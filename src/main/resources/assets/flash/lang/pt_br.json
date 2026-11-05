@@ -1,4 +1,5 @@
 {
+  "message.flash.machine_no_space": "Sem espaço livre suficiente para colocar a máquina aqui.",
   "itemGroup.flash": "Flash",
   "block.flash.transformation_chamber": "Câmara de Transformação",
   "block.flash.potion_container": "Recipiente de Poções",

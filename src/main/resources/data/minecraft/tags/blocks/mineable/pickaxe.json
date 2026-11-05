@@ -1,9 +1,11 @@
 {
-    "replace":  false,
-    "values":  [
-                   "flash:transformation_chamber",
-                   "flash:potion_container",
-                   "flash:acceleration_stone",
-                   "flash:acceleration_crystal"
-               ]
+  "replace": false,
+  "values": [
+    "flash:transformation_chamber",
+    "flash:potion_container",
+    "flash:acceleration_stone",
+    "flash:acceleration_crystal",
+    "flash:transformation_chamber_part",
+    "flash:potion_container_part"
+  ]
 }

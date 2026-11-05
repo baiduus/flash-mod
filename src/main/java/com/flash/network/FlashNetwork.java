@@ -68,11 +68,5 @@ public final class FlashNetwork {
                 .decoder(FlashBeamPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
-
-        CHANNEL.messageBuilder(FlashMachineInteractPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
-                .encoder(FlashMachineInteractPacket::encode)
-                .decoder(FlashMachineInteractPacket::new)
-                .consumerMainThread((message, context) -> message.handle(context.get()))
-                .add();
     }
 }
