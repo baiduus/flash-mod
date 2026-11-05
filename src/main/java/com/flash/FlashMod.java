@@ -35,6 +35,8 @@ public final class FlashMod {
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, FlashClientConfig.SPEC);
 
         FlashNetwork.register();
+        com.flash.power.FlashCombustion.registerProtection(
+                player -> com.flash.item.FlashSuitItem.countWorn(player) > 0);
 
         ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);

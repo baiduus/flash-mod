@@ -153,11 +153,45 @@ public class TachyonExtractorBlock extends BaseEntityBlock {
     /** Small yellow sparks around the coil while working (client side only, discreet). */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!state.getValue(WORKING) || random.nextInt(4) != 0) {
+        if (!state.getValue(WORKING)) {
             return;
         }
-        int count = 1 + random.nextInt(2);
-        for (int i = 0; i < count; i++) {
+        Direction facing = state.getValue(FACING);
+        boolean suit = level.getBlockEntity(pos) instanceof TachyonExtractorBlockEntity extractor
+                && isSuit(extractor.displayStack());
+        net.minecraft.core.particles.ParticleOptions main = suit
+                ? ParticleTypes.ELECTRIC_SPARK
+                : new net.minecraft.core.particles.DustParticleOptions(
+                        new org.joml.Vector3f(0.85F, 0.05F, 0.08F), 1.0F);
+
+        // Inside the chamber: sparks / red motes orbiting the spinning item.
+        for (int i = 0; i < 2; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0D;
+            double radius = 0.10D + random.nextDouble() * 0.12D;
+            double dx = Math.cos(angle) * radius;
+            double dz = Math.sin(angle) * radius;
+            double dy = 0.06D + random.nextDouble() * 0.38D;
+            double wx;
+            double wz;
+            switch (facing) {
+                case SOUTH -> { wx = -dx; wz = -dz; }
+                case EAST -> { wx = -dz; wz = dx; }
+                case WEST -> { wx = dz; wz = -dx; }
+                default -> { wx = dx; wz = dz; }
+            }
+            level.addParticle(main, pos.getX() + 0.5D + wx, pos.getY() + dy,
+                    pos.getZ() + 0.5D + wz, -wz * 0.15D, 0.01D, wx * 0.15D);
+        }
+        if (random.nextInt(3) == 0) {
+            level.addParticle(suit ? ParticleTypes.END_ROD : ParticleTypes.SMOKE,
+                    pos.getX() + 0.5D + (random.nextDouble() - 0.5D) * 0.3D,
+                    pos.getY() + 0.12D,
+                    pos.getZ() + 0.5D + (random.nextDouble() - 0.5D) * 0.3D,
+                    0.0D, 0.03D, 0.0D);
+        }
+
+        // Coil on top.
+        if (random.nextInt(4) == 0) {
             double angle = random.nextDouble() * Math.PI * 2.0D;
             double radius = 0.4D * random.nextDouble();
             level.addParticle(ParticleTypes.ELECTRIC_SPARK,

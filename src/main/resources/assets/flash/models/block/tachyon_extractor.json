@@ -15,25 +15,16 @@
   {
    "name": "body",
    "from": [
-    -0.0,
-    -0.0,
-    -0.0
+    0,
+    0,
+    0
    ],
    "to": [
-    16.0,
-    16.0,
-    16.0
+    16,
+    16,
+    16
    ],
    "faces": {
-    "north": {
-     "uv": [
-      0,
-      0,
-      16,
-      16
-     ],
-     "texture": "#front"
-    },
     "south": {
      "uv": [
       0,
@@ -78,6 +69,222 @@
       16
      ],
      "texture": "#bottom"
+    }
+   }
+  },
+  {
+   "name": "front_bottom",
+   "from": [
+    0,
+    0,
+    0
+   ],
+   "to": [
+    16,
+    2,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      14,
+      16,
+      16
+     ],
+     "texture": "#front"
+    }
+   }
+  },
+  {
+   "name": "front_top",
+   "from": [
+    0,
+    8,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      8
+     ],
+     "texture": "#front"
+    }
+   }
+  },
+  {
+   "name": "front_left",
+   "from": [
+    0,
+    2,
+    0
+   ],
+   "to": [
+    4,
+    8,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      12,
+      8,
+      16,
+      14
+     ],
+     "texture": "#front"
+    }
+   }
+  },
+  {
+   "name": "front_right",
+   "from": [
+    12,
+    2,
+    0
+   ],
+   "to": [
+    16,
+    8,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      8,
+      4,
+      14
+     ],
+     "texture": "#front"
+    }
+   }
+  },
+  {
+   "name": "chamber_back",
+   "from": [
+    4,
+    1,
+    14
+   ],
+   "to": [
+    12,
+    9,
+    14
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      4,
+      7,
+      12,
+      15
+     ],
+     "texture": "#back"
+    }
+   }
+  },
+  {
+   "name": "chamber_floor",
+   "from": [
+    4,
+    1,
+    1
+   ],
+   "to": [
+    12,
+    1,
+    14
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      4,
+      1,
+      12,
+      14
+     ],
+     "texture": "#bottom"
+    }
+   }
+  },
+  {
+   "name": "chamber_ceiling",
+   "from": [
+    4,
+    9,
+    1
+   ],
+   "to": [
+    12,
+    9,
+    14
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      4,
+      1,
+      12,
+      14
+     ],
+     "texture": "#top"
+    }
+   }
+  },
+  {
+   "name": "chamber_left",
+   "from": [
+    4,
+    1,
+    1
+   ],
+   "to": [
+    4,
+    9,
+    14
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      1,
+      7,
+      14,
+      15
+     ],
+     "texture": "#side"
+    }
+   }
+  },
+  {
+   "name": "chamber_right",
+   "from": [
+    12,
+    1,
+    1
+   ],
+   "to": [
+    12,
+    9,
+    14
+   ],
+   "faces": {
+    "west": {
+     "uv": [
+      1,
+      7,
+      14,
+      15
+     ],
+     "texture": "#side_left"
     }
    }
   },
@@ -142,19 +349,28 @@
    }
   },
   {
-   "name": "door_glass",
+   "name": "window_glass",
    "from": [
-    3,
-    3,
-    -0.15
+    4,
+    2,
+    -0.25
    ],
    "to": [
-    13,
-    11,
-    0
+    12,
+    8,
+    -0.25
    ],
    "faces": {
     "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#glass"
+    },
+    "south": {
      "uv": [
       0,
       0,

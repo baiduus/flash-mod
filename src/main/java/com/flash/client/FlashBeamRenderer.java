@@ -31,13 +31,13 @@ public final class FlashBeamRenderer {
     }
 
     public static void add(Vec3 start, Vec3 end, int color,
-                           int durationTicks, float width) {
+                           int durationTicks, float width, boolean negative) {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
         if (level == null || durationTicks <= 0) {
             return;
         }
-        BEAMS.add(new Beam(start, end, color, durationTicks, width,
+        BEAMS.add(new Beam(start, end, color, durationTicks, width, negative,
                 level.getGameTime(), level.random.nextLong()));
     }
 
@@ -116,14 +116,20 @@ public final class FlashBeamRenderer {
             }
             float width = beam.width * (strand == 0 ? 1.0F : 0.75F);
             FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, points,
-                    0.095F * width, 0.042F * width, 0.015F * width, fade);
+                    0.095F * width, 0.042F * width, 0.015F * width,
+                    beam.negative ? FlashLightningRibbon.RED_GLOW_COLOR : FlashLightningRibbon.GLOW_COLOR,
+                    beam.negative ? FlashLightningRibbon.RED_MID_COLOR : FlashLightningRibbon.MID_COLOR,
+                    beam.negative ? FlashLightningRibbon.RED_CORE_COLOR : FlashLightningRibbon.CORE_COLOR, fade);
 
             if (random.nextFloat() < 0.85F) {
                 Vec3 origin = points.get(4 + random.nextInt(segments - 8));
                 List<Vec3> branch = FlashLightningRibbon.buildBranch(
                         origin, random, time, random.nextDouble() * Mth.TWO_PI);
                 FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, branch,
-                        0.045F * width, 0.020F * width, 0.008F * width, fade);
+                        0.045F * width, 0.020F * width, 0.008F * width,
+                        beam.negative ? FlashLightningRibbon.RED_GLOW_COLOR : FlashLightningRibbon.GLOW_COLOR,
+                        beam.negative ? FlashLightningRibbon.RED_MID_COLOR : FlashLightningRibbon.MID_COLOR,
+                        beam.negative ? FlashLightningRibbon.RED_CORE_COLOR : FlashLightningRibbon.CORE_COLOR, fade);
             }
         }
 
@@ -139,12 +145,15 @@ public final class FlashBeamRenderer {
             flarePoints.add(beam.end);
             flarePoints.add(beam.end.add(flareDirection));
             FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, flarePoints,
-                    0.045F, 0.020F, 0.008F, fade);
+                    0.045F, 0.020F, 0.008F,
+                    beam.negative ? FlashLightningRibbon.RED_GLOW_COLOR : FlashLightningRibbon.GLOW_COLOR,
+                    beam.negative ? FlashLightningRibbon.RED_MID_COLOR : FlashLightningRibbon.MID_COLOR,
+                    beam.negative ? FlashLightningRibbon.RED_CORE_COLOR : FlashLightningRibbon.CORE_COLOR, fade);
         }
     }
 
     private record Beam(Vec3 start, Vec3 end, int color, int duration,
-                        float width, float createdAt, long seed) {
+                        float width, boolean negative, float createdAt, long seed) {
         net.minecraft.world.phys.AABB bounds() {
             return new net.minecraft.world.phys.AABB(
                     Math.min(start.x, end.x), Math.min(start.y, end.y),

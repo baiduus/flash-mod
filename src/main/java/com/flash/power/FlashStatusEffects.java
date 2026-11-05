@@ -78,6 +78,10 @@ public final class FlashStatusEffects {
         return 5; // Strength VI
     }
 
+    public static int hasteAmplifier(int level) {
+        return strengthAmplifier(level);
+    }
+
     public static String regenerationName(int level) {
         int amp = regenerationAmplifier(level);
         return amp < 0 ? "-" : "Regeneration " + roman(amp + 1);
@@ -166,14 +170,17 @@ public final class FlashStatusEffects {
 
         int regen = regenerationAmplifier(level);
         int strength = strengthAmplifier(level);
-        Owned previous = OWNED.getOrDefault(player.getUUID(), new Owned(level, -1, -1));
+        Owned previous = OWNED.getOrDefault(player.getUUID(), new Owned(level, -1, -1, -1));
 
         int ownedRegen = applyEffect(player, MobEffects.REGENERATION, regen,
                 previous.regeneration, EFFECT_DURATION);
         int ownedStrength = applyEffect(player, MobEffects.DAMAGE_BOOST, strength,
                 previous.strength, EFFECT_DURATION);
 
-        OWNED.put(player.getUUID(), new Owned(level, ownedRegen, ownedStrength));
+        int ownedHaste = applyEffect(player, MobEffects.DIG_SPEED, hasteAmplifier(level),
+                previous.haste, EFFECT_DURATION);
+
+        OWNED.put(player.getUUID(), new Owned(level, ownedRegen, ownedStrength, ownedHaste));
     }
 
     private static int applyEffect(ServerPlayer player, MobEffect effect,
@@ -202,7 +209,7 @@ public final class FlashStatusEffects {
             // Same tier: a normal addEffect refreshes the duration without
             // creating a hidden effect.
             player.addEffect(new MobEffectInstance(effect, duration, desired,
-                    false, true, true));
+                    false, false, true));
             return desired;
         }
 
@@ -213,7 +220,7 @@ public final class FlashStatusEffects {
             player.removeEffect(effect);
         }
         player.addEffect(new MobEffectInstance(effect, duration, desired,
-                false, true, true));
+                false, false, true));
         return desired;
     }
 
@@ -224,6 +231,7 @@ public final class FlashStatusEffects {
         }
         removeIfOurs(player, MobEffects.REGENERATION, owned.regeneration, EFFECT_DURATION);
         removeIfOurs(player, MobEffects.DAMAGE_BOOST, owned.strength, EFFECT_DURATION);
+        removeIfOurs(player, MobEffects.DIG_SPEED, owned.haste, EFFECT_DURATION);
         HEAL_WINDOWS.remove(player.getUUID());
     }
 
@@ -263,7 +271,7 @@ public final class FlashStatusEffects {
         };
     }
 
-    private record Owned(int level, int regeneration, int strength) {
+    private record Owned(int level, int regeneration, int strength, int haste) {
     }
 
     private static final class HealWindow {

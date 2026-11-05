@@ -26,6 +26,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -148,6 +149,21 @@ public final class FlashAbilityManager {
                 yield true;
             }
             case SPEED_MANIPULATION -> grantSpeedToTarget(player);
+            case DASH_PUNCH -> {
+                state.dash = FlashDashPunch.start(player);
+                if (state.dash == null) {
+                    player.displayClientMessage(
+                            Component.translatable("message.flash.dash_no_targets"), true);
+                    yield false;
+                }
+                yield true;
+            }
+            case TIME_SLOW -> {
+                state.slow = FlashTimeSlow.start(player);
+                player.displayClientMessage(
+                        Component.translatable("message.flash.time_slow_started"), true);
+                yield true;
+            }
             case ACCELERATION_FORCE -> {
                 state.portalTicks = 0;
                 state.portalExit = FlashDimensionTravel.isInAccelerationForce(player);
@@ -188,6 +204,7 @@ public final class FlashAbilityManager {
             sendSync(player, ability, false);
         } else if (ability == FlashAbility.SPEED_TORNADO && state.tornadoTicks >= 0) {
             state.tornadoTicks = -1;
+            releaseDebris(state);
             startHoldCooldown(player, ability);
             sendSync(player, ability, false);
         }
@@ -239,6 +256,7 @@ public final class FlashAbilityManager {
             state.tornadoTicks++;
             if (state.tornadoTicks > MAX_TORNADO_TICKS) {
                 state.tornadoTicks = -1;
+                releaseDebris(state);
                 startHoldCooldown(player, FlashAbility.SPEED_TORNADO);
                 sendSync(player, FlashAbility.SPEED_TORNADO, false);
             }
@@ -280,6 +298,16 @@ public final class FlashAbilityManager {
             }
         }
 
+        if (state.dash != null && !FlashDashPunch.tick(player, state.dash)) {
+            state.dash = null;
+            sendSync(player, FlashAbility.DASH_PUNCH, false);
+        }
+
+        if (state.slow != null && !FlashTimeSlow.tick(player, state.slow)) {
+            state.slow = null;
+            sendSync(player, FlashAbility.TIME_SLOW, false);
+        }
+
         FlashWaterWalk.tick(player);
         FlashDimensionTravel.tick(player);
     }
@@ -287,6 +315,12 @@ public final class FlashAbilityManager {
     public static void reset(ServerPlayer player) {
         FlashWaterWalk.release(player);
         PlayerState state = STATES.remove(player.getUUID());
+        if (state != null) {
+            releaseDebris(state);
+            if (state.slow != null) {
+                FlashTimeSlow.end(player, state.slow);
+            }
+        }
         if (state != null && state.phasing) {
             FlashPhase.restore(player);
             FlashAbilitySyncPacket.send(player, FlashAbility.PHASING, false, 0);
@@ -364,6 +398,12 @@ public final class FlashAbilityManager {
         if (state.portalTicks >= 0) {
             mask |= 1 << FlashAbility.ACCELERATION_FORCE.ordinal();
         }
+        if (state.dash != null) {
+            mask |= 1 << FlashAbility.DASH_PUNCH.ordinal();
+        }
+        if (state.slow != null) {
+            mask |= 1 << FlashAbility.TIME_SLOW.ordinal();
+        }
         return mask;
     }
 
@@ -381,19 +421,10 @@ public final class FlashAbilityManager {
                 FlashAbilityCombat.spawnElectricBurst(
                         (ServerLevel) player.level(),
                         target.getBoundingBox().getCenter(), 7);
-                ((ServerLevel) player.level()).sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        target.getX(), target.getY() + target.getBbHeight() * 0.6D, target.getZ(),
-                        1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
         }
 
         player.swing(InteractionHand.MAIN_HAND, true);
-        Vec3 impact = player.getEyePosition().add(look.scale(1.3D));
-        ((ServerLevel) player.level()).sendParticles(ParticleTypes.SWEEP_ATTACK,
-                impact.x, impact.y - 0.2D, impact.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-        ((ServerLevel) player.level()).sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                player.getX(), player.getY() + 1.0D, player.getZ(),
-                5, 0.35D, 0.65D, 0.35D, 0.03D);
         player.playNotifySound(SoundEvents.PLAYER_ATTACK_SWEEP,
                 SoundSource.PLAYERS, 0.55F, 1.65F);
     }
@@ -419,42 +450,7 @@ public final class FlashAbilityManager {
                     .add(right.scale(side * 0.42D))
                     .add(0.0D, -0.22D, 0.0D);
 
-            // Conical helix: the radius grows with distance while the emission
-            // point rotates, producing a believable spinning air burst instead
-            // of a straight line of cloud particles.
-            for (int i = 1; i <= 9; i++) {
-                double t = i / 9.0D;
-                double radius = 0.08D + t * 1.15D;
-                double angle = time * 1.9D + side * Math.PI + t * 5.4D;
-                Vec3 point = origin.add(look.scale(t * 7.0D))
-                        .add(right.scale(Math.cos(angle) * radius))
-                        .add(up.scale(Math.sin(angle) * radius * 0.55D));
-
-                level.sendParticles(ParticleTypes.CLOUD,
-                        point.x, point.y, point.z, 1,
-                        0.02D, 0.02D, 0.02D, 0.01D);
-                if (i % 3 == 0) {
-                    level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                            point.x, point.y, point.z, 1,
-                            0.03D, 0.03D, 0.03D, 0.01D);
-                }
-                if (i == 4 || i == 8) {
-                    level.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                            point.x, point.y, point.z, 1,
-                            0.0D, 0.0D, 0.0D, 0.0D);
-                }
-            }
-
-            // Visible rotating ring at the end of the cone.
-            for (int j = 0; j < 10; j++) {
-                double angle = time * 1.5D + side * Math.PI + j * (Math.PI * 2.0D / 10.0D);
-                Vec3 point = origin.add(look.scale(7.0D))
-                        .add(right.scale(Math.cos(angle) * 1.25D))
-                        .add(up.scale(Math.sin(angle) * 0.72D));
-                level.sendParticles(ParticleTypes.CLOUD,
-                        point.x, point.y, point.z, 1,
-                        0.02D, 0.02D, 0.02D, 0.01D);
-            }
+            // Visuals are drawn client-side by FlashAbilityEffectsRenderer.
         }
 
         List<LivingEntity> targets = FlashAbilityCombat.targetsInFront(player, 7.2D, 0.42D, 20);
@@ -554,8 +550,9 @@ public final class FlashAbilityManager {
         // Lift nearby blocks as debris when block destruction is enabled.
         if (FlashPowers.isDestroyBlocksEnabled(player)
                 && state.tornadoTicks % 12 == 0) {
-            liftDebris(player, level, center);
+            liftDebris(player, level, center, state);
         }
+        holdDebrisAtTop(state, center);
 
         // Visual funnel: about 9.5 blocks tall, wider at the top, with two
         // particles per layer every other tick (bounded for performance).
@@ -588,11 +585,45 @@ public final class FlashAbilityManager {
         }
     }
 
-    private static void liftDebris(ServerPlayer player, ServerLevel level, Vec3 center) {
-        long existing = level.getEntitiesOfClass(FallingBlockEntity.class,
-                new AABB(center, center).inflate(12.0D),
-                entity -> entity.isAlive()).size();
-        if (existing >= 12) {
+    /**
+     * Debris stays at the top of the funnel, hopping up and down while it
+     * orbits, until the ability ends; {@link #releaseDebris} then drops it.
+     */
+    private static void holdDebrisAtTop(PlayerState state, Vec3 center) {
+        state.debris.removeIf(block -> !block.isAlive());
+        int count = state.debris.size();
+        for (int i = 0; i < count; i++) {
+            FallingBlockEntity block = state.debris.get(i);
+            double angle = state.tornadoTicks * 0.22D + i * (Mth.TWO_PI / Math.max(1, count));
+            double hop = Math.abs(Math.sin(state.tornadoTicks * 0.16D + i * 1.7D)) * 1.1D;
+            double radius = 2.0D + 0.6D * Math.sin(i * 2.1D);
+            double tx = center.x + Math.cos(angle) * radius;
+            double ty = center.y + 9.2D + hop;
+            double tz = center.z + Math.sin(angle) * radius;
+            block.setNoGravity(true);
+            block.time = 1;
+            block.setDeltaMovement(
+                    (tx - block.getX()) * 0.22D,
+                    (ty - block.getY()) * 0.22D,
+                    (tz - block.getZ()) * 0.22D);
+            block.hurtMarked = true;
+        }
+    }
+
+    private static void releaseDebris(PlayerState state) {
+        for (FallingBlockEntity block : state.debris) {
+            if (block.isAlive()) {
+                block.setNoGravity(false);
+                block.setDeltaMovement(block.getDeltaMovement().scale(0.2D));
+                block.hurtMarked = true;
+            }
+        }
+        state.debris.clear();
+    }
+
+    private static void liftDebris(ServerPlayer player, ServerLevel level, Vec3 center,
+                                   PlayerState ps) {
+        if (ps.debris.size() >= 12) {
             return;
         }
 
@@ -625,6 +656,8 @@ public final class FlashAbilityManager {
                     0.55D + level.random.nextDouble() * 0.35D,
                     (level.random.nextDouble() - 0.5D) * 0.18D);
             falling.hurtMarked = true;
+            falling.dropItem = false;
+            ps.debris.add(falling);
             lifted++;
         }
         if (lifted > 0) {
@@ -913,7 +946,8 @@ public final class FlashAbilityManager {
                 || state.tornadoTicks >= 0
                 || state.lightningTicks >= 0
                 || state.massTicks >= 0
-                || state.portalTicks >= 0;
+                || state.portalTicks >= 0
+                || state.dash != null;
     }
 
     private static long gameTime(ServerPlayer player) {
@@ -948,6 +982,7 @@ public final class FlashAbilityManager {
         int phasingTicks;
         Vec3 lastSafe = Vec3.ZERO;
         int tornadoTicks = -1;
+        final List<FallingBlockEntity> debris = new java.util.ArrayList<>();
         Vec3 tornadoCenter = Vec3.ZERO;
         double tornadoAngle;
         int lightningTicks = -1;
@@ -958,5 +993,7 @@ public final class FlashAbilityManager {
         double massAngle;
         int portalTicks = -1;
         boolean portalExit;
+        FlashDashPunch.Run dash;
+        FlashTimeSlow.Zone slow;
     }
 }

@@ -50,8 +50,8 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
         if (!stack.isEmpty()) {
             poseStack.pushPose();
             float bob = working ? Mth.sin(time * 0.12F) * (1.0F / 16.0F) : 0.0F;
-            poseStack.translate(0.5D, 0.38D + bob, 0.52D);
-            poseStack.scale(0.42F, 0.42F, 0.42F);
+            poseStack.translate(0.5D, 0.31D + bob * 0.6F, 0.5D);
+            poseStack.scale(0.36F, 0.36F, 0.36F);
             float spin = working ? time * 4.0F : (extractor.isDone() ? time * 2.0F : 0.0F);
             poseStack.mulPose(Axis.YP.rotationDegrees(spin));
             int light = powered ? LightTexture.FULL_BRIGHT : packedLight;
@@ -67,18 +67,21 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
         poseStack.popPose();
     }
 
-    /** Orange bar on the front panel; fills from left to right (0 to 4 px). */
+    /** Orange bar on the front panel; fills along the track (0 to 6 px). */
     private void drawProgressBar(TachyonExtractorBlockEntity extractor, PoseStack poseStack,
                                  MultiBufferSource buffers) {
         float fraction = extractor.isDone() ? 1.0F : extractor.progressFraction();
         if (fraction <= 0.0F) {
             return;
         }
-        float x0 = 8.0F / 16.0F;
-        float x1 = x0 + 4.0F / 16.0F * fraction;
-        float y0 = 12.1F / 16.0F;
-        float y1 = 12.9F / 16.0F;
-        float z = -0.004F;
+        // Track of the panel: texture row 3 (block y 12..13), columns 7..13.
+        // The emissive overlay shell of the powered model sits at z = -0.02, so
+        // the bar is drawn clearly in front of it.
+        float x0 = 7.0F / 16.0F;
+        float x1 = x0 + 6.0F / 16.0F * fraction;
+        float y0 = 12.0F / 16.0F;
+        float y1 = 13.0F / 16.0F;
+        float z = -0.035F;
         VertexConsumer consumer = buffers.getBuffer(RenderType.lightning());
         Matrix4f matrix = poseStack.last().pose();
         int r = 255, g = 150, b = 30, a = 255;

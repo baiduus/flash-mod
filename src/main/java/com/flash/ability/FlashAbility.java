@@ -18,7 +18,9 @@ public enum FlashAbility {
     LIGHTNING_STRIKE(5, "lightning_strike", 300, false),
     MASS_PUNCH(8, "mass_punch", 600, false),
     SPEED_MANIPULATION(9, "speed_manipulation", 1200, false),
-    ACCELERATION_FORCE(10, "acceleration_force", 200, false);
+    ACCELERATION_FORCE(10, "acceleration_force", 200, false),
+    DASH_PUNCH(6, "dash_punch", 300, false),
+    TIME_SLOW(10, "time_slow", 1800, false);
 
     private final int requiredLevel;
     private final String id;

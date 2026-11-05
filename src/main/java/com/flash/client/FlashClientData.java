@@ -14,8 +14,8 @@ public final class FlashClientData {
     private static boolean destroyBlocks;
     private static boolean temporary;
     private static int temporaryRemaining;
-    private static final boolean[] ABILITY_ACTIVE = new boolean[8];
-    private static final int[] ABILITY_COOLDOWN = new int[8];
+    private static final boolean[] ABILITY_ACTIVE = new boolean[32];
+    private static final int[] ABILITY_COOLDOWN = new int[32];
 
     private FlashClientData() {
     }

@@ -17,7 +17,9 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.LightBlock;
+import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -25,16 +27,18 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 
 /**
- * Builds the Flash Museum block by block. Coordinates are written for a
+ * Builds the Flash Museum: an old, abandoned neoclassical building (deepslate
+ * and stone brick walls, oxidised copper roof, cracked windows, moss, vines and
+ * dim soul lanterns) around a faded red carpet. Coordinates are written for a
  * building whose entrance faces south (canonical frame: x to the right, z from
  * the entrance towards the back, y = 0 is the foundation row); the base class
  * rotates / mirrors the result for the chosen orientation.
  *
  * <pre>
- *   z 0-2    facade tower with the lightning emblem and the entrance
- *   z 3-8    lobby with reception desk
- *   z 9-22   hall: suit gallery (left), rogues gallery (right), red carpet in the middle
- *   z 23-24  wall with the golden archway
+ *   z 0      facade with columns, pediment and the entrance
+ *   z 1-8    lobby with a rotten reception desk
+ *   z 9-22   hall: old showcases on both sides, columns, faded carpet
+ *   z 23-24  wall with the gilded archway
  *   z 25-29  Suit Room: pedestal and chest
  * </pre>
  */
@@ -49,21 +53,36 @@ public class FlashMuseumPiece extends StructurePiece {
     private static final int CEILING = 10;
 
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
-    private static final BlockState RED = Blocks.RED_CONCRETE.defaultBlockState();
-    private static final BlockState DARK_RED = Blocks.RED_TERRACOTTA.defaultBlockState();
-    private static final BlockState YELLOW = Blocks.YELLOW_CONCRETE.defaultBlockState();
-    private static final BlockState WHITE = Blocks.WHITE_CONCRETE.defaultBlockState();
-    private static final BlockState GRAY = Blocks.GRAY_CONCRETE.defaultBlockState();
-    private static final BlockState BLACK = Blocks.BLACK_CONCRETE.defaultBlockState();
-    private static final BlockState QUARTZ = Blocks.SMOOTH_QUARTZ.defaultBlockState();
-    private static final BlockState GOLD = Blocks.GOLD_BLOCK.defaultBlockState();
-    private static final BlockState GLASS = Blocks.GLASS.defaultBlockState();
-    private static final BlockState LANTERN = Blocks.SEA_LANTERN.defaultBlockState();
+    private static final BlockState DEEPSLATE_BRICKS = Blocks.DEEPSLATE_BRICKS.defaultBlockState();
+    private static final BlockState CRACKED_DEEPSLATE = Blocks.CRACKED_DEEPSLATE_BRICKS.defaultBlockState();
     private static final BlockState STONE_BRICKS = Blocks.STONE_BRICKS.defaultBlockState();
+    private static final BlockState MOSSY_BRICKS = Blocks.MOSSY_STONE_BRICKS.defaultBlockState();
+    private static final BlockState COBBLED = Blocks.COBBLED_DEEPSLATE.defaultBlockState();
+    private static final BlockState MOSSY_COBBLE = Blocks.MOSSY_COBBLESTONE.defaultBlockState();
+    private static final BlockState TILES = Blocks.DEEPSLATE_TILES.defaultBlockState();
+    private static final BlockState CRACKED_TILES = Blocks.CRACKED_DEEPSLATE_TILES.defaultBlockState();
+    private static final BlockState POLISHED = Blocks.POLISHED_DEEPSLATE.defaultBlockState();
     private static final BlockState BLACKSTONE = Blocks.POLISHED_BLACKSTONE.defaultBlockState();
+    private static final BlockState BLACK_BRICKS = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState();
+    private static final BlockState GILDED = Blocks.GILDED_BLACKSTONE.defaultBlockState();
+    private static final BlockState GOLD = Blocks.GOLD_BLOCK.defaultBlockState();
+    private static final BlockState QUARTZ_PILLAR = Blocks.QUARTZ_PILLAR.defaultBlockState();
+    private static final BlockState CHISELED_QUARTZ = Blocks.CHISELED_QUARTZ_BLOCK.defaultBlockState();
+    private static final BlockState OXIDIZED = Blocks.OXIDIZED_CUT_COPPER.defaultBlockState();
+    private static final BlockState WEATHERED = Blocks.WEATHERED_CUT_COPPER.defaultBlockState();
+    private static final BlockState GLASS = Blocks.GLASS.defaultBlockState();
+    private static final BlockState MOSS = Blocks.MOSS_BLOCK.defaultBlockState();
+    private static final BlockState MOSS_CARPET = Blocks.MOSS_CARPET.defaultBlockState();
     private static final BlockState CARPET = Blocks.RED_CARPET.defaultBlockState();
+    private static final BlockState COBWEB = Blocks.COBWEB.defaultBlockState();
+    private static final BlockState CHAIN = Blocks.CHAIN.defaultBlockState();
+    private static final BlockState SOUL_LANTERN_HANGING =
+            Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true);
+    private static final BlockState SOUL_LANTERN = Blocks.SOUL_LANTERN.defaultBlockState();
     private static final BlockState ROD = Blocks.LIGHTNING_ROD.defaultBlockState();
-    private static final BlockState END_ROD = Blocks.END_ROD.defaultBlockState();
+    private static final BlockState DARK_OAK = Blocks.DARK_OAK_PLANKS.defaultBlockState();
+    private static final BlockState DARK_OAK_SLAB = Blocks.DARK_OAK_SLAB.defaultBlockState();
+    private static final BlockState CANDLE = Blocks.CANDLE.defaultBlockState();
 
     public FlashMuseumPiece(int centerX, int baseY, int centerZ, Direction orientation) {
         super(ModStructures.FLASH_MUSEUM_PIECE.get(), 0,
@@ -93,198 +112,279 @@ public class FlashMuseumPiece extends StructurePiece {
         this.placeBlock(level, state, x, y, z, box);
     }
 
+    /** Weathered wall block: mostly deepslate bricks, with cracks, moss and rubble. */
+    private static BlockState aged(RandomSource random) {
+        int roll = random.nextInt(100);
+        if (roll < 52) {
+            return DEEPSLATE_BRICKS;
+        } else if (roll < 74) {
+            return CRACKED_DEEPSLATE;
+        } else if (roll < 86) {
+            return MOSSY_BRICKS;
+        } else if (roll < 94) {
+            return STONE_BRICKS;
+        }
+        return COBBLED;
+    }
+
+    private static BlockState agedFloor(RandomSource random) {
+        int roll = random.nextInt(100);
+        if (roll < 55) {
+            return TILES;
+        } else if (roll < 78) {
+            return CRACKED_TILES;
+        } else if (roll < 90) {
+            return POLISHED;
+        } else if (roll < 96) {
+            return MOSSY_COBBLE;
+        }
+        return MOSS;
+    }
+
+    private void agedBox(WorldGenLevel level, BoundingBox box, RandomSource random,
+                         int x0, int y0, int z0, int x1, int y1, int z1) {
+        for (int x = x0; x <= x1; x++) {
+            for (int y = y0; y <= y1; y++) {
+                for (int z = z0; z <= z1; z++) {
+                    put(level, box, aged(random), x, y, z);
+                }
+            }
+        }
+    }
+
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structures, ChunkGenerator generator,
                             RandomSource random, BoundingBox box, ChunkPos chunkPos, BlockPos pivot) {
-        // ---- foundation, floor and a clear volume (hills and trees would otherwise bury it)
+        // foundation and a clear volume (hills and trees would otherwise bury it)
         for (int x = 0; x < W; x++) {
             for (int z = 0; z < D; z++) {
-                this.fillColumnDown(level, STONE_BRICKS, x, 0, z, box);
+                this.fillColumnDown(level, random.nextInt(4) == 0 ? MOSSY_BRICKS : STONE_BRICKS, x, 0, z, box);
             }
         }
         this.generateAirBox(level, box, 0, FLOOR, 0, W - 1, FlashMuseumStructure.HEIGHT - 1, D - 1);
-        fill(level, box, 0, 0, 0, W - 1, 0, D - 1, STONE_BRICKS);
 
-        shell(level, box);
-        floor(level, box);
-        facade(level, box);
-        lobby(level, box);
-        hall(level, box);
-        archway(level, box);
+        floor(level, box, random);
+        walls(level, box, random);
+        facade(level, box, random);
+        roof(level, box, random);
+        hall(level, box, random);
+        archway(level, box, random);
         suitRoom(level, box, random);
-        lighting(level, box);
+        decay(level, box, random);
+        lighting(level, box, random);
     }
 
     // ------------------------------------------------------------------
     // Structure
     // ------------------------------------------------------------------
 
-    private void shell(WorldGenLevel level, BoundingBox box) {
-        // red walls with a yellow band, flat gray roof with a red parapet
-        fill(level, box, 0, FLOOR, 0, W - 1, CEILING, D - 1, RED);
-        this.generateAirBox(level, box, 1, FLOOR + 1, 1, W - 2, CEILING - 1, D - 2);
-        fill(level, box, 0, CEILING, 0, W - 1, CEILING, D - 1, GRAY);
-        fill(level, box, 0, CEILING + 1, 0, W - 1, CEILING + 1, 0, RED);
-        fill(level, box, 0, CEILING + 1, D - 1, W - 1, CEILING + 1, D - 1, RED);
-        fill(level, box, 0, CEILING + 1, 0, 0, CEILING + 1, D - 1, RED);
-        fill(level, box, W - 1, CEILING + 1, 0, W - 1, CEILING + 1, D - 1, RED);
-        // yellow speed band around the building
-        fill(level, box, 0, 9, 0, W - 1, 9, 0, YELLOW);
-        fill(level, box, 0, 9, D - 1, W - 1, 9, D - 1, YELLOW);
-        fill(level, box, 0, 9, 0, 0, 9, D - 1, YELLOW);
-        fill(level, box, W - 1, 9, 0, W - 1, 9, D - 1, YELLOW);
-        // dark skirting
-        fill(level, box, 0, FLOOR + 1, 0, W - 1, FLOOR + 1, 0, BLACK);
-        fill(level, box, 0, FLOOR + 1, D - 1, W - 1, FLOOR + 1, D - 1, BLACK);
-        fill(level, box, 0, FLOOR + 1, 0, 0, FLOOR + 1, D - 1, BLACK);
-        fill(level, box, W - 1, FLOOR + 1, 0, W - 1, FLOOR + 1, D - 1, BLACK);
-        // big windows: front wings and both sides
-        fill(level, box, 2, 4, 0, 7, 8, 0, GLASS);
-        fill(level, box, W - 8, 4, 0, W - 3, 8, 0, GLASS);
-        for (int z : new int[] {5, 12, 19}) {
-            fill(level, box, 0, 4, z, 0, 8, z + 3, GLASS);
-            fill(level, box, W - 1, 4, z, W - 1, 8, z + 3, GLASS);
-        }
-    }
-
-    private void floor(WorldGenLevel level, BoundingBox box) {
-        // checkered quartz / gray floor, a dark ring and a red runner down the middle
-        for (int x = 1; x < W - 1; x++) {
-            for (int z = 1; z < D - 1; z++) {
-                put(level, box, ((x + z) & 1) == 0 ? QUARTZ : GRAY, x, FLOOR, z);
+    private void floor(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        for (int x = 0; x < W; x++) {
+            for (int z = 0; z < D; z++) {
+                put(level, box, agedFloor(random), x, FLOOR, z);
             }
         }
-        fill(level, box, 15, FLOOR, 1, 17, FLOOR, 22, BLACK);
-        fill(level, box, 15, FLOOR + 1, 1, 17, FLOOR + 1, 22, CARPET);
-        fill(level, box, 14, FLOOR, 1, 14, FLOOR, 22, YELLOW);
-        fill(level, box, 18, FLOOR, 1, 18, FLOOR, 22, YELLOW);
-    }
-
-    /** Red tower on the front with the Flash emblem and the entrance. */
-    private void facade(WorldGenLevel level, BoundingBox box) {
-        fill(level, box, 9, FLOOR, 0, 23, 22, 2, RED);
-        fill(level, box, 9, 22, 0, 23, 22, 2, YELLOW);
-        fill(level, box, 9, FLOOR + 1, 0, 23, FLOOR + 1, 2, BLACK);
-        // entrance opening, framed in gold
-        this.generateAirBox(level, box, 14, FLOOR + 1, 0, 18, 6, 2);
-        fill(level, box, 13, FLOOR + 1, 0, 13, 7, 0, GOLD);
-        fill(level, box, 19, FLOOR + 1, 0, 19, 7, 0, GOLD);
-        fill(level, box, 13, 7, 0, 19, 7, 0, GOLD);
-        // entrance steps are not needed: the floor is flush with the ground
-
-        // emblem: white disc, yellow ring and bolt, centred on x = 16
-        boolean mirrored = this.getOrientation() == Direction.SOUTH || this.getOrientation() == Direction.WEST;
-        int cx = 16;
-        int cy = 15;
-        int[][] bolt = {
-                {2, 5}, {3, 5}, {1, 4}, {2, 4}, {3, 4}, {0, 3}, {1, 3}, {2, 3}, {-1, 2}, {0, 2}, {1, 2},
-                {-2, 1}, {-1, 1}, {0, 1}, {1, 1}, {2, 1}, {3, 1}, {0, 0}, {1, 0}, {2, 0}, {-1, -1}, {0, -1},
-                {1, -1}, {-2, -2}, {-1, -2}, {0, -2}, {-3, -3}, {-2, -3}, {-1, -3}, {-3, -4}, {-2, -4}, {-4, -5}
-        };
-        for (int dx = -7; dx <= 7; dx++) {
-            for (int dy = -7; dy <= 7; dy++) {
-                double dist = Math.sqrt(dx * dx + dy * dy);
-                BlockState state = null;
-                if (dist <= 7.2D) {
-                    state = dist > 6.1D ? YELLOW : WHITE;
+        // chequered inlay in the lobby and the hall
+        for (int x = 4; x <= W - 5; x++) {
+            for (int z = 2; z <= 21; z++) {
+                if (((x + z) & 1) == 0 && random.nextInt(3) != 0) {
+                    put(level, box, POLISHED, x, FLOOR, z);
                 }
-                if (state == null) {
-                    continue;
+            }
+        }
+    }
+
+    private void walls(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        // outer shell: weathered deepslate / stone bricks
+        agedBox(level, box, random, 0, FLOOR + 1, 0, W - 1, CEILING - 1, 0);
+        agedBox(level, box, random, 0, FLOOR + 1, D - 1, W - 1, CEILING - 1, D - 1);
+        agedBox(level, box, random, 0, FLOOR + 1, 0, 0, CEILING - 1, D - 1);
+        agedBox(level, box, random, W - 1, FLOOR + 1, 0, W - 1, CEILING - 1, D - 1);
+        // plinth and a gilded cornice that survived the years
+        for (int x = 0; x < W; x++) {
+            put(level, box, BLACK_BRICKS, x, FLOOR + 1, 0);
+            put(level, box, BLACK_BRICKS, x, FLOOR + 1, D - 1);
+            if (random.nextInt(3) != 0) {
+                put(level, box, random.nextInt(4) == 0 ? GILDED : BLACK_BRICKS, x, CEILING - 1, 0);
+            }
+        }
+        for (int z = 0; z < D; z++) {
+            put(level, box, BLACK_BRICKS, 0, FLOOR + 1, z);
+            put(level, box, BLACK_BRICKS, W - 1, FLOOR + 1, z);
+            if (random.nextInt(3) != 0) {
+                put(level, box, random.nextInt(4) == 0 ? GILDED : BLACK_BRICKS, 0, CEILING - 1, z);
+                put(level, box, random.nextInt(4) == 0 ? GILDED : BLACK_BRICKS, W - 1, CEILING - 1, z);
+            }
+        }
+        // tall windows on both long sides, some panes gone, some cracked glass
+        for (int z : new int[] {5, 11, 17}) {
+            for (int side : new int[] {0, W - 1}) {
+                for (int dz = 0; dz < 3; dz++) {
+                    for (int y = FLOOR + 3; y <= FLOOR + 6; y++) {
+                        int roll = random.nextInt(10);
+                        BlockState state = roll < 4 ? GLASS : (roll < 8 ? AIR : aged(random));
+                        if (y == FLOOR + 6 && dz != 1) {
+                            state = aged(random);
+                        }
+                        put(level, box, state, side, y, z + dz);
+                    }
                 }
-                put(level, box, state, mirrored ? W - 1 - (cx + dx) : cx + dx, cy + dy, 0);
             }
         }
-        for (int[] cell : bolt) {
-            int bx = cx + cell[0];
-            put(level, box, Blocks.ORANGE_CONCRETE.defaultBlockState(), mirrored ? W - 1 - bx : bx, cy + cell[1], 0);
+        // back wall of the suit room: a faded gilded frieze
+        for (int x = 3; x < W - 3; x += 2) {
+            put(level, box, random.nextInt(3) == 0 ? AIR : GILDED, x, 8, D - 1);
         }
-        for (int[] cell : bolt) {
-            // a slightly smaller yellow core so the bolt reads as gold with an orange edge
-            if ((cell[0] + cell[1]) % 2 != 0 || cell[1] < -4) {
-                continue;
+    }
+
+    private void facade(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        // four columns in front of the entrance
+        for (int x : new int[] {8, 11, 21, 24}) {
+            int top = random.nextInt(5) == 0 ? CEILING - 3 : CEILING - 1;
+            for (int y = FLOOR + 1; y <= top; y++) {
+                put(level, box, y == FLOOR + 1 || y == top ? CHISELED_QUARTZ : QUARTZ_PILLAR, x, y, 0);
             }
-            int bx = cx + cell[0];
-            put(level, box, YELLOW, mirrored ? W - 1 - bx : bx, cy + cell[1], 0);
+            if (top < CEILING - 1) {
+                put(level, box, Blocks.COBBLESTONE.defaultBlockState(), x, FLOOR + 2, 1);
+            }
         }
-        // lightning rods on the top corners of the tower
-        put(level, box, ROD, 9, 23, 1);
-        put(level, box, ROD, 23, 23, 1);
-        put(level, box, ROD, 16, 23, 1);
+        // grand entrance: 5 wide, 6 tall, rounded top, framed in gilded blackstone
+        this.generateAirBox(level, box, 14, FLOOR + 1, 0, 18, FLOOR + 5, 0);
+        this.generateAirBox(level, box, 15, FLOOR + 6, 0, 17, FLOOR + 6, 0);
+        for (int y = FLOOR + 1; y <= FLOOR + 6; y++) {
+            put(level, box, y % 2 == 0 ? GILDED : BLACK_BRICKS, 13, y, 0);
+            put(level, box, y % 2 == 0 ? GILDED : BLACK_BRICKS, 19, y, 0);
+        }
+        for (int x = 13; x <= 19; x++) {
+            put(level, box, x == 16 ? GOLD : GILDED, x, FLOOR + 7, 0);
+        }
+        put(level, box, BLACK_BRICKS, 14, FLOOR + 6, 0);
+        put(level, box, BLACK_BRICKS, 18, FLOOR + 6, 0);
+        // a broken door leaf hanging in the doorway
+        put(level, box, Blocks.DARK_OAK_TRAPDOOR.defaultBlockState(), 14, FLOOR + 2, 1);
+        put(level, box, Blocks.DARK_OAK_TRAPDOOR.defaultBlockState(), 18, FLOOR + 3, 1);
+
+        // pediment: stepped triangle above the entrance with an oxidised medallion
+        for (int row = 0; row < 6; row++) {
+            int half = 12 - row * 2;
+            for (int x = 16 - half; x <= 16 + half; x++) {
+                put(level, box, random.nextInt(6) == 0 ? CRACKED_DEEPSLATE : DEEPSLATE_BRICKS,
+                        x, CEILING + row, 0);
+                put(level, box, aged(random), x, CEILING + row, 1);
+            }
+        }
+        fill(level, box, 15, CEILING + 1, 0, 17, CEILING + 3, 0, OXIDIZED);
+        put(level, box, GOLD, 16, CEILING + 2, 0);
+        put(level, box, ROD, 16, CEILING + 6, 0);
+        put(level, box, ROD, 4, CEILING + 1, 0);
+        put(level, box, ROD, 28, CEILING + 1, 0);
     }
 
-    private void lobby(WorldGenLevel level, BoundingBox box) {
-        // reception desk on the right
-        fill(level, box, 21, FLOOR + 1, 6, 27, FLOOR + 1, 6, QUARTZ);
-        fill(level, box, 21, FLOOR + 2, 6, 27, FLOOR + 2, 6,
-                Blocks.QUARTZ_SLAB.defaultBlockState());
-        fill(level, box, 21, FLOOR + 1, 7, 21, FLOOR + 1, 7, QUARTZ);
-        fill(level, box, 27, FLOOR + 1, 7, 27, FLOOR + 1, 7, QUARTZ);
-        put(level, box, Blocks.LECTERN.defaultBlockState(), 24, FLOOR + 3, 6);
-        // golden pylons beside the entrance
-        for (int x : new int[] {11, 21}) {
-            fill(level, box, x, FLOOR + 1, 4, x, FLOOR + 1, 4, GOLD);
-            put(level, box, ROD, x, FLOOR + 2, 4);
+    private void roof(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        for (int x = 0; x < W; x++) {
+            for (int z = 0; z < D; z++) {
+                boolean edge = x == 0 || z == 0 || x == W - 1 || z == D - 1;
+                put(level, box, edge ? OXIDIZED : (random.nextInt(3) == 0 ? WEATHERED : OXIDIZED),
+                        x, CEILING, z);
+            }
         }
-        // pennants of the speed band
-        fill(level, box, 1, 6, 1, W - 2, 6, 1, YELLOW);
-        // left lobby: a small "timeline" wall of gold and red blocks
-        for (int i = 0; i < 6; i++) {
-            fill(level, box, 3 + i * 2, FLOOR + 1, 7, 3 + i * 2, FLOOR + 1 + (i % 3), 7,
-                    i % 2 == 0 ? GOLD : DARK_RED);
+        // collapsed sections letting the light in
+        int[][] holes = {{5, 12, 3, 3}, {24, 6, 3, 2}, {26, 17, 2, 3}, {10, 3, 2, 2}};
+        for (int[] hole : holes) {
+            for (int x = hole[0]; x < hole[0] + hole[2]; x++) {
+                for (int z = hole[1]; z < hole[1] + hole[3]; z++) {
+                    put(level, box, AIR, x, CEILING, z);
+                    if (random.nextInt(3) == 0) {
+                        put(level, box, MOSS_CARPET, x, FLOOR + 1, z);
+                    }
+                }
+            }
+            put(level, box, MOSS, hole[0] + 1, FLOOR, hole[1] + 1);
+            put(level, box, Blocks.FLOWERING_AZALEA.defaultBlockState(), hole[0] + 1, FLOOR + 1, hole[1] + 1);
         }
-        put(level, box, Blocks.LECTERN.defaultBlockState(), 6, FLOOR + 1, 4);
+        // central skylight with a broken glass roof
+        for (int x = 12; x <= 20; x++) {
+            for (int z = 12; z <= 18; z++) {
+                int roll = random.nextInt(10);
+                put(level, box, roll < 5 ? GLASS : (roll < 8 ? AIR : WEATHERED), x, CEILING, z);
+            }
+        }
     }
 
-    private void hall(WorldGenLevel level, BoundingBox box) {
-        // suit gallery (left): four showcases; rogues gallery (right): four showcases
-        int[] zs = {12, 17};
-        int[][] suitColors = {{0xB3191E, 0}, {0xE8B820, 0}, {0x6E0A10, 0}, {0xD63A3A, 0}};
-        int[][] rogueColors = {{0xF0C814, 1}, {0x151515, 1}, {0x2E6FD6, 1}, {0x2E8B3A, 1}};
+    // ------------------------------------------------------------------
+    // Interior
+    // ------------------------------------------------------------------
+
+    private void hall(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        // faded carpet runner from the door to the archway
+        for (int z = 1; z <= 24; z++) {
+            for (int x = 15; x <= 17; x++) {
+                int roll = random.nextInt(10);
+                if (roll < 6) {
+                    put(level, box, CARPET, x, FLOOR + 1, z);
+                } else if (roll < 8) {
+                    put(level, box, MOSS_CARPET, x, FLOOR + 1, z);
+                }
+            }
+        }
+        // two rows of columns, several of them broken
+        for (int x : new int[] {9, 23}) {
+            for (int z = 7; z <= 22; z += 5) {
+                int top = random.nextInt(4) == 0 ? FLOOR + 2 + random.nextInt(3) : CEILING - 1;
+                for (int y = FLOOR + 1; y <= top; y++) {
+                    BlockState state = y == FLOOR + 1 || y == CEILING - 1 ? BLACK_BRICKS : aged(random);
+                    put(level, box, state, x, y, z);
+                }
+                if (top < CEILING - 1) {
+                    put(level, box, Blocks.GRAVEL.defaultBlockState(), x + 1, FLOOR + 1, z);
+                    put(level, box, COBBLED, x, FLOOR + 1, z + 1);
+                    put(level, box, MOSS_CARPET, x - 1, FLOOR + 1, z);
+                }
+            }
+        }
+        // reception desk, rotten and covered in cobwebs
+        for (int x = 11; x <= 21; x++) {
+            if (x >= 15 && x <= 17) {
+                continue; // keep the carpet path open
+            }
+            put(level, box, DARK_OAK, x, FLOOR + 1, 5);
+            if (random.nextInt(4) != 0) {
+                put(level, box, DARK_OAK_SLAB, x, FLOOR + 2, 5);
+            }
+        }
+        put(level, box, CANDLE, 12, FLOOR + 2, 5);
+        put(level, box, CANDLE, 20, FLOOR + 2, 5);
+        put(level, box, COBWEB, 13, FLOOR + 2, 6);
+
+        // old showcases against both side walls
+        int[] colors = {0x6B1E1E, 0x8A7A2A, 0x4A1414, 0x7A6A20, 0x5A1A1A, 0x6E6224};
         int index = 0;
-        for (int xc : new int[] {4, 9}) {
-            for (int zc : zs) {
-                showcase(level, box, xc, zc, suitColors[index % 4][0], true);
-                showcase(level, box, W - 1 - xc, zc, rogueColors[index % 4][0], false);
-                index++;
-            }
-        }
-        // back-left: the cosmic treadmill
-        fill(level, box, 3, FLOOR + 1, 20, 10, FLOOR + 1, 22, BLACK);
-        fill(level, box, 3, FLOOR + 1, 20, 10, FLOOR + 1, 20, YELLOW);
-        fill(level, box, 3, FLOOR + 1, 22, 10, FLOOR + 1, 22, YELLOW);
-        for (int x : new int[] {3, 10}) {
-            put(level, box, ROD, x, FLOOR + 2, 20);
-            put(level, box, ROD, x, FLOOR + 2, 22);
-        }
-        fill(level, box, 5, FLOOR + 2, 21, 8, FLOOR + 2, 21, Blocks.IRON_BLOCK.defaultBlockState());
-        // back-right: a speed force column (glowing core inside a yellow glass ring)
-        int cx = 27;
-        int cz = 20;
-        fill(level, box, cx - 1, FLOOR + 1, cz - 1, cx + 1, FLOOR + 1, cz + 1, GOLD);
-        fill(level, box, cx - 1, FLOOR + 2, cz - 1, cx + 1, 8, cz + 1,
-                Blocks.YELLOW_STAINED_GLASS.defaultBlockState());
-        fill(level, box, cx, FLOOR + 2, cz, cx, 8, cz, Blocks.GLOWSTONE.defaultBlockState());
-        put(level, box, ROD, cx, 9, cz);
-        // trophy corners
-        for (int x : new int[] {1, W - 2}) {
-            fill(level, box, x, FLOOR + 1, 9, x, FLOOR + 3, 9, GOLD);
-            put(level, box, Blocks.GOLD_BLOCK.defaultBlockState(), x, FLOOR + 4, 9);
+        for (int z : new int[] {10, 15, 20}) {
+            showcase(level, box, random, 3, z, colors[index++ % colors.length], false);
+            showcase(level, box, random, W - 4, z, colors[index++ % colors.length], index % 2 == 0);
         }
     }
 
-    /** 3x3 glass case with an armor stand in a coloured leather suit. */
-    private void showcase(WorldGenLevel level, BoundingBox box, int cx, int cz, int color, boolean suit) {
+    /** 3x3 old glass case with an armor stand in a faded leather suit. */
+    private void showcase(WorldGenLevel level, BoundingBox box, RandomSource random,
+                          int cx, int cz, int color, boolean suit) {
         fill(level, box, cx - 1, FLOOR + 1, cz - 1, cx + 1, FLOOR + 1, cz + 1, BLACKSTONE);
         for (int x = cx - 1; x <= cx + 1; x++) {
             for (int z = cz - 1; z <= cz + 1; z++) {
                 boolean edge = x == cx - 1 || x == cx + 1 || z == cz - 1 || z == cz + 1;
-                if (edge) {
-                    fill(level, box, x, FLOOR + 2, z, x, FLOOR + 5, z, GLASS);
+                if (!edge) {
+                    continue;
+                }
+                for (int y = FLOOR + 2; y <= FLOOR + 5; y++) {
+                    if (random.nextInt(100) < 22) {
+                        continue; // shattered pane
+                    }
+                    put(level, box, GLASS, x, y, z);
                 }
             }
         }
-        fill(level, box, cx - 1, FLOOR + 6, cz - 1, cx + 1, FLOOR + 6, cz + 1, suit ? GOLD : BLACK);
-        put(level, box, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 13), cx, FLOOR + 5, cz);
+        fill(level, box, cx - 1, FLOOR + 6, cz - 1, cx + 1, FLOOR + 6, cz + 1, suit ? GILDED : BLACK_BRICKS);
+        put(level, box, COBWEB, cx - 1, FLOOR + 5, cz - 1);
         spawnStand(level, box, cx, FLOOR + 2, cz, color, suit);
     }
 
@@ -312,33 +412,46 @@ public class FlashMuseumPiece extends StructurePiece {
         return stack;
     }
 
-    private void archway(WorldGenLevel level, BoundingBox box) {
-        // wall between hall and suit room, with an open golden archway on the red carpet
-        fill(level, box, 1, FLOOR + 1, 23, W - 2, CEILING - 1, 24, RED);
-        fill(level, box, 1, 9, 23, W - 2, 9, 24, YELLOW);
+    private void archway(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        // wall between hall and suit room with a gilded archway on the carpet path
+        agedBox(level, box, random, 1, FLOOR + 1, 23, W - 2, CEILING - 1, 24);
         this.generateAirBox(level, box, 15, FLOOR + 1, 23, 17, 6, 24);
-        fill(level, box, 14, FLOOR + 1, 23, 14, 7, 23, GOLD);
-        fill(level, box, 18, FLOOR + 1, 23, 18, 7, 23, GOLD);
-        fill(level, box, 14, 7, 23, 18, 7, 23, GOLD);
+        for (int y = FLOOR + 1; y <= 7; y++) {
+            put(level, box, y % 2 == 0 ? GILDED : BLACK_BRICKS, 14, y, 23);
+            put(level, box, y % 2 == 0 ? GILDED : BLACK_BRICKS, 18, y, 23);
+        }
+        for (int x = 14; x <= 18; x++) {
+            put(level, box, x == 16 ? GOLD : GILDED, x, 7, 23);
+        }
         put(level, box, ROD, 14, 8, 23);
         put(level, box, ROD, 18, 8, 23);
-        fill(level, box, 15, FLOOR + 1, 23, 17, FLOOR + 1, 24, CARPET);
-        // flank the archway with two display pillars (suits' emblem colours)
+        // fallen stones on the threshold (still easy to walk over)
+        put(level, box, COBBLED, 15, FLOOR + 1, 22);
+        put(level, box, Blocks.GRAVEL.defaultBlockState(), 17, FLOOR + 1, 22);
         for (int x : new int[] {12, 20}) {
-            fill(level, box, x, FLOOR + 1, 22, x, FLOOR + 4, 22, YELLOW);
-            put(level, box, LANTERN, x, FLOOR + 5, 22);
+            fill(level, box, x, FLOOR + 1, 22, x, FLOOR + 3, 22, BLACK_BRICKS);
+            put(level, box, SOUL_LANTERN, x, FLOOR + 4, 22);
         }
     }
 
     private void suitRoom(WorldGenLevel level, BoundingBox box, RandomSource random) {
-        // golden floor, red carpet to the pedestal, glowing walls
-        fill(level, box, 2, FLOOR, 25, W - 3, FLOOR, 29, GOLD);
-        fill(level, box, 15, FLOOR + 1, 25, 17, FLOOR + 1, 28, CARPET);
-        fill(level, box, 1, 6, 25, 1, 6, 29, YELLOW);
-        fill(level, box, W - 2, 6, 25, W - 2, 6, 29, YELLOW);
+        // dark tiled floor with gilded accents and a worn carpet to the pedestal
+        for (int x = 2; x <= W - 3; x++) {
+            for (int z = 25; z <= 29; z++) {
+                put(level, box, random.nextInt(5) == 0 ? GILDED : (random.nextBoolean() ? BLACK_BRICKS : BLACKSTONE),
+                        x, FLOOR, z);
+            }
+        }
+        for (int z = 25; z <= 28; z++) {
+            for (int x = 15; x <= 17; x++) {
+                if (random.nextInt(5) != 0) {
+                    put(level, box, CARPET, x, FLOOR + 1, z);
+                }
+            }
+        }
         // pedestal with the chest
-        fill(level, box, 15, FLOOR + 1, 27, 17, FLOOR + 1, 29, GOLD);
-        fill(level, box, 15, FLOOR + 2, 27, 17, FLOOR + 2, 29, GOLD);
+        fill(level, box, 15, FLOOR + 1, 27, 17, FLOOR + 2, 29, BLACK_BRICKS);
+        fill(level, box, 15, FLOOR + 2, 27, 17, FLOOR + 2, 29, GILDED);
         for (int x : new int[] {15, 17}) {
             put(level, box, ROD, x, FLOOR + 3, 27);
             put(level, box, ROD, x, FLOOR + 3, 29);
@@ -347,24 +460,69 @@ public class FlashMuseumPiece extends StructurePiece {
         Direction toEntrance = this.getOrientation() == null ? Direction.SOUTH : this.getOrientation().getOpposite();
         BlockState chest = Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, toEntrance);
         this.createChest(level, box, random, chestPos, SUIT_LOOT, chest);
-        // sea lantern frieze and end rods so the room glows
-        for (int x = 3; x < W - 3; x += 3) {
-            put(level, box, LANTERN, x, 8, 26);
-            put(level, box, LANTERN, x, 8, 28);
-        }
+        // dim soul lanterns on posts and candles, so the room glows faintly
         for (int x : new int[] {4, 10, 22, 28}) {
-            fill(level, box, x, FLOOR + 1, 27, x, FLOOR + 3, 27, QUARTZ);
-            put(level, box, END_ROD, x, FLOOR + 4, 27);
+            fill(level, box, x, FLOOR + 1, 27, x, FLOOR + 3, 27, BLACK_BRICKS);
+            put(level, box, SOUL_LANTERN, x, FLOOR + 4, 27);
+        }
+        put(level, box, CANDLE, 15, FLOOR + 3, 28);
+        put(level, box, CANDLE, 17, FLOOR + 3, 28);
+        put(level, box, COBWEB, 2, 8, 26);
+        put(level, box, COBWEB, W - 3, 8, 26);
+    }
+
+    /** Overgrowth and rubble: moss patches, vines along the walls, fallen stone, cobwebs. */
+    private void decay(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        for (int i = 0; i < 38; i++) {
+            int x = 1 + random.nextInt(W - 2);
+            int z = 1 + random.nextInt(D - 2);
+            switch (random.nextInt(4)) {
+                case 0 -> {
+                    put(level, box, MOSS, x, FLOOR, z);
+                    put(level, box, MOSS_CARPET, x, FLOOR + 1, z);
+                }
+                case 1 -> {
+                    put(level, box, COBBLED, x, FLOOR + 1, z);
+                    if (random.nextBoolean()) {
+                        put(level, box, Blocks.GRAVEL.defaultBlockState(), x, FLOOR + 1, z + 1);
+                    }
+                }
+                case 2 -> put(level, box, COBWEB, x, CEILING - 1, z);
+                default -> put(level, box, MOSS_CARPET, x, FLOOR + 1, z);
+            }
+        }
+        // vines hanging from the ceiling along both long walls
+        for (int z = 2; z < D - 3; z += 2) {
+            if (random.nextInt(3) == 0) {
+                continue;
+            }
+            int length = 2 + random.nextInt(5);
+            for (int y = CEILING - 1; y > CEILING - 1 - length; y--) {
+                put(level, box, Blocks.VINE.defaultBlockState().setValue(VineBlock.WEST, true), 1, y, z);
+            }
+            if (random.nextInt(3) != 0) {
+                for (int y = CEILING - 1; y > CEILING - 1 - length; y--) {
+                    put(level, box, Blocks.VINE.defaultBlockState().setValue(VineBlock.EAST, true),
+                            W - 2, y, z + 1);
+                }
+            }
         }
     }
 
-    private void lighting(WorldGenLevel level, BoundingBox box) {
-        for (int x = 3; x < W - 2; x += 4) {
-            for (int z = 4; z < 23; z += 4) {
-                put(level, box, LANTERN, x, CEILING - 1, z);
+    private void lighting(WorldGenLevel level, BoundingBox box, RandomSource random) {
+        // sparse hanging soul lanterns: old and dim on purpose
+        for (int x : new int[] {6, 16, 26}) {
+            for (int z : new int[] {4, 10, 15, 21}) {
+                if (random.nextInt(4) == 0) {
+                    continue; // burnt out
+                }
+                put(level, box, CHAIN, x, CEILING - 1, z);
+                put(level, box, CHAIN, x, CEILING - 2, z);
+                put(level, box, SOUL_LANTERN_HANGING, x, CEILING - 3, z);
             }
         }
-        // keep the hidden structure blocks quiet in the sky light
-        put(level, box, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 12), 16, 8, 26);
+        // soft hidden light so the chest room is never pitch black
+        put(level, box, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 8), 16, 8, 26);
+        put(level, box, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 7), 16, 8, 6);
     }
 }
