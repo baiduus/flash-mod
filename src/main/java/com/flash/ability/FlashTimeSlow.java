@@ -60,7 +60,7 @@ public final class FlashTimeSlow {
 
     static Zone start(ServerPlayer player) {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.RESPAWN_ANCHOR_DEPLETE.get(), SoundSource.PLAYERS, 1.6F, 0.6F);
+                SoundEvents.RESPAWN_ANCHOR_DEPLETE.value(), SoundSource.PLAYERS, 1.6F, 0.6F);
         return new Zone();
     }
 
