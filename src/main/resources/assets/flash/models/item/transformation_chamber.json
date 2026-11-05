@@ -1,20 +1,35 @@
 {
   "parent": "flash:block/transformation_chamber",
+  "transform": {
+    "origin": [0, 0, 0],
+    "translation": [-1.67, -2.1, 1.1],
+    "scale": [8, 8, 8]
+  },
   "display": {
     "gui": {
       "rotation": [30, 225, 0],
       "translation": [0, 0, 0],
-      "scale": [0.18, 0.18, 0.18]
+      "scale": [0.125, 0.125, 0.125]
     },
     "ground": {
       "rotation": [0, 0, 0],
-      "translation": [0, 3, 0],
-      "scale": [0.1, 0.1, 0.1]
+      "translation": [0, 2, 0],
+      "scale": [0.06, 0.06, 0.06]
     },
     "fixed": {
       "rotation": [0, 0, 0],
       "translation": [0, 0, 0],
-      "scale": [0.25, 0.25, 0.25]
+      "scale": [0.1, 0.1, 0.1]
+    },
+    "thirdperson_righthand": {
+      "rotation": [75, 45, 0],
+      "translation": [0, 2.5, 0],
+      "scale": [0.05, 0.05, 0.05]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 45, 0],
+      "translation": [0, 1, 0],
+      "scale": [0.06, 0.06, 0.06]
     }
   }
 }

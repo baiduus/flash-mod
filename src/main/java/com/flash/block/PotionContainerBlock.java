@@ -40,7 +40,7 @@ import net.minecraftforge.network.NetworkHooks;
  */
 public class PotionContainerBlock extends BaseEntityBlock {
 
-    private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 40.0D, 16.0D);
+    private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 51.2D, 16.0D);
 
     public static final BooleanProperty FILLED = BooleanProperty.create("filled");
     public static final DirectionProperty FACING = DirectionProperty.create(

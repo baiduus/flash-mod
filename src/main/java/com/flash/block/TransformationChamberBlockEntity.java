@@ -40,10 +40,11 @@ import net.minecraft.world.phys.Vec3;
 public class TransformationChamberBlockEntity extends BlockEntity {
 
     /**
-     * Interior floor height of the rescaled model. The old model used a
-     * vertical transform of 4.8; the new 3.66-block version uses 3.072.
+     * Interior floor height of the model (top of the cabin floor plates above
+     * the controller block). Defined by the model, see
+     * {@link TransformationChamberBlock#FLOOR_HEIGHT}.
      */
-    public static final double BASE_HEIGHT = 3.55D * 3.072D / 16.0D;
+    public static final double BASE_HEIGHT = TransformationChamberBlock.FLOOR_HEIGHT;
     private static final double INSIDE_RADIUS = 0.04D;
     private static final int SNEAK_GRACE_TICKS = 10;
 
@@ -213,8 +214,9 @@ public class TransformationChamberBlockEntity extends BlockEntity {
 
         Direction facing = state.getValue(TransformationChamberBlock.FACING);
         double baseY = pos.getY() + BASE_HEIGHT + 0.001D;
-        double frontX = centerX(pos, state);
-        double frontZ = pos.getZ() + 0.5D + facing.getStepZ() * 1.6D;
+        Vec3 exit = TransformationChamberBlock.exitPoint(pos, state);
+        double frontX = exit.x;
+        double frontZ = exit.z;
         AABB frontTarget = player.getBoundingBox().move(
                 frontX - player.getX(),
                 baseY - player.getY(),
@@ -289,22 +291,21 @@ public class TransformationChamberBlockEntity extends BlockEntity {
     private static boolean isInside(ServerPlayer player, BlockPos pos, BlockState state) {
         double dx = player.getX() - centerX(pos, state);
         double dz = player.getZ() - centerZ(pos, state);
-        if (Math.abs(dx) > 1.28D || Math.abs(dz) > 1.28D) {
+        if (Math.abs(dx) > 1.4D || Math.abs(dz) > 1.4D) {
             return false;
         }
-        return player.getY() >= pos.getY() - 0.5D && player.getY() <= pos.getY() + 4.2D;
+        return player.getY() >= pos.getY() - 0.5D
+                && player.getY() <= pos.getY() + TransformationChamberBlock.MODEL_HEIGHT;
     }
 
+    /** X of the cabin centre (where the occupant stands), rotated with the machine. */
     public static double centerX(BlockPos pos, BlockState state) {
-        Direction left = state.getValue(TransformationChamberBlock.FACING).getCounterClockWise();
-        // 1.60 model blocks scaled by the same 0.64 factor as the model.
-        return pos.getX() + 0.5D + left.getStepX() * 1.024D;
+        return TransformationChamberBlock.cabinFloorCenter(pos, state).x;
     }
 
+    /** Z of the cabin centre (where the occupant stands), rotated with the machine. */
     public static double centerZ(BlockPos pos, BlockState state) {
-        Direction back = state.getValue(TransformationChamberBlock.FACING).getOpposite();
-        // 1.80 model blocks scaled by the same 0.64 factor as the model.
-        return pos.getZ() + 0.5D + back.getStepZ() * 1.152D;
+        return TransformationChamberBlock.cabinFloorCenter(pos, state).z;
     }
 
     private static Vec3 cabinCenter(BlockPos pos, BlockState state) {

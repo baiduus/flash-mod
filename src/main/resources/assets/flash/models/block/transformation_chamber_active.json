@@ -1,9 +1,6 @@
 {
-    "textures":  {
-                     "glow":  "flash:block/machine_glow_active",
-                     "red":  "flash:block/machine_red_active",
-                     "lightning":  "flash:block/machine_lightning_active",
-                     "particle":  "flash:block/machine_glow_active"
-                 },
-    "parent":  "flash:block/transformation_chamber"
+ "parent": "flash:block/transformation_chamber",
+ "textures": {
+  "g": "flash:block/machine_glow_active"
+ }
 }

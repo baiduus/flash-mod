@@ -1,10 +1,6 @@
 {
-    "textures":  {
-                     "glow":  "flash:block/machine_glow_active",
-                     "red":  "flash:block/machine_red_active",
-                     "screen":  "flash:block/machine_screen",
-                     "potions":  "flash:block/potion_trio_active",
-                     "particle":  "flash:block/machine_glow_active"
-                 },
-    "parent":  "flash:block/potion_container"
+ "parent": "flash:block/potion_container",
+ "textures": {
+  "g": "flash:block/machine_glow_active"
+ }
 }

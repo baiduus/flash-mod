@@ -38,8 +38,6 @@ public final class FlashTargeting {
 
     private static final int SCAN_XZ = 6;
     private static final int SCAN_Y = 4;
-    private static final double MACHINE_HALF_WIDTH = 3.05D;
-    private static final double MACHINE_HEIGHT = 3.72D;
 
     private static BlockPos targetedMachine;
 
@@ -78,10 +76,7 @@ public final class FlashTargeting {
 
             AABB box;
             if (state.getBlock() instanceof TransformationChamberBlock) {
-                box = new AABB(pos.getX() - MACHINE_HALF_WIDTH, pos.getY(),
-                        pos.getZ() - MACHINE_HALF_WIDTH,
-                        pos.getX() + MACHINE_HALF_WIDTH, pos.getY() + MACHINE_HEIGHT,
-                        pos.getZ() + MACHINE_HALF_WIDTH);
+                box = TransformationChamberBlock.footprint(pos, state);
             } else {
                 box = state.getShape(minecraft.level, pos).bounds().move(pos);
             }
