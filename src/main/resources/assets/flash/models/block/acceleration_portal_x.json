@@ -1,0 +1,15 @@
+{
+  "render_type": "minecraft:translucent",
+  "ambientocclusion": false,
+  "textures": { "particle": "flash:block/acceleration_portal", "portal": "flash:block/acceleration_portal" },
+  "elements": [
+    {
+      "from": [0, 0, 7.9],
+      "to": [16, 16, 8.1],
+      "faces": {
+        "north": { "texture": "#portal", "uv": [0, 0, 16, 16] },
+        "south": { "texture": "#portal", "uv": [0, 0, 16, 16] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,800 @@
+{
+    "transform":  {
+                      "scale":  [
+                                    2.2,
+                                    2.2,
+                                    2.2
+                                ],
+                      "translation":  [
+                                          -0.22,
+                                          0,
+                                          -0.3208
+                                      ],
+                      "origin":  [
+                                     0,
+                                     0,
+                                     0
+                                 ]
+                  },
+    "render_type":  "minecraft:translucent",
+    "credit":  "Flash mod - large potion panel",
+    "elements":  [
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#dark"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#dark"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#dark"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#dark"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#dark"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#dark"
+                                                }
+                                   },
+                         "from":  [
+                                      0,
+                                      0,
+                                      0
+                                  ],
+                         "to":  [
+                                    7,
+                                    18,
+                                    5
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   },
+                         "from":  [
+                                      0,
+                                      0,
+                                      4.8
+                                  ],
+                         "to":  [
+                                    7,
+                                    1,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   },
+                         "from":  [
+                                      0,
+                                      17,
+                                      4.8
+                                  ],
+                         "to":  [
+                                    7,
+                                    18,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#steel"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#steel"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#steel"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#steel"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#steel"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#steel"
+                                                }
+                                   },
+                         "from":  [
+                                      0.6,
+                                      5,
+                                      4.9
+                                  ],
+                         "to":  [
+                                    6.4,
+                                    16,
+                                    5.05
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#black"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#black"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#black"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#black"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#black"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#black"
+                                                }
+                                   },
+                         "from":  [
+                                      1,
+                                      10,
+                                      5.05
+                                  ],
+                         "to":  [
+                                    6,
+                                    15,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                32,
+                                                                32
+                                                            ],
+                                                     "texture":  "#potions"
+                                                 }
+                                   },
+                         "from":  [
+                                      1,
+                                      10,
+                                      5.1
+                                  ],
+                         "to":  [
+                                    6,
+                                    15,
+                                    5.13
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#screen"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#screen"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#screen"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#screen"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#screen"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#screen"
+                                                }
+                                   },
+                         "from":  [
+                                      1.2,
+                                      6,
+                                      5.05
+                                  ],
+                         "to":  [
+                                    5.8,
+                                    9,
+                                    5.12
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   },
+                         "from":  [
+                                      0,
+                                      3,
+                                      5
+                                  ],
+                         "to":  [
+                                    0.4,
+                                    16.5,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   },
+                         "from":  [
+                                      6.6,
+                                      3,
+                                      5
+                                  ],
+                         "to":  [
+                                    7,
+                                    16.5,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#red"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#red"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#red"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#red"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#red"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#red"
+                                                }
+                                   },
+                         "from":  [
+                                      0.4,
+                                      4.5,
+                                      5.06
+                                  ],
+                         "to":  [
+                                    0.7,
+                                    16,
+                                    5.12
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#red"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#red"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#red"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#red"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#red"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#red"
+                                                }
+                                   },
+                         "from":  [
+                                      6.3,
+                                      4.5,
+                                      5.06
+                                  ],
+                         "to":  [
+                                    6.6,
+                                    16,
+                                    5.12
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#glow"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#glow"
+                                                }
+                                   },
+                         "from":  [
+                                      0.2,
+                                      4.5,
+                                      5.12
+                                  ],
+                         "to":  [
+                                    6.8,
+                                    5,
+                                    5.17
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#glow"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#glow"
+                                                }
+                                   },
+                         "from":  [
+                                      1.5,
+                                      16.2,
+                                      5.06
+                                  ],
+                         "to":  [
+                                    5.5,
+                                    16.6,
+                                    5.12
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#glow"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#glow"
+                                                }
+                                   },
+                         "from":  [
+                                      0.8,
+                                      1.2,
+                                      5.06
+                                  ],
+                         "to":  [
+                                    6.2,
+                                    1.8,
+                                    5.12
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#steel"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#steel"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#steel"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#steel"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#steel"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#steel"
+                                                }
+                                   },
+                         "from":  [
+                                      -0.15,
+                                      7,
+                                      2
+                                  ],
+                         "to":  [
+                                    0,
+                                    12,
+                                    4
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               32,
+                                                               32
+                                                           ],
+                                                    "texture":  "#vent"
+                                                }
+                                   },
+                         "from":  [
+                                      -0.18,
+                                      7.5,
+                                      2.5
+                                  ],
+                         "to":  [
+                                    -0.12,
+                                    11.5,
+                                    3.7
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "west":  {
+                                                    "uv":  [
+                                                               0,
+                                                               0,
+                                                               32,
+                                                               32
+                                                           ],
+                                                    "texture":  "#screen"
+                                                }
+                                   },
+                         "from":  [
+                                      -0.18,
+                                      12.5,
+                                      2
+                                  ],
+                         "to":  [
+                                    -0.12,
+                                    15.5,
+                                    4
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#steel"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#steel"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#steel"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#steel"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#steel"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#steel"
+                                                }
+                                   },
+                         "from":  [
+                                      1.5,
+                                      8,
+                                      -0.2
+                                  ],
+                         "to":  [
+                                    5.5,
+                                    13,
+                                    0
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "north":  {
+                                                     "uv":  [
+                                                                0,
+                                                                0,
+                                                                32,
+                                                                32
+                                                            ],
+                                                     "texture":  "#vent"
+                                                 }
+                                   },
+                         "from":  [
+                                      2,
+                                      8.5,
+                                      -0.22
+                                  ],
+                         "to":  [
+                                    5,
+                                    12.5,
+                                    -0.17
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   },
+                         "from":  [
+                                      0.8,
+                                      15.8,
+                                      5
+                                  ],
+                         "to":  [
+                                    1.2,
+                                    16.2,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   },
+                         "from":  [
+                                      5.8,
+                                      15.8,
+                                      5
+                                  ],
+                         "to":  [
+                                    6.2,
+                                    16.2,
+                                    5.1
+                                ]
+                     },
+                     {
+                         "from":  [
+                                      0,
+                                      0,
+                                      5
+                                  ],
+                         "to":  [
+                                    7,
+                                    0.4,
+                                    5.15
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      0.4,
+                                      16,
+                                      5.05
+                                  ],
+                         "to":  [
+                                    6.6,
+                                    16.3,
+                                    5.12
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#glow"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#glow"
+                                                }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      -0.18,
+                                      4.5,
+                                      2
+                                  ],
+                         "to":  [
+                                    -0.12,
+                                    13,
+                                    4
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#glow"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#glow"
+                                                }
+                                   }
+                     },
+                     {
+                         "from":  [
+                                      6.9,
+                                      4.5,
+                                      2
+                                  ],
+                         "to":  [
+                                    6.96,
+                                    13,
+                                    4
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#glow"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#glow"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#glow"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#glow"
+                                                }
+                                   }
+                     }
+                 ],
+    "textures":  {
+                     "gold":  "flash:block/machine_gold",
+                     "black":  "flash:block/machine_black",
+                     "potions":  "flash:block/potion_trio",
+                     "dark_alt":  "flash:block/machine_dark_alt",
+                     "particle":  "flash:block/machine_dark",
+                     "steel":  "flash:block/machine_steel",
+                     "dark":  "flash:block/machine_dark",
+                     "vent":  "flash:block/machine_vent",
+                     "glow":  "flash:block/machine_glow",
+                     "screen":  "flash:block/machine_screen",
+                     "red":  "flash:block/machine_red"
+                 }
+}

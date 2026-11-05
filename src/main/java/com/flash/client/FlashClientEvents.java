@@ -1,0 +1,52 @@
+package com.flash.client;
+
+import com.flash.FlashMod;
+import com.flash.registry.ModBlockEntities;
+import com.flash.registry.ModBlocks;
+import com.flash.registry.ModMenus;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+
+@Mod.EventBusSubscriber(modid = FlashMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public final class FlashClientEvents {
+
+    private FlashClientEvents() {
+    }
+
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            // Force the custom Forge ArmPose to be created during client
+            // setup, before any player model is rendered.
+            FlashAbilityPoses.WIND_HANDS.name();
+            MenuScreens.register(
+                    ModMenus.POTION_CONTAINER.get(),
+                    PotionContainerScreen::new
+            );
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.TRANSFORMATION_CHAMBER.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.POTION_CONTAINER.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.ACCELERATION_PORTAL.get(), RenderType.translucent());
+        });
+    }
+
+    @SubscribeEvent
+    public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(
+                ModBlockEntities.ACCELERATION_PORTAL.get(),
+                AccelerationPortalRenderer::new
+        );
+    }
+
+    @SubscribeEvent
+    public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
+        event.registerAboveAll("flash_speed", new FlashHud());
+        event.registerAboveAll("flash_abilities", new FlashAbilityHud());
+    }
+}

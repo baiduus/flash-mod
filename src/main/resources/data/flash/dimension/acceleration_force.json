@@ -1,0 +1,11 @@
+{
+  "type": "flash:acceleration_force",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "flash:acceleration_force",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "flash:acceleration_force"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "axis=x": { "model": "flash:block/acceleration_portal_x" },
+    "axis=z": { "model": "flash:block/acceleration_portal_z" }
+  }
+}

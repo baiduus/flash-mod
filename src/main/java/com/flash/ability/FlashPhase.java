@@ -1,0 +1,230 @@
+package com.flash.ability;
+
+import com.flash.power.FlashPowers;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+/**
+ * Molecular-vibration phasing. Collision is disabled on both sides while the
+ * key is held, but gravity is disabled as well and the vertical speed is only
+ * changed by the player's look direction. Horizontal motion is never touched,
+ * so the ability no longer slows the player down.
+ *
+ * <p>The ability stores the last position that was not inside a block. If the
+ * player releases the key inside a wall, or falls below the world, a safe
+ * position is searched around the current location and the player is moved
+ * there before collisions are restored.</p>
+ */
+public final class FlashPhase {
+
+    private static final int MAX_PHASING_TICKS = 240;
+    private static final double MAX_SAFE_DROP = 40.0D;
+
+    private FlashPhase() {
+    }
+
+    public static void start(ServerPlayer player, FlashAbilityManager.PlayerState state) {
+        state.phasing = true;
+        state.phasingTicks = 0;
+        state.lastSafe = player.position();
+        player.noPhysics = true;
+        player.setNoGravity(true);
+        player.fallDistance = 0.0F;
+        player.setAirSupply(300);
+        player.setDeltaMovement(Vec3.ZERO);
+        player.hurtMarked = true;
+        player.displayClientMessage(
+                Component.translatable("message.flash.phasing_started"), true);
+        player.playNotifySound(SoundEvents.CHORUS_FRUIT_TELEPORT,
+                SoundSource.PLAYERS, 0.8F, 1.7F);
+        ServerLevel level = (ServerLevel) player.level();
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                player.getX(), player.getY() + 1.0D, player.getZ(),
+                24, 0.35D, 0.8D, 0.35D, 0.08D);
+    }
+
+    public static boolean tick(ServerPlayer player, FlashAbilityManager.PlayerState state) {
+        if (!FlashPowers.hasPowers(player)
+                || FlashPowers.getSelectedLevel(player) < 3) {
+            return false;
+        }
+        state.phasingTicks++;
+        if (state.phasingTicks > MAX_PHASING_TICKS) {
+            return false;
+        }
+
+        ServerLevel level = (ServerLevel) player.level();
+        player.fallDistance = 0.0F;
+        player.setAirSupply(300);
+        player.noPhysics = true;
+        player.setNoGravity(true);
+
+        // No gravity and no residual velocity: the player only moves
+        // vertically when deliberately looking up or down. Horizontal input is
+        // completely untouched, which removes the old slowdown.
+        double vertical = 0.0D;
+        if (player.getXRot() > 40.0F) {
+            vertical = -0.16D;
+        } else if (player.getXRot() < -40.0F) {
+            vertical = 0.16D;
+        } else if (player.isShiftKeyDown()) {
+            vertical = -0.16D;
+        }
+        Vec3 motion = player.getDeltaMovement();
+        // Preserve horizontal momentum; only the vertical component is
+        // controlled. Setting hurtMarked here would resend the server's stale
+        // horizontal velocity and make the player feel slow.
+        player.setDeltaMovement(motion.x, vertical, motion.z);
+
+        if (player.getY() < level.getMinBuildHeight() + 2.0D
+                || player.getY() < state.lastSafe.y - MAX_SAFE_DROP) {
+            Vec3 safe = findSafe(player, state.lastSafe);
+            teleport(player, safe);
+            state.lastSafe = safe;
+        } else if (!isInsideBlock(player, player.position())
+                && state.phasingTicks % 8 == 0) {
+            state.lastSafe = player.position();
+        }
+
+        if (player.tickCount % 2 == 0) {
+            level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                    player.getX(), player.getY() + 1.0D, player.getZ(),
+                    6, 0.28D, 0.65D, 0.28D, 0.05D);
+            level.sendParticles(ParticleTypes.ENCHANTED_HIT,
+                    player.getX(), player.getY() + 0.9D, player.getZ(),
+                    2, 0.25D, 0.45D, 0.25D, 0.03D);
+        }
+        if (state.phasingTicks % 20 == 0) {
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.4F, 1.8F);
+        }
+        return true;
+    }
+
+    public static void stop(ServerPlayer player, FlashAbilityManager.PlayerState state,
+                            boolean moveToSafety) {
+        state.phasing = false;
+        state.phasingTicks = 0;
+        restore(player);
+        if (moveToSafety && isInsideBlock(player, player.position())) {
+            Vec3 safe = findSafe(player, state.lastSafe);
+            teleport(player, safe);
+            state.lastSafe = safe;
+        }
+        player.displayClientMessage(
+                Component.translatable("message.flash.phasing_stopped"), true);
+        player.playNotifySound(SoundEvents.CHORUS_FRUIT_TELEPORT,
+                SoundSource.PLAYERS, 0.7F, 0.9F);
+    }
+
+    public static void restore(ServerPlayer player) {
+        player.noPhysics = false;
+        player.setNoGravity(false);
+        player.fallDistance = 0.0F;
+        player.setDeltaMovement(Vec3.ZERO);
+        player.hurtMarked = true;
+    }
+
+    private static void teleport(ServerPlayer player, Vec3 safe) {
+        player.connection.teleport(safe.x, safe.y, safe.z,
+                player.getYRot(), player.getXRot());
+        player.setDeltaMovement(Vec3.ZERO);
+        player.fallDistance = 0.0F;
+        player.hurtMarked = true;
+    }
+
+    /**
+     * Looks for a free 1.8-block tall space, preferring a position with solid
+     * ground underneath so the player does not end up falling into a cave or
+     * the void after leaving a wall.
+     */
+    private static Vec3 findSafe(ServerPlayer player, Vec3 fallback) {
+        if (isFreeAndSupported(player, player.position())) {
+            return player.position();
+        }
+        for (int dy = 1; dy <= 16; dy++) {
+            Vec3 candidate = player.position().add(0.0D, dy, 0.0D);
+            if (isFreeAndSupported(player, candidate)) {
+                return candidate;
+            }
+        }
+
+        Vec3 base = player.position();
+        for (int radius = 1; radius <= 6; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    for (int dy = 4; dy >= -3; dy--) {
+                        Vec3 candidate = base.add(dx, dy, dz);
+                        if (isFreeAndSupported(player, candidate)) {
+                            return candidate;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int dy = 0; dy <= 20; dy++) {
+            Vec3 candidate = fallback.add(0.0D, dy, 0.0D);
+            if (isFreeAndSupported(player, candidate)) {
+                return candidate;
+            }
+        }
+
+        // Last resort: place the player on top of the height map so they can
+        // never remain stuck inside a wall or fall forever.
+        int bx = (int) Math.floor(player.getX());
+        int bz = (int) Math.floor(player.getZ());
+        int surface = player.level().getHeight(
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                bx, bz);
+        return new Vec3(player.getX(), Math.max(surface, player.level().getMinBuildHeight() + 2), player.getZ());
+    }
+
+    private static boolean isFreeAndSupported(ServerPlayer player, Vec3 position) {
+        if (!isFree(player, position)) {
+            return false;
+        }
+        Level level = player.level();
+        BlockPos below = BlockPos.containing(position.x, position.y - 0.05D, position.z);
+        BlockState ground = level.getBlockState(below);
+        if (ground.getCollisionShape(level, below, net.minecraft.world.phys.shapes.CollisionContext.empty()).isEmpty()) {
+            // No floor directly underneath: still allow it when there is a
+            // floor within three blocks, otherwise prefer another candidate.
+            for (int dy = 1; dy <= 3; dy++) {
+                BlockPos deeper = below.below(dy);
+                if (!level.getBlockState(deeper).getCollisionShape(
+                        level, deeper, net.minecraft.world.phys.shapes.CollisionContext.empty()).isEmpty()) {
+                    return true;
+                }
+            }
+            return position.y <= level.getMinBuildHeight() + 3.0D;
+        }
+        return true;
+    }
+
+    private static boolean isFree(ServerPlayer player, Vec3 position) {
+        AABB box = new AABB(position.x - 0.3D, position.y,
+                position.z - 0.3D, position.x + 0.3D,
+                position.y + 1.8D, position.z + 0.3D);
+        return player.level().noCollision(player, box);
+    }
+
+    private static boolean isInsideBlock(ServerPlayer player, Vec3 position) {
+        AABB box = new AABB(position.x - 0.28D, position.y + 0.05D,
+                position.z - 0.28D, position.x + 0.28D,
+                position.y + 1.75D, position.z + 0.28D);
+        return !player.level().noCollision(player, box);
+    }
+}

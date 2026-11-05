@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=south,active=false": { "model": "flash:block/transformation_chamber" },
+    "facing=west,active=false": { "model": "flash:block/transformation_chamber", "y": 90 },
+    "facing=north,active=false": { "model": "flash:block/transformation_chamber", "y": 180 },
+    "facing=east,active=false": { "model": "flash:block/transformation_chamber", "y": 270 },
+    "facing=south,active=true": { "model": "flash:block/transformation_chamber_active" },
+    "facing=west,active=true": { "model": "flash:block/transformation_chamber_active", "y": 90 },
+    "facing=north,active=true": { "model": "flash:block/transformation_chamber_active", "y": 180 },
+    "facing=east,active=true": { "model": "flash:block/transformation_chamber_active", "y": 270 }
+  }
+}

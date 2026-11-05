@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=south,filled=false": { "model": "flash:block/potion_container" },
+    "facing=west,filled=false": { "model": "flash:block/potion_container", "y": 90 },
+    "facing=north,filled=false": { "model": "flash:block/potion_container", "y": 180 },
+    "facing=east,filled=false": { "model": "flash:block/potion_container", "y": 270 },
+    "facing=south,filled=true": { "model": "flash:block/potion_container_filled" },
+    "facing=west,filled=true": { "model": "flash:block/potion_container_filled", "y": 90 },
+    "facing=north,filled=true": { "model": "flash:block/potion_container_filled", "y": 180 },
+    "facing=east,filled=true": { "model": "flash:block/potion_container_filled", "y": 270 }
+  }
+}

@@ -1,0 +1,9 @@
+{
+    "replace":  false,
+    "values":  [
+                   "flash:transformation_chamber",
+                   "flash:potion_container",
+                   "flash:acceleration_stone",
+                   "flash:acceleration_crystal"
+               ]
+}
