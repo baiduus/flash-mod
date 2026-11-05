@@ -26,6 +26,8 @@ public final class FlashClientEvents {
             // Force the custom Forge ArmPose to be created during client
             // setup, before any player model is rendered.
             FlashAbilityPoses.WIND_HANDS.name();
+            FlashAbilityPoses.RUN.name();
+            FlashAbilityPoses.VIBRATE.name();
             MenuScreens.register(
                     ModMenus.POTION_CONTAINER.get(),
                     PotionContainerScreen::new

@@ -35,12 +35,12 @@ public record FlashVisualSyncPacket(UUID playerId, int level, int activeMask) {
     public static void send(ServerPlayer player) {
         int level = FlashPowers.hasPowers(player)
                 ? FlashPowers.getSelectedLevel(player)
-                : FlashSpeedLevels.MIN_LEVEL;
+                : 0;
         send(player, level);
     }
 
     public static void send(ServerPlayer player, int level) {
-        int clamped = FlashSpeedLevels.clamp(level);
+        int clamped = level <= 0 ? 0 : FlashSpeedLevels.clamp(level);
         int mask = com.flash.ability.FlashAbilityManager.activeMask(player);
         FlashNetwork.CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),

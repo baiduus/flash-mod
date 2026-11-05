@@ -4,17 +4,26 @@ import com.flash.power.FlashPowers;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -79,25 +88,99 @@ public final class FlashAbilityCombat {
         return hurt;
     }
 
-    public static Optional<EntityHitResult> pickEntity(ServerPlayer player, Vec3 start, Vec3 end) {
-        AABB search = new AABB(start, end).inflate(2.0D);
-        EntityHitResult closest = null;
-        double closestDistance = Double.MAX_VALUE;
-        for (LivingEntity entity : player.level().getEntitiesOfClass(
-                LivingEntity.class, search,
-                entity -> entity != player && entity.isAlive()
-                        && !(entity instanceof net.minecraft.world.entity.player.Player other
-                        && other.isSpectator()))) {
-            Optional<Vec3> clip = entity.getBoundingBox().inflate(0.35D).clip(start, end);
-            if (clip.isPresent()) {
-                double distance = clip.get().distanceToSqr(start);
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closest = new EntityHitResult(entity, clip.get());
+    /** Result of {@link #aim}: where the shot lands and what (if anything) it hit. */
+    public record AimResult(Vec3 point, Entity entity, BlockHitResult block) {
+    }
+
+    /** Short and tall grass never stop an aimed shot. */
+    private static boolean isGrass(BlockState state) {
+        return state.is(Blocks.GRASS) || state.is(Blocks.TALL_GRASS);
+    }
+
+    /**
+     * Ray cast against the real outline of every block (flowers, torches, glass,
+     * water surface...) except grass.
+     */
+    public static BlockHitResult pickBlock(ServerPlayer player, Vec3 start, Vec3 end) {
+        Level level = player.level();
+        ClipContext context = new ClipContext(start, end, ClipContext.Block.OUTLINE,
+                ClipContext.Fluid.ANY, player);
+        return BlockGetter.traverseBlocks(start, end, context, (ctx, pos) -> {
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir() || isGrass(state)) {
+                return null;
+            }
+            VoxelShape shape = state.getShape(level, pos, CollisionContext.empty());
+            BlockHitResult result = shape.isEmpty() ? null : shape.clip(start, end, pos);
+            FluidState fluid = state.getFluidState();
+            if (!fluid.isEmpty()) {
+                BlockHitResult fluidHit = fluid.getShape(level, pos).clip(start, end, pos);
+                if (fluidHit != null && (result == null
+                        || start.distanceToSqr(fluidHit.getLocation())
+                        < start.distanceToSqr(result.getLocation()))) {
+                    result = fluidHit;
                 }
             }
+            return result;
+        }, ctx -> {
+            Vec3 delta = ctx.getFrom().subtract(ctx.getTo());
+            return BlockHitResult.miss(ctx.getTo(), Direction.getNearest(delta.x, delta.y, delta.z),
+                    BlockPos.containing(ctx.getTo()));
+        });
+    }
+
+    /**
+     * Forgiving aiming for the lightning: any entity inside a cylinder around the
+     * line of sight (it widens with distance) counts as hit, as long as no block
+     * is in the way. Without an entity the shot lands on the first block, or at
+     * the end of the range.
+     */
+    public static AimResult aim(ServerPlayer player, double range) {
+        Vec3 start = player.getEyePosition();
+        Vec3 look = player.getLookAngle().normalize();
+        Vec3 end = start.add(look.scale(range));
+
+        BlockHitResult block = pickBlock(player, start, end);
+        boolean blockHit = block.getType() != HitResult.Type.MISS;
+        double blockDistance = blockHit ? block.getLocation().distanceTo(start) : range;
+
+        Entity best = null;
+        double bestAlong = Double.MAX_VALUE;
+        Vec3 bestPoint = null;
+        for (Entity entity : player.level().getEntities(player,
+                new AABB(start, end).inflate(4.0D),
+                e -> !e.isSpectator() && e != player.getVehicle() && !e.isPassengerOfSameVehicle(player))) {
+            AABB box = entity.getBoundingBox();
+            Vec3 center = box.getCenter();
+            Vec3 delta = center.subtract(start);
+            double along = delta.dot(look);
+            if (along < 0.3D || along > blockDistance + 0.6D) {
+                continue;
+            }
+            double sideways = delta.subtract(look.scale(along)).length();
+            double reach = Math.max(box.getXsize(), Math.max(box.getYsize(), box.getZsize())) * 0.5D
+                    + 0.35D + along * 0.03D;
+            if (sideways > reach || along >= bestAlong) {
+                continue;
+            }
+            best = entity;
+            bestAlong = along;
+            Vec3 point = box.clip(start, end).orElse(center);
+            bestPoint = box.contains(start) ? center : point;
         }
-        return Optional.ofNullable(closest);
+
+        if (best != null) {
+            return new AimResult(bestPoint, best, blockHit ? block : null);
+        }
+        return new AimResult(blockHit ? block.getLocation() : end, null, blockHit ? block : null);
+    }
+
+    /** Damages any kind of entity (living or not). */
+    public static boolean hitAny(ServerPlayer player, Entity target, float damage) {
+        if (target instanceof LivingEntity living) {
+            return hit(player, living, damage);
+        }
+        return target.hurt(player.damageSources().playerAttack(player), damage);
     }
 
     public static void spawnElectricBurst(ServerLevel level, Vec3 position, int count) {

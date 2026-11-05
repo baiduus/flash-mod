@@ -2,6 +2,10 @@ package com.flash.block;
 
 import com.flash.registry.ModBlockEntities;
 import java.util.UUID;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import org.joml.Vector3f;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -27,7 +31,13 @@ public class AccelerationPortalBlockEntity extends BlockEntity {
     private static final String GROUND_OFFSET = "GroundOffset";
     private static final String SEED = "Seed";
 
-    private static final long LIFETIME_TICKS = 1200L;
+    /** Ticks the portal stays open; the renderer closes it during the last 15. */
+    public static final long LIFETIME_TICKS = 1200L;
+
+    private static final DustParticleOptions GOLD_DUST =
+            new DustParticleOptions(new Vector3f(1.0F, 0.80F, 0.10F), 0.9F);
+    private static final DustParticleOptions BLUE_DUST =
+            new DustParticleOptions(new Vector3f(0.30F, 0.60F, 1.0F), 0.9F);
 
     private UUID owner;
     private boolean exit;
@@ -100,7 +110,35 @@ public class AccelerationPortalBlockEntity extends BlockEntity {
         if (portal.createdAt > 0L
                 && level.getGameTime() - portal.createdAt > LIFETIME_TICKS) {
             FlashAccelerationPortal.removeAt(level, pos);
+            return;
         }
+        if (level instanceof ServerLevel serverLevel && level.getGameTime() % 3L == 0L) {
+            portal.spawnParticles(serverLevel);
+        }
+    }
+
+    /** A few sparks around the ring, in the portal plane. Kept small so the circle stays readable. */
+    private void spawnParticles(ServerLevel level) {
+        double radians = Math.toRadians(this.yaw);
+        double rx = -Math.cos(radians);
+        double rz = -Math.sin(radians);
+        double cx = this.worldPosition.getX() + 0.5D;
+        double cy = this.worldPosition.getY() + 0.5D;
+        double cz = this.worldPosition.getZ() + 0.5D;
+        for (int i = 0; i < 4; i++) {
+            double angle = level.random.nextDouble() * Math.PI * 2.0D;
+            double r = this.radius * (0.85D + level.random.nextDouble() * 0.45D);
+            double side = Math.cos(angle) * r;
+            boolean blue = i == 0;
+            level.sendParticles(blue ? BLUE_DUST : GOLD_DUST,
+                    cx + rx * side, cy + Math.sin(angle) * r, cz + rz * side,
+                    1, 0.05D, 0.05D, 0.05D, 0.0D);
+        }
+        double angle = level.random.nextDouble() * Math.PI * 2.0D;
+        double side = Math.cos(angle) * this.radius;
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+                cx + rx * side, cy + Math.sin(angle) * this.radius, cz + rz * side,
+                1, 0.1D, 0.1D, 0.1D, 0.04D);
     }
 
     @Override
@@ -153,10 +191,11 @@ public class AccelerationPortalBlockEntity extends BlockEntity {
 
     @Override
     public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        double r = this.radius + 1.5D;
+        double r = this.radius * 2.4D + 1.0D;
+        double down = Math.max(r, this.groundOffset + 1.0D);
         return new net.minecraft.world.phys.AABB(
                 this.worldPosition.getX() + 0.5D - r,
-                this.worldPosition.getY() + 0.5D - r,
+                this.worldPosition.getY() + 0.5D - down,
                 this.worldPosition.getZ() + 0.5D - r,
                 this.worldPosition.getX() + 0.5D + r,
                 this.worldPosition.getY() + 0.5D + r,

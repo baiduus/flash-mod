@@ -32,7 +32,6 @@ public class FlashHud implements IGuiOverlay {
 
         int level = FlashClientData.getSelectedLevel();
         boolean combustion = level >= FlashSpeedLevels.FIRE_LEVEL;
-        int accent = combustion ? COLOR_ORANGE : COLOR_GREEN;
 
         String line1 = Component.translatable("hud.flash.level", level).getString();
         String line2;
@@ -50,10 +49,10 @@ public class FlashHud implements IGuiOverlay {
         }
         String line3 = combustion ? Component.translatable("hud.flash.combustion").getString() : null;
 
-        int textWidth = minecraft.font.width(line1);
-        textWidth = Math.max(textWidth, minecraft.font.width(line2));
+        var font = minecraft.font;
+        int textWidth = Math.max(font.width(line1), font.width(line2));
         if (line3 != null) {
-            textWidth = Math.max(textWidth, minecraft.font.width(line3));
+            textWidth = Math.max(textWidth, font.width(line3));
         }
 
         int x = 6;
@@ -61,12 +60,21 @@ public class FlashHud implements IGuiOverlay {
         int boxWidth = textWidth + 14;
         int boxHeight = 12 + (line3 != null ? 22 : 12);
 
-        graphics.fill(x, y, x + boxWidth, y + boxHeight, 0xB0000000);
-        graphics.fill(x, y, x + 2, y + boxHeight, accent);
-        graphics.drawString(minecraft.font, line1, x + 7, y + 4, accent, true);
-        graphics.drawString(minecraft.font, line2, x + 7, y + 15, COLOR_MUTED, true);
+        graphics.fill(x, y, x + boxWidth, y + boxHeight, FlashHudStyle.PANEL);
+        FlashHudStyle.barVertical(graphics, x, y, 3, boxHeight);
+        FlashHudStyle.gradientText(graphics, font, line1, x + 8, y + 4);
+        graphics.drawString(font, line2, x + 8, y + 15, FlashHudStyle.TEXT_MUTED, true);
         if (line3 != null) {
-            graphics.drawString(minecraft.font, line3, x + 7, y + 26, COLOR_RED, true);
+            FlashHudStyle.gradientText(graphics, font, line3, x + 8, y + 26);
+        }
+        // Progress strip along the bottom edge (orange to yellow).
+        if (FlashClientData.getMaxLevel() < FlashSpeedLevels.MAX_LEVEL) {
+            float progress = Math.min(1.0F, (float) (FlashClientData.getDistance()
+                    / FlashSpeedLevels.BLOCKS_PER_LEVEL));
+            int filled = Math.round((boxWidth - 3) * progress);
+            if (filled > 0) {
+                FlashHudStyle.barHorizontal(graphics, x + 3, y + boxHeight - 2, filled, 2);
+            }
         }
     }
 }

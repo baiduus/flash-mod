@@ -13,7 +13,7 @@ public enum FlashAbility {
 
     BARRAGE(1, "barrage", 160, false),
     WIND_HANDS(2, "wind_hands", 100, true),
-    PHASING(3, "phasing", 200, true),
+    PHASING(3, "phasing", 0, true),
     SPEED_TORNADO(4, "speed_tornado", 240, true),
     LIGHTNING_STRIKE(5, "lightning_strike", 300, false),
     MASS_PUNCH(8, "mass_punch", 600, false),

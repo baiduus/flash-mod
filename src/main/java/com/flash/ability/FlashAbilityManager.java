@@ -28,12 +28,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 
 /**
@@ -57,6 +55,8 @@ public final class FlashAbilityManager {
 
     private static final Map<UUID, PlayerState> STATES = new ConcurrentHashMap<>();
     private static final Map<UUID, Map<FlashAbility, Long>> COOLDOWNS = new ConcurrentHashMap<>();
+    /** Players whose cooldowns were switched off with /flash cooldowns off (testing aid). */
+    private static final Set<UUID> NO_COOLDOWN = ConcurrentHashMap.newKeySet();
 
     private FlashAbilityManager() {
     }
@@ -168,7 +168,8 @@ public final class FlashAbilityManager {
         // Hold abilities start their cooldown when the player releases them,
         // so holding the key is never punished by a cooldown that expires
         // before the ability ends.
-        if (!ability.isHold()) {
+        if (!ability.isHold() && ability.cooldownTicks() > 0
+                && !NO_COOLDOWN.contains(player.getUUID())) {
             cooldowns(player).put(ability, now + ability.cooldownTicks());
         }
         sendSync(player, ability, true);
@@ -284,6 +285,7 @@ public final class FlashAbilityManager {
     }
 
     public static void reset(ServerPlayer player) {
+        FlashWaterWalk.release(player);
         PlayerState state = STATES.remove(player.getUUID());
         if (state != null && state.phasing) {
             FlashPhase.restore(player);
@@ -295,6 +297,24 @@ public final class FlashAbilityManager {
     public static void clear() {
         STATES.clear();
         COOLDOWNS.clear();
+        NO_COOLDOWN.clear();
+    }
+
+    /** Switches the cooldowns of a player on or off (testing command). */
+    public static void setCooldownsEnabled(ServerPlayer player, boolean enabled) {
+        if (enabled) {
+            NO_COOLDOWN.remove(player.getUUID());
+        } else {
+            NO_COOLDOWN.add(player.getUUID());
+            COOLDOWNS.remove(player.getUUID());
+        }
+        for (FlashAbility ability : FlashAbility.values()) {
+            FlashAbilitySyncPacket.send(player, ability, false, 0);
+        }
+    }
+
+    public static boolean areCooldownsEnabled(ServerPlayer player) {
+        return !NO_COOLDOWN.contains(player.getUUID());
     }
 
     public static boolean isPhasing(ServerPlayer player) {
@@ -560,9 +580,11 @@ public final class FlashAbilityManager {
                 }
             }
         }
-        if (state.tornadoTicks % 10 == 0) {
+        // Soft wind loop, only while the key is held (this method stops running
+        // the moment the ability is released).
+        if (state.tornadoTicks % 16 == 0) {
             level.playSound(null, center.x, center.y, center.z,
-                    SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.7F, 0.8F);
+                    SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.18F, 0.9F);
         }
     }
 
@@ -607,7 +629,7 @@ public final class FlashAbilityManager {
         }
         if (lifted > 0) {
             level.playSound(null, center.x, center.y, center.z,
-                    SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 0.5F, 0.9F);
+                    SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 0.15F, 1.0F);
         }
     }
 
@@ -639,28 +661,11 @@ public final class FlashAbilityManager {
         ServerLevel level = (ServerLevel) player.level();
         Vec3 start = player.getEyePosition();
         Vec3 look = player.getLookAngle().normalize();
-        Vec3 end = start.add(look.scale(48.0D));
 
-        BlockHitResult blockHit = level.clip(new ClipContext(start, end,
-                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        EntityHitResult entityHit = FlashAbilityCombat.pickEntity(player, start, end)
-                .orElse(null);
-
-        double blockDistance = blockHit == null ? Double.MAX_VALUE
-                : blockHit.getLocation().distanceToSqr(start);
-        double entityDistance = entityHit == null ? Double.MAX_VALUE
-                : entityHit.getLocation().distanceToSqr(start);
-
-        Vec3 targetPoint;
-        LivingEntity target = null;
-        if (entityHit != null && entityDistance <= blockDistance) {
-            target = (LivingEntity) entityHit.getEntity();
-            targetPoint = entityHit.getLocation();
-        } else if (blockHit != null) {
-            targetPoint = blockHit.getLocation();
-        } else {
-            targetPoint = end;
-        }
+        // Forgiving aim: any entity near the line of sight, or the first block
+        // (flowers, glass and water included; grass is ignored).
+        FlashAbilityCombat.AimResult aim = FlashAbilityCombat.aim(player, 64.0D);
+        Vec3 targetPoint = aim.point();
 
         // Quick synchronized air slap: the arm swing is broadcast by vanilla,
         // while the sweep fan makes the gesture readable at a distance.
@@ -679,14 +684,14 @@ public final class FlashAbilityManager {
         player.playNotifySound(SoundEvents.PLAYER_ATTACK_SWEEP,
                 SoundSource.PLAYERS, 1.3F, 1.25F);
 
-        if (target != null) {
-            FlashAbilityCombat.hit(player, target, 25.0F);
-            target.setSecondsOnFire(8);
+        if (aim.entity() != null) {
+            FlashAbilityCombat.hitAny(player, aim.entity(), 25.0F);
+            aim.entity().setSecondsOnFire(8);
         }
 
-        if (FlashPowers.isDestroyBlocksEnabled(player) && blockHit != null) {
+        if (FlashPowers.isDestroyBlocksEnabled(player) && aim.block() != null) {
             FlashAbilityCombat.breakCone(player, look,
-                    Math.sqrt(blockDistance) + 1.0D, 1.6D, 18);
+                    targetPoint.distanceTo(start) + 1.0D, 1.6D, 18);
             BlockPos firePos = BlockPos.containing(targetPoint).above();
             if (level.getBlockState(firePos).isAir()
                     && !level.getBlockState(firePos.below()).isAir()) {
@@ -891,6 +896,9 @@ public final class FlashAbilityManager {
     // ------------------------------------------------------------------
 
     private static void startHoldCooldown(ServerPlayer player, FlashAbility ability) {
+        if (ability.cooldownTicks() <= 0 || NO_COOLDOWN.contains(player.getUUID())) {
+            return;
+        }
         cooldowns(player).put(ability, gameTime(player) + ability.cooldownTicks());
     }
 
@@ -917,6 +925,9 @@ public final class FlashAbilityManager {
     }
 
     private static long cooldownEnd(ServerPlayer player, FlashAbility ability) {
+        if (NO_COOLDOWN.contains(player.getUUID())) {
+            return 0L;
+        }
         Map<FlashAbility, Long> map = COOLDOWNS.get(player.getUUID());
         return map == null ? 0L : map.getOrDefault(ability, 0L);
     }

@@ -39,7 +39,54 @@ public final class FlashLightningRibbon {
     public static final float BRANCH_MID_WIDTH = 0.012F;
     public static final float BRANCH_CORE_WIDTH = 0.005F;
 
+    /** Orange (base of a bolt) to yellow (tip) used by the body and trail lightning. */
+    private static final float[] BOLT_ORANGE = {1.0F, 0.42F, 0.04F};
+    private static final float[] BOLT_YELLOW = {1.0F, 0.88F, 0.16F};
+    private static final float[] BOLT_WHITE = {1.0F, 0.97F, 0.70F};
+
     private FlashLightningRibbon() {
+    }
+
+    /**
+     * Draws a thin bolt whose colour runs from orange at the first point to
+     * yellow at the last one (glow, body and a pale core).
+     */
+    public static void drawBolt(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
+                                List<Vec3> points, float width, float alpha) {
+        if (alpha <= 0.001F || points.size() < 2) {
+            return;
+        }
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 2.4F, 0.0F, 0.22F * alpha);
+        drawGradientPass(consumer, matrix, cameraPos, points, width, 0.0F, 0.60F * alpha);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 0.38F, 0.65F, 0.95F * alpha);
+    }
+
+    private static void drawGradientPass(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
+                                         List<Vec3> points, float width, float whiten, float alpha) {
+        int n = points.size();
+        for (int i = 1; i < n; i++) {
+            Vec3 start = points.get(i - 1);
+            Vec3 end = points.get(i);
+            Vec3 middle = start.add(end).scale(0.5D);
+            Vec3 side = end.subtract(start).cross(middle.subtract(cameraPos));
+            if (side.lengthSqr() < 1.0E-8D) {
+                continue;
+            }
+            side = side.normalize().scale(width);
+            float t = (i - 0.5F) / (n - 1);
+            float red = mix(mix(BOLT_ORANGE[0], BOLT_YELLOW[0], t), BOLT_WHITE[0], whiten);
+            float green = mix(mix(BOLT_ORANGE[1], BOLT_YELLOW[1], t), BOLT_WHITE[1], whiten);
+            float blue = mix(mix(BOLT_ORANGE[2], BOLT_YELLOW[2], t), BOLT_WHITE[2], whiten);
+
+            vertex(consumer, matrix, start.add(side), red, green, blue, alpha, 0.0F, 0.0F);
+            vertex(consumer, matrix, start.subtract(side), red, green, blue, alpha, 1.0F, 0.0F);
+            vertex(consumer, matrix, end.subtract(side), red, green, blue, alpha, 1.0F, 1.0F);
+            vertex(consumer, matrix, end.add(side), red, green, blue, alpha, 0.0F, 1.0F);
+        }
+    }
+
+    private static float mix(float a, float b, float t) {
+        return a + (b - a) * t;
     }
 
     public static void drawArc(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,

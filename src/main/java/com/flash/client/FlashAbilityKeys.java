@@ -73,6 +73,16 @@ public final class FlashAbilityKeys {
         return null;
     }
 
+    /** True while the key of a skill is held (used for instant, optimistic client effects). */
+    public static boolean isHeld(FlashAbility ability) {
+        for (int i = 0; i < ORDER.length; i++) {
+            if (ORDER[i] == ability) {
+                return WAS_DOWN[i];
+            }
+        }
+        return false;
+    }
+
     public static void tick() {
         Minecraft minecraft = Minecraft.getInstance();
         boolean canUse = minecraft.player != null
