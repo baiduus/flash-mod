@@ -67,16 +67,8 @@ public class PotionContainerBlockEntity extends BlockEntity implements Container
     }
 
     public boolean isConnectedToChamber() {
-        if (this.level == null) {
-            return false;
-        }
-        for (Direction direction : Direction.Plane.HORIZONTAL) {
-            BlockEntity neighbor = this.level.getBlockEntity(this.worldPosition.relative(direction));
-            if (neighbor instanceof TransformationChamberBlockEntity) {
-                return true;
-            }
-        }
-        return false;
+        return this.level != null
+                && TransformationChamberBlock.chamberNextToContainer(this.level, this.worldPosition) != null;
     }
 
     public List<PotionRequirement> missingRequirements() {

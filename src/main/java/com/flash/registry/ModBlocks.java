@@ -3,7 +3,9 @@ package com.flash.registry;
 import com.flash.FlashMod;
 import com.flash.block.AccelerationPortalBlock;
 import com.flash.block.PotionContainerBlock;
+import com.flash.block.PotionContainerPartBlock;
 import com.flash.block.TransformationChamberBlock;
+import com.flash.block.TransformationChamberPartBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -36,6 +38,28 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
                     .lightLevel(state -> state.getValue(PotionContainerBlock.FILLED) ? 13 : 7)));
+
+    public static final RegistryObject<Block> TRANSFORMATION_CHAMBER_PART = BLOCKS.register(
+            "transformation_chamber_part",
+            () -> new TransformationChamberPartBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(6.0F, 8.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .noLootTable()
+                    .lightLevel(state -> 10)));
+
+    public static final RegistryObject<Block> POTION_CONTAINER_PART = BLOCKS.register(
+            "potion_container_part",
+            () -> new PotionContainerPartBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(4.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .noLootTable()
+                    .lightLevel(state -> 7)));
 
     public static final RegistryObject<Block> ACCELERATION_STONE = BLOCKS.register(
             "acceleration_stone",

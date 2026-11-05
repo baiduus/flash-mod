@@ -1,6 +1,8 @@
 package com.flash.block;
 
 import com.flash.registry.ModBlockEntities;
+import com.flash.registry.ModBlocks;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
@@ -40,7 +43,7 @@ import net.minecraftforge.network.NetworkHooks;
  */
 public class PotionContainerBlock extends BaseEntityBlock {
 
-    private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 51.2D, 16.0D);
+    private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
 
     public static final BooleanProperty FILLED = BooleanProperty.create("filled");
     public static final DirectionProperty FACING = DirectionProperty.create(
@@ -62,8 +65,36 @@ public class PotionContainerBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
+        BlockPos origin = context.getClickedPos();
+        for (int y = 1; y <= PotionContainerPartBlock.MAX_LAYER; y++) {
+            BlockPos cell = origin.above(y);
+            if (level.isOutsideBuildHeight(cell) || !level.getBlockState(cell).canBeReplaced()) {
+                if (!level.isClientSide && context.getPlayer() != null) {
+                    context.getPlayer().displayClientMessage(
+                            Component.translatable("message.flash.machine_no_space"), true);
+                }
+                return null;
+            }
+        }
         return this.defaultBlockState()
                 .setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (level.isClientSide || oldState.is(this)) {
+            return;
+        }
+        for (int y = 1; y <= PotionContainerPartBlock.MAX_LAYER; y++) {
+            BlockPos cell = pos.above(y);
+            if (!level.isOutsideBuildHeight(cell) && level.getBlockState(cell).canBeReplaced()) {
+                level.setBlock(cell, ModBlocks.POTION_CONTAINER_PART.get().defaultBlockState()
+                                .setValue(PotionContainerPartBlock.LAYER, y),
+                        Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            }
+        }
     }
 
     @Override
@@ -110,9 +141,16 @@ public class PotionContainerBlock extends BaseEntityBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            for (Direction direction : Direction.Plane.HORIZONTAL) {
-                if (level.getBlockEntity(pos.relative(direction)) instanceof TransformationChamberBlockEntity chamber) {
-                    chamber.onPotionContainerRemoved();
+            TransformationChamberBlockEntity chamber =
+                    TransformationChamberBlock.chamberNextToContainer(level, pos);
+            if (chamber != null) {
+                chamber.onPotionContainerRemoved();
+            }
+            Block part = ModBlocks.POTION_CONTAINER_PART.get();
+            for (int y = 1; y <= PotionContainerPartBlock.MAX_LAYER; y++) {
+                if (level.getBlockState(pos.above(y)).is(part)) {
+                    level.setBlock(pos.above(y), Blocks.AIR.defaultBlockState(),
+                            Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
                 }
             }
             if (level.getBlockEntity(pos) instanceof PotionContainerBlockEntity container) {

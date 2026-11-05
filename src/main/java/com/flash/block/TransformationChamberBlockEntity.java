@@ -8,6 +8,7 @@ import com.flash.power.FlashStatusEffects;
 import com.flash.network.FlashSyncPacket;
 import com.flash.network.FlashVisualSyncPacket;
 import com.flash.registry.ModBlockEntities;
+import com.flash.registry.ModBlocks;
 import com.flash.transformation.PotionRequirement;
 import com.flash.transformation.TransformationSequence;
 import java.util.List;
@@ -45,7 +46,12 @@ public class TransformationChamberBlockEntity extends BlockEntity {
      * {@link TransformationChamberBlock#FLOOR_HEIGHT}.
      */
     public static final double BASE_HEIGHT = TransformationChamberBlock.FLOOR_HEIGHT;
-    private static final double INSIDE_RADIUS = 0.04D;
+    /** Cabin walking area (model space): free inside, tight while the sequence runs. */
+    private static final double FREE_MIN_X = 1.45D;
+    private static final double FREE_MAX_X = 2.55D;
+    private static final double FREE_MIN_Z = -0.55D;
+    private static final double FREE_MAX_Z = 0.95D;
+    private static final double LOCKED_RADIUS = 0.15D;
     private static final int SNEAK_GRACE_TICKS = 10;
 
     private static final String TAG_ACTIVE = "Active";
@@ -81,11 +87,11 @@ public class TransformationChamberBlockEntity extends BlockEntity {
 
         chamber.tickOccupant(serverLevel, pos, state);
 
-        boolean powered = serverLevel.hasNeighborSignal(pos);
-        if (powered && !chamber.lastPowered) {
-            chamber.tryStart(serverLevel, pos, state);
+        // Redstone is event driven (controller and part blocks call refreshPower);
+        // this slow poll only covers missed updates, e.g. right after loading.
+        if (serverLevel.getGameTime() % 20L == 0L) {
+            chamber.refreshPower();
         }
-        chamber.lastPowered = powered;
 
         if (chamber.active) {
             chamber.tickSequence(serverLevel, pos, state);
@@ -184,25 +190,32 @@ public class TransformationChamberBlockEntity extends BlockEntity {
 
         double centerX = centerX(pos, state);
         double centerZ = centerZ(pos, state);
-        double dx = serverPlayer.getX() - centerX;
-        double dz = serverPlayer.getZ() - centerZ;
-
-        if (Math.abs(dx) > INSIDE_RADIUS || Math.abs(dz) > INSIDE_RADIUS) {
-            double nextX = centerX + Math.max(-INSIDE_RADIUS, Math.min(INSIDE_RADIUS, dx));
-            double nextZ = centerZ + Math.max(-INSIDE_RADIUS, Math.min(INSIDE_RADIUS, dz));
-            serverPlayer.connection.teleport(nextX, serverPlayer.getY(), nextZ,
+        double[] m = TransformationChamberBlock.toModel(pos, state, serverPlayer.getX(), serverPlayer.getZ());
+        double minX = FREE_MIN_X;
+        double maxX = FREE_MAX_X;
+        double minZ = FREE_MIN_Z;
+        double maxZ = FREE_MAX_Z;
+        if (this.active) {
+            double[] c = TransformationChamberBlock.toModel(pos, state, centerX, centerZ);
+            minX = c[0] - LOCKED_RADIUS;
+            maxX = c[0] + LOCKED_RADIUS;
+            minZ = c[1] - LOCKED_RADIUS;
+            maxZ = c[1] + LOCKED_RADIUS;
+        }
+        if (m[0] < minX || m[0] > maxX || m[1] < minZ || m[1] > maxZ) {
+            double cx = Math.max(minX, Math.min(maxX, m[0]));
+            double cz = Math.max(minZ, Math.min(maxZ, m[1]));
+            Vec3 target = TransformationChamberBlock.toWorld(pos, state, cx, 0.0D, cz);
+            serverPlayer.connection.teleport(target.x, serverPlayer.getY(), target.z,
                     serverPlayer.getYRot(), serverPlayer.getXRot());
-            Vec3 motion = serverPlayer.getDeltaMovement();
-            serverPlayer.setDeltaMovement(0.0D, motion.y, 0.0D);
+            serverPlayer.setDeltaMovement(0.0D, serverPlayer.getDeltaMovement().y, 0.0D);
             serverPlayer.fallDistance = 0.0F;
-            FlashProgression.reset(serverPlayer);
         }
 
         if (serverPlayer.getY() < pos.getY() + BASE_HEIGHT - 0.1D) {
             serverPlayer.connection.teleport(centerX, pos.getY() + BASE_HEIGHT, centerZ,
                     serverPlayer.getYRot(), serverPlayer.getXRot());
             serverPlayer.setDeltaMovement(Vec3.ZERO);
-            FlashProgression.reset(serverPlayer);
         }
     }
 
@@ -418,10 +431,64 @@ public class TransformationChamberBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
+    /**
+     * Re-reads redstone from the controller and every part of the machine and
+     * starts the transformation on a rising edge. Called by the controller and
+     * the part blocks whenever one of their neighbours changes.
+     */
+    public void refreshPower() {
+        if (!(this.level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos pos = this.worldPosition;
+        BlockState state = this.getBlockState();
+        boolean powered = serverLevel.hasNeighborSignal(pos);
+        if (!powered) {
+            for (BlockPos cell : TransformationChamberBlock.partPositions(pos, state)) {
+                if (serverLevel.hasNeighborSignal(cell)) {
+                    powered = true;
+                    break;
+                }
+            }
+        }
+        if (powered == this.lastPowered) {
+            return;
+        }
+        this.lastPowered = powered;
+        this.setChanged();
+        if (powered) {
+            this.tryStart(serverLevel, pos, state);
+        }
+    }
+
+    /** Looks for a potion container touching any cell of the machine. */
     private PotionContainerBlockEntity findContainer(ServerLevel level, BlockPos pos) {
+        BlockState state = this.getBlockState();
+        PotionContainerBlockEntity found = containerAround(level, pos);
+        if (found != null) {
+            return found;
+        }
+        for (BlockPos cell : TransformationChamberBlock.partPositions(pos, state)) {
+            found = containerAround(level, cell);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private static PotionContainerBlockEntity containerAround(ServerLevel level, BlockPos cell) {
         for (Direction direction : Direction.Plane.HORIZONTAL) {
-            BlockEntity blockEntity = level.getBlockEntity(pos.relative(direction));
-            if (blockEntity instanceof PotionContainerBlockEntity container) {
+            BlockPos neighbor = cell.relative(direction);
+            BlockState neighborState = level.getBlockState(neighbor);
+            BlockPos controller = null;
+            if (neighborState.is(ModBlocks.POTION_CONTAINER.get())) {
+                controller = neighbor;
+            } else if (neighborState.is(ModBlocks.POTION_CONTAINER_PART.get())) {
+                controller = neighbor.below(neighborState.getValue(PotionContainerPartBlock.LAYER));
+            }
+            if (controller != null
+                    && level.getBlockEntity(controller) instanceof PotionContainerBlockEntity container) {
                 return container;
             }
         }

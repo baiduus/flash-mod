@@ -1,8 +1,11 @@
 package com.flash.block;
 
 import com.flash.registry.ModBlockEntities;
+import com.flash.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
+import java.util.List;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -12,6 +15,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
@@ -22,11 +26,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
@@ -69,16 +72,6 @@ public class TransformationChamberBlock extends BaseEntityBlock {
     private static final double EXIT_X = 2.0D;
     private static final double EXIT_Z = 2.2D;
 
-    /**
-     * Collision stays on the controller cell: it is the solid left column and
-     * casing of the machine. The opening is outside this cell, so the player
-     * teleported into the cabin never starts inside a collision box. Model-space
-     * box (facing=south): x 0.15..1.0, z 0..1, up to the top of the opening.
-     */
-    private static final double COLLISION_MIN_X = 0.15D;
-    private static final double COLLISION_MAX_X = 1.0D;
-    private static final double COLLISION_HEIGHT = 3.8D;
-
     public TransformationChamberBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
@@ -93,8 +86,50 @@ public class TransformationChamberBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState()
-                .setValue(FACING, context.getHorizontalDirection().getOpposite());
+        Direction facing = context.getHorizontalDirection().getOpposite();
+        Level level = context.getLevel();
+        BlockPos origin = context.getClickedPos();
+        for (BlockPos cell : MachineLayout.partPositions(origin, facing)) {
+            if (level.isOutsideBuildHeight(cell) || !level.getBlockState(cell).canBeReplaced()) {
+                if (!level.isClientSide && context.getPlayer() != null) {
+                    context.getPlayer().displayClientMessage(
+                            Component.translatable("message.flash.machine_no_space"), true);
+                }
+                return null;
+            }
+        }
+        return this.defaultBlockState().setValue(FACING, facing);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (level.isClientSide || oldState.is(this)) {
+            return;
+        }
+        Direction facing = state.getValue(FACING);
+        for (int[] o : MachineLayout.partOffsets(facing)) {
+            BlockPos cell = pos.offset(o[0], o[1], o[2]);
+            if (level.isOutsideBuildHeight(cell) || !level.getBlockState(cell).canBeReplaced()) {
+                continue;
+            }
+            int[] idx = MachineLayout.cellAt(facing, o[0], o[1], o[2]);
+            level.setBlock(cell, TransformationChamberPartBlock.stateFor(facing, idx[0], idx[1], idx[2]),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        }
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block,
+                                BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof TransformationChamberBlockEntity chamber) {
+            chamber.refreshPower();
+        }
+    }
+
+    @Override
+    public PushReaction getPistonPushReaction(BlockState state) {
+        return PushReaction.BLOCK;
     }
 
     @Override
@@ -138,19 +173,26 @@ public class TransformationChamberBlock extends BaseEntityBlock {
                 && level.getBlockEntity(pos) instanceof TransformationChamberBlockEntity chamber) {
             chamber.onChamberRemoved();
         }
+        if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            Block part = ModBlocks.TRANSFORMATION_CHAMBER_PART.get();
+            for (BlockPos cell : MachineLayout.partPositions(pos, state.getValue(FACING))) {
+                if (level.getBlockState(cell).is(part)) {
+                    level.setBlock(cell, Blocks.AIR.defaultBlockState(),
+                            Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
+                }
+            }
+        }
         super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        Direction facing = state.getValue(FACING);
-        return rotatedBox(facing, MODEL_MIN_X, MODEL_MIN_Z, MODEL_MAX_X, MODEL_MAX_Z, MODEL_HEIGHT);
+        return MachineLayout.controllerShape(state.getValue(FACING));
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        Direction facing = state.getValue(FACING);
-        return rotatedBox(facing, COLLISION_MIN_X, 0.0D, COLLISION_MAX_X, 1.0D, COLLISION_HEIGHT);
+        return MachineLayout.controllerShape(state.getValue(FACING));
     }
 
     // ------------------------------------------------------------------
@@ -162,21 +204,13 @@ public class TransformationChamberBlock extends BaseEntityBlock {
      * centre, exactly like the blockstate {@code y} rotation (south 0, west 90,
      * north 180, east 270). Returns {x, z} relative to the controller cell.
      */
-    private static double[] rotate(Direction facing, double x, double z) {
+    static double[] rotate(Direction facing, double x, double z) {
         return switch (facing) {
             case WEST -> new double[] {1.0D - z, x};
             case NORTH -> new double[] {1.0D - x, 1.0D - z};
             case EAST -> new double[] {z, 1.0D - x};
             default -> new double[] {x, z};
         };
-    }
-
-    private static VoxelShape rotatedBox(Direction facing, double minX, double minZ,
-                                         double maxX, double maxZ, double height) {
-        double[] a = rotate(facing, minX, minZ);
-        double[] b = rotate(facing, maxX, maxZ);
-        return Shapes.box(Math.min(a[0], b[0]), 0.0D, Math.min(a[1], b[1]),
-                Math.max(a[0], b[0]), height, Math.max(a[1], b[1]));
     }
 
     /** World position of a model-space point at the given height above the controller block. */
@@ -195,11 +229,51 @@ public class TransformationChamberBlock extends BaseEntityBlock {
         return toWorld(pos, state, EXIT_X, FLOOR_HEIGHT, EXIT_Z);
     }
 
-    /** Everything that is drawn, in world coordinates (used for targeting). */
-    public static AABB footprint(BlockPos pos, BlockState state) {
-        Vec3 a = toWorld(pos, state, MODEL_MIN_X, 0.0D, MODEL_MIN_Z);
-        Vec3 b = toWorld(pos, state, MODEL_MAX_X, MODEL_HEIGHT, MODEL_MAX_Z);
-        return new AABB(a.x, a.y, a.z, b.x, b.y, b.z);
+    /** Inverse of {@link #toWorld}: world point to model space {x, z} (facing=south frame). */
+    public static double[] toModel(BlockPos pos, BlockState state, double worldX, double worldZ) {
+        double rx = worldX - pos.getX();
+        double rz = worldZ - pos.getZ();
+        return switch (state.getValue(FACING)) {
+            case WEST -> new double[] {rz, 1.0D - rx};
+            case NORTH -> new double[] {1.0D - rx, 1.0D - rz};
+            case EAST -> new double[] {1.0D - rz, rx};
+            default -> new double[] {rx, rz};
+        };
+    }
+
+    /** Every cell the machine occupies besides the controller. */
+    public static List<BlockPos> partPositions(BlockPos pos, BlockState state) {
+        return MachineLayout.partPositions(pos, state.getValue(FACING));
+    }
+
+    /**
+     * Finds the chamber a block position belongs to (the controller itself or
+     * one of its invisible parts), or null.
+     */
+    public static TransformationChamberBlockEntity chamberAt(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.is(ModBlocks.TRANSFORMATION_CHAMBER.get())) {
+            return level.getBlockEntity(pos) instanceof TransformationChamberBlockEntity chamber ? chamber : null;
+        }
+        if (state.is(ModBlocks.TRANSFORMATION_CHAMBER_PART.get())) {
+            BlockPos controller = TransformationChamberPartBlock.controllerPos(pos, state);
+            return level.getBlockEntity(controller) instanceof TransformationChamberBlockEntity chamber ? chamber : null;
+        }
+        return null;
+    }
+
+    /** The chamber touching a potion container column placed at {@code containerPos}, or null. */
+    public static TransformationChamberBlockEntity chamberNextToContainer(Level level, BlockPos containerPos) {
+        for (int y = 0; y <= PotionContainerPartBlock.MAX_LAYER; y++) {
+            for (Direction direction : Direction.Plane.HORIZONTAL) {
+                TransformationChamberBlockEntity chamber =
+                        chamberAt(level, containerPos.above(y).relative(direction));
+                if (chamber != null) {
+                    return chamber;
+                }
+            }
+        }
+        return null;
     }
 
     @Override

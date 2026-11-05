@@ -792,7 +792,17 @@ def build_machine():
 
 def build_container():
     m = Model("potion_container", 2.0)
-    B = m.box
+
+    # O recipiente e encaixado exatamente na sua celula (0..1 em x e z): o
+    # desenho original tinha -0.35..1.0 em x e 1.56 de profundidade.
+    def fx(v):
+        return tuple(round((a + 0.35) / 1.35, 4) for a in v)
+
+    def fz(v):
+        return tuple(round(1.0 - (1.0 - a) / 1.56, 4) for a in v)
+
+    def B(name, x, y, z, **kw):
+        return m.box(name, fx(x), y, fz(z), **kw)
     B("p1", (-0.35, 1), (0, 0.2), (-0.3, 1.0), all="dark", top="graphite")
     B("p1_led", (-0.2, 0.8), (0.05, 0.16), (-0.33, -0.3), all="g:bar")
     B("p2", (-0.3, 1), (0.2, 0.4), (-0.1, 1.0), all="graphite", top="dark_alt")
