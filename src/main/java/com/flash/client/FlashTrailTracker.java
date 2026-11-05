@@ -31,13 +31,13 @@ import net.minecraftforge.fml.common.Mod;
 public final class FlashTrailTracker {
 
     static final int LIFETIME_TICKS = 10;
-    static final int STREAM_COUNT = 4;
+    static final int STREAM_COUNT = 7;
     static final int MAX_POINTS_PER_STREAM = 12;
     private static final double MIN_STEP_SQR = 0.0025D;
     private static final double MAX_STEP_SQR = 64.0D;
 
-    private static final double[] SIDE_OFFSET = {-0.22D, 0.22D, -0.08D, 0.08D};
-    private static final double[] UP_OFFSET = {-0.15D, 0.12D, 0.0D, 0.28D};
+    private static final double[] SIDE_OFFSET = {-0.26D, 0.26D, -0.13D, 0.13D, 0.0D, -0.04D, 0.04D};
+    private static final double[] UP_OFFSET = {-0.15D, 0.12D, 0.0D, 0.28D, 0.16D, -0.25D, 0.38D};
 
     private static final Map<UUID, TrailState> STATES = new HashMap<>();
 
@@ -69,6 +69,7 @@ public final class FlashTrailTracker {
 
             TrailState state = STATES.computeIfAbsent(id, key -> new TrailState(key, gameTime));
             state.level = playerLevel;
+            state.negative = FlashClientVisualLevels.isNegative(player);
             // Never draw the trail of the local player in first person: it
             // would cover the view.
             if (player == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
@@ -140,6 +141,7 @@ public final class FlashTrailTracker {
         Vec3 lastDirection = new Vec3(0.0D, 0.0D, 1.0D);
         boolean initialized;
         int level = 3;
+        boolean negative;
 
         TrailState(UUID id, long gameTime) {
             this.seed = id.getMostSignificantBits()

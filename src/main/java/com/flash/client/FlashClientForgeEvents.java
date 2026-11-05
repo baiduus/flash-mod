@@ -127,6 +127,5 @@ public final class FlashClientForgeEvents {
         }
         FlashClientData.reset();
         FlashClientVisualLevels.reset();
-        FlashRunAnimation.reset();
     }
 }

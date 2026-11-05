@@ -102,6 +102,7 @@ public final class FlashBodyLightningRenderer {
         long seed = player.getUUID().getMostSignificantBits()
                 ^ Long.rotateLeft(player.getUUID().getLeastSignificantBits(), 23);
 
+        boolean negative = FlashClientVisualLevels.isNegative(player);
         int count = 5 + level / 3;
         int offset = (int) (frame % ZONES.length);
         for (int arc = 0; arc < count; arc++) {
@@ -127,13 +128,13 @@ public final class FlashBodyLightningRenderer {
                         position.z + Math.cos(a) * r));
             }
             FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, points,
-                    BOLT_WIDTH, 1.0F);
+                    BOLT_WIDTH, 1.0F, negative);
 
             if (random.nextFloat() < 0.30F) {
                 Vec3 start = points.get(1 + random.nextInt(segments - 1));
                 List<Vec3> branch = FlashLightningRibbon.buildBranch(start, random, time, arc);
                 FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, branch,
-                        BOLT_WIDTH * 0.6F, 0.9F);
+                        BOLT_WIDTH * 0.6F, 0.9F, negative);
             }
         }
     }

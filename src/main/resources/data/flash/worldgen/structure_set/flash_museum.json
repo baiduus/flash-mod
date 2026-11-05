@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "flash:flash_museum",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 24,
+    "separation": 8,
+    "salt": 1305419
+  }
+}

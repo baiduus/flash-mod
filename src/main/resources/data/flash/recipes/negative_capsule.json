@@ -1,0 +1,14 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "ingredients": [
+  {
+   "item": "flash:tachyon"
+  },
+  {
+   "item": "flash:corrupted_matter"
+  }
+ ],
+ "result": {
+  "item": "flash:negative_capsule"
+ }
+}

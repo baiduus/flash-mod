@@ -28,6 +28,8 @@ public final class FlashPowers {
     private static final String TOTAL_DISTANCE = "totalDistance";
     private static final String LEGACY_RANK = "rank";
 
+    private static final String NEGATIVE = "negative";
+
     private static final String TEMP_LEVEL = "tempLevel";
     private static final String TEMP_UNTIL = "tempUntil";
     private static final String DESTROY_BLOCKS = "destroyBlocks";
@@ -47,6 +49,39 @@ public final class FlashPowers {
         CompoundTag flash = data.getCompound(ROOT);
         return flash.getBoolean(HAS_POWERS)
                 || isTemporaryActive(flash, gameTime(player));
+    }
+
+    /**
+     * True when the player carries the Negative Acceleration Force. It shares
+     * the level system with the Positive force (same levels, same abilities);
+     * only the look changes: everything is red instead of orange / yellow.
+     */
+    public static boolean isNegative(Player player) {
+        CompoundTag data = player.getPersistentData();
+        return data.contains(ROOT) && data.getCompound(ROOT).getBoolean(NEGATIVE)
+                && hasPowers(player);
+    }
+
+    public static void setNegative(Player player, boolean negative) {
+        CompoundTag persistent = player.getPersistentData();
+        CompoundTag flash = persistent.contains(ROOT)
+                ? persistent.getCompound(ROOT).copy()
+                : new CompoundTag();
+        if (negative) {
+            flash.putBoolean(NEGATIVE, true);
+        } else {
+            flash.remove(NEGATIVE);
+        }
+        persistent.put(ROOT, flash);
+    }
+
+    /**
+     * Gives the Negative force. A player without powers starts at level 1; a
+     * player who already has the Positive force keeps the level reached.
+     */
+    public static void grantNegative(Player player) {
+        grant(player);
+        setNegative(player, true);
     }
 
     public static boolean hasPermanentPowers(Player player) {

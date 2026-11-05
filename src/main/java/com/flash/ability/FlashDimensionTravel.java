@@ -43,6 +43,11 @@ public final class FlashDimensionTravel {
             Registries.DIMENSION,
             new ResourceLocation(FlashMod.MODID, "acceleration_force"));
 
+    /** Red twin of the Acceleration Force, entered by players with the Negative force. */
+    public static final ResourceKey<Level> NEGATIVE_ACCELERATION_FORCE = ResourceKey.create(
+            Registries.DIMENSION,
+            new ResourceLocation(FlashMod.MODID, "negative_acceleration_force"));
+
     private static final String ROOT = "flash_dimension";
     private static final String ACTIVE = "active";
     private static final String ORIGIN_DIMENSION = "originDimension";
@@ -59,8 +64,10 @@ public final class FlashDimensionTravel {
     private FlashDimensionTravel() {
     }
 
+    /** True in either the Positive or the Negative Acceleration Force dimension. */
     public static boolean isInAccelerationForce(ServerPlayer player) {
-        return player.level().dimension().equals(ACCELERATION_FORCE);
+        ResourceKey<Level> key = player.level().dimension();
+        return key.equals(ACCELERATION_FORCE) || key.equals(NEGATIVE_ACCELERATION_FORCE);
     }
 
     public static void tryUsePortal(ServerPlayer player,
@@ -102,7 +109,9 @@ public final class FlashDimensionTravel {
         if (server == null) {
             return false;
         }
-        ServerLevel target = server.getLevel(ACCELERATION_FORCE);
+        ServerLevel target = server.getLevel(
+                com.flash.power.FlashPowers.isNegative(player)
+                        ? NEGATIVE_ACCELERATION_FORCE : ACCELERATION_FORCE);
         if (target == null) {
             player.displayClientMessage(
                     Component.translatable("message.flash.dimension_missing"), true);

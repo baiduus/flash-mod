@@ -106,7 +106,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (cooling) {
             float remaining = Math.min(1.0F, cooldown / (float) cooldownTotal);
             int fill = Math.max(1, Math.round((w - 3) * remaining));
-            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, 0x90301000);
+            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, FlashClientVisualLevels.isLocalNegative() ? 0x90300808 : 0x90301000);
         }
         if (active) {
             FlashHudStyle.barHorizontal(g, x + 3, y + ROW_HEIGHT - 2, w - 3, 2);
@@ -129,10 +129,10 @@ public final class FlashAbilityHud implements IGuiOverlay {
         g.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF15110D);
         FlashHudStyle.barHorizontal(g, boxX, boxY, boxW, 1);
         FlashHudStyle.barHorizontal(g, boxX, boxY + boxH - 1, boxW, 1);
-        g.fill(boxX, boxY, boxX + 1, boxY + boxH, FlashHudStyle.ORANGE);
-        g.fill(boxX + boxW - 1, boxY, boxX + boxW, boxY + boxH, FlashHudStyle.YELLOW);
+        g.fill(boxX, boxY, boxX + 1, boxY + boxH, FlashHudStyle.from());
+        g.fill(boxX + boxW - 1, boxY, boxX + boxW, boxY + boxH, FlashHudStyle.to());
         int labelW = font.width(label);
         g.drawString(font, label, boxX + (boxW - labelW) / 2, boxY + (boxH - 8) / 2 + 1,
-                cooling ? FlashHudStyle.YELLOW : FlashHudStyle.WHITE, false);
+                cooling ? FlashHudStyle.to() : FlashHudStyle.WHITE, false);
     }
 }

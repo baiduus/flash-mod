@@ -27,6 +27,16 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.POTION_CONTAINER.get());
                         output.accept(ModItems.ACCELERATION_STONE.get());
                         output.accept(ModItems.ACCELERATION_CRYSTAL.get());
+                        output.accept(ModItems.TACHYON_EXTRACTOR.get());
+                        output.accept(ModItems.TORN_SUIT.get());
+                        output.accept(ModItems.TACHYON.get());
+                        output.accept(ModItems.CORRUPTED_MATTER.get());
+                        output.accept(ModItems.NEGATIVE_CAPSULE.get());
+                        output.accept(ModItems.SYRINGE.get());
+                        output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
+                                com.flash.item.SyringeContents.NEGATIVE_FORCE));
+                        output.accept(ModItems.NEGATIVE_STONE.get());
+                        output.accept(ModItems.NEGATIVE_CRYSTAL.get());
                         output.accept(potion(Potions.SWIFTNESS));
                         output.accept(potion(Potions.REGENERATION));
                         output.accept(potion(Potions.STRENGTH));

@@ -1,0 +1,169 @@
+{
+ "credit": "Flash mod - tachyon extractor",
+ "render_type": "minecraft:translucent",
+ "textures": {
+  "front": "flash:block/tachyon_extractor_front",
+  "back": "flash:block/tachyon_extractor_back",
+  "side": "flash:block/tachyon_extractor_side",
+  "side_left": "flash:block/tachyon_extractor_side_left",
+  "top": "flash:block/tachyon_extractor_top",
+  "bottom": "flash:block/tachyon_extractor_bottom",
+  "glass": "flash:block/tachyon_extractor_glass",
+  "particle": "flash:block/tachyon_extractor_side"
+ },
+ "elements": [
+  {
+   "name": "body",
+   "from": [
+    -0.0,
+    -0.0,
+    -0.0
+   ],
+   "to": [
+    16.0,
+    16.0,
+    16.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#front"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#back"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#side"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#side_left"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#top"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#bottom"
+    }
+   }
+  },
+  {
+   "name": "coil",
+   "from": [
+    4,
+    16,
+    4
+   ],
+   "to": [
+    12,
+    17,
+    12
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      4,
+      4,
+      12,
+      12
+     ],
+     "texture": "#top"
+    },
+    "north": {
+     "uv": [
+      4,
+      0,
+      12,
+      1
+     ],
+     "texture": "#side"
+    },
+    "south": {
+     "uv": [
+      4,
+      0,
+      12,
+      1
+     ],
+     "texture": "#side"
+    },
+    "east": {
+     "uv": [
+      4,
+      0,
+      12,
+      1
+     ],
+     "texture": "#side"
+    },
+    "west": {
+     "uv": [
+      4,
+      0,
+      12,
+      1
+     ],
+     "texture": "#side"
+    }
+   }
+  },
+  {
+   "name": "door_glass",
+   "from": [
+    3,
+    3,
+    -0.15
+   ],
+   "to": [
+    13,
+    11,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#glass"
+    }
+   }
+  }
+ ]
+}

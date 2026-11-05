@@ -1,0 +1,25 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "FRF",
+  "RVR",
+  "FOF"
+ ],
+ "key": {
+  "F": {
+   "item": "minecraft:iron_ingot"
+  },
+  "R": {
+   "item": "minecraft:redstone_block"
+  },
+  "V": {
+   "item": "minecraft:glass"
+  },
+  "O": {
+   "item": "minecraft:furnace"
+  }
+ },
+ "result": {
+  "item": "flash:tachyon_extractor"
+ }
+}

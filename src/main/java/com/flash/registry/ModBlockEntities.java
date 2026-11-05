@@ -2,6 +2,7 @@ package com.flash.registry;
 
 import com.flash.FlashMod;
 import com.flash.block.PotionContainerBlockEntity;
+import com.flash.block.TachyonExtractorBlockEntity;
 import com.flash.block.TransformationChamberBlockEntity;
 import com.flash.block.AccelerationPortalBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -33,6 +34,13 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(
                             AccelerationPortalBlockEntity::new,
                             ModBlocks.ACCELERATION_PORTAL.get()
+                    ).build(null));
+
+    public static final RegistryObject<BlockEntityType<TachyonExtractorBlockEntity>> TACHYON_EXTRACTOR =
+            BLOCK_ENTITIES.register("tachyon_extractor", () ->
+                    BlockEntityType.Builder.of(
+                            TachyonExtractorBlockEntity::new,
+                            ModBlocks.TACHYON_EXTRACTOR.get()
                     ).build(null));
 
     private ModBlockEntities() {

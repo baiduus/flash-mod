@@ -1,0 +1,7 @@
+{
+  "type": "flash:flash_museum",
+  "biomes": "#flash:has_structure/flash_museum",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}
