@@ -1,0 +1,11 @@
+{
+ "parent": "flash:item/syringe_empty",
+ "overrides": [
+  {
+   "predicate": {
+    "flash:content": 1
+   },
+   "model": "flash:item/syringe_negative"
+  }
+ ]
+}

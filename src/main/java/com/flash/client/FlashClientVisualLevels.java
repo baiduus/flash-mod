@@ -15,12 +15,33 @@ public final class FlashClientVisualLevels {
 
     private static final Map<UUID, Integer> LEVELS = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> ACTIVE = new ConcurrentHashMap<>();
+    private static final java.util.Set<UUID> NEGATIVE = ConcurrentHashMap.newKeySet();
 
     private FlashClientVisualLevels() {
     }
 
     public static void set(UUID playerId, int level) {
         set(playerId, level, 0);
+    }
+
+    public static void set(UUID playerId, int level, int activeMask, boolean negative) {
+        if (negative) {
+            NEGATIVE.add(playerId);
+        } else {
+            NEGATIVE.remove(playerId);
+        }
+        set(playerId, level, activeMask);
+    }
+
+    /** True when the player carries the (red) Negative Acceleration Force. */
+    public static boolean isNegative(Player player) {
+        return NEGATIVE.contains(player.getUUID());
+    }
+
+    /** Same for the local player (HUD, own effects). */
+    public static boolean isLocalNegative() {
+        Player player = Minecraft.getInstance().player;
+        return player != null && NEGATIVE.contains(player.getUUID());
     }
 
     public static void set(UUID playerId, int level, int activeMask) {
@@ -59,5 +80,6 @@ public final class FlashClientVisualLevels {
     public static void reset() {
         LEVELS.clear();
         ACTIVE.clear();
+        NEGATIVE.clear();
     }
 }

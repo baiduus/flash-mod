@@ -33,7 +33,8 @@ public class FlashHud implements IGuiOverlay {
         int level = FlashClientData.getSelectedLevel();
         boolean combustion = level >= FlashSpeedLevels.FIRE_LEVEL;
 
-        String line1 = Component.translatable("hud.flash.level", level).getString();
+        String line1 = Component.translatable(
+                FlashClientVisualLevels.isLocalNegative() ? "hud.flash.level_negative" : "hud.flash.level", level).getString();
         String line2;
         if (FlashClientData.getMaxLevel() >= FlashSpeedLevels.MAX_LEVEL) {
             line2 = Component.translatable("hud.flash.max_level").getString();

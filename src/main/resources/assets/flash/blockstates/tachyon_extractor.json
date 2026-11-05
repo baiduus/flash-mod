@@ -1,0 +1,64 @@
+{
+ "variants": {
+  "facing=north,powered=false,working=false": {
+   "model": "flash:block/tachyon_extractor"
+  },
+  "facing=north,powered=false,working=true": {
+   "model": "flash:block/tachyon_extractor"
+  },
+  "facing=north,powered=true,working=false": {
+   "model": "flash:block/tachyon_extractor_on"
+  },
+  "facing=north,powered=true,working=true": {
+   "model": "flash:block/tachyon_extractor_on"
+  },
+  "facing=east,powered=false,working=false": {
+   "model": "flash:block/tachyon_extractor",
+   "y": 90
+  },
+  "facing=east,powered=false,working=true": {
+   "model": "flash:block/tachyon_extractor",
+   "y": 90
+  },
+  "facing=east,powered=true,working=false": {
+   "model": "flash:block/tachyon_extractor_on",
+   "y": 90
+  },
+  "facing=east,powered=true,working=true": {
+   "model": "flash:block/tachyon_extractor_on",
+   "y": 90
+  },
+  "facing=south,powered=false,working=false": {
+   "model": "flash:block/tachyon_extractor",
+   "y": 180
+  },
+  "facing=south,powered=false,working=true": {
+   "model": "flash:block/tachyon_extractor",
+   "y": 180
+  },
+  "facing=south,powered=true,working=false": {
+   "model": "flash:block/tachyon_extractor_on",
+   "y": 180
+  },
+  "facing=south,powered=true,working=true": {
+   "model": "flash:block/tachyon_extractor_on",
+   "y": 180
+  },
+  "facing=west,powered=false,working=false": {
+   "model": "flash:block/tachyon_extractor",
+   "y": 270
+  },
+  "facing=west,powered=false,working=true": {
+   "model": "flash:block/tachyon_extractor",
+   "y": 270
+  },
+  "facing=west,powered=true,working=false": {
+   "model": "flash:block/tachyon_extractor_on",
+   "y": 270
+  },
+  "facing=west,powered=true,working=true": {
+   "model": "flash:block/tachyon_extractor_on",
+   "y": 270
+  }
+ }
+}

@@ -125,6 +125,9 @@ public final class FlashAccelerationPortal {
                 if (level.getBlockEntity(marker) instanceof AccelerationPortalBlockEntity portal) {
                     portal.configure(player.getUUID(), exit, level.getGameTime(),
                             player.getYRot(), DEFAULT_RADIUS, groundOffset, seed);
+                    portal.setNegative(com.flash.power.FlashPowers.isNegative(player)
+                            || level.dimension().equals(
+                                    FlashDimensionTravel.NEGATIVE_ACCELERATION_FORCE));
                 }
                 long now = level.getGameTime();
                 Portal portal = new Portal(player.getUUID(), level.dimension(),

@@ -41,20 +41,41 @@ public final class AccelerationPortalRenderer
     private static final ResourceLocation GLOW_TEXTURE = new ResourceLocation(
             FlashMod.MODID, "textures/effect/portal_glow.png");
 
-    private static final RenderType VORTEX_TYPE =
+    private static final RenderType VORTEX_TYPE_POSITIVE =
             RenderType.entityTranslucentEmissive(VORTEX_TEXTURE);
-    private static final RenderType GLOW_TYPE =
+    private static final RenderType GLOW_TYPE_POSITIVE =
             RenderType.entityTranslucentEmissive(GLOW_TEXTURE);
+    private static final RenderType VORTEX_TYPE_NEGATIVE = RenderType.entityTranslucentEmissive(
+            new ResourceLocation(FlashMod.MODID, "textures/effect/portal_vortex_negative.png"));
+    private static final RenderType GLOW_TYPE_NEGATIVE = RenderType.entityTranslucentEmissive(
+            new ResourceLocation(FlashMod.MODID, "textures/effect/portal_glow_negative.png"));
 
-    private static final float[] GOLD_GLOW = {1.0F, 0.55F, 0.03F, 0.24F};
-    private static final float[] GOLD_MID = {1.0F, 0.80F, 0.10F, 0.62F};
-    private static final float[] GOLD_CORE = {1.0F, 0.97F, 0.62F, 0.96F};
-    private static final float[] AMBER_GLOW = {1.0F, 0.42F, 0.02F, 0.22F};
-    private static final float[] AMBER_MID = {1.0F, 0.66F, 0.06F, 0.58F};
-    private static final float[] AMBER_CORE = {1.0F, 0.90F, 0.50F, 0.95F};
-    private static final float[] BLUE_GLOW = {0.10F, 0.38F, 1.0F, 0.24F};
-    private static final float[] BLUE_MID = {0.26F, 0.62F, 1.0F, 0.70F};
-    private static final float[] BLUE_CORE = {0.85F, 0.95F, 1.0F, 0.98F};
+    /** Theme of the portal being drawn right now (render thread only). */
+    private static boolean negativeTheme;
+
+    private static final float[] POS_GOLD_GLOW = {1.0F, 0.55F, 0.03F, 0.24F};
+    private static final float[] POS_GOLD_MID = {1.0F, 0.80F, 0.10F, 0.62F};
+    private static final float[] POS_GOLD_CORE = {1.0F, 0.97F, 0.62F, 0.96F};
+    private static final float[] POS_AMBER_GLOW = {1.0F, 0.42F, 0.02F, 0.22F};
+    private static final float[] POS_AMBER_MID = {1.0F, 0.66F, 0.06F, 0.58F};
+    private static final float[] POS_AMBER_CORE = {1.0F, 0.90F, 0.50F, 0.95F};
+    private static final float[] POS_BLUE_GLOW = {0.10F, 0.38F, 1.0F, 0.24F};
+    private static final float[] POS_BLUE_MID = {0.26F, 0.62F, 1.0F, 0.70F};
+    private static final float[] POS_BLUE_CORE = {0.85F, 0.95F, 1.0F, 0.98F};
+    // Negative Acceleration Force: the same portal in reds.
+    private static final float[] NEG_GOLD_GLOW = {0.85F, 0.04F, 0.05F, 0.26F};
+    private static final float[] NEG_GOLD_MID = {1.0F, 0.14F, 0.10F, 0.64F};
+    private static final float[] NEG_GOLD_CORE = {1.0F, 0.72F, 0.66F, 0.96F};
+    private static final float[] NEG_AMBER_GLOW = {0.60F, 0.02F, 0.04F, 0.22F};
+    private static final float[] NEG_AMBER_MID = {0.85F, 0.07F, 0.08F, 0.58F};
+    private static final float[] NEG_AMBER_CORE = {1.0F, 0.55F, 0.50F, 0.95F};
+    private static final float[] NEG_BLUE_GLOW = {0.90F, 0.10F, 0.15F, 0.24F};
+    private static final float[] NEG_BLUE_MID = {1.0F, 0.30F, 0.30F, 0.70F};
+    private static final float[] NEG_BLUE_CORE = {1.0F, 0.92F, 0.92F, 0.98F};
+
+    private static float[] pick(float[] positive, float[] negative) {
+        return negativeTheme ? negative : positive;
+    }
 
     public AccelerationPortalRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -67,6 +88,7 @@ public final class AccelerationPortalRenderer
             return;
         }
 
+        negativeTheme = portal.isNegative();
         float ticks = portal.getLevel().getGameTime() + partialTick;
         float t = ticks / 20.0F;
         float age = portal.createdAt() > 0L ? ticks - portal.createdAt() : 100.0F;
@@ -112,10 +134,20 @@ public final class AccelerationPortalRenderer
         poseStack.popPose();
 
         if (bufferSource instanceof MultiBufferSource.BufferSource buffers) {
-            buffers.endBatch(GLOW_TYPE);
-            buffers.endBatch(VORTEX_TYPE);
+            buffers.endBatch(GLOW_TYPE_POSITIVE);
+            buffers.endBatch(VORTEX_TYPE_POSITIVE);
+            buffers.endBatch(GLOW_TYPE_NEGATIVE);
+            buffers.endBatch(VORTEX_TYPE_NEGATIVE);
             buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
         }
+    }
+
+    private static RenderType vortexType() {
+        return negativeTheme ? VORTEX_TYPE_NEGATIVE : VORTEX_TYPE_POSITIVE;
+    }
+
+    private static RenderType glowType() {
+        return negativeTheme ? GLOW_TYPE_NEGATIVE : GLOW_TYPE_POSITIVE;
     }
 
     private static float smooth(float x) {
@@ -134,7 +166,7 @@ public final class AccelerationPortalRenderer
         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(t * 18.0F));
         Matrix4f matrix = poseStack.last().pose();
-        VertexConsumer consumer = bufferSource.getBuffer(GLOW_TYPE);
+        VertexConsumer consumer = bufferSource.getBuffer(glowType());
         float r = radius * 1.35F;
         quad(consumer, matrix, -r, -r, r, r, 0.0F, 1.0F, 1.0F, 1.0F,
                 (0.50F + 0.12F * pulse) * vis);
@@ -150,14 +182,15 @@ public final class AccelerationPortalRenderer
                 {0.74F, -0.03F, 26.0F, 0.55F, 0.80F, 0.90F, 1.0F},
                 {0.52F, 0.01F, -42.0F, 0.42F, 0.70F, 0.85F, 1.0F}
         };
-        VertexConsumer consumer = bufferSource.getBuffer(VORTEX_TYPE);
+        VertexConsumer consumer = bufferSource.getBuffer(vortexType());
         for (float[] layer : layers) {
             poseStack.pushPose();
             poseStack.mulPose(Axis.ZP.rotationDegrees(t * layer[2]));
             Matrix4f matrix = poseStack.last().pose();
             float size = radius * layer[0];
             quad(consumer, matrix, -size, -size, size, size, layer[1],
-                    layer[4], layer[5], layer[6], layer[3] * vis);
+                    negativeTheme ? 1.0F : layer[4], negativeTheme ? 1.0F : layer[5],
+                    negativeTheme ? 1.0F : layer[6], layer[3] * vis);
             poseStack.popPose();
         }
     }
@@ -192,9 +225,9 @@ public final class AccelerationPortalRenderer
             float alpha = vis * (0.70F + 0.30F * Mth.sin(t * 1.7F + i * 1.9F));
             FlashLightningRibbon.drawArc(consumer, matrix, camera, points,
                     0.17F * width, 0.072F * width, 0.024F * width,
-                    amber ? AMBER_GLOW : GOLD_GLOW,
-                    amber ? AMBER_MID : GOLD_MID,
-                    amber ? AMBER_CORE : GOLD_CORE, alpha);
+                    amber ? pick(POS_AMBER_GLOW, NEG_AMBER_GLOW) : pick(POS_GOLD_GLOW, NEG_GOLD_GLOW),
+                    amber ? pick(POS_AMBER_MID, NEG_AMBER_MID) : pick(POS_GOLD_MID, NEG_GOLD_MID),
+                    amber ? pick(POS_AMBER_CORE, NEG_AMBER_CORE) : pick(POS_GOLD_CORE, NEG_GOLD_CORE), alpha);
         }
 
         // Continuous thin circle: keeps the portal readable as a circle.
@@ -205,7 +238,7 @@ public final class AccelerationPortalRenderer
             circle.add(new Vec3(Math.cos(theta) * r, Math.sin(theta) * r, 0.02D));
         }
         FlashLightningRibbon.drawArc(consumer, matrix, camera, circle,
-                0.12F, 0.05F, 0.018F, GOLD_GLOW, GOLD_MID, GOLD_CORE,
+                0.12F, 0.05F, 0.018F, pick(POS_GOLD_GLOW, NEG_GOLD_GLOW), pick(POS_GOLD_MID, NEG_GOLD_MID), pick(POS_GOLD_CORE, NEG_GOLD_CORE),
                 vis * (0.80F + 0.20F * pulse));
     }
 
@@ -232,7 +265,7 @@ public final class AccelerationPortalRenderer
                 points.add(new Vec3(x * cosS - y * sinS, x * sinS + y * cosS, z));
             }
             FlashLightningRibbon.drawArc(consumer, matrix, camera, points,
-                    0.075F, 0.030F, 0.011F, GOLD_GLOW, GOLD_MID, GOLD_CORE,
+                    0.075F, 0.030F, 0.011F, pick(POS_GOLD_GLOW, NEG_GOLD_GLOW), pick(POS_GOLD_MID, NEG_GOLD_MID), pick(POS_GOLD_CORE, NEG_GOLD_CORE),
                     vis * 0.9F);
         }
     }
@@ -258,8 +291,8 @@ public final class AccelerationPortalRenderer
             float alpha = vis * 0.8F * Mth.sin((float) (flow * Math.PI));
             FlashLightningRibbon.drawArc(consumer, matrix, camera, points,
                     0.040F, 0.016F, 0.006F,
-                    gold ? GOLD_GLOW : BLUE_GLOW, gold ? GOLD_MID : BLUE_MID,
-                    gold ? GOLD_CORE : BLUE_CORE, alpha);
+                    gold ? pick(POS_GOLD_GLOW, NEG_GOLD_GLOW) : pick(POS_BLUE_GLOW, NEG_BLUE_GLOW), gold ? pick(POS_GOLD_MID, NEG_GOLD_MID) : pick(POS_BLUE_MID, NEG_BLUE_MID),
+                    gold ? pick(POS_GOLD_CORE, NEG_GOLD_CORE) : pick(POS_BLUE_CORE, NEG_BLUE_CORE), alpha);
         }
     }
 
@@ -320,8 +353,8 @@ public final class AccelerationPortalRenderer
         float widthMul = blue ? 1.0F : 1.15F;
         FlashLightningRibbon.drawArc(consumer, matrix, camera, points,
                 0.062F * scale * widthMul, 0.023F * scale * widthMul, 0.0085F * scale * widthMul,
-                blue ? BLUE_GLOW : GOLD_GLOW, blue ? BLUE_MID : GOLD_MID,
-                blue ? BLUE_CORE : GOLD_CORE, alpha);
+                blue ? pick(POS_BLUE_GLOW, NEG_BLUE_GLOW) : pick(POS_GOLD_GLOW, NEG_GOLD_GLOW), blue ? pick(POS_BLUE_MID, NEG_BLUE_MID) : pick(POS_GOLD_MID, NEG_GOLD_MID),
+                blue ? pick(POS_BLUE_CORE, NEG_BLUE_CORE) : pick(POS_GOLD_CORE, NEG_GOLD_CORE), alpha);
 
         if (depth > 0) {
             int branches = 1 + random.nextInt(2);

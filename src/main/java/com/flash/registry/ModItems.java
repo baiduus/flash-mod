@@ -1,7 +1,9 @@
 package com.flash.registry;
 
 import com.flash.FlashMod;
+import com.flash.item.FlashTooltipItem;
 import com.flash.item.PotionContainerItem;
+import com.flash.item.SyringeItem;
 import com.flash.item.TransformationChamberItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
@@ -30,6 +32,43 @@ public final class ModItems {
             "acceleration_crystal",
             () -> new net.minecraft.world.item.BlockItem(ModBlocks.ACCELERATION_CRYSTAL.get(),
                     new Item.Properties()));
+
+    public static final RegistryObject<Item> TACHYON_EXTRACTOR = ITEMS.register(
+            "tachyon_extractor",
+            () -> new net.minecraft.world.item.BlockItem(ModBlocks.TACHYON_EXTRACTOR.get(),
+                    new Item.Properties()));
+
+    public static final RegistryObject<Item> NEGATIVE_STONE = ITEMS.register(
+            "negative_stone",
+            () -> new net.minecraft.world.item.BlockItem(ModBlocks.NEGATIVE_STONE.get(),
+                    new Item.Properties()));
+
+    public static final RegistryObject<Item> NEGATIVE_CRYSTAL = ITEMS.register(
+            "negative_crystal",
+            () -> new net.minecraft.world.item.BlockItem(ModBlocks.NEGATIVE_CRYSTAL.get(),
+                    new Item.Properties()));
+
+    public static final RegistryObject<Item> TORN_SUIT = ITEMS.register(
+            "torn_suit",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(1),
+                    "tooltip.flash.torn_suit", "tooltip.flash.torn_suit.2"));
+
+    public static final RegistryObject<Item> TACHYON = ITEMS.register(
+            "tachyon",
+            () -> new FlashTooltipItem(new Item.Properties(), "tooltip.flash.tachyon"));
+
+    public static final RegistryObject<Item> CORRUPTED_MATTER = ITEMS.register(
+            "corrupted_matter",
+            () -> new FlashTooltipItem(new Item.Properties(), "tooltip.flash.corrupted_matter"));
+
+    public static final RegistryObject<Item> NEGATIVE_CAPSULE = ITEMS.register(
+            "negative_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16),
+                    "tooltip.flash.negative_capsule"));
+
+    public static final RegistryObject<Item> SYRINGE = ITEMS.register(
+            "syringe",
+            () -> new SyringeItem(new Item.Properties().stacksTo(1)));
 
     private ModItems() {
     }

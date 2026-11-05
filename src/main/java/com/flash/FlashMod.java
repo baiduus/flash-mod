@@ -41,5 +41,7 @@ public final class FlashMod {
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModMenus.MENUS.register(modBus);
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modBus);
+        com.flash.registry.ModStructures.STRUCTURE_TYPES.register(modBus);
+        com.flash.registry.ModStructures.PIECE_TYPES.register(modBus);
     }
 }

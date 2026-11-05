@@ -43,6 +43,10 @@ public final class FlashLightningRibbon {
     private static final float[] BOLT_ORANGE = {1.0F, 0.42F, 0.04F};
     private static final float[] BOLT_YELLOW = {1.0F, 0.88F, 0.16F};
     private static final float[] BOLT_WHITE = {1.0F, 0.97F, 0.70F};
+    /** Negative Acceleration Force: dark red at the base, bright red at the tip. */
+    private static final float[] BOLT_RED_DARK = {0.62F, 0.02F, 0.03F};
+    private static final float[] BOLT_RED_BRIGHT = {1.0F, 0.14F, 0.10F};
+    private static final float[] BOLT_RED_WHITE = {1.0F, 0.66F, 0.60F};
 
     private FlashLightningRibbon() {
     }
@@ -53,16 +57,26 @@ public final class FlashLightningRibbon {
      */
     public static void drawBolt(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
                                 List<Vec3> points, float width, float alpha) {
+        drawBolt(consumer, matrix, cameraPos, points, width, alpha, false);
+    }
+
+    /** Same bolt, red instead of orange / yellow when {@code negative} is set. */
+    public static void drawBolt(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
+                                List<Vec3> points, float width, float alpha, boolean negative) {
         if (alpha <= 0.001F || points.size() < 2) {
             return;
         }
-        drawGradientPass(consumer, matrix, cameraPos, points, width * 2.4F, 0.0F, 0.22F * alpha);
-        drawGradientPass(consumer, matrix, cameraPos, points, width, 0.0F, 0.60F * alpha);
-        drawGradientPass(consumer, matrix, cameraPos, points, width * 0.38F, 0.65F, 0.95F * alpha);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 2.4F, 0.0F, 0.22F * alpha, negative);
+        drawGradientPass(consumer, matrix, cameraPos, points, width, 0.0F, 0.60F * alpha, negative);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 0.38F, 0.65F, 0.95F * alpha, negative);
     }
 
     private static void drawGradientPass(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
-                                         List<Vec3> points, float width, float whiten, float alpha) {
+                                         List<Vec3> points, float width, float whiten, float alpha,
+                                         boolean negative) {
+        float[] from = negative ? BOLT_RED_DARK : BOLT_ORANGE;
+        float[] to = negative ? BOLT_RED_BRIGHT : BOLT_YELLOW;
+        float[] white = negative ? BOLT_RED_WHITE : BOLT_WHITE;
         int n = points.size();
         for (int i = 1; i < n; i++) {
             Vec3 start = points.get(i - 1);
@@ -74,9 +88,9 @@ public final class FlashLightningRibbon {
             }
             side = side.normalize().scale(width);
             float t = (i - 0.5F) / (n - 1);
-            float red = mix(mix(BOLT_ORANGE[0], BOLT_YELLOW[0], t), BOLT_WHITE[0], whiten);
-            float green = mix(mix(BOLT_ORANGE[1], BOLT_YELLOW[1], t), BOLT_WHITE[1], whiten);
-            float blue = mix(mix(BOLT_ORANGE[2], BOLT_YELLOW[2], t), BOLT_WHITE[2], whiten);
+            float red = mix(mix(from[0], to[0], t), white[0], whiten);
+            float green = mix(mix(from[1], to[1], t), white[1], whiten);
+            float blue = mix(mix(from[2], to[2], t), white[2], whiten);
 
             vertex(consumer, matrix, start.add(side), red, green, blue, alpha, 0.0F, 0.0F);
             vertex(consumer, matrix, start.subtract(side), red, green, blue, alpha, 1.0F, 0.0F);

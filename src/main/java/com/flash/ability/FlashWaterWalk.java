@@ -27,7 +27,7 @@ import net.minecraft.world.phys.Vec3;
  * column, the player is placed exactly on it and flagged as standing on the
  * ground. Because the feet never enter the water, vanilla walking physics apply
  * (full speed, normal jumps, no drag) and client and server never disagree, so
- * there is no rubber banding. Sneaking lets the player sink and dive.</p>
+ * there is no rubber banding. Sneaking, or standing still, lets the player sink and dive.</p>
  */
 public final class FlashWaterWalk {
 
@@ -47,6 +47,12 @@ public final class FlashWaterWalk {
         if (player.isSpectator() || player.isPassenger() || player.isShiftKeyDown()
                 || player.getAbilities().flying || player.noPhysics || player.isFallFlying()
                 || player.isEyeInFluid(FluidTags.WATER)) {
+            return false;
+        }
+        // Only while moving: standing still, the player sinks like in vanilla.
+        double dx = player.getX() - player.xo;
+        double dz = player.getZ() - player.zo;
+        if (dx * dx + dz * dz < 0.0009D) {
             return false;
         }
         double top = surface(player);

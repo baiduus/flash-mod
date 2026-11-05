@@ -104,6 +104,15 @@ public final class FlashCommands {
                                         .executes(context -> cooldowns(context.getSource(),
                                                 EntityArgument.getPlayer(context, "target"),
                                                 BoolArgumentType.getBool(context, "value"))))))
+                .then(Commands.literal("negative")
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                .executes(context -> negative(context.getSource(),
+                                        context.getSource().getPlayerOrException(),
+                                        BoolArgumentType.getBool(context, "value")))
+                                .then(Commands.argument("target", EntityArgument.player())
+                                        .executes(context -> negative(context.getSource(),
+                                                EntityArgument.getPlayer(context, "target"),
+                                                BoolArgumentType.getBool(context, "value"))))))
                 .then(Commands.literal("status")
                         .executes(context -> status(context.getSource(), context.getSource().getPlayerOrException()))
                         .then(Commands.argument("target", EntityArgument.player())
@@ -115,6 +124,24 @@ public final class FlashCommands {
         FlashAbilityManager.setCooldownsEnabled(target, enabled);
         source.sendSuccess(() -> Component.translatable(
                 enabled ? "commands.flash.cooldowns.on" : "commands.flash.cooldowns.off",
+                target.getDisplayName()), true);
+        return 1;
+    }
+
+    /** Test helper: gives or removes the Negative Acceleration Force (level kept). */
+    private static int negative(CommandSourceStack source, ServerPlayer target, boolean enabled) {
+        if (enabled) {
+            FlashPowers.grantNegative(target);
+        } else {
+            FlashPowers.setNegative(target, false);
+        }
+        FlashSpeed.apply(target);
+        FlashStep.apply(target);
+        FlashStatusEffects.onLevelChanged(target);
+        FlashSyncPacket.send(target);
+        FlashVisualSyncPacket.send(target);
+        source.sendSuccess(() -> Component.translatable(
+                enabled ? "commands.flash.negative.on" : "commands.flash.negative.off",
                 target.getDisplayName()), true);
         return 1;
     }

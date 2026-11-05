@@ -74,7 +74,7 @@ public final class FlashTrailLightningRenderer {
                         continue;
                     }
                     List<Vec3> segment = List.of(older.position(), newer.position());
-                    FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, segment, width, fade);
+                    FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, segment, width, fade, state.negative);
 
                     // Small spark off the trail now and then.
                     if (i >= 2 && i % 4 == 0) {
@@ -87,7 +87,7 @@ public final class FlashTrailLightningRenderer {
                                     older.position(), random, now,
                                     random.nextDouble() * Mth.TWO_PI);
                             FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, branch,
-                                    width * 0.6F, fade);
+                                    width * 0.6F, fade, state.negative);
                         }
                     }
                 }

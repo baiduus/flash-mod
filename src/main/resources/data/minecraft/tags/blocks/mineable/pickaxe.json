@@ -1,11 +1,14 @@
 {
-  "replace": false,
-  "values": [
-    "flash:transformation_chamber",
-    "flash:potion_container",
-    "flash:acceleration_stone",
-    "flash:acceleration_crystal",
-    "flash:transformation_chamber_part",
-    "flash:potion_container_part"
-  ]
+ "replace": false,
+ "values": [
+  "flash:transformation_chamber",
+  "flash:potion_container",
+  "flash:acceleration_stone",
+  "flash:acceleration_crystal",
+  "flash:transformation_chamber_part",
+  "flash:potion_container_part",
+  "flash:tachyon_extractor",
+  "flash:negative_stone",
+  "flash:negative_crystal"
+ ]
 }

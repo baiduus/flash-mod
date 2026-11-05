@@ -1,0 +1,11 @@
+{
+  "type": "flash:negative_acceleration_force",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "flash:negative_acceleration_force",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "flash:negative_acceleration_force"
+    }
+  }
+}
