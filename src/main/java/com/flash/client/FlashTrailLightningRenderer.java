@@ -61,8 +61,9 @@ public final class FlashTrailLightningRenderer {
                     continue;
                 }
 
-                float widthScale = 1.42F + state.level * 0.025F;
-                for (int i = 1; i < points.size(); i++) {
+                float width = 0.0105F + state.level * 0.0004F;
+                int count = points.size();
+                for (int i = 1; i < count; i++) {
                     FlashTrailTracker.TrailPoint older = points.get(i - 1);
                     FlashTrailTracker.TrailPoint newer = points.get(i);
                     float age = now - older.createdAt();
@@ -72,39 +73,21 @@ public final class FlashTrailLightningRenderer {
                     if (fade <= 0.01F) {
                         continue;
                     }
-                    fade = Math.min(1.0F, fade * 1.12F);
-
                     List<Vec3> segment = List.of(older.position(), newer.position());
-                    FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, segment,
-                            FlashLightningRibbon.BODY_GLOW_WIDTH * widthScale,
-                            FlashLightningRibbon.BODY_MID_WIDTH * widthScale,
-                            FlashLightningRibbon.BODY_CORE_WIDTH * widthScale,
-                            fade);
+                    FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, segment, width, fade);
 
-                    if (i >= 2 && i % 3 == 0) {
-                        RandomSource branchRandom = RandomSource.create(
+                    // Small spark off the trail now and then.
+                    if (i >= 2 && i % 4 == 0) {
+                        RandomSource random = RandomSource.create(
                                 state.seed
                                         ^ (stream.lane * 0x9E3779B97F4A7C15L)
                                         ^ (older.createdAt() * 0x632BE59BD9B4E019L));
-                        if (branchRandom.nextFloat() < 0.82F) {
+                        if (random.nextFloat() < 0.55F) {
                             List<Vec3> branch = FlashLightningRibbon.buildBranch(
-                                    older.position(), branchRandom, now,
-                                    branchRandom.nextDouble() * Mth.TWO_PI);
-                            FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, branch,
-                                    FlashLightningRibbon.BRANCH_GLOW_WIDTH * widthScale * 1.25F,
-                                    FlashLightningRibbon.BRANCH_MID_WIDTH * widthScale * 1.25F,
-                                    FlashLightningRibbon.BRANCH_CORE_WIDTH * widthScale * 1.25F,
-                                    fade);
-                            if (branchRandom.nextFloat() < 0.35F) {
-                                List<Vec3> secondary = FlashLightningRibbon.buildBranch(
-                                        older.position(), branchRandom, now,
-                                        branchRandom.nextDouble() * Mth.TWO_PI);
-                                FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, secondary,
-                                        FlashLightningRibbon.BRANCH_GLOW_WIDTH * widthScale,
-                                        FlashLightningRibbon.BRANCH_MID_WIDTH * widthScale,
-                                        FlashLightningRibbon.BRANCH_CORE_WIDTH * widthScale,
-                                        fade);
-                            }
+                                    older.position(), random, now,
+                                    random.nextDouble() * Mth.TWO_PI);
+                            FlashLightningRibbon.drawBolt(consumer, matrix, cameraPos, branch,
+                                    width * 0.6F, fade);
                         }
                     }
                 }

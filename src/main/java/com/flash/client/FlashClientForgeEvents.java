@@ -1,7 +1,6 @@
 package com.flash.client;
 
 import com.flash.FlashMod;
-import com.flash.ability.FlashAbility;
 import com.flash.config.FlashClientConfig;
 import com.flash.network.FlashNetwork;
 import com.flash.network.FlashSelectLevelPacket;
@@ -10,7 +9,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -42,22 +40,7 @@ public final class FlashClientForgeEvents {
 
         FlashClientData.tick();
         FlashAbilityKeys.tick();
-        boolean phasing = FlashClientData.isAbilityActive(FlashAbility.PHASING.ordinal());
-        minecraft.player.noPhysics = phasing;
-        minecraft.player.setNoGravity(phasing);
-        if (phasing) {
-            // Keep the player's own horizontal momentum and only replace the
-            // vertical component. No residual upward drift, no slowdown.
-            Vec3 motion = minecraft.player.getDeltaMovement();
-            double vertical = 0.0D;
-            if (minecraft.player.isShiftKeyDown() || minecraft.player.getXRot() > 40.0F) {
-                vertical = -0.16D;
-            } else if (minecraft.player.getXRot() < -40.0F) {
-                vertical = 0.16D;
-            }
-            minecraft.player.setDeltaMovement(motion.x, vertical, motion.z);
-            minecraft.player.hasImpulse = true;
-        }
+
 
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
         boolean decrease = drain(FlashKeys.DECREASE_SPEED);
@@ -144,5 +127,6 @@ public final class FlashClientForgeEvents {
         }
         FlashClientData.reset();
         FlashClientVisualLevels.reset();
+        FlashRunAnimation.reset();
     }
 }

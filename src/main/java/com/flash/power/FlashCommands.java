@@ -95,11 +95,28 @@ public final class FlashCommands {
                                         .executes(context -> castAbility(context.getSource(),
                                                 EntityArgument.getPlayer(context, "target"),
                                                 IntegerArgumentType.getInteger(context, "ability"))))))
+                .then(Commands.literal("cooldowns")
+                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                .executes(context -> cooldowns(context.getSource(),
+                                        context.getSource().getPlayerOrException(),
+                                        BoolArgumentType.getBool(context, "value")))
+                                .then(Commands.argument("target", EntityArgument.player())
+                                        .executes(context -> cooldowns(context.getSource(),
+                                                EntityArgument.getPlayer(context, "target"),
+                                                BoolArgumentType.getBool(context, "value"))))))
                 .then(Commands.literal("status")
                         .executes(context -> status(context.getSource(), context.getSource().getPlayerOrException()))
                         .then(Commands.argument("target", EntityArgument.player())
                                 .executes(context -> status(context.getSource(),
                                         EntityArgument.getPlayer(context, "target"))))));
+    }
+
+    private static int cooldowns(CommandSourceStack source, ServerPlayer target, boolean enabled) {
+        FlashAbilityManager.setCooldownsEnabled(target, enabled);
+        source.sendSuccess(() -> Component.translatable(
+                enabled ? "commands.flash.cooldowns.on" : "commands.flash.cooldowns.off",
+                target.getDisplayName()), true);
+        return 1;
     }
 
     private static int destroyBlocks(CommandSourceStack source, ServerPlayer target, boolean enabled) {

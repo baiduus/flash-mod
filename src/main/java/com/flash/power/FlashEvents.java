@@ -82,7 +82,8 @@ public final class FlashEvents {
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            FlashVisualSyncPacket.send(player, FlashSpeedLevels.MIN_LEVEL);
+            com.flash.ability.FlashWaterWalk.release(player);
+            FlashVisualSyncPacket.send(player, 0);
             resetTransient(player);
         }
     }

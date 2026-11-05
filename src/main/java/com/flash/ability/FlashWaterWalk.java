@@ -1,108 +1,138 @@
 package com.flash.ability;
 
 import com.flash.power.FlashPowers;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Passive level 3+ water running.
+ * Passive level 3+ water running, rebuilt.
  *
- * <p>Instead of only giving a tiny upward push when the player is already
- * submerged, the code now finds the top of the water column and keeps the
- * player's feet at that surface. The player can stand still on the water,
- * run across it and jump normally. Sneaking deliberately lets the player sink
- * so this does not remove the ability to dive.</p>
+ * <p>The old version teleported the player from the server every tick, which
+ * fought the client's own swimming physics and felt slow and jittery. The new
+ * method treats the water surface as solid ground, and does it on <b>both</b>
+ * sides with the same deterministic rule, once at the end of every player tick:
+ * if the feet are at (or just below) the real surface height of the water
+ * column, the player is placed exactly on it and flagged as standing on the
+ * ground. Because the feet never enter the water, vanilla walking physics apply
+ * (full speed, normal jumps, no drag) and client and server never disagree, so
+ * there is no rubber banding. Sneaking lets the player sink and dive.</p>
  */
 public final class FlashWaterWalk {
+
+    /** Players for whom the server temporarily allowed "flying" so the anti-fly kick ignores water walking. */
+    private static final Set<UUID> FLY_GRANTED = ConcurrentHashMap.newKeySet();
 
     private FlashWaterWalk() {
     }
 
-    public static void tick(ServerPlayer player) {
-        if (!FlashPowers.hasPowers(player)
-                || FlashPowers.getSelectedLevel(player) < 3
-                || player.isSpectator()
-                || player.isPassenger()
-                || player.isShiftKeyDown()
-                || FlashAbilityManager.isPhasing(player)) {
-            return;
+    /**
+     * Shared rule, called at the end of the player tick on the client (local
+     * player) and on the server.
+     *
+     * @return true when the player was placed on the water surface
+     */
+    public static boolean walk(Player player) {
+        if (player.isSpectator() || player.isPassenger() || player.isShiftKeyDown()
+                || player.getAbilities().flying || player.noPhysics || player.isFallFlying()
+                || player.isEyeInFluid(FluidTags.WATER)) {
+            return false;
         }
-
-        double surface = waterSurface(player);
-        if (Double.isNaN(surface)) {
-            return;
+        double top = surface(player);
+        if (Double.isNaN(top)) {
+            return false;
         }
-
         double feet = player.getY();
-        if (feet < surface - 0.05D) {
-            // Correct the vertical position on the server instead of sending a
-            // velocity packet. A velocity packet would carry the server's
-            // stale horizontal motion and make running on water feel slow.
-            player.connection.teleport(player.getX(), surface, player.getZ(),
-                    player.getYRot(), player.getXRot());
-            player.setDeltaMovement(Vec3.ZERO);
-            player.hasImpulse = true;
-            player.fallDistance = 0.0F;
-        } else if (feet <= surface + 0.18D) {
-            player.fallDistance = 0.0F;
+        if (feet > top + 0.05D) {
+            return false;
+        }
+        // Deep entry (e.g. a fall): rise quickly instead of popping up at once.
+        double target = feet < top - 0.3D ? Math.min(top, feet + 0.3D) : top;
+        player.setPos(player.getX(), target, player.getZ());
+        Vec3 motion = player.getDeltaMovement();
+        player.setDeltaMovement(motion.x, 0.0D, motion.z);
+        if (target >= top) {
+            player.setOnGround(true);
+        }
+        player.fallDistance = 0.0F;
+        return true;
+    }
+
+    /** Server side: rule, anti-fly allowance, particles and sound. */
+    public static void tick(ServerPlayer player) {
+        boolean allowed = FlashPowers.hasPowers(player)
+                && FlashPowers.getSelectedLevel(player) >= 3
+                && !FlashAbilityManager.isPhasing(player);
+        boolean walked = allowed && walk(player);
+        if (!walked) {
+            release(player);
+            return;
         }
 
-        if (player.tickCount % 3 == 0) {
+        // The server's "flying is not enabled" check would kick a player who
+        // stands on water for four seconds; allow it only while walking.
+        if (!player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = true;
+            FLY_GRANTED.add(player.getUUID());
+        }
+
+        Vec3 motion = player.getDeltaMovement();
+        boolean moving = motion.x * motion.x + motion.z * motion.z > 0.0036D;
+        if (moving && player.tickCount % 3 == 0) {
             ServerLevel level = (ServerLevel) player.level();
             level.sendParticles(ParticleTypes.SPLASH,
-                    player.getX(), surface + 0.04D, player.getZ(),
-                    4, 0.28D, 0.05D, 0.28D, 0.08D);
+                    player.getX(), player.getY() + 0.05D, player.getZ(),
+                    3, 0.25D, 0.03D, 0.25D, 0.06D);
             level.sendParticles(ParticleTypes.CLOUD,
-                    player.getX(), surface + 0.02D, player.getZ(),
-                    2, 0.22D, 0.02D, 0.22D, 0.01D);
+                    player.getX(), player.getY() + 0.03D, player.getZ(),
+                    1, 0.2D, 0.01D, 0.2D, 0.01D);
         }
-        if (player.tickCount % 12 == 0) {
-            ServerLevel level = (ServerLevel) player.level();
-            level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.PLAYER_SPLASH, SoundSource.PLAYERS, 0.35F, 1.5F);
+        if (moving && player.tickCount % 10 == 0) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.PLAYER_SPLASH, SoundSource.PLAYERS, 0.25F, 1.6F);
+        }
+    }
+
+    /** Takes back the temporary flight allowance. Safe to call at any time. */
+    public static void release(ServerPlayer player) {
+        if (FLY_GRANTED.remove(player.getUUID()) && !player.isCreative() && !player.isSpectator()) {
+            player.getAbilities().mayfly = false;
         }
     }
 
     /**
-     * @return the Y coordinate of the top face of the highest water block at
-     *         the player's column, or NaN when the player is not in/on water.
+     * Y of the real water surface under the player's feet (block Y + fluid
+     * height), or NaN when the feet are not at/in a water column.
      */
-    private static double waterSurface(ServerPlayer player) {
-        BlockPos feet = BlockPos.containing(player.getX(), player.getY(), player.getZ());
-        FluidState feetFluid = player.level().getFluidState(feet);
-        FluidState belowFluid = player.level().getFluidState(feet.below());
-        boolean inWater = feetFluid.is(Fluids.WATER) || belowFluid.is(Fluids.WATER);
-        if (!inWater) {
-            // A player standing exactly on the surface is not "in water", but
-            // the block below is; accept that case as well.
-            if (!belowFluid.is(Fluids.WATER)) {
+    private static double surface(Player player) {
+        Level level = player.level();
+        int x = (int) Math.floor(player.getX());
+        int z = (int) Math.floor(player.getZ());
+        double feet = player.getY();
+        BlockPos cell = new BlockPos(x, (int) Math.floor(feet + 0.15D), z);
+
+        if (!level.getFluidState(cell).is(FluidTags.WATER)) {
+            // Feet slightly above the surface: look at the cell right below.
+            cell = cell.below();
+            if (!level.getFluidState(cell).is(FluidTags.WATER)) {
                 return Double.NaN;
             }
         }
-
-        int top = feet.getY();
-        for (int dy = 0; dy <= 6; dy++) {
-            BlockPos pos = feet.above(dy);
-            if (player.level().getFluidState(pos).is(Fluids.WATER)) {
-                top = pos.getY();
-            } else if (dy > 0) {
-                break;
-            }
+        for (int i = 0; i < 4 && level.getFluidState(cell.above()).is(FluidTags.WATER); i++) {
+            cell = cell.above();
         }
-
-        double surface = top + 1.0D;
-        // Only treat it as walkable water when the player is close to the
-        // surface; otherwise the player is diving and normal swimming applies.
-        if (player.getY() > surface + 0.6D || player.getY() < surface - 3.2D) {
-            return Double.NaN;
-        }
-        return surface;
+        FluidState fluid = level.getFluidState(cell);
+        return cell.getY() + fluid.getHeight(level, cell);
     }
 }

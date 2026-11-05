@@ -1,139 +1,27 @@
 package com.flash.client;
 
 import com.flash.ability.FlashAbility;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /**
- * Bottom-right ability panel.
- *
- * <p>Only permanently unlocked abilities are shown. Each slot has a small
- * pixel-art icon, a green indicator when the ability is ready, a gold border
- * while it is active and a dark fill plus the remaining seconds while it is on
- * cooldown. Cooldowns come from the server snapshot, so the panel matches the
- * real cooldown used by {@code FlashAbilityManager}.</p>
+ * Bottom-right ability list: one row per unlocked ability with a gradient
+ * (orange to yellow) bar on the left, the name and the key in a small box on
+ * the right. A row darkens and shows the remaining seconds while cooling down
+ * and lights up while the ability is active. The first row is the speed
+ * control. Cooldowns come from the server snapshot.
  */
 public final class FlashAbilityHud implements IGuiOverlay {
 
-    private static final int CELL = 24;
-    private static final int GAP = 3;
-    private static final int COLUMNS = 2;
-
-    private static final int COLOR_BORDER = 0xFF2B3038;
-    private static final int COLOR_BG = 0xC00A0C10;
-    private static final int COLOR_SLOT = 0xFF101418;
-    private static final int COLOR_READY = 0xFF35D06A;
-    private static final int COLOR_ACTIVE = 0xFFFFD24A;
-    private static final int COLOR_COOLING = 0xFF4A525D;
-    private static final int COLOR_TEXT = 0xFFF2F5F7;
-
-    /**
-     * 9x9 pixel-art icons. Index matches {@link FlashAbility#ordinal()}.
-     */
-    private static final String[][] ICONS = {
-            {   // BARRAGE - fist
-                    "..#####..",
-                    ".#######.",
-                    ".#.#.#.#.",
-                    ".#######.",
-                    ".#######.",
-                    ".#######.",
-                    "..#####..",
-                    "...###...",
-                    "........."
-            },
-            {   // WIND_HANDS - spiral
-                    "..#####..",
-                    ".##...##.",
-                    "##..#..##",
-                    "#..###..#",
-                    "#.##.#..#",
-                    "#..###..#",
-                    "##..#..##",
-                    ".##...##.",
-                    "..#####.."
-            },
-            {   // PHASING - ghost / vibrating body
-                    "...###...",
-                    "..#####..",
-                    "..#####..",
-                    "...###...",
-                    "..#.#.#..",
-                    ".#######.",
-                    "..#.#.#..",
-                    "..#...#..",
-                    "..#...#.."
-            },
-            {   // SPEED_TORNADO - funnel
-                    "#########",
-                    ".#######.",
-                    "..#####..",
-                    "...###...",
-                    "..#####..",
-                    "...###...",
-                    "....#....",
-                    "...###...",
-                    "....#...."
-            },
-            {   // LIGHTNING_STRIKE - bolt
-                    "....##...",
-                    "...##....",
-                    "..##.....",
-                    ".######..",
-                    "...##....",
-                    "..##.....",
-                    ".##......",
-                    ".#.......",
-                    "........."
-            },
-            {   // MASS_PUNCH - impact star
-                    "....#....",
-                    ".#..#..#.",
-                    "..#.#.#..",
-                    "...###...",
-                    "#########",
-                    "...###...",
-                    "..#.#.#..",
-                    ".#..#..#.",
-                    "....#...."
-            },
-            {   // SPEED_MANIPULATION - two linked figures
-                    ".##...##.",
-                    "#..#.#..#",
-                    "#...#...#",
-                    "#..#.#..#",
-                    ".##...##.",
-                    ".........",
-                    "..#...#..",
-                    "...#.#...",
-                    "....#...."
-            },
-            {   // ACCELERATION_FORCE - portal ring
-                    "...###...",
-                    ".##...##.",
-                    "#...#...#",
-                    "#..###..#",
-                    "#..#.#..#",
-                    "#..###..#",
-                    "#...#...#",
-                    ".##...##.",
-                    "...###..."
-            }
-    };
-
-    private static final int[] ICON_COLORS = {
-            0xFFFFC83A, // barrage
-            0xFFFFE58A, // wind
-            0xFFB388FF, // phasing
-            0xFFFFB03A, // tornado
-            0xFFFFF07A, // lightning
-            0xFFFF7A3D, // mass punch
-            0xFF5BD6FF, // speed manipulation
-            0xFFFFD24A  // acceleration force
-    };
+    private static final int ROW_HEIGHT = 14;
+    private static final int ROW_GAP = 2;
+    private static final int MIN_WIDTH = 118;
+    private static final int MARGIN = 6;
 
     @Override
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
@@ -145,114 +33,106 @@ public final class FlashAbilityHud implements IGuiOverlay {
                 || !FlashClientData.hasPowers()) {
             return;
         }
-
         int maxLevel = FlashClientData.getMaxLevel();
         if (maxLevel < 1) {
             return;
         }
 
-        int unlocked = 0;
+        Font font = minecraft.font;
+        int rows = 1;
+        int panelWidth = MIN_WIDTH;
+        panelWidth = Math.max(panelWidth, rowWidth(font,
+                Component.translatable("hud.flash.speed").getString(), keyLabel(FlashKeys.INCREASE_SPEED)));
         for (FlashAbility ability : FlashAbility.values()) {
             if (ability.requiredLevel() <= maxLevel) {
-                unlocked++;
+                rows++;
+                panelWidth = Math.max(panelWidth, rowWidth(font,
+                        ability.displayName().getString(), keyLabel(FlashAbilityKeys.mapping(ability))));
             }
         }
-        if (unlocked == 0) {
+
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - rows * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        if (x < 4 || y < 4) {
             return;
         }
 
-        int rows = (unlocked + COLUMNS - 1) / COLUMNS;
-        int panelWidth = COLUMNS * CELL + (COLUMNS - 1) * GAP + 10;
-        int panelHeight = rows * CELL + (rows - 1) * GAP + 22;
-        int x = width - panelWidth - 6;
-        int y = height - 22 - panelHeight - 4;
-        if (x < 4) {
-            return;
-        }
-        if (y < 4) {
-            y = 4;
-        }
+        drawRow(graphics, font, x, y, panelWidth,
+                Component.translatable("hud.flash.speed").getString(),
+                keyLabel(FlashKeys.INCREASE_SPEED), 0, 1, false);
+        y += ROW_HEIGHT + ROW_GAP;
 
-        graphics.fill(x, y, x + panelWidth, y + panelHeight, COLOR_BG);
-        graphics.fill(x, y, x + panelWidth, y + 1, COLOR_BORDER);
-        graphics.fill(x, y + panelHeight - 1, x + panelWidth, y + panelHeight, COLOR_BORDER);
-        graphics.fill(x, y, x + 1, y + panelHeight, COLOR_BORDER);
-        graphics.fill(x + panelWidth - 1, y, x + panelWidth, y + panelHeight, COLOR_BORDER);
-        graphics.fill(x + 1, y + 1, x + panelWidth - 1, y + 2, 0x66FFD24A);
-
-        String header = Component.translatable("hud.flash.abilities").getString();
-        graphics.drawString(minecraft.font, header, x + 5, y + 5, COLOR_TEXT, false);
-
-        int index = 0;
         for (FlashAbility ability : FlashAbility.values()) {
             if (ability.requiredLevel() > maxLevel) {
                 continue;
             }
-            int column = index % COLUMNS;
-            int row = index / COLUMNS;
-            index++;
-
-            int cellX = x + 5 + column * (CELL + GAP);
-            int cellY = y + 15 + row * (CELL + GAP);
             int cooldown = FlashClientData.getAbilityCooldown(ability.ordinal());
             boolean active = FlashClientData.isAbilityActive(ability.ordinal());
-            boolean ready = cooldown <= 0 && !active;
-
-            int border = active ? COLOR_ACTIVE : ready ? COLOR_READY : COLOR_COOLING;
-            graphics.fill(cellX, cellY, cellX + CELL, cellY + CELL, border);
-            graphics.fill(cellX + 1, cellY + 1, cellX + CELL - 1,
-                    cellY + CELL - 1, COLOR_SLOT);
-
-            int iconColor = ICON_COLORS[ability.ordinal() % ICON_COLORS.length];
-            drawIcon(graphics, ability, cellX + 3, cellY + 3, 2, iconColor);
-
-            if (cooldown > 0) {
-                int total = Math.max(1, ability.cooldownTicks());
-                float remaining = Math.min(1.0F, cooldown / (float) total);
-                int overlay = Math.max(1, Math.round((CELL - 2) * remaining));
-                graphics.fill(cellX + 1, cellY + CELL - 1 - overlay,
-                        cellX + CELL - 1, cellY + CELL - 1, 0xB4000000);
-
-                int seconds = (cooldown + 19) / 20;
-                String text = seconds + "s";
-                int textWidth = minecraft.font.width(text);
-                if (textWidth > CELL - 2) {
-                    text = Integer.toString(seconds);
-                    textWidth = minecraft.font.width(text);
-                }
-                graphics.drawString(minecraft.font, text,
-                        cellX + (CELL - textWidth) / 2,
-                        cellY + (CELL - 8) / 2,
-                        COLOR_ACTIVE, true);
-            }
-
-            if (ready) {
-                graphics.fill(cellX + CELL - 5, cellY + 3,
-                        cellX + CELL - 3, cellY + 5, COLOR_READY);
-            } else if (active) {
-                graphics.fill(cellX + 3, cellY + CELL - 3,
-                        cellX + CELL - 3, cellY + CELL - 2, COLOR_ACTIVE);
-            }
-
-            // Undimmed icon on the active slot.
-            if (active) {
-                drawIcon(graphics, ability, cellX + 3, cellY + 3, 2, 0xFFFFFFFF);
-            }
+            drawRow(graphics, font, x, y, panelWidth, ability.displayName().getString(),
+                    keyLabel(FlashAbilityKeys.mapping(ability)),
+                    cooldown, Math.max(1, ability.cooldownTicks()), active);
+            y += ROW_HEIGHT + ROW_GAP;
         }
     }
 
-    private static void drawIcon(GuiGraphics graphics, FlashAbility ability,
-                                 int x, int y, int scale, int color) {
-        String[] pattern = ICONS[ability.ordinal() % ICONS.length];
-        for (int row = 0; row < pattern.length; row++) {
-            String line = pattern[row];
-            for (int column = 0; column < line.length(); column++) {
-                if (line.charAt(column) == '.') {
-                    continue;
-                }
-                graphics.fill(x + column * scale, y + row * scale,
-                        x + (column + 1) * scale, y + (row + 1) * scale, color);
-            }
+    private static int rowWidth(Font font, String name, String key) {
+        return 8 + font.width(name) + 10 + keyBoxWidth(font, key) + 4;
+    }
+
+    private static int keyBoxWidth(Font font, String key) {
+        return Math.max(14, font.width(key) + 8);
+    }
+
+    private static String keyLabel(KeyMapping mapping) {
+        if (mapping == null || mapping.isUnbound()) {
+            return "-";
         }
+        String label = mapping.getTranslatedKeyMessage().getString();
+        return label.length() > 6 ? label.substring(0, 6) : label.toUpperCase();
+    }
+
+    private static void drawRow(GuiGraphics g, Font font, int x, int y, int w, String name,
+                                String key, int cooldown, int cooldownTotal, boolean active) {
+        boolean cooling = cooldown > 0;
+        g.fill(x, y, x + w, y + ROW_HEIGHT, FlashHudStyle.PANEL);
+
+        // Gradient bar on the left edge (dimmed while cooling down).
+        FlashHudStyle.barVertical(g, x, y, 3, ROW_HEIGHT);
+        if (cooling) {
+            g.fill(x, y, x + 3, y + ROW_HEIGHT, 0xA0000000);
+        }
+
+        // Cooldown fill: dark block that shrinks as time passes.
+        if (cooling) {
+            float remaining = Math.min(1.0F, cooldown / (float) cooldownTotal);
+            int fill = Math.max(1, Math.round((w - 3) * remaining));
+            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, 0x90301000);
+        }
+        if (active) {
+            FlashHudStyle.barHorizontal(g, x + 3, y + ROW_HEIGHT - 2, w - 3, 2);
+        }
+
+        int textY = y + (ROW_HEIGHT - 8) / 2;
+        if (active) {
+            FlashHudStyle.gradientText(g, font, name, x + 8, textY);
+        } else {
+            g.drawString(font, name, x + 8, textY,
+                    cooling ? 0xFF8C8279 : FlashHudStyle.WHITE, true);
+        }
+
+        // Key box.
+        String label = cooling ? ((cooldown + 19) / 20) + "s" : key;
+        int boxW = keyBoxWidth(font, key);
+        int boxX = x + w - boxW - 3;
+        int boxY = y + 2;
+        int boxH = ROW_HEIGHT - 4;
+        g.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF15110D);
+        FlashHudStyle.barHorizontal(g, boxX, boxY, boxW, 1);
+        FlashHudStyle.barHorizontal(g, boxX, boxY + boxH - 1, boxW, 1);
+        g.fill(boxX, boxY, boxX + 1, boxY + boxH, FlashHudStyle.ORANGE);
+        g.fill(boxX + boxW - 1, boxY, boxX + boxW, boxY + boxH, FlashHudStyle.YELLOW);
+        int labelW = font.width(label);
+        g.drawString(font, label, boxX + (boxW - labelW) / 2, boxY + (boxH - 8) / 2 + 1,
+                cooling ? FlashHudStyle.YELLOW : FlashHudStyle.WHITE, false);
     }
 }

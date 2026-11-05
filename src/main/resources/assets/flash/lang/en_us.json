@@ -1,4 +1,7 @@
 {
+  "commands.flash.cooldowns.on": "Cooldowns enabled for %s (normal behavior).",
+  "commands.flash.cooldowns.off": "Cooldowns disabled for %s (abilities can be reused instantly).",
+  "hud.flash.speed": "Speed",
   "message.flash.machine_no_space": "Not enough free space to place the machine here.",
   "itemGroup.flash": "Flash",
   "block.flash.transformation_chamber": "Transformation Chamber",

@@ -24,7 +24,7 @@ public final class FlashClientVisualLevels {
     }
 
     public static void set(UUID playerId, int level, int activeMask) {
-        if (level < 3) {
+        if (level < 1) {
             LEVELS.remove(playerId);
         } else {
             LEVELS.put(playerId, level);

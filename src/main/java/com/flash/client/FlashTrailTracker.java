@@ -1,13 +1,11 @@
 package com.flash.client;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -15,7 +13,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -33,14 +30,14 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = com.flash.FlashMod.MODID, value = Dist.CLIENT)
 public final class FlashTrailTracker {
 
-    static final int LIFETIME_TICKS = 14;
-    static final int STREAM_COUNT = 7;
-    static final int MAX_POINTS_PER_STREAM = 16;
+    static final int LIFETIME_TICKS = 10;
+    static final int STREAM_COUNT = 4;
+    static final int MAX_POINTS_PER_STREAM = 12;
     private static final double MIN_STEP_SQR = 0.0025D;
     private static final double MAX_STEP_SQR = 64.0D;
 
-    private static final double[] SIDE_OFFSET = {-0.34D, -0.22D, -0.10D, 0.10D, 0.22D, 0.34D, 0.0D};
-    private static final double[] UP_OFFSET = {-0.18D, 0.12D, -0.04D, 0.20D, 0.02D, 0.30D, -0.25D};
+    private static final double[] SIDE_OFFSET = {-0.22D, 0.22D, -0.08D, 0.08D};
+    private static final double[] UP_OFFSET = {-0.15D, 0.12D, 0.0D, 0.28D};
 
     private static final Map<UUID, TrailState> STATES = new HashMap<>();
 
@@ -72,6 +69,13 @@ public final class FlashTrailTracker {
 
             TrailState state = STATES.computeIfAbsent(id, key -> new TrailState(key, gameTime));
             state.level = playerLevel;
+            // Never draw the trail of the local player in first person: it
+            // would cover the view.
+            if (player == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
+                state.clearPoints();
+                state.initialized = false;
+                continue;
+            }
             Vec3 current = player.position();
             if (!state.initialized) {
                 state.initialized = true;
