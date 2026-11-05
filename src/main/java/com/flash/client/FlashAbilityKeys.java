@@ -31,7 +31,9 @@ public final class FlashAbilityKeys {
             FlashAbility.LIGHTNING_STRIKE,
             FlashAbility.MASS_PUNCH,
             FlashAbility.SPEED_MANIPULATION,
-            FlashAbility.ACCELERATION_FORCE
+            FlashAbility.ACCELERATION_FORCE,
+            FlashAbility.DASH_PUNCH,
+            FlashAbility.TIME_SLOW
     };
 
     private static final KeyMapping[] MAPPINGS = new KeyMapping[ORDER.length];
@@ -46,7 +48,9 @@ public final class FlashAbilityKeys {
                 GLFW.GLFW_KEY_B, // Lançamento de raios
                 GLFW.GLFW_KEY_N, // Soco de massa infinita
                 GLFW.GLFW_KEY_M, // Manipulação de velocidade
-                GLFW.GLFW_KEY_P  // Força de Aceleração
+                GLFW.GLFW_KEY_P, // Força de Aceleração
+                GLFW.GLFW_KEY_V, // Corrida de socos
+                GLFW.GLFW_KEY_H  // Câmera lenta
         };
         for (int i = 0; i < ORDER.length; i++) {
             MAPPINGS[i] = new KeyMapping(ORDER[i].keyName(),

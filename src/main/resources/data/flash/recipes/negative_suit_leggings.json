@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "NCN",
+    "N N",
+    "N N"
+  ],
+  "key": {
+    "N": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "C": {
+      "item": "flash:negative_crystal"
+    }
+  },
+  "result": {
+    "item": "flash:negative_suit_leggings"
+  }
+}

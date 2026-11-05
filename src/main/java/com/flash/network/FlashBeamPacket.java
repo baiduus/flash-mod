@@ -9,7 +9,7 @@ import net.minecraftforge.network.PacketDistributor;
 
 /** Short-lived bright electric beam drawn by the client. */
 public record FlashBeamPacket(Vec3 start, Vec3 end, int color, int durationTicks,
-                              float width) {
+                              float width, boolean negative) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeDouble(this.start.x);
@@ -21,17 +21,19 @@ public record FlashBeamPacket(Vec3 start, Vec3 end, int color, int durationTicks
         buffer.writeInt(this.color);
         buffer.writeVarInt(this.durationTicks);
         buffer.writeFloat(this.width);
+        buffer.writeBoolean(this.negative);
     }
 
     public FlashBeamPacket(FriendlyByteBuf buffer) {
         this(new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
                 new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
-                buffer.readInt(), buffer.readVarInt(), buffer.readFloat());
+                buffer.readInt(), buffer.readVarInt(), buffer.readFloat(),
+                buffer.readBoolean());
     }
 
     public void handle(NetworkEvent.Context context) {
         context.enqueueWork(() -> FlashBeamRenderer.add(
-                this.start, this.end, this.color, this.durationTicks, this.width));
+                this.start, this.end, this.color, this.durationTicks, this.width, this.negative));
         context.setPacketHandled(true);
     }
 
@@ -39,6 +41,7 @@ public record FlashBeamPacket(Vec3 start, Vec3 end, int color, int durationTicks
                             int color, int durationTicks, float width) {
         FlashNetwork.CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> source),
-                new FlashBeamPacket(start, end, color, durationTicks, width));
+                new FlashBeamPacket(start, end, color, durationTicks, width,
+                        com.flash.power.FlashPowers.isNegative(source)));
     }
 }

@@ -70,6 +70,46 @@ public final class ModItems {
             "syringe",
             () -> new SyringeItem(new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> FLASH_SUIT_HELMET = ITEMS.register(
+            "flash_suit_helmet",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.POSITIVE,
+                    net.minecraft.world.item.ArmorItem.Type.HELMET));
+
+    public static final RegistryObject<Item> FLASH_SUIT_CHESTPLATE = ITEMS.register(
+            "flash_suit_chestplate",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.POSITIVE,
+                    net.minecraft.world.item.ArmorItem.Type.CHESTPLATE));
+
+    public static final RegistryObject<Item> FLASH_SUIT_LEGGINGS = ITEMS.register(
+            "flash_suit_leggings",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.POSITIVE,
+                    net.minecraft.world.item.ArmorItem.Type.LEGGINGS));
+
+    public static final RegistryObject<Item> FLASH_SUIT_BOOTS = ITEMS.register(
+            "flash_suit_boots",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.POSITIVE,
+                    net.minecraft.world.item.ArmorItem.Type.BOOTS));
+
+    public static final RegistryObject<Item> NEGATIVE_SUIT_HELMET = ITEMS.register(
+            "negative_suit_helmet",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.NEGATIVE,
+                    net.minecraft.world.item.ArmorItem.Type.HELMET));
+
+    public static final RegistryObject<Item> NEGATIVE_SUIT_CHESTPLATE = ITEMS.register(
+            "negative_suit_chestplate",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.NEGATIVE,
+                    net.minecraft.world.item.ArmorItem.Type.CHESTPLATE));
+
+    public static final RegistryObject<Item> NEGATIVE_SUIT_LEGGINGS = ITEMS.register(
+            "negative_suit_leggings",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.NEGATIVE,
+                    net.minecraft.world.item.ArmorItem.Type.LEGGINGS));
+
+    public static final RegistryObject<Item> NEGATIVE_SUIT_BOOTS = ITEMS.register(
+            "negative_suit_boots",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.NEGATIVE,
+                    net.minecraft.world.item.ArmorItem.Type.BOOTS));
+
     private ModItems() {
     }
 }
