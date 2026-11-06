@@ -27,11 +27,7 @@ public class FlashRingItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack ring = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            if (FlashSuitItem.countWorn(player) > 0) {
-                FlashSuitUtil.stowToRing(player, ring);
-            } else {
-                FlashSuitUtil.deployFromRing(player, ring);
-            }
+            FlashSuitUtil.toggleRing(player, ring);
         }
         player.getCooldowns().addCooldown(this, 20);
         return InteractionResultHolder.sidedSuccess(ring, level.isClientSide);

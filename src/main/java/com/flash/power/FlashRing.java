@@ -82,7 +82,7 @@ public final class FlashRing {
         if (ring.isEmpty()) {
             return;
         }
-        if (FlashSuitItem.countWorn(player) > 0) {
+        if (FlashSuitUtil.ringSetWorn(ring)) {
             FlashSuitUtil.stowToRing(player, ring);
         }
         set(player, ItemStack.EMPTY);
@@ -98,11 +98,7 @@ public final class FlashRing {
             player.displayClientMessage(Component.translatable("message.flash.ring_needed"), true);
             return;
         }
-        if (FlashSuitItem.countWorn(player) > 0) {
-            FlashSuitUtil.stowToRing(player, ring);
-        } else {
-            FlashSuitUtil.deployFromRing(player, ring);
-        }
+        FlashSuitUtil.toggleRing(player, ring);
         set(player, ring);
     }
 
