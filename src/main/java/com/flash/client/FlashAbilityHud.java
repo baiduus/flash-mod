@@ -27,6 +27,14 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && PowerTheme.localHulk()) {
+            if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
+                    && !minecraft.options.renderDebug
+                    && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
+                renderHulk(graphics, minecraft, width, height);
+            }
+            return;
+        }
         if (minecraft.player == null || minecraft.options.hideGui
                 || minecraft.player.isSpectator() || minecraft.screen != null
                 || minecraft.options.renderDebug
@@ -76,6 +84,47 @@ public final class FlashAbilityHud implements IGuiOverlay {
         }
     }
 
+    /** Same panel for the Hulk: the transform key and the unlocked Hulk abilities. */
+    private static void renderHulk(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
+        Font font = minecraft.font;
+        long now = minecraft.level != null ? minecraft.level.getGameTime() : 0L;
+        int level = Math.max(1, com.flash.hulk.HulkState.level());
+        boolean form = com.flash.hulk.HulkState.isTransformed(minecraft.player);
+        String transform = Component.translatable("hud.flash.hulk_transform").getString();
+        int rows = 1;
+        int panelWidth = Math.max(MIN_WIDTH, rowWidth(font, transform, keyLabel(FlashKeys.HULK_TRANSFORM)));
+        if (form) {
+            for (com.flash.hulk.HulkAbility a : com.flash.hulk.HulkAbility.values()) {
+                if (a.level() <= level) {
+                    rows++;
+                    panelWidth = Math.max(panelWidth, rowWidth(font, a.displayName().getString(),
+                            keyLabel(FlashAbilityKeys.mapping(a.keySlot()))));
+                }
+            }
+        }
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - rows * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        if (x < 4 || y < 4) {
+            return;
+        }
+        drawRow(graphics, font, x, y, panelWidth, transform, keyLabel(FlashKeys.HULK_TRANSFORM), 0, 1, form);
+        y += ROW_HEIGHT + ROW_GAP;
+        if (!form) {
+            return;
+        }
+        boolean furious = com.flash.hulk.HulkState.furyTicks(now) > 0;
+        for (com.flash.hulk.HulkAbility a : com.flash.hulk.HulkAbility.values()) {
+            if (a.level() > level) {
+                continue;
+            }
+            int cd = com.flash.hulk.HulkState.cooldown(a, now);
+            boolean active = a == com.flash.hulk.HulkAbility.FURY && furious;
+            drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(),
+                    keyLabel(FlashAbilityKeys.mapping(a.keySlot())), cd, Math.max(1, a.cooldown()), active);
+            y += ROW_HEIGHT + ROW_GAP;
+        }
+    }
+
     private static int rowWidth(Font font, String name, String key) {
         return 8 + font.width(name) + 10 + keyBoxWidth(font, key) + 4;
     }
@@ -107,7 +156,8 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (cooling) {
             float remaining = Math.min(1.0F, cooldown / (float) cooldownTotal);
             int fill = Math.max(1, Math.round((w - 3) * remaining));
-            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, FlashClientVisualLevels.isLocalNegative() ? 0x90300808 : 0x90301000);
+            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, PowerTheme.localHulk() ? 0x90201230
+                    : FlashClientVisualLevels.isLocalNegative() ? 0x90300808 : 0x90301000);
         }
         if (active) {
             FlashHudStyle.barHorizontal(g, x + 3, y + ROW_HEIGHT - 2, w - 3, 2);

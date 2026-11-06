@@ -424,5 +424,7 @@
   "ability.flash.hulk.world_breaker": "World Breaker Stomp",
   "ability.flash.hulk.world_breaker.description": "A stomp that breaks the ground in spreading rings.",
   "commands.flash.hulk.level": "%s is now Hulk level %s.",
-  "commands.flash.hulk.rage": "%s's rage set to %s%%."
+  "commands.flash.hulk.rage": "%s's rage set to %s%%.",
+  "hud.flash.hulk_transform": "Transform",
+  "hud.flash.hulk_rage_max": "Maximum rage"
 }

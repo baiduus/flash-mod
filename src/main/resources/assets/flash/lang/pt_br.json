@@ -424,5 +424,7 @@
   "ability.flash.hulk.world_breaker": "Pisão Destruidor",
   "ability.flash.hulk.world_breaker.description": "Um pisão que quebra o chão em anéis que se espalham.",
   "commands.flash.hulk.level": "%s agora é Hulk nível %s.",
-  "commands.flash.hulk.rage": "Raiva de %s definida em %s%%."
+  "commands.flash.hulk.rage": "Raiva de %s definida em %s%%.",
+  "hud.flash.hulk_transform": "Transformar",
+  "hud.flash.hulk_rage_max": "Raiva máxima"
 }
