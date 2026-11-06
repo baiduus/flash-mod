@@ -40,21 +40,22 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
     }
 
     /**
-     * A small ring on the right hand: a thin gold band just outside the arm and
-     * the sleeve, with a little red gem on the outer side. The pose must already be
+     * A small ring on the right hand: a little gold loop at the lower corner of the hand,
+     * with a small lightning plate on the outer side. The pose must already be
      * at the arm model part.
      */
     public static void drawRing(PoseStack poseStack, MultiBufferSource buffers, int light, boolean slim) {
         VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         // The arm box is not centred on the part origin: x -3..1 (default) or -2..1 (slim), y -2..10.
-        float cx = slim ? -0.5F : -1.0F;
-        float hx = slim ? 1.5F : 2.0F;
-        float hz = 2.0F;
-        float pad = 0.28F;
-        // small band in the middle of the hand
-        box(poseStack, consumer, light, cx - hx - pad, 7.8F, -hz - pad, cx + hx + pad, 8.7F, hz + pad, 0.0F);
-        // little gem on the outer side
-        box(poseStack, consumer, light, cx - hx - pad - 0.35F, 7.65F, -0.7F, cx - hx - pad + 0.1F, 8.85F, 0.7F, 0.5F);
+        float outer = slim ? -2.0F : -3.0F;   // outer side of the hand (x)
+        float front = -2.0F;                  // front of the hand (z)
+        float pad = 0.22F;
+        // a small ring around the lower, outer-front corner of the hand (where a finger would be)
+        box(poseStack, consumer, light, outer - pad, 8.5F, front - pad,
+                outer + 1.7F, 9.5F, front + 1.7F, 0.0F);
+        // little plate with the lightning emblem on the outer face of the ring
+        box(poseStack, consumer, light, outer - pad - 0.30F, 8.4F, front - pad + 0.1F,
+                outer - pad, 9.6F, front + 1.5F, 0.5F);
     }
 
     /** Axis-aligned box in model pixels; {@code u} selects the gold (0.0) or the red (0.5) half of the texture. */
