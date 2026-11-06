@@ -13,6 +13,8 @@ public final class FlashClientConfig {
     public static final ForgeConfigSpec.BooleanValue WALL_RUN;
     public static final ForgeConfigSpec.BooleanValue SHOW_ABILITY_HUD;
     public static final ForgeConfigSpec.BooleanValue BODY_LIGHTNING;
+    /** False: the suit mask covers the mouth (closed). True: the mask leaves a standard open mouth. */
+    public static final ForgeConfigSpec.BooleanValue MASK_OPEN_MOUTH;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -31,6 +33,9 @@ public final class FlashClientConfig {
         BODY_LIGHTNING = builder
                 .comment("Draw the lightning around your own body in third person.")
                 .define("bodyLightning", true);
+        MASK_OPEN_MOUTH = builder
+                .comment("Suit mask: false covers the mouth, true shows a standard mouth")
+                .define("maskOpenMouth", false);
         builder.pop();
         SPEC = builder.build();
     }

@@ -262,5 +262,9 @@
   "message.flash.ring_missing": "Você não tem um Anel do Flash no inventário.",
   "message.flash.ring_equipped": "Anel equipado.",
   "message.flash.ring_removed": "Anel guardado no inventário.",
-  "message.flash.ring_needed": "Equipe o anel pela tela K (aba Equipamento)."
+  "message.flash.ring_needed": "Equipe o anel pela tela K (aba Equipamento).",
+  "gui.flash.config.mouth": "Boca da máscara",
+  "gui.flash.config.mouth.desc": "Tampada cobre a boca do traje. Aberta mostra uma boca padrão.",
+  "gui.flash.config.mouth_closed": "Tampada",
+  "gui.flash.config.mouth_open": "Aberta"
 }

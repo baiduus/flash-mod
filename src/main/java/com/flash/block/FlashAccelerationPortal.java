@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
 public final class FlashAccelerationPortal {
 
     public static final double DEFAULT_RADIUS = 2.8D;
-    private static final long LIFETIME_TICKS = 1200L;
+    private static final long LIFETIME_TICKS = 300L;
     private static final double MIN_GROUND_OFFSET = 1.2D;
     private static final double MAX_GROUND_OFFSET = 8.0D;
 

@@ -39,6 +39,18 @@ public class FlashSuitItem extends ArmorItem {
         });
     }
 
+    /** Client option: the helmet may use the texture with a standard open mouth. */
+    @Override
+    public String getArmorTexture(ItemStack stack, net.minecraft.world.entity.Entity entity,
+                                  net.minecraft.world.entity.EquipmentSlot slot, String type) {
+        if (slot == net.minecraft.world.entity.EquipmentSlot.HEAD && type == null
+                && com.flash.config.FlashClientConfig.MASK_OPEN_MOUTH.get()) {
+            return "flash:textures/models/armor/"
+                    + (this.negative ? "negative_suit" : "flash_suit") + "_open_layer_1.png";
+        }
+        return null;
+    }
+
     @Override
     public boolean canBeDepleted() {
         return false;

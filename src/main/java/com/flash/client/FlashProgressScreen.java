@@ -44,8 +44,8 @@ public class FlashProgressScreen extends Screen {
     private static final int SKILL_ROW = 25;
     private static final int SKILL_W = 200;
 
-    private static final int CFG_ROW_H = 44;
-    private static final int CFG_ROW_GAP = 6;
+    private static final int CFG_ROW_H = 36;
+    private static final int CFG_ROW_GAP = 5;
 
     private static final int COLOR_BG_TOP = 0xFF15181E;
     private static final int COLOR_BG_BOTTOM = 0xFF0A0B0E;
@@ -442,21 +442,26 @@ public class FlashProgressScreen extends Screen {
 
     private void drawConfigTab(GuiGraphics g, int mx, int my) {
         configRow(g, 0, "gui.flash.config.destroy", "gui.flash.config.destroy.desc", mx, my);
-        drawSwitch(g, switchX(), cfgY(0) + 11, FlashClientData.isDestroyBlocks());
+        drawSwitch(g, switchX(), cfgY(0) + 7, FlashClientData.isDestroyBlocks());
 
         configRow(g, 1, "gui.flash.config.speed_mode", "gui.flash.config.speed_mode.desc", mx, my);
         boolean scroll = FlashClientConfig.SCROLL_MODE.get();
-        drawSegment(g, segX(0), cfgY(1) + 10, "gui.flash.config.mode_keys", !scroll, mx, my);
-        drawSegment(g, segX(1), cfgY(1) + 10, "gui.flash.config.mode_scroll", scroll, mx, my);
+        drawSegment(g, segX(0), cfgY(1) + 6, "gui.flash.config.mode_keys", !scroll, mx, my);
+        drawSegment(g, segX(1), cfgY(1) + 6, "gui.flash.config.mode_scroll", scroll, mx, my);
 
         configRow(g, 2, "gui.flash.config.wall_run", "gui.flash.config.wall_run.desc", mx, my);
-        drawSwitch(g, switchX(), cfgY(2) + 11, FlashClientConfig.WALL_RUN.get());
+        drawSwitch(g, switchX(), cfgY(2) + 7, FlashClientConfig.WALL_RUN.get());
 
         configRow(g, 3, "gui.flash.config.hud", "gui.flash.config.hud.desc", mx, my);
-        drawSwitch(g, switchX(), cfgY(3) + 11, FlashClientConfig.SHOW_ABILITY_HUD.get());
+        drawSwitch(g, switchX(), cfgY(3) + 7, FlashClientConfig.SHOW_ABILITY_HUD.get());
 
         configRow(g, 4, "gui.flash.config.body_lightning", "gui.flash.config.body_lightning.desc", mx, my);
-        drawSwitch(g, switchX(), cfgY(4) + 11, FlashClientConfig.BODY_LIGHTNING.get());
+        drawSwitch(g, switchX(), cfgY(4) + 7, FlashClientConfig.BODY_LIGHTNING.get());
+
+        configRow(g, 5, "gui.flash.config.mouth", "gui.flash.config.mouth.desc", mx, my);
+        boolean open = FlashClientConfig.MASK_OPEN_MOUTH.get();
+        drawSegment(g, segX(0), cfgY(5) + 6, "gui.flash.config.mouth_closed", !open, mx, my);
+        drawSegment(g, segX(1), cfgY(5) + 6, "gui.flash.config.mouth_open", open, mx, my);
     }
 
     private static int switchX() {
@@ -477,9 +482,9 @@ public class FlashProgressScreen extends Screen {
         g.fill(PAD, y, PW - PAD, y + CFG_ROW_H, hovered ? accentDark() : COLOR_BOX_BORDER);
         g.fill(PAD + 1, y + 1, PW - PAD - 1, y + CFG_ROW_H - 1, COLOR_BOX);
         g.fill(PAD + 1, y + 1, PAD + 4, y + CFG_ROW_H - 1, accent());
-        g.drawString(this.font, Component.translatable(titleKey), PAD + 16, y + 10, COLOR_TEXT, false);
+        g.drawString(this.font, Component.translatable(titleKey), PAD + 16, y + 6, COLOR_TEXT, false);
         g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable(descKey).getString(), 330),
-                PAD + 16, y + 25, COLOR_MUTED, false);
+                PAD + 16, y + 20, COLOR_MUTED, false);
     }
 
     private void drawSwitch(GuiGraphics g, int x, int y, boolean on) {
@@ -688,7 +693,7 @@ public class FlashProgressScreen extends Screen {
                 return true;
             }
             if (inRow(mx, my, 1)) {
-                int y = cfgY(1) + 10;
+                int y = cfgY(1) + 6;
                 if (my >= y && my < y + 24) {
                     for (int i = 0; i < 2; i++) {
                         if (mx >= segX(i) && mx < segX(i) + segW()) {
@@ -696,6 +701,23 @@ public class FlashProgressScreen extends Screen {
                             if (FlashClientConfig.SCROLL_MODE.get() != wantScroll) {
                                 FlashClientConfig.SCROLL_MODE.set(wantScroll);
                                 FlashClientConfig.SCROLL_MODE.save();
+                            }
+                            click();
+                            return true;
+                        }
+                    }
+                }
+                return true;
+            }
+            if (inRow(mx, my, 5)) {
+                int y = cfgY(5) + 6;
+                if (my >= y && my < y + 24) {
+                    for (int i = 0; i < 2; i++) {
+                        if (mx >= segX(i) && mx < segX(i) + segW()) {
+                            boolean wantOpen = i == 1;
+                            if (FlashClientConfig.MASK_OPEN_MOUTH.get() != wantOpen) {
+                                FlashClientConfig.MASK_OPEN_MOUTH.set(wantOpen);
+                                FlashClientConfig.MASK_OPEN_MOUTH.save();
                             }
                             click();
                             return true;

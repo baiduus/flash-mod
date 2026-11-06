@@ -262,5 +262,9 @@
   "message.flash.ring_missing": "You have no Flash Ring in your inventory.",
   "message.flash.ring_equipped": "Ring equipped.",
   "message.flash.ring_removed": "Ring returned to your inventory.",
-  "message.flash.ring_needed": "Equip the ring in the K screen (Equipment tab)."
+  "message.flash.ring_needed": "Equip the ring in the K screen (Equipment tab).",
+  "gui.flash.config.mouth": "Mask mouth",
+  "gui.flash.config.mouth.desc": "Covered hides the mouth of the suit. Open shows a standard mouth.",
+  "gui.flash.config.mouth_closed": "Covered",
+  "gui.flash.config.mouth_open": "Open"
 }
