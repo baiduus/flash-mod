@@ -51,6 +51,11 @@ public final class FlashClientForgeEvents {
 
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
         boolean decrease = drain(FlashKeys.DECREASE_SPEED);
+        if (FlashClientConfig.SCROLL_MODE.get()) {
+            // Ctrl + scroll mode is active: the V keys are disabled.
+            increase = false;
+            decrease = false;
+        }
 
         while (FlashKeys.OPEN_PROGRESS.consumeClick()) {
             if (minecraft.screen == null) {
@@ -87,10 +92,10 @@ public final class FlashClientForgeEvents {
     @SubscribeEvent
     public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (!FlashClientConfig.MOUSE_WHEEL_CONTROLS.get()
+        if (!FlashClientConfig.SCROLL_MODE.get()
                 || minecraft.player == null
                 || minecraft.screen != null
-                || !minecraft.player.isShiftKeyDown()
+                || !Screen.hasControlDown()
                 || minecraft.player.isSpectator()
                 || !FlashClientData.hasPowers()) {
             return;
@@ -101,7 +106,7 @@ public final class FlashClientForgeEvents {
             return;
         }
 
-        // Consume the notch so the camera does not also zoom while sneaking.
+        // Consume the notch so the hotbar does not scroll too.
         event.setCanceled(true);
         changeLevel(minecraft, delta > 0.0D ? 1 : -1, false);
     }

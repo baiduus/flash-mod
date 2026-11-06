@@ -2,12 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "I I",
-    "I I"
+    "G G",
+    "N G"
   ],
   "key": {
-    "I": {
+    "G": {
       "item": "minecraft:gold_ingot"
+    },
+    "N": {
+      "item": "flash:negative_crystal"
     }
   },
   "result": {

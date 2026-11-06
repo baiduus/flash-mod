@@ -78,9 +78,9 @@ public final class FlashStatusEffects {
         return 5; // Strength VI
     }
 
-    /** Level 1 = Haste IV (x1.8) ... level 10 = Haste XXXI (about x7 faster mining). */
+    /** Level 1 = Haste VII (x2.4) ... level 10 = Haste LXIV (about x13 faster mining). */
     public static int hasteAmplifier(int level) {
-        return Math.min(40, Math.max(0, level) * 3);
+        return Math.min(63, Math.max(0, level) * 6);
     }
 
     public static String regenerationName(int level) {

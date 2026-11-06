@@ -13,42 +13,51 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * K screen: a compact, server-authoritative progression panel.
- *
- * <p>All values come from {@link FlashClientData}, which is updated by
- * {@code FlashSyncPacket}. Clicking an unlocked card asks the server to select
- * that level; locked cards are never sent.</p>
+ * K screen with two tabs: "Progresso" (levels, abilities, progress to the next
+ * level) and "Config" (block destruction, speed control mode and visual
+ * options). The accent colour is gold for the positive force and red for the
+ * negative one. Server-authoritative values come from {@link FlashClientData}.
  */
 public class FlashProgressScreen extends Screen {
 
-    private static final int PANEL_WIDTH = 560;
-    private static final int PANEL_HEIGHT = 360;
+    private static final int PW = 640;
+    private static final int PH = 400;
+
+    private static final int PAD = 20;
+    private static final int TAB_Y = 66;
+    private static final int TAB_W = 124;
+    private static final int TAB_H = 24;
+    private static final int CONTENT_Y = 104;
 
     private static final int CARD_COLUMNS = 4;
-    private static final int CARD_WIDTH = 77;
-    private static final int CARD_HEIGHT = 38;
+    private static final int CARD_W = 90;
+    private static final int CARD_H = 40;
     private static final int CARD_GAP = 6;
-    private static final int GRID_X = 17;
-    private static final int GRID_Y = 96;
-    private static final int SKILL_X = 350;
-    private static final int SKILL_Y = 96;
-    private static final int SKILL_ROW = 22;
-    private static final int TOGGLE_Y = 300;
+    private static final int GRID_X = PAD;
+    private static final int GRID_Y = 176;
 
-    private static final int COLOR_BORDER = 0xFF262B33;
-    private static final int COLOR_PANEL = 0xFF0B0D10;
-    private static final int COLOR_PANEL_INNER = 0xFF111418;
+    private static final int SKILL_X = 420;
+    private static final int SKILL_ROW = 25;
+    private static final int SKILL_W = 200;
+
+    private static final int CFG_ROW_H = 44;
+    private static final int CFG_ROW_GAP = 6;
+
+    private static final int COLOR_BG_TOP = 0xFF15181E;
+    private static final int COLOR_BG_BOTTOM = 0xFF0A0B0E;
     private static final int COLOR_TEXT = 0xFFF2F5F7;
-    private static final int COLOR_MUTED = 0xFF8B939E;
+    private static final int COLOR_MUTED = 0xFF98A1AD;
     private static final int COLOR_DIM = 0xFF5B626C;
     private static final int COLOR_GREEN = 0xFF35D06A;
-    private static final int COLOR_GREEN_DARK = 0xFF1B6B3A;
     private static final int COLOR_ORANGE = 0xFFFF7A3D;
-    private static final int COLOR_RED = 0xFFFF5A3C;
-    private static final int COLOR_CARD_LOCKED = 0xFF101216;
+    private static final int COLOR_BOX = 0xFF12151A;
+    private static final int COLOR_BOX_BORDER = 0xFF2A2F38;
+
+    private static int tab = 0;
 
     private int leftPos;
     private int topPos;
@@ -58,22 +67,46 @@ public class FlashProgressScreen extends Screen {
         super(Component.translatable("gui.flash.progress.title"));
     }
 
+    // ------------------------------------------------------------------
+    // Layout
+    // ------------------------------------------------------------------
+
     @Override
     protected void init() {
         super.init();
         this.uiScale = Math.min(1.0F, Math.min(
-                this.width / (float) (PANEL_WIDTH + 10),
-                this.height / (float) (PANEL_HEIGHT + 10)));
+                this.width / (float) (PW + 10),
+                this.height / (float) (PH + 10)));
         if (this.uiScale <= 0.01F) {
             this.uiScale = 1.0F;
         }
-        this.leftPos = Math.round((this.width / this.uiScale - PANEL_WIDTH) / 2.0F);
-        this.topPos = Math.round((this.height / this.uiScale - PANEL_HEIGHT) / 2.0F);
+        this.leftPos = Math.round((this.width / this.uiScale - PW) / 2.0F);
+        this.topPos = Math.round((this.height / this.uiScale - PH) / 2.0F);
     }
+
+    private static boolean negative() {
+        return FlashClientVisualLevels.isLocalNegative();
+    }
+
+    private static int accent() {
+        return negative() ? 0xFFFF4040 : 0xFFFFC21A;
+    }
+
+    private static int accentDark() {
+        return negative() ? 0xFF3C0C0E : 0xFF3F3207;
+    }
+
+    private static int accentSoft() {
+        return negative() ? 0xFF1E0A0B : 0xFF1F1A08;
+    }
+
+    // ------------------------------------------------------------------
+    // Render
+    // ------------------------------------------------------------------
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, this.width, this.height, 0xAA000000);
+        graphics.fill(0, 0, this.width, this.height, 0xB0000000);
 
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
@@ -81,39 +114,45 @@ public class FlashProgressScreen extends Screen {
 
         int x = this.leftPos;
         int y = this.topPos;
-        int scaledMouseX = (int) (mouseX / this.uiScale);
-        int scaledMouseY = (int) (mouseY / this.uiScale);
+        int mx = (int) (mouseX / this.uiScale) - x;
+        int my = (int) (mouseY / this.uiScale) - y;
 
-        graphics.fill(x - 1, y - 1, x + PANEL_WIDTH + 1, y + PANEL_HEIGHT + 1, COLOR_BORDER);
-        graphics.fill(x, y, x + PANEL_WIDTH, y + PANEL_HEIGHT, COLOR_PANEL);
-        graphics.fill(x + 1, y + 1, x + PANEL_WIDTH - 1, y + 2, COLOR_GREEN_DARK);
+        poseStack.translate(x, y, 0.0F);
 
-        graphics.drawString(this.font, this.title, x + 16, y + 14, COLOR_TEXT, false);
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.subtitle"),
-                x + 16, y + 30, COLOR_MUTED, false);
+        // frame, glow and body
+        graphics.fill(-3, -3, PW + 3, PH + 3, accentDark());
+        graphics.fill(-1, -1, PW + 1, PH + 1, accent());
+        graphics.fillGradient(0, 0, PW, PH, COLOR_BG_TOP, COLOR_BG_BOTTOM);
 
-        drawBadge(graphics, x, y);
-        drawSummaryRows(graphics, x, y);
+        drawHeader(graphics);
+        drawTabs(graphics, mx, my);
+        graphics.fill(PAD, TAB_Y + TAB_H + 4, PW - PAD, TAB_Y + TAB_H + 5, COLOR_BOX_BORDER);
 
-        graphics.fill(x + 16, y + 86, x + PANEL_WIDTH - 16, y + 87, 0xFF1D222A);
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.levels"),
-                x + 16, y + 88, COLOR_TEXT, false);
+        if (tab == 0) {
+            drawProgressTab(graphics, mx, my);
+        } else {
+            drawConfigTab(graphics, mx, my);
+        }
 
-        drawLevelGrid(graphics, x, y, scaledMouseX, scaledMouseY);
-        drawSkills(graphics, x, y, scaledMouseX, scaledMouseY);
-        drawProgress(graphics, x, y);
-        drawDestroyToggle(graphics, x, y, scaledMouseX, scaledMouseY);
-
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.footer"),
-                x + 16, y + PANEL_HEIGHT - 15, COLOR_DIM, false);
+        graphics.drawString(this.font, footerText(), PAD, PH - 16, COLOR_DIM, false);
 
         poseStack.popPose();
     }
 
-    private void drawBadge(GuiGraphics graphics, int x, int y) {
+    private Component footerText() {
+        return Component.translatable(FlashClientConfig.SCROLL_MODE.get()
+                ? "gui.flash.footer.scroll" : "gui.flash.footer.keys");
+    }
+
+    private void drawHeader(GuiGraphics g) {
+        g.fillGradient(0, 0, PW, 58, accentDark(), 0x00000000);
+        g.fill(0, 0, PW, 3, accent());
+        drawBolt(g, 24, 12, accent());
+
+        scaledText(g, this.title, 64, 12, 1.5F, COLOR_TEXT);
+        g.drawString(this.font, Component.translatable("gui.flash.progress.subtitle"),
+                64, 36, COLOR_MUTED, false);
+
         Component badge = FlashClientData.hasPowers()
                 ? (FlashClientData.isTemporary()
                     ? Component.translatable("gui.flash.progress.temporary",
@@ -121,286 +160,420 @@ public class FlashProgressScreen extends Screen {
                     : Component.translatable("gui.flash.progress.active_badge",
                         FlashClientData.getSelectedLevel()))
                 : Component.translatable("gui.flash.progress.no_powers_badge");
-        int textWidth = this.font.width(badge);
-        int badgeX = x + PANEL_WIDTH - 16 - textWidth - 10;
-        int badgeY = y + 11;
-        int color = FlashClientData.hasPowers() ? COLOR_GREEN : COLOR_MUTED;
-
-        graphics.fill(badgeX, badgeY, badgeX + textWidth + 10, badgeY + 16, 0xFF15351F);
-        graphics.fill(badgeX, badgeY, badgeX + textWidth + 10, badgeY + 1, color);
-        graphics.drawString(this.font, badge, badgeX + 5, badgeY + 4, color, false);
+        int tw = this.font.width(badge);
+        int bx = PW - PAD - tw - 18;
+        int by = 18;
+        int color = FlashClientData.hasPowers() ? accent() : COLOR_MUTED;
+        g.fill(bx, by, bx + tw + 18, by + 22, accentSoft());
+        g.fill(bx, by, bx + tw + 18, by + 2, color);
+        g.drawString(this.font, badge, bx + 9, by + 8, color, false);
     }
 
-    private void drawSummaryRows(GuiGraphics graphics, int x, int y) {
-        Component selected = FlashClientData.hasPowers()
+    /** Chunky pixel lightning bolt. */
+    private static void drawBolt(GuiGraphics g, int x, int y, int c) {
+        g.fill(x + 12, y, x + 22, y + 6, c);
+        g.fill(x + 9, y + 6, x + 19, y + 12, c);
+        g.fill(x + 3, y + 12, x + 19, y + 17, c);
+        g.fill(x + 9, y + 17, x + 19, y + 22, c);
+        g.fill(x + 6, y + 22, x + 16, y + 27, c);
+        g.fill(x + 3, y + 27, x + 11, y + 32, c);
+    }
+
+    private void drawTabs(GuiGraphics g, int mx, int my) {
+        String[] keys = {"gui.flash.tab.progress", "gui.flash.tab.config"};
+        for (int i = 0; i < keys.length; i++) {
+            int tx = PAD + i * (TAB_W + 6);
+            boolean active = tab == i;
+            boolean hovered = mx >= tx && mx < tx + TAB_W && my >= TAB_Y && my < TAB_Y + TAB_H;
+            g.fill(tx, TAB_Y, tx + TAB_W, TAB_Y + TAB_H,
+                    active ? accentDark() : (hovered ? 0xFF1B1F26 : 0xFF111419));
+            if (active) {
+                g.fill(tx, TAB_Y, tx + TAB_W, TAB_Y + 2, accent());
+            }
+            Component label = Component.translatable(keys[i]);
+            g.drawString(this.font, label, tx + (TAB_W - this.font.width(label)) / 2,
+                    TAB_Y + 8, active ? accent() : COLOR_MUTED, false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Progress tab
+    // ------------------------------------------------------------------
+
+    private void drawProgressTab(GuiGraphics g, int mx, int my) {
+        boolean has = FlashClientData.hasPowers();
+        Component selected = has
                 ? Component.translatable("level.flash." + FlashClientData.getSelectedLevel())
                 : Component.translatable("gui.flash.progress.none");
-        Component max = FlashClientData.hasPowers()
+        Component max = has
                 ? Component.translatable("level.flash." + FlashClientData.getMaxLevel())
                 : Component.translatable("gui.flash.progress.none");
+        statBox(g, PAD, CONTENT_Y, 185, 48, Component.translatable("gui.flash.progress.selected"), selected);
+        statBox(g, PAD + 193, CONTENT_Y, 185, 48, Component.translatable("gui.flash.progress.max"), max);
 
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.selected"),
-                x + 16, y + 52, COLOR_MUTED, false);
-        graphics.drawString(this.font, selected,
-                x + PANEL_WIDTH - 16 - this.font.width(selected), y + 52, COLOR_TEXT, false);
-
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.max"),
-                x + 16, y + 68, COLOR_MUTED, false);
-        graphics.drawString(this.font, max,
-                x + PANEL_WIDTH - 16 - this.font.width(max), y + 68, COLOR_TEXT, false);
+        g.drawString(this.font, Component.translatable("gui.flash.progress.levels"),
+                PAD, GRID_Y - 14, COLOR_TEXT, false);
+        drawLevelGrid(g, mx, my);
+        drawProgress(g);
+        drawSkills(g, mx, my);
     }
 
-    private void drawLevelGrid(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
+    private void statBox(GuiGraphics g, int x, int y, int w, int h, Component label, Component value) {
+        g.fill(x, y, x + w, y + h, COLOR_BOX_BORDER);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, COLOR_BOX);
+        g.fill(x + 1, y + 1, x + 4, y + h - 1, accent());
+        g.drawString(this.font, label, x + 14, y + 8, COLOR_MUTED, false);
+        scaledText(g, value, x + 14, y + 22, 1.5F, COLOR_TEXT);
+    }
+
+    private void drawLevelGrid(GuiGraphics g, int mx, int my) {
         int max = FlashClientData.getMaxLevel();
         int selected = FlashClientData.getSelectedLevel();
-        boolean hasPowers = FlashClientData.hasPowers();
+        boolean has = FlashClientData.hasPowers();
 
         for (int level = FlashSpeedLevels.MIN_LEVEL; level <= FlashSpeedLevels.MAX_LEVEL; level++) {
-            int column = level % CARD_COLUMNS;
-            int row = level / CARD_COLUMNS;
-            int cardX = x + GRID_X + column * (CARD_WIDTH + CARD_GAP);
-            int cardY = y + GRID_Y + row * (CARD_HEIGHT + CARD_GAP);
+            int cx = GRID_X + (level % CARD_COLUMNS) * (CARD_W + CARD_GAP);
+            int cy = GRID_Y + (level / CARD_COLUMNS) * (CARD_H + CARD_GAP);
+            boolean unlocked = has && level <= max;
+            boolean inUse = has && level == selected;
+            boolean hovered = mx >= cx && mx < cx + CARD_W && my >= cy && my < cy + CARD_H;
 
-            boolean unlocked = hasPowers && level <= max;
-            boolean inUse = hasPowers && level == selected;
-            boolean hovered = mouseX >= cardX && mouseX < cardX + CARD_WIDTH
-                    && mouseY >= cardY && mouseY < cardY + CARD_HEIGHT;
-
-            int border = inUse ? COLOR_ORANGE : unlocked ? COLOR_GREEN : 0xFF2B3038;
+            int border = inUse ? accent() : unlocked ? 0xFF2F8F55 : COLOR_BOX_BORDER;
+            int fill = inUse ? accentSoft() : unlocked ? 0xFF101A13 : 0xFF0E1013;
             if (hovered && unlocked && !inUse) {
                 border = 0xFF9BE8B4;
-            }
-            int fill = inUse ? 0xFF1C150C : unlocked ? 0xFF101A13 : COLOR_CARD_LOCKED;
-            if (hovered && unlocked && !inUse) {
                 fill = 0xFF17231B;
             }
-
-            graphics.fill(cardX, cardY, cardX + CARD_WIDTH, cardY + CARD_HEIGHT, border);
-            graphics.fill(cardX + 1, cardY + 1, cardX + CARD_WIDTH - 1, cardY + CARD_HEIGHT - 1, fill);
-
-            if (unlocked) {
-                drawCheck(graphics, cardX + 9, cardY + 9, inUse ? COLOR_ORANGE : COLOR_GREEN);
-            } else {
-                drawLock(graphics, cardX + 9, cardY + 9, COLOR_DIM);
+            g.fill(cx, cy, cx + CARD_W, cy + CARD_H, border);
+            g.fill(cx + 1, cy + 1, cx + CARD_W - 1, cy + CARD_H - 1, fill);
+            if (inUse) {
+                g.fill(cx + 1, cy + 1, cx + CARD_W - 1, cy + 3, accent());
             }
 
-            graphics.drawString(this.font,
-                    Component.translatable("level.flash." + level),
-                    cardX + 23, cardY + 8, unlocked ? COLOR_TEXT : COLOR_DIM, false);
+            scaledText(g, Component.literal(Integer.toString(level)), cx + 10, cy + 11, 2.0F,
+                    inUse ? accent() : unlocked ? COLOR_TEXT : COLOR_DIM);
 
             Component status = inUse
                     ? Component.translatable("gui.flash.progress.in_use")
                     : unlocked
                     ? Component.translatable("gui.flash.progress.unlocked")
                     : Component.translatable("gui.flash.progress.locked");
-            int statusColor = inUse ? COLOR_ORANGE : unlocked ? COLOR_GREEN : COLOR_DIM;
-            graphics.drawString(this.font, status, cardX + 23, cardY + 22, statusColor, false);
-        }
-    }
-
-    private void drawSkills(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
-        int sx = x + SKILL_X;
-        int sy = y + SKILL_Y;
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.skills"),
-                sx, sy - 8, COLOR_TEXT, false);
-
-        FlashAbility[] abilities = FlashAbility.values();
-        for (int i = 0; i < abilities.length; i++) {
-            FlashAbility ability = abilities[i];
-            int rowY = sy + 10 + i * SKILL_ROW;
-            boolean unlocked = FlashClientData.hasPowers()
-                    && FlashClientData.getMaxLevel() >= ability.requiredLevel();
-            int color = unlocked ? COLOR_GREEN : COLOR_DIM;
+            int statusColor = inUse ? accent() : unlocked ? COLOR_GREEN : COLOR_DIM;
+            g.drawString(this.font, this.font.plainSubstrByWidth(status.getString(), 44),
+                    cx + 40, cy + 16, statusColor, false);
             if (unlocked) {
-                drawCheck(graphics, sx, rowY, color);
+                drawCheck(g, cx + CARD_W - 16, cy + 6, inUse ? accent() : COLOR_GREEN);
             } else {
-                drawLock(graphics, sx, rowY, color);
-            }
-
-            String name = ability.displayName().getString();
-            graphics.drawString(this.font, this.font.plainSubstrByWidth(name, 132),
-                    sx + 14, rowY, unlocked ? COLOR_TEXT : COLOR_DIM, false);
-
-            Component requirement = unlocked
-                    ? Component.translatable("gui.flash.progress.unlocked")
-                    : Component.translatable("gui.flash.progress.skills_locked",
-                        ability.requiredLevel());
-            graphics.drawString(this.font, requirement,
-                    sx + 14, rowY + 10, color, false);
-
-            int cooldown = FlashClientData.getAbilityCooldown(ability.ordinal());
-            if (cooldown > 0) {
-                Component cd = Component.literal(formatTime(cooldown));
-                graphics.drawString(this.font, cd,
-                        sx + 186 - this.font.width(cd), rowY, COLOR_ORANGE, false);
-            }
-
-            if (mouseX >= sx && mouseX < x + PANEL_WIDTH - 16
-                    && mouseY >= rowY - 1 && mouseY < rowY + 18) {
-                graphics.renderTooltip(this.font, ability.description(), mouseX, mouseY);
+                drawLock(g, cx + CARD_W - 16, cy + 6, COLOR_DIM);
             }
         }
-
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.no_new_skills"),
-                sx, y + 286, COLOR_DIM, false);
     }
 
-    private void drawDestroyToggle(GuiGraphics graphics, int x, int y,
-                                   int mouseX, int mouseY) {
-        int tx = x + 16;
-        int ty = y + TOGGLE_Y;
-        int tw = 300;
-        int th = 20;
-        boolean hovered = mouseX >= tx && mouseX < tx + tw
-                && mouseY >= ty && mouseY < ty + th;
-        boolean enabled = FlashClientData.isDestroyBlocks();
-        int border = hovered ? COLOR_ORANGE : 0xFF2B3038;
-        graphics.fill(tx, ty, tx + tw, ty + th, border);
-        graphics.fill(tx + 1, ty + 1, tx + tw - 1, ty + th - 1,
-                enabled ? 0xFF1C150C : 0xFF101216);
-        graphics.drawString(this.font,
-                Component.translatable("gui.flash.progress.destroy_blocks"),
-                tx + 7, ty + 6, COLOR_TEXT, false);
-        Component value = Component.translatable(enabled
-                ? "gui.flash.progress.destroy_on"
-                : "gui.flash.progress.destroy_off");
-        graphics.drawString(this.font, value,
-                tx + tw - 7 - this.font.width(value), ty + 6,
-                enabled ? COLOR_ORANGE : COLOR_MUTED, false);
-    }
+    private void drawProgress(GuiGraphics g) {
+        boolean has = FlashClientData.hasPowers();
+        boolean maxed = has && FlashClientData.getMaxLevel() >= FlashSpeedLevels.MAX_LEVEL;
+        int y = 322;
 
-    private boolean isToggleAt(double mouseX, double mouseY) {
-        int tx = this.leftPos + 16;
-        int ty = this.topPos + TOGGLE_Y;
-        return mouseX >= tx && mouseX < tx + 300
-                && mouseY >= ty && mouseY < ty + 20;
-    }
-
-    private void drawProgress(GuiGraphics graphics, int x, int y) {
-        boolean hasPowers = FlashClientData.hasPowers();
-        boolean maxed = hasPowers && FlashClientData.getMaxLevel() >= FlashSpeedLevels.MAX_LEVEL;
-
-        if (!hasPowers) {
-            graphics.drawString(this.font,
-                    Component.translatable("gui.flash.progress.no_powers"),
-                    x + 16, y + 242, COLOR_MUTED, false);
-            drawBar(graphics, x, y, 0.0F, COLOR_DIM);
-            graphics.drawString(this.font,
-                    Component.translatable("gui.flash.progress.no_powers_hint"),
-                    x + 16, y + 266, COLOR_DIM, false);
+        if (!has) {
+            g.drawString(this.font, Component.translatable("gui.flash.progress.no_powers"),
+                    PAD, y, COLOR_MUTED, false);
+            drawBar(g, y + 14, 0.0F, COLOR_DIM);
+            g.drawString(this.font, Component.translatable("gui.flash.progress.no_powers_hint"),
+                    PAD, y + 34, COLOR_DIM, false);
             return;
         }
-
         if (maxed) {
-            graphics.drawString(this.font,
-                    Component.translatable("gui.flash.progress.maxed"),
-                    x + 16, y + 242, COLOR_GREEN, false);
-            drawBar(graphics, x, y, 1.0F, COLOR_GREEN);
-            graphics.drawString(this.font,
-                    Component.translatable("gui.flash.progress.all_unlocked"),
-                    x + 16, y + 266, COLOR_MUTED, false);
+            g.drawString(this.font, Component.translatable("gui.flash.progress.maxed"),
+                    PAD, y, COLOR_GREEN, false);
+            drawBar(g, y + 14, 1.0F, COLOR_GREEN);
+            g.drawString(this.font, Component.translatable("gui.flash.progress.all_unlocked"),
+                    PAD, y + 34, COLOR_MUTED, false);
             return;
         }
 
         int next = FlashClientData.getMaxLevel() + 1;
-        Component title = Component.translatable("gui.flash.progress.next", next);
-        graphics.drawString(this.font, title, x + 16, y + 242, COLOR_TEXT, false);
-
+        g.drawString(this.font, Component.translatable("gui.flash.progress.next", next),
+                PAD, y, COLOR_TEXT, false);
         float fraction = (float) Math.min(1.0D,
                 FlashClientData.getDistance() / (double) FlashSpeedLevels.BLOCKS_PER_LEVEL);
-        int percent = Math.round(fraction * 100.0F);
-        Component percentText = Component.literal(percent + "%");
-        graphics.drawString(this.font, percentText,
-                x + PANEL_WIDTH - 16 - this.font.width(percentText), y + 242, COLOR_GREEN, false);
-
-        drawBar(graphics, x, y, fraction, COLOR_RED);
+        Component percent = Component.literal(Math.round(fraction * 100.0F) + "%");
+        g.drawString(this.font, percent, PAD + 378 - this.font.width(percent), y, accent(), false);
+        drawBar(g, y + 14, fraction, accent());
 
         int travelled = Math.min(FlashSpeedLevels.BLOCKS_PER_LEVEL,
                 (int) Math.floor(FlashClientData.getDistance()));
         int remaining = Math.max(0, FlashSpeedLevels.BLOCKS_PER_LEVEL - travelled);
-        Component counter = Component.translatable("gui.flash.progress.blocks",
-                number(travelled), number(FlashSpeedLevels.BLOCKS_PER_LEVEL));
-        Component remainingText = Component.translatable("gui.flash.progress.remaining", number(remaining));
-        graphics.drawString(this.font, counter, x + 16, y + 266, COLOR_MUTED, false);
-        graphics.drawString(this.font, remainingText,
-                x + PANEL_WIDTH - 16 - this.font.width(remainingText), y + 266, COLOR_TEXT, false);
+        g.drawString(this.font, Component.translatable("gui.flash.progress.blocks",
+                number(travelled), number(FlashSpeedLevels.BLOCKS_PER_LEVEL)),
+                PAD, y + 34, COLOR_MUTED, false);
+        Component rest = Component.translatable("gui.flash.progress.remaining", number(remaining));
+        g.drawString(this.font, rest, PAD + 378 - this.font.width(rest), y + 34, COLOR_TEXT, false);
     }
 
-    private void drawBar(GuiGraphics graphics, int x, int y, float fraction, int color) {
-        int barX = x + 16;
-        int barY = y + 254;
-        int barWidth = PANEL_WIDTH - 32;
-        int barHeight = 7;
-
-        graphics.fill(barX, barY, barX + barWidth, barY + barHeight, 0xFF232831);
-        int filled = (int) ((barWidth - 2) * Math.max(0.0F, Math.min(1.0F, fraction)));
+    private void drawBar(GuiGraphics g, int y, float fraction, int color) {
+        int w = 378;
+        int h = 12;
+        g.fill(PAD, y, PAD + w, y + h, COLOR_BOX_BORDER);
+        g.fill(PAD + 1, y + 1, PAD + w - 1, y + h - 1, 0xFF0C0E11);
+        int filled = (int) ((w - 2) * Math.max(0.0F, Math.min(1.0F, fraction)));
         if (filled > 0) {
-            graphics.fill(barX + 1, barY + 1, barX + 1 + filled, barY + barHeight - 1, color);
+            g.fillGradient(PAD + 1, y + 1, PAD + 1 + filled, y + h - 1, color, darker(color));
+            // segment ticks every 10 %
+            for (int i = 1; i < 10; i++) {
+                int tx = PAD + 1 + (w - 2) * i / 10;
+                if (tx < PAD + 1 + filled) {
+                    g.fill(tx, y + 1, tx + 1, y + h - 1, 0x55000000);
+                }
+            }
         }
     }
 
-    private static void drawCheck(GuiGraphics graphics, int x, int y, int color) {
-        graphics.fill(x + 1, y + 4, x + 3, y + 6, color);
-        graphics.fill(x + 2, y + 5, x + 4, y + 7, color);
-        graphics.fill(x + 3, y + 4, x + 5, y + 6, color);
-        graphics.fill(x + 4, y + 2, x + 6, y + 5, color);
-        graphics.fill(x + 5, y + 1, x + 7, y + 3, color);
+    private void drawSkills(GuiGraphics g, int mx, int my) {
+        g.drawString(this.font, Component.translatable("gui.flash.progress.skills"),
+                SKILL_X, CONTENT_Y, COLOR_TEXT, false);
+        FlashAbility[] abilities = FlashAbility.values();
+        int top = CONTENT_Y + 14;
+        for (int i = 0; i < abilities.length; i++) {
+            FlashAbility ability = abilities[i];
+            int ry = top + i * SKILL_ROW;
+            boolean unlocked = FlashClientData.hasPowers()
+                    && FlashClientData.getMaxLevel() >= ability.requiredLevel();
+            boolean hovered = mx >= SKILL_X && mx < SKILL_X + SKILL_W && my >= ry && my < ry + SKILL_ROW - 2;
+
+            g.fill(SKILL_X, ry, SKILL_X + SKILL_W, ry + SKILL_ROW - 2,
+                    hovered ? accent() : COLOR_BOX_BORDER);
+            g.fill(SKILL_X + 1, ry + 1, SKILL_X + SKILL_W - 1, ry + SKILL_ROW - 3,
+                    unlocked ? 0xFF111A14 : 0xFF0E1013);
+            if (unlocked) {
+                drawCheck(g, SKILL_X + 6, ry + 7, COLOR_GREEN);
+            } else {
+                drawLock(g, SKILL_X + 6, ry + 7, COLOR_DIM);
+            }
+            g.drawString(this.font, this.font.plainSubstrByWidth(ability.displayName().getString(), 120),
+                    SKILL_X + 22, ry + 3, unlocked ? COLOR_TEXT : COLOR_DIM, false);
+            Component requirement = unlocked
+                    ? Component.translatable("gui.flash.progress.unlocked")
+                    : Component.translatable("gui.flash.progress.skills_locked", ability.requiredLevel());
+            g.drawString(this.font, requirement, SKILL_X + 22, ry + 12,
+                    unlocked ? COLOR_GREEN : COLOR_DIM, false);
+
+            int cooldown = FlashClientData.getAbilityCooldown(ability.ordinal());
+            if (cooldown > 0) {
+                Component cd = Component.literal(formatTime(cooldown));
+                g.drawString(this.font, cd, SKILL_X + SKILL_W - 6 - this.font.width(cd),
+                        ry + 8, COLOR_ORANGE, false);
+            }
+            if (hovered) {
+                g.renderTooltip(this.font, ability.description(), mx, my);
+            }
+        }
     }
 
-    private static void drawLock(GuiGraphics graphics, int x, int y, int color) {
-        graphics.fill(x + 2, y + 4, x + 7, y + 8, color);
-        graphics.fill(x + 2, y + 1, x + 3, y + 4, color);
-        graphics.fill(x + 6, y + 1, x + 7, y + 4, color);
-        graphics.fill(x + 2, y + 1, x + 7, y + 2, color);
-        graphics.fill(x + 4, y + 5, x + 5, y + 7, 0xFF101216);
+    // ------------------------------------------------------------------
+    // Config tab
+    // ------------------------------------------------------------------
+
+    private static int cfgY(int row) {
+        return CONTENT_Y + row * (CFG_ROW_H + CFG_ROW_GAP);
+    }
+
+    private void drawConfigTab(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.config.destroy", "gui.flash.config.destroy.desc", mx, my);
+        drawSwitch(g, switchX(), cfgY(0) + 11, FlashClientData.isDestroyBlocks());
+
+        configRow(g, 1, "gui.flash.config.speed_mode", "gui.flash.config.speed_mode.desc", mx, my);
+        boolean scroll = FlashClientConfig.SCROLL_MODE.get();
+        drawSegment(g, segX(0), cfgY(1) + 10, "gui.flash.config.mode_keys", !scroll, mx, my);
+        drawSegment(g, segX(1), cfgY(1) + 10, "gui.flash.config.mode_scroll", scroll, mx, my);
+
+        configRow(g, 2, "gui.flash.config.wall_run", "gui.flash.config.wall_run.desc", mx, my);
+        drawSwitch(g, switchX(), cfgY(2) + 11, FlashClientConfig.WALL_RUN.get());
+
+        configRow(g, 3, "gui.flash.config.hud", "gui.flash.config.hud.desc", mx, my);
+        drawSwitch(g, switchX(), cfgY(3) + 11, FlashClientConfig.SHOW_ABILITY_HUD.get());
+
+        configRow(g, 4, "gui.flash.config.body_lightning", "gui.flash.config.body_lightning.desc", mx, my);
+        drawSwitch(g, switchX(), cfgY(4) + 11, FlashClientConfig.BODY_LIGHTNING.get());
+    }
+
+    private static int switchX() {
+        return PW - PAD - 14 - 56;
+    }
+
+    private static int segW() {
+        return 128;
+    }
+
+    private static int segX(int index) {
+        return PW - PAD - 10 - 2 * segW() - 6 + index * (segW() + 6);
+    }
+
+    private void configRow(GuiGraphics g, int row, String titleKey, String descKey, int mx, int my) {
+        int y = cfgY(row);
+        boolean hovered = mx >= PAD && mx < PW - PAD && my >= y && my < y + CFG_ROW_H;
+        g.fill(PAD, y, PW - PAD, y + CFG_ROW_H, hovered ? accentDark() : COLOR_BOX_BORDER);
+        g.fill(PAD + 1, y + 1, PW - PAD - 1, y + CFG_ROW_H - 1, COLOR_BOX);
+        g.fill(PAD + 1, y + 1, PAD + 4, y + CFG_ROW_H - 1, accent());
+        g.drawString(this.font, Component.translatable(titleKey), PAD + 16, y + 10, COLOR_TEXT, false);
+        g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable(descKey).getString(), 330),
+                PAD + 16, y + 25, COLOR_MUTED, false);
+    }
+
+    private void drawSwitch(GuiGraphics g, int x, int y, boolean on) {
+        int w = 56;
+        int h = 22;
+        g.fill(x, y, x + w, y + h, on ? accent() : COLOR_BOX_BORDER);
+        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, on ? accentDark() : 0xFF0C0E11);
+        int knob = on ? x + w - 2 - 18 : x + 2;
+        g.fill(knob, y + 2, knob + 18, y + h - 2, on ? accent() : COLOR_DIM);
+        Component text = Component.translatable(on ? "gui.flash.config.on" : "gui.flash.config.off");
+        g.drawString(this.font, text, on ? x + 7 : x + w - 7 - this.font.width(text), y + 7,
+                on ? COLOR_TEXT : COLOR_MUTED, false);
+    }
+
+    private void drawSegment(GuiGraphics g, int x, int y, String key, boolean active, int mx, int my) {
+        int w = segW();
+        int h = 24;
+        boolean hovered = mx >= x && mx < x + w && my >= y && my < y + h;
+        g.fill(x, y, x + w, y + h, active ? accent() : (hovered ? COLOR_MUTED : COLOR_BOX_BORDER));
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, active ? accentDark() : 0xFF0C0E11);
+        Component label = Component.translatable(key);
+        g.drawString(this.font, this.font.plainSubstrByWidth(label.getString(), w - 8),
+                x + (w - Math.min(w - 8, this.font.width(label))) / 2, y + 8,
+                active ? accent() : COLOR_MUTED, false);
+    }
+
+    // ------------------------------------------------------------------
+    // Small drawing helpers
+    // ------------------------------------------------------------------
+
+    private void scaledText(GuiGraphics g, Component text, int x, int y, float scale, int color) {
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(x, y, 0.0F);
+        pose.scale(scale, scale, 1.0F);
+        g.drawString(this.font, text, 0, 0, color, false);
+        pose.popPose();
+    }
+
+    private static int darker(int argb) {
+        int r = ((argb >> 16) & 0xFF) * 6 / 10;
+        int gr = ((argb >> 8) & 0xFF) * 6 / 10;
+        int b = (argb & 0xFF) * 6 / 10;
+        return 0xFF000000 | (r << 16) | (gr << 8) | b;
+    }
+
+    private static void drawCheck(GuiGraphics g, int x, int y, int c) {
+        g.fill(x + 1, y + 4, x + 3, y + 6, c);
+        g.fill(x + 2, y + 5, x + 4, y + 7, c);
+        g.fill(x + 3, y + 4, x + 5, y + 6, c);
+        g.fill(x + 4, y + 2, x + 6, y + 5, c);
+        g.fill(x + 5, y + 1, x + 7, y + 3, c);
+    }
+
+    private static void drawLock(GuiGraphics g, int x, int y, int c) {
+        g.fill(x + 2, y + 4, x + 7, y + 8, c);
+        g.fill(x + 2, y + 1, x + 3, y + 4, c);
+        g.fill(x + 6, y + 1, x + 7, y + 4, c);
+        g.fill(x + 2, y + 1, x + 7, y + 2, c);
+        g.fill(x + 4, y + 5, x + 5, y + 7, 0xFF101216);
+    }
+
+    // ------------------------------------------------------------------
+    // Input
+    // ------------------------------------------------------------------
+
+    private void click() {
+        Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            double sx = mouseX / this.uiScale;
-            double sy = mouseY / this.uiScale;
-            if (isToggleAt(sx, sy)) {
+        if (button != 0) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+        double mx = mouseX / this.uiScale - this.leftPos;
+        double my = mouseY / this.uiScale - this.topPos;
+
+        // tabs
+        for (int i = 0; i < 2; i++) {
+            int tx = PAD + i * (TAB_W + 6);
+            if (mx >= tx && mx < tx + TAB_W && my >= TAB_Y && my < TAB_Y + TAB_H) {
+                tab = i;
+                click();
+                return true;
+            }
+        }
+
+        if (tab == 1) {
+            if (inRow(mx, my, 0)) {
                 boolean enabled = !FlashClientData.isDestroyBlocks();
                 FlashClientData.setDestroyBlocksOptimistic(enabled);
                 FlashNetwork.CHANNEL.sendToServer(new FlashSettingsPacket(enabled));
-                Minecraft.getInstance().getSoundManager().play(
-                        SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                click();
                 return true;
             }
-            int level = levelAt(sx, sy);
-            if (level >= 0
-                    && FlashClientData.hasPowers()
-                    && !FlashClientData.isTemporary()
-                    && level <= FlashClientData.getMaxLevel()) {
-                FlashClientData.setSelectedLevelOptimistic(level);
-                FlashNetwork.CHANNEL.sendToServer(new FlashSelectLevelPacket(level));
-                Minecraft.getInstance().getSoundManager().play(
-                        SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
-                );
+            if (inRow(mx, my, 1)) {
+                int y = cfgY(1) + 10;
+                if (my >= y && my < y + 24) {
+                    for (int i = 0; i < 2; i++) {
+                        if (mx >= segX(i) && mx < segX(i) + segW()) {
+                            boolean wantScroll = i == 1;
+                            if (FlashClientConfig.SCROLL_MODE.get() != wantScroll) {
+                                FlashClientConfig.SCROLL_MODE.set(wantScroll);
+                                FlashClientConfig.SCROLL_MODE.save();
+                            }
+                            click();
+                            return true;
+                        }
+                    }
+                }
                 return true;
             }
+            ForgeConfigSpec.BooleanValue[] toggles = {
+                    null, null, FlashClientConfig.WALL_RUN,
+                    FlashClientConfig.SHOW_ABILITY_HUD, FlashClientConfig.BODY_LIGHTNING};
+            for (int row = 2; row <= 4; row++) {
+                if (inRow(mx, my, row)) {
+                    FlashClientConfig.toggle(toggles[row]);
+                    click();
+                    return true;
+                }
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        int level = levelAt(mx, my);
+        if (level >= 0
+                && FlashClientData.hasPowers()
+                && !FlashClientData.isTemporary()
+                && level <= FlashClientData.getMaxLevel()) {
+            FlashClientData.setSelectedLevelOptimistic(level);
+            FlashNetwork.CHANNEL.sendToServer(new FlashSelectLevelPacket(level));
+            click();
+            return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    private int levelAt(double mouseX, double mouseY) {
-        int gridX = (int) mouseX - (this.leftPos + GRID_X);
-        int gridY = (int) mouseY - (this.topPos + GRID_Y);
-        if (gridX < 0 || gridY < 0) {
+    private static boolean inRow(double mx, double my, int row) {
+        int y = cfgY(row);
+        return mx >= PAD && mx < PW - PAD && my >= y && my < y + CFG_ROW_H;
+    }
+
+    private int levelAt(double mx, double my) {
+        int gx = (int) mx - GRID_X;
+        int gy = (int) my - GRID_Y;
+        if (gx < 0 || gy < 0) {
             return -1;
         }
-        int column = gridX / (CARD_WIDTH + CARD_GAP);
-        int row = gridY / (CARD_HEIGHT + CARD_GAP);
+        int column = gx / (CARD_W + CARD_GAP);
+        int row = gy / (CARD_H + CARD_GAP);
         if (column >= CARD_COLUMNS || row > 2) {
             return -1;
         }
-        if (gridX % (CARD_WIDTH + CARD_GAP) >= CARD_WIDTH
-                || gridY % (CARD_HEIGHT + CARD_GAP) >= CARD_HEIGHT) {
+        if (gx % (CARD_W + CARD_GAP) >= CARD_W || gy % (CARD_H + CARD_GAP) >= CARD_H) {
             return -1;
         }
         int level = row * CARD_COLUMNS + column;
@@ -413,7 +586,8 @@ public class FlashProgressScreen extends Screen {
             this.onClose();
             return true;
         }
-        if (FlashClientData.hasPowers()) {
+        // Only the active control mode works: keys mode here, Ctrl+scroll otherwise.
+        if (FlashClientData.hasPowers() && !FlashClientConfig.SCROLL_MODE.get()) {
             if (FlashKeys.INCREASE_SPEED.matches(keyCode, scanCode)) {
                 int direction = Screen.hasControlDown() ? -1 : 1;
                 FlashClientForgeEvents.changeLevel(Minecraft.getInstance(), direction, true);
@@ -430,9 +604,9 @@ public class FlashProgressScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (FlashClientConfig.MOUSE_WHEEL_CONTROLS.get()
+        if (FlashClientConfig.SCROLL_MODE.get()
                 && minecraft.player != null
-                && minecraft.player.isShiftKeyDown()
+                && Screen.hasControlDown()
                 && FlashClientData.hasPowers()
                 && delta != 0.0D) {
             FlashClientForgeEvents.changeLevel(minecraft, delta > 0.0D ? 1 : -1, false);
@@ -448,8 +622,7 @@ public class FlashProgressScreen extends Screen {
 
     private static String formatTime(int ticks) {
         int seconds = Math.max(0, ticks) / 20;
-        return String.format(java.util.Locale.ROOT, "%d:%02d",
-                seconds / 60, seconds % 60);
+        return String.format(java.util.Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60);
     }
 
     private static String number(int value) {

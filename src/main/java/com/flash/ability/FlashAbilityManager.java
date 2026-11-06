@@ -433,6 +433,32 @@ public final class FlashAbilityManager {
     // Wind hands (level 2, hold)
     // ------------------------------------------------------------------
 
+    private static void extinguishCone(ServerLevel level, Vec3 eye, Vec3 look, Vec3 right, Vec3 up) {
+        boolean extinguished = false;
+        for (int d = 1; d <= 7; d++) {
+            double reach = 0.25D + d * 0.2D;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    Vec3 point = eye.add(look.scale(d))
+                            .add(right.scale(dx * reach)).add(up.scale(dy * reach));
+                    net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(point);
+                    net.minecraft.world.level.block.state.BlockState block = level.getBlockState(pos);
+                    if (block.is(net.minecraft.world.level.block.Blocks.FIRE)
+                            || block.is(net.minecraft.world.level.block.Blocks.SOUL_FIRE)) {
+                        level.removeBlock(pos, false);
+                        level.sendParticles(ParticleTypes.LARGE_SMOKE, pos.getX() + 0.5D,
+                                pos.getY() + 0.4D, pos.getZ() + 0.5D, 4, 0.2D, 0.2D, 0.2D, 0.02D);
+                        extinguished = true;
+                    }
+                }
+            }
+        }
+        if (extinguished) {
+            level.playSound(null, eye.x, eye.y, eye.z, SoundEvents.FIRE_EXTINGUISH,
+                    SoundSource.PLAYERS, 0.6F, 1.2F);
+        }
+    }
+
     private static void windPulse(ServerPlayer player, PlayerState state) {
         ServerLevel level = (ServerLevel) player.level();
         Vec3 look = player.getLookAngle().normalize();
@@ -453,8 +479,17 @@ public final class FlashAbilityManager {
             // Visuals are drawn client-side by FlashAbilityEffectsRenderer.
         }
 
+        // The wind blows fire out: burning blocks inside the cone and burning creatures.
+        player.clearFire();
+        if (state.windTicks % 2 == 0) {
+            extinguishCone(level, eye, look, right, up);
+        }
+
         List<LivingEntity> targets = FlashAbilityCombat.targetsInFront(player, 7.2D, 0.42D, 20);
         for (LivingEntity target : targets) {
+            if (target.isOnFire()) {
+                target.clearFire();
+            }
             Vec3 delta = target.getBoundingBox().getCenter().subtract(eye);
             double distance = delta.length();
             if (distance > 7.2D || distance < 0.01D) {

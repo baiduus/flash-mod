@@ -15,7 +15,8 @@ final class FlashWallRun {
 
     static void tick(Minecraft minecraft) {
         LocalPlayer player = minecraft.player;
-        if (player == null || minecraft.screen != null || !FlashClientData.hasPowers()
+        if (player == null || minecraft.screen != null
+                || !com.flash.config.FlashClientConfig.WALL_RUN.get() || !FlashClientData.hasPowers()
                 || player.isSpectator() || player.getAbilities().flying
                 || player.isPassenger() || player.isInWater() || player.isInLava()
                 || player.onClimbable() || player.isFallFlying()) {

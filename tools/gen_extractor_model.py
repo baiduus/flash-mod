@@ -46,9 +46,7 @@ def build(on):
         "up": face([4, 4, 12, 12], "#top"), "north": face([4, 0, 12, 1], "#side"),
         "south": face([4, 0, 12, 1], "#side"), "east": face([4, 0, 12, 1], "#side"),
         "west": face([4, 0, 12, 1], "#side")}})
-    # glass pane just in front of the opening (both sides visible)
-    els.append({"name": "window_glass", "from": [4, 2, -0.25], "to": [12, 8, -0.25], "faces": {
-        "north": face([0, 0, 16, 16], "#glass"), "south": face([0, 0, 16, 16], "#glass")}})
+    # (the translucent glass pane is drawn by the block entity renderer)
     if on:
         g = lambda uv, t: face(uv, t, True)
         els.append({"name": "body_e", "from": [-0.02, -0.02, -0.02], "to": [16.02, 16.02, 16.02], "faces": {

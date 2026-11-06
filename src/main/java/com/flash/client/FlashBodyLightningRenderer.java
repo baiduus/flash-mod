@@ -64,7 +64,8 @@ public final class FlashBodyLightningRenderer {
         for (Player player : level.players()) {
             if (!player.isAlive() || player.isSpectator()
                     || FlashClientVisualLevels.get(player) < 3
-                    || (player == localPlayer && firstPerson)
+                    || (player == localPlayer && (firstPerson
+                        || !com.flash.config.FlashClientConfig.BODY_LIGHTNING.get()))
                     || player.distanceToSqr(localPlayer) > MAX_RENDER_DISTANCE_SQR) {
                 continue;
             }

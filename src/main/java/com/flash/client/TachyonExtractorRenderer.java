@@ -61,10 +61,36 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
             poseStack.popPose();
         }
 
+        drawGlass(poseStack, buffers, powered ? LightTexture.FULL_BRIGHT : packedLight);
         if (powered) {
             drawProgressBar(extractor, poseStack, buffers);
         }
         poseStack.popPose();
+    }
+
+    private static final net.minecraft.resources.ResourceLocation GLASS =
+            new net.minecraft.resources.ResourceLocation("flash", "textures/block/tachyon_extractor_glass.png");
+
+    /** Real translucent glass over the window (block models here are cutout, which cannot blend). */
+    private void drawGlass(PoseStack poseStack, MultiBufferSource buffers, int light) {
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(GLASS));
+        PoseStack.Pose pose = poseStack.last();
+        float x0 = 4.0F / 16.0F;
+        float x1 = 12.0F / 16.0F;
+        float y0 = 2.0F / 16.0F;
+        float y1 = 8.0F / 16.0F;
+        float z = -0.25F / 16.0F;
+        glassVertex(consumer, pose, x0, y0, z, 0.0F, 1.0F, light);
+        glassVertex(consumer, pose, x1, y0, z, 1.0F, 1.0F, light);
+        glassVertex(consumer, pose, x1, y1, z, 1.0F, 0.0F, light);
+        glassVertex(consumer, pose, x0, y1, z, 0.0F, 0.0F, light);
+    }
+
+    private static void glassVertex(VertexConsumer consumer, PoseStack.Pose pose, float x, float y,
+                                    float z, float u, float v, int light) {
+        consumer.vertex(pose.pose(), x, y, z).color(255, 255, 255, 255).uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
+                .normal(pose.normal(), 0.0F, 0.0F, -1.0F).endVertex();
     }
 
     /** Orange bar on the front panel; fills along the track (0 to 6 px). */

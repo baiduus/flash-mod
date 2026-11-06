@@ -30,7 +30,8 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (minecraft.player == null || minecraft.options.hideGui
                 || minecraft.player.isSpectator() || minecraft.screen != null
                 || minecraft.options.renderDebug
-                || !FlashClientData.hasPowers()) {
+                || !FlashClientData.hasPowers()
+                || !com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
             return;
         }
         int maxLevel = FlashClientData.getMaxLevel();
