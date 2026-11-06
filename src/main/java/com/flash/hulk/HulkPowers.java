@@ -292,6 +292,21 @@ public final class HulkPowers {
         sync(player);
     }
 
+    /** Command: sets the rage level (1..10) and the rage bar (0..100). */
+    public static void setLevel(ServerPlayer player, int level, float rage) {
+        if (!has(player)) {
+            grant(player, false);
+        }
+        CompoundTag tag = tag(player).copy();
+        tag.putInt(LEVEL, Math.max(1, Math.min(MAX_LEVEL, level)));
+        tag.putFloat(RAGE, Math.max(0.0F, Math.min(MAX_RAGE, rage)));
+        tag.remove(TEMP_UNTIL);
+        save(player, tag);
+        applyAttributes(player);
+        player.refreshDimensions();
+        sync(player);
+    }
+
     public static void startFury(ServerPlayer player) {
         CompoundTag tag = tag(player).copy();
         tag.putLong(FURY_UNTIL, player.level().getGameTime() + FURY_TICKS);

@@ -172,7 +172,9 @@ public final class FlashClientForgeEvents {
         drawingRingHand = true;
         try {
             // the nested event passes through untouched, so the vanilla hand is drawn
-            if (right) {
+            if (hulk) {
+                // the Hulk's arm replaces the skin arm (drawn below)
+            } else if (right) {
                 player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),
                         event.getPackedLight(), event.getPlayer());
             } else {

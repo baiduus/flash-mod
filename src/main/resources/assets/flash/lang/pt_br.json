@@ -422,5 +422,7 @@
   "ability.flash.hulk.gamma_wave": "Onda Gama",
   "ability.flash.hulk.gamma_wave.description": "Explosão de radiação gama em volta do Hulk.",
   "ability.flash.hulk.world_breaker": "Pisão Destruidor",
-  "ability.flash.hulk.world_breaker.description": "Um pisão que quebra o chão em anéis que se espalham."
+  "ability.flash.hulk.world_breaker.description": "Um pisão que quebra o chão em anéis que se espalham.",
+  "commands.flash.hulk.level": "%s agora é Hulk nível %s.",
+  "commands.flash.hulk.rage": "Raiva de %s definida em %s%%."
 }

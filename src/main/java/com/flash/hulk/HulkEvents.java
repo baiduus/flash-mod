@@ -192,6 +192,20 @@ public final class HulkEvents {
                         .executes(c -> give(c.getSource().getPlayerOrException(), c.getSource()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> give(EntityArgument.getPlayer(c, "player"), c.getSource()))))
+                .then(Commands.literal("level")
+                        .then(Commands.argument("level", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, HulkPowers.MAX_LEVEL))
+                                .executes(c -> level(c.getSource().getPlayerOrException(),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "level"), c.getSource()))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(c -> level(EntityArgument.getPlayer(c, "player"),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "level"), c.getSource())))))
+                .then(Commands.literal("rage")
+                        .then(Commands.argument("percent", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 100))
+                                .executes(c -> rage(c.getSource().getPlayerOrException(),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "percent"), c.getSource()))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(c -> rage(EntityArgument.getPlayer(c, "player"),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "percent"), c.getSource())))))
                 .then(Commands.literal("remove")
                         .executes(c -> remove(c.getSource().getPlayerOrException(), c.getSource()))
                         .then(Commands.argument("player", EntityArgument.player())
@@ -201,6 +215,21 @@ public final class HulkEvents {
     private static int give(ServerPlayer player, net.minecraft.commands.CommandSourceStack source) {
         HulkPowers.grant(player, false);
         source.sendSuccess(() -> Component.translatable("commands.flash.hulk.give", player.getDisplayName()), true);
+        return 1;
+    }
+
+    private static int level(ServerPlayer player, int level, net.minecraft.commands.CommandSourceStack source) {
+        HulkPowers.setLevel(player, level, 0.0F);
+        source.sendSuccess(() -> Component.translatable("commands.flash.hulk.level", player.getDisplayName(), level), true);
+        return 1;
+    }
+
+    private static int rage(ServerPlayer player, int percent, net.minecraft.commands.CommandSourceStack source) {
+        if (!HulkPowers.has(player)) {
+            HulkPowers.grant(player, false);
+        }
+        HulkPowers.setLevel(player, HulkPowers.level(player), percent);
+        source.sendSuccess(() -> Component.translatable("commands.flash.hulk.rage", player.getDisplayName(), percent), true);
         return 1;
     }
 

@@ -422,5 +422,7 @@
   "ability.flash.hulk.gamma_wave": "Gamma Wave",
   "ability.flash.hulk.gamma_wave.description": "A burst of gamma radiation around the Hulk.",
   "ability.flash.hulk.world_breaker": "World Breaker Stomp",
-  "ability.flash.hulk.world_breaker.description": "A stomp that breaks the ground in spreading rings."
+  "ability.flash.hulk.world_breaker.description": "A stomp that breaks the ground in spreading rings.",
+  "commands.flash.hulk.level": "%s is now Hulk level %s.",
+  "commands.flash.hulk.rage": "%s's rage set to %s%%."
 }

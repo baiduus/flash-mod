@@ -50,6 +50,20 @@ public final class HulkClient {
     @SubscribeEvent
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (HulkState.isTransformed(event.getEntity())) {
+            // only the Hulk is visible: the player's own skin (and its outer layer) is hidden
+            PlayerModel<AbstractClientPlayer> skin = event.getRenderer().getModel();
+            skin.head.visible = false;
+            skin.hat.visible = false;
+            skin.body.visible = false;
+            skin.jacket.visible = false;
+            skin.rightArm.visible = false;
+            skin.leftArm.visible = false;
+            skin.rightSleeve.visible = false;
+            skin.leftSleeve.visible = false;
+            skin.rightLeg.visible = false;
+            skin.leftLeg.visible = false;
+            skin.rightPants.visible = false;
+            skin.leftPants.visible = false;
             event.getPoseStack().pushPose();
             float scale = HulkState.scale(event.getEntity());
             event.getPoseStack().scale(scale, scale, scale);
@@ -99,6 +113,13 @@ public final class HulkClient {
     static void drawArm(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player,
                         PlayerModel<AbstractClientPlayer> parent, HumanoidArm arm) {
         HulkModel hulk = model();
+        // same arm pose vanilla uses for the first-person hand (the skin arm itself is not drawn)
+        parent.attackTime = 0.0F;
+        parent.crouching = false;
+        parent.swimAmount = 0.0F;
+        parent.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+        parent.rightArm.xRot = 0.0F;
+        parent.leftArm.xRot = 0.0F;
         VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(HulkModel.TEXTURE));
         if (arm == HumanoidArm.RIGHT) {
             hulk.rightArm.copyFrom(parent.rightArm);
