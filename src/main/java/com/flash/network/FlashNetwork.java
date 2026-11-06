@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "16";
+    private static final String PROTOCOL = "17";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -102,6 +102,18 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(HulkTransformPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(HulkTransformPacket::encode)
                 .decoder(HulkTransformPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HulkAbilityPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(HulkAbilityPacket::encode)
+                .decoder(HulkAbilityPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HulkSettingsPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(HulkSettingsPacket::encode)
+                .decoder(HulkSettingsPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
     }

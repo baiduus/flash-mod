@@ -36,11 +36,6 @@ public final class ModCreativeTabs {
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
                                 com.flash.item.SyringeContents.NEGATIVE_FORCE));
                         output.accept(ModItems.V9_CAPSULE.get());
-                        output.accept(ModItems.GAMMA_CAPSULE.get());
-                        output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
-                                com.flash.item.SyringeContents.GAMMA));
-                        output.accept(ModItems.GAMMA_BOMB.get());
-                        output.accept(ModItems.GAMMA_REACTOR.get());
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
                                 com.flash.item.SyringeContents.V9));
                         output.accept(ModItems.NEGATIVE_STONE.get());
@@ -77,6 +72,23 @@ public final class ModCreativeTabs {
         PotionUtils.setPotion(stack, potion);
         return stack;
     }
+
+    /** Everything of the Hulk (gamma power). */
+    public static final RegistryObject<CreativeModeTab> HULK = CREATIVE_MODE_TABS.register(
+            "hulk",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.flash.hulk"))
+                    .icon(() -> new ItemStack(ModItems.GAMMA_CHAMBER.get()))
+                    .withTabsBefore(FLASH.getKey())
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModItems.GAMMA_CHAMBER.get());
+                        output.accept(ModItems.GAMMA_REACTOR.get());
+                        output.accept(ModItems.GAMMA_CAPSULE.get());
+                        output.accept(ModItems.SYRINGE.get());
+                        output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
+                                com.flash.item.SyringeContents.GAMMA));
+                    })
+                    .build());
 
     private ModCreativeTabs() {
     }

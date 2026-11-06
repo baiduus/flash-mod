@@ -1,0 +1,26 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "IGI",
+  "GEG",
+  "IRI"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_block"
+  },
+  "G": {
+   "item": "minecraft:green_stained_glass"
+  },
+  "E": {
+   "item": "minecraft:emerald_block"
+  },
+  "R": {
+   "item": "minecraft:redstone_block"
+  }
+ },
+ "result": {
+  "item": "flash:gamma_chamber"
+ }
+}

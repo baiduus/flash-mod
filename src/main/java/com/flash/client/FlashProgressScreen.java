@@ -140,7 +140,7 @@ public class FlashProgressScreen extends Screen {
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
         if (PowerTheme.localHulk()) {
-            return new int[] {TAB_PROGRESS};
+            return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         return FlashClientData.hasPowers() ? new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG}
                 : new int[] {TAB_PROGRESS};
@@ -247,6 +247,8 @@ public class FlashProgressScreen extends Screen {
             drawProgressTab(graphics, mx, my);
         } else if (current == TAB_EQUIP) {
             drawEquipTab(graphics, mx, my);
+        } else if (PowerTheme.localHulk()) {
+            drawHulkConfig(graphics, mx, my);
         } else {
             drawConfigTab(graphics, mx, my);
         }
@@ -387,66 +389,158 @@ public class FlashProgressScreen extends Screen {
     // Hulk page
     // ------------------------------------------------------------------
 
-    private static final String[] HULK_SKILLS = {"strength", "jump", "resistance", "regeneration", "speed"};
-
     private void drawHulkTab(GuiGraphics g, int mx, int my) {
         Minecraft mc = Minecraft.getInstance();
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
         boolean form = mc.player != null && com.flash.hulk.HulkState.isTransformed(mc.player);
-        float rage = Math.max(0.0F, Math.min(1.0F, com.flash.hulk.HulkState.clientRage() / com.flash.hulk.HulkPowers.MAX_RAGE));
+        int level = Math.max(1, com.flash.hulk.HulkState.level());
+        float rage = Math.max(0.0F, Math.min(1.0F, com.flash.hulk.HulkState.rage() / com.flash.hulk.HulkPowers.MAX_RAGE));
+        int temp = com.flash.hulk.HulkState.tempTicks(now);
         int half = (LEFT_W - 8) / 2;
-        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.form"),
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.level"),
+                Component.translatable("gui.flash.hulk.level_value", level),
+                temp > 0 ? Component.literal(formatTime(temp)) : Component.literal(String.format(java.util.Locale.ROOT,
+                        "%.1fx", com.flash.hulk.HulkPowers.scaleFor(level, com.flash.hulk.HulkState.grow()))));
+        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.form"),
                 Component.translatable(form ? "gui.flash.hulk.form_hulk" : "gui.flash.hulk.form_banner"),
-                Component.literal(form ? "1.5x" : ""));
-        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.rage"),
-                Component.literal(Math.round(rage * 100.0F) + "%"),
-                Component.translatable("gui.flash.hulk.rage_bonus", Math.round(8 + 14 * rage)));
+                Component.translatable("gui.flash.hulk.key_short", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()));
 
-        // rage meter
-        int y = GRID_Y - 4;
-        card(g, PAD, y, LEFT_W, 58, 0.0F);
-        g.drawString(this.font, Component.translatable("gui.flash.hulk.rage_meter"), PAD + 10, y + 8, COLOR_TEXT, false);
+        // levels 1..10
+        sectionTitle(g, Component.translatable("gui.flash.hulk.levels"), PAD, GRID_Y - 13);
+        int cols = 5;
+        int cw = (LEFT_W - GRID_GAP * (cols - 1)) / cols;
+        int ch = 30;
+        float pulse = 0.5F + 0.5F * (float) Math.sin(seconds() * 3.2F);
+        for (int l = 1; l <= com.flash.hulk.HulkPowers.MAX_LEVEL; l++) {
+            int cx = PAD + ((l - 1) % cols) * (cw + GRID_GAP);
+            int cy = GRID_Y + ((l - 1) / cols) * (ch + GRID_GAP);
+            boolean reached = l <= level;
+            if (l == level) {
+                g.fill(cx - 2, cy - 2, cx + cw + 2, cy + ch + 2, withAlpha(accent(), 0.25F + 0.35F * pulse));
+                g.fill(cx - 1, cy - 1, cx + cw + 1, cy + ch + 1, accent());
+                g.fill(cx, cy, cx + cw, cy + ch, accentSoft());
+            } else {
+                card(g, cx, cy, cw, ch, 0.0F);
+                if (reached) {
+                    g.fill(cx + 1, cy + ch - 2, cx + cw - 1, cy + ch - 1, withAlpha(accent(), 0.6F));
+                }
+            }
+            Component n = Component.literal(Integer.toString(l));
+            int nw = Math.round(this.font.width(n) * 1.5F);
+            scaledText(g, n, cx + (cw - nw) / 2, cy + 9, 1.5F,
+                    l == level ? accent() : reached ? COLOR_TEXT : COLOR_DIM);
+            if (!reached) {
+                drawLock(g, cx + cw - 10, cy + 3, COLOR_DIM);
+            }
+        }
+
+        // rage = progress to the next level
+        int y = PROGRESS_Y;
+        card(g, PAD, y, LEFT_W, CONTENT_BOTTOM - y, 0.0F);
         if (this.shownProgress < 0.0F) {
             this.shownProgress = 0.0F;
         }
         this.shownProgress += (rage - this.shownProgress) * Math.min(1.0F, this.dt * 5.0F);
-        drawBar(g, PAD + 10, y + 22, LEFT_W - 20, this.shownProgress, rage > 0.75F ? 0xFFFF5A3C : accent());
+        boolean maxed = level >= com.flash.hulk.HulkPowers.MAX_LEVEL;
+        g.drawString(this.font, Component.translatable(temp > 0 ? "gui.flash.hulk.temporary"
+                        : maxed ? "gui.flash.hulk.maxed" : "gui.flash.hulk.next", level + 1),
+                PAD + 10, y + 8, COLOR_TEXT, false);
+        Component pct = Component.literal(Math.round(rage * 100.0F) + "%");
+        g.drawString(this.font, pct, PAD + LEFT_W - 10 - this.font.width(pct), y + 8, accent(), false);
+        drawBar(g, PAD + 10, y + 22, LEFT_W - 20, this.shownProgress, rage > 0.85F ? 0xFFFF5A3C : accent());
         g.drawString(this.font, this.font.plainSubstrByWidth(
                         Component.translatable("gui.flash.hulk.rage_hint").getString(), LEFT_W - 20),
-                PAD + 10, y + 38, COLOR_MUTED, false);
+                PAD + 10, y + 36, COLOR_MUTED, false);
 
-        // controls
-        int cy = y + 66;
-        card(g, PAD, cy, LEFT_W, CONTENT_BOTTOM - cy, 0.0F);
-        g.drawString(this.font, Component.translatable("gui.flash.hulk.key_transform",
-                FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()), PAD + 10, cy + 9, accent(), false);
-        g.drawString(this.font, Component.translatable("gui.flash.hulk.key_jump"), PAD + 10, cy + 23, COLOR_TEXT, false);
-        g.drawString(this.font, this.font.plainSubstrByWidth(
-                        Component.translatable("gui.flash.hulk.origin").getString(), LEFT_W - 20),
-                PAD + 10, cy + 37, COLOR_DIM, false);
-
-        // abilities
+        // abilities (passives included), with level, key and cooldown
         sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
         int top = CONTENT_Y + 14;
-        String tooltip = null;
-        for (int i = 0; i < HULK_SKILLS.length; i++) {
-            int ry = top + i * 34;
-            int rh = 31;
-            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
-            float hv = hover("hulkskill" + i, hovered);
-            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
-            g.fill(RIGHT_X, ry + 4, RIGHT_X + 2, ry + rh - 4, lerpColor(withAlpha(accent(), 0.5F), accent(), hv));
-            g.drawString(this.font, Component.translatable("gui.flash.hulk.skill." + HULK_SKILLS[i]),
-                    RIGHT_X + 10, ry + 6, form ? COLOR_TEXT : COLOR_MUTED, false);
-            g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable(
-                            "gui.flash.hulk.skill." + HULK_SKILLS[i] + ".short").getString(), RIGHT_W - 16),
-                    RIGHT_X + 10, ry + 18, COLOR_DIM, false);
-            if (hovered) {
-                tooltip = "gui.flash.hulk.skill." + HULK_SKILLS[i] + ".description";
+        String[] passives = {"jump", "skin"};
+        int[] passiveLevels = {1, 9};
+        Component tooltip = null;
+        int row = 0;
+        int total = com.flash.hulk.HulkAbility.values().length + passives.length;
+        for (int k = 0; k < total; k++) {
+            int ry = top + row * SKILL_ROW;
+            int rh = SKILL_ROW - 2;
+            Component name;
+            Component desc;
+            int req;
+            Component right;
+            int cooldown = 0;
+            if (k < 2) {
+                name = Component.translatable("ability.flash.hulk." + passives[k]);
+                desc = Component.translatable("ability.flash.hulk." + passives[k] + ".description");
+                req = passiveLevels[k];
+                right = Component.translatable("gui.flash.hulk.passive");
+            } else {
+                com.flash.hulk.HulkAbility a = com.flash.hulk.HulkAbility.values()[k - 2];
+                name = a.displayName();
+                desc = a.description();
+                req = a.level();
+                cooldown = com.flash.hulk.HulkState.cooldown(a, now);
+                net.minecraft.client.KeyMapping key = FlashAbilityKeys.mapping(a.keySlot());
+                right = cooldown > 0 ? Component.literal(formatTime(cooldown))
+                        : key != null ? key.getTranslatedKeyMessage() : Component.empty();
             }
+            boolean unlocked = level >= req;
+            if (!unlocked) {
+                right = Component.translatable("gui.flash.progress.level_short", req);
+            }
+            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            float hv = hover("hsk" + k, hovered);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            if (unlocked) {
+                drawCheck(g, RIGHT_X + 6, ry + 6, accent());
+            } else {
+                drawLock(g, RIGHT_X + 6, ry + 5, COLOR_DIM);
+            }
+            int rw = this.font.width(right);
+            g.drawString(this.font, this.font.plainSubstrByWidth(name.getString(), RIGHT_W - 30 - rw),
+                    RIGHT_X + 18, ry + 6, unlocked ? COLOR_TEXT : COLOR_DIM, false);
+            g.drawString(this.font, right, RIGHT_X + RIGHT_W - 6 - rw, ry + 6,
+                    cooldown > 0 ? COLOR_ORANGE : unlocked ? accent() : COLOR_DIM, false);
+            if (hovered) {
+                tooltip = desc;
+            }
+            row++;
         }
         if (tooltip != null) {
-            g.renderTooltip(this.font, Component.translatable(tooltip), mx, my);
+            g.renderTooltip(this.font, tooltip, mx, my);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Hulk options
+    // ------------------------------------------------------------------
+
+    private void drawHulkConfig(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.hulk.cfg.destroy", "gui.flash.hulk.cfg.destroy.desc", mx, my);
+        drawSwitch(g, "hsw0", switchX(), cfgY(0) + 8, com.flash.hulk.HulkState.destroyBlocks());
+        configRow(g, 1, "gui.flash.hulk.cfg.grow", "gui.flash.hulk.cfg.grow.desc", mx, my);
+        drawSwitch(g, "hsw1", switchX(), cfgY(1) + 8, com.flash.hulk.HulkState.grow());
+        configRow(g, 2, "gui.flash.config.hud", "gui.flash.hulk.cfg.hud.desc", mx, my);
+        drawSwitch(g, "hsw2", switchX(), cfgY(2) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+    }
+
+    private boolean clickHulkConfig(int mx, int my) {
+        boolean destroy = com.flash.hulk.HulkState.destroyBlocks();
+        boolean grow = com.flash.hulk.HulkState.grow();
+        if (inRow(mx, my, 0)) {
+            destroy = !destroy;
+        } else if (inRow(mx, my, 1)) {
+            grow = !grow;
+        } else if (inRow(mx, my, 2)) {
+            FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
+            click();
+            return true;
+        } else {
+            return false;
+        }
+        com.flash.hulk.HulkState.setSettingsOptimistic(destroy, grow);
+        FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkSettingsPacket(destroy, grow));
+        click();
+        return true;
     }
 
     /** Pixel fist (about 26 x 26). */
@@ -1018,6 +1112,9 @@ public class FlashProgressScreen extends Screen {
 
         if (activeTab() == TAB_EQUIP) {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localHulk()) {
+            return clickHulkConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_CONFIG) {
             if (inRow(ix, iy, 0)) {

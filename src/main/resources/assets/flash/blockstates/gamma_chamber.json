@@ -1,0 +1,16 @@
+{
+ "variants": {
+  "active=false,loaded=false": {
+   "model": "flash:block/gamma_chamber"
+  },
+  "active=true,loaded=false": {
+   "model": "flash:block/gamma_chamber_active"
+  },
+  "active=false,loaded=true": {
+   "model": "flash:block/gamma_chamber_active"
+  },
+  "active=true,loaded=true": {
+   "model": "flash:block/gamma_chamber_active"
+  }
+ }
+}

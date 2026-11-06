@@ -122,28 +122,82 @@ public class FlashHud implements IGuiOverlay {
         }
     }
 
-    /** Hulk HUD: form and the rage meter. */
+    /** Hulk HUD: level and rage (top left) and the abilities with keys and cooldowns (bottom right). */
     private static void drawHulk(GuiGraphics g, Minecraft mc) {
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
         boolean form = com.flash.hulk.HulkState.isTransformed(mc.player);
+        int level = Math.max(1, com.flash.hulk.HulkState.level());
         float rage = Math.max(0.0F, Math.min(1.0F,
-                com.flash.hulk.HulkState.clientRage() / com.flash.hulk.HulkPowers.MAX_RAGE));
+                com.flash.hulk.HulkState.rage() / com.flash.hulk.HulkPowers.MAX_RAGE));
+        int temp = com.flash.hulk.HulkState.tempTicks(now);
+        int fury = com.flash.hulk.HulkState.furyTicks(now);
         var font = mc.font;
-        String line1 = Component.translatable(form ? "hud.flash.hulk" : "hud.flash.banner").getString();
+        String line1 = form ? Component.translatable("hud.flash.hulk_level", level).getString()
+                : Component.translatable("hud.flash.banner").getString();
         String line2 = form
                 ? Component.translatable("hud.flash.hulk_rage", Math.round(rage * 100.0F)).getString()
                 : Component.translatable("hud.flash.banner_hint", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()).getString();
-        int w = Math.max(font.width(line1), font.width(line2)) + 14;
-        int h = 26;
+        String line3 = temp > 0 ? Component.translatable("hud.flash.hulk_temp", time(temp)).getString()
+                : fury > 0 ? Component.translatable("hud.flash.hulk_fury", time(fury)).getString() : null;
+        int w = Math.max(font.width(line1), font.width(line2));
+        if (line3 != null) {
+            w = Math.max(w, font.width(line3));
+        }
+        w += 14;
+        int h = line3 != null ? 37 : 26;
         int x = 6;
         int y = 6;
         g.fill(x, y, x + w, y + h, FlashHudStyle.PANEL);
-        g.fill(x, y, x + 3, y + h, 0xFF5BD94A);
+        g.fill(x, y, x + 3, y + h, fury > 0 ? 0xFFFF3B30 : 0xFF5BD94A);
         g.drawString(font, line1, x + 8, y + 4, 0xFF7CF06A, true);
         g.drawString(font, line2, x + 8, y + 15, FlashHudStyle.TEXT_MUTED, true);
+        if (line3 != null) {
+            g.drawString(font, line3, x + 8, y + 26, fury > 0 ? 0xFFFF6A50 : 0xFFB9C0C8, true);
+        }
         if (form) {
             int bar = Math.round((w - 3) * rage);
-            int color = rage > 0.75F ? 0xFFFF5A3C : 0xFF5BD94A;
-            g.fill(x + 3, y + h - 2, x + 3 + bar, y + h, color);
+            g.fill(x + 3, y + h - 2, x + 3 + bar, y + h, rage > 0.85F ? 0xFFFF5A3C : 0xFF5BD94A);
         }
+        if (!form || !com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
+            return;
+        }
+        // abilities, bottom right
+        java.util.List<com.flash.hulk.HulkAbility> unlocked = new java.util.ArrayList<>();
+        for (com.flash.hulk.HulkAbility a : com.flash.hulk.HulkAbility.values()) {
+            if (level >= a.level()) {
+                unlocked.add(a);
+            }
+        }
+        if (unlocked.isEmpty()) {
+            return;
+        }
+        int rowW = 128;
+        int rowH = 14;
+        int sw = mc.getWindow().getGuiScaledWidth();
+        int sh = mc.getWindow().getGuiScaledHeight();
+        int top = sh - 6 - unlocked.size() * (rowH + 2);
+        for (int i = 0; i < unlocked.size(); i++) {
+            com.flash.hulk.HulkAbility a = unlocked.get(i);
+            int ry = top + i * (rowH + 2);
+            int rx = sw - 6 - rowW;
+            int cd = com.flash.hulk.HulkState.cooldown(a, now);
+            g.fill(rx, ry, rx + rowW, ry + rowH, FlashHudStyle.PANEL);
+            g.fill(rx, ry, rx + 2, ry + rowH, cd > 0 ? 0xFF3A4A38 : 0xFF5BD94A);
+            if (cd > 0) {
+                float left = Math.min(1.0F, cd / (float) a.cooldown());
+                g.fill(rx + 2, ry, rx + 2 + Math.round((rowW - 2) * left), ry + rowH, 0x70203018);
+            }
+            g.drawString(font, font.plainSubstrByWidth(a.displayName().getString(), rowW - 34), rx + 6, ry + 3,
+                    cd > 0 ? 0xFF8C948A : 0xFFE8F5E4, true);
+            net.minecraft.client.KeyMapping key = FlashAbilityKeys.mapping(a.keySlot());
+            String right = cd > 0 ? ((cd + 19) / 20) + "s"
+                    : key != null ? key.getTranslatedKeyMessage().getString() : "";
+            g.drawString(font, right, rx + rowW - 4 - font.width(right), ry + 3, cd > 0 ? 0xFFFF8A3D : 0xFF7CF06A, true);
+        }
+    }
+
+    private static String time(int ticks) {
+        int s = Math.max(0, ticks) / 20;
+        return String.format(java.util.Locale.ROOT, "%d:%02d", s / 60, s % 60);
     }
 }

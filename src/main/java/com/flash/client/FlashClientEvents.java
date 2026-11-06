@@ -48,7 +48,7 @@ public final class FlashClientEvents {
                 FlashSuitStandRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.ACCELERATION_PHANTOM.get(),
                 AccelerationPhantomRenderer::new);
-        event.registerEntityRenderer(com.flash.registry.ModEntities.GAMMA_BOMB.get(),
+        event.registerEntityRenderer(com.flash.registry.ModEntities.HULK_BOULDER.get(),
                 net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),

@@ -598,6 +598,44 @@ def k_g_liquid(w, h, r, c):
     return clamp(a)
 
 
+def _greenify(arr):
+    """Yellow / orange glow -> gamma green."""
+    a = arr.astype(float)
+    r, g, b = a[..., 0].copy(), a[..., 1].copy(), a[..., 2].copy()
+    hi = np.maximum(r, g)
+    a[..., 0] = hi * 0.30 + b * 0.2
+    a[..., 1] = hi
+    a[..., 2] = hi * 0.22 + b * 0.3
+    return clamp(a)
+
+
+def k_g_gbar(w, h, r, c):
+    return _greenify(k_g_bar(w, h, r, c))
+
+
+def k_g_gfloor(w, h, r, c):
+    return _greenify(k_g_floor(w, h, r, c))
+
+
+def k_g_gtube(w, h, r, c):
+    """Gamma energy 'glass': glowing vertical streaks with see-through gaps."""
+    a = np.zeros((h, w, 4), float)
+    f = c["frame"] / float(FRAMES)
+    for x in range(w):
+        if (x + int(f * 4)) % 3 == 0:
+            for y in range(h):
+                t = ((y / max(1, h) + f + x * 0.13) % 1.0)
+                v = 150 + 105 * t
+                a[y, x, :3] = (v * 0.3, v, v * 0.25)
+                a[y, x, 3] = 255
+    a[0, :, :3] = (60, 200, 50)
+    a[0, :, 3] = 255
+    a[-1, :, :3] = (60, 200, 50)
+    a[-1, :, 3] = 255
+    a[..., :3] *= pulse(c, 0.08, 0.18)
+    return clamp(a)
+
+
 KINDS = {
     "graphite": k_graphite, "dark": k_dark, "dark_alt": k_dark_alt,
     "steel": k_steel, "gold": k_gold, "gold_dull": k_gold_dull, "bronze": k_bronze,
@@ -609,6 +647,7 @@ KINDS = {
     "g:bar": k_g_bar, "g:red": k_g_red, "g:grid": k_g_grid,
     "g:floor": k_g_floor, "g:bolt": k_g_bolt, "g:potion": k_g_potion,
     "glass_dark": k_glass_dark, "g:liquid": k_g_liquid,
+    "g:gbar": k_g_gbar, "g:gfloor": k_g_gfloor, "g:gtube": k_g_gtube,
 }
 KIND_DENS = {"g:bolt": 2, "potion_panel": 2, "g:potion": 2}
 
@@ -839,6 +878,47 @@ def build_container():
     return m
 
 
+def build_gamma():
+    """Gamma chamber (Hulk): a round pad with a gamma emitter, a tube of gamma energy,
+    four pillars with green strips, a capsule port and a glowing gamma core on top.
+    Collision is only the pad (the player stands inside the tube)."""
+    m = Model("gamma_chamber", 4.0)
+    B = m.box
+    C = 0.5
+    disc(m, "pad", C, C, 0.0, 0.95, (0.0, 0.18), step=0.05, all="dark", top="graphite")
+    disc(m, "pad2", C, C, 0.0, 0.82, (0.18, 0.25), step=0.05, all="graphite", top="floor_plate")
+    disc(m, "pad_gold", C, C, 0.84, 0.95, (0.18, 0.21), step=0.05, all="gold", occlude=False)
+    disc(m, "pad_led", C, C, 0.88, 0.97, (0.06, 0.12), step=0.05, all="g:gbar", occlude=False)
+    disc(m, "emitter", C, C, 0.0, 0.5, (0.25, 0.27), step=0.05, top="g:gfloor",
+         skip=("front", "back", "left", "right", "bottom"), occlude=False)
+    disc(m, "tube", C, C, 0.76, 0.82, (0.27, 2.9), step=0.05, all="g:gtube", occlude=False,
+         skip=("top", "bottom"))
+    for i, deg in enumerate((45, 135, 225, 315)):
+        x, z = polar(C, C, 0.9, deg)
+        xa, xb = round(x - 0.09, 4), round(x + 0.09, 4)
+        za, zb = round(z - 0.09, 4), round(z + 0.09, 4)
+        B("pil%d" % i, (xa, xb), (0.18, 3.0), (za, zb), all="steel", top="graphite")
+        B("pil_base%d" % i, (xa - 0.03, xb + 0.03), (0.18, 0.4), (za - 0.03, zb + 0.03), all="graphite")
+        sx, sz = polar(C, C, 1.0, deg)
+        B("pil_led%d" % i, (round(sx - 0.025, 4), round(sx + 0.025, 4)), (0.5, 2.7),
+          (round(sz - 0.025, 4), round(sz + 0.025, 4)), all="g:gbar")
+    # capsule port on the front-left pillar
+    x, z = polar(C, C, 1.02, -45)
+    B("port", (round(x - 0.12, 4), round(x + 0.12, 4)), (1.0, 1.4), (round(z - 0.12, 4), round(z + 0.12, 4)),
+      all="dark", front="panel_box")
+    B("port_glow", (round(x - 0.06, 4), round(x + 0.06, 4)), (1.08, 1.32), (round(z - 0.14, 4), round(z - 0.12, 4)),
+      all="g:gbar")
+    # top cap and gamma core
+    disc(m, "cap", C, C, 0.0, 1.0, (2.9, 3.12), step=0.05, all="graphite", top="header_top",
+         bottom="header_under")
+    disc(m, "cap_gold", C, C, 0.92, 1.03, (2.96, 3.05), step=0.05, all="gold", occlude=False)
+    disc(m, "cap_emit", C, C, 0.0, 0.5, (2.88, 2.9), bottom="g:gfloor",
+         skip=("front", "back", "left", "right", "top"), occlude=False)
+    disc(m, "core", C, C, 0.0, 0.28, (3.12, 3.42), step=0.04, all="g:gbar")
+    disc(m, "core_rim", C, C, 0.26, 0.34, (3.12, 3.2), step=0.04, all="gold", occlude=False)
+    return m
+
+
 # ----------------------------------------------------------------------
 # Emissao
 # ----------------------------------------------------------------------
@@ -897,7 +977,8 @@ def element(b, scale, uvs, atlas_main, atlas_glow, jobs, model_name):
 def main():
     machine = build_machine()
     container = build_container()
-    models = [machine, container]
+    gamma = build_gamma()
+    models = [machine, container, gamma]
     jobs = collect(models)
 
     main_rects = {k: (v[1], v[2]) for k, v in jobs.items() if not v[0].startswith("g:")}
@@ -949,7 +1030,8 @@ def main():
             json.dump(data, fh, indent=1)
 
     for m, credit in ((machine, "Flash mod - transformation chamber v8"),
-                      (container, "Flash mod - potion container v8")):
+                      (container, "Flash mod - potion container v8"),
+                      (gamma, "Flash mod - gamma chamber v1")):
         els = [e for e in (element(b, m.scale, uvs, None, None, jobs, m.name)
                            for b in m.boxes) if e]
         data = {
@@ -965,7 +1047,7 @@ def main():
         write(m.name, data)
         alt = {"parent": "flash:block/" + m.name,
                "textures": {"g": "flash:block/machine_glow_active"}}
-        write(m.name + ("_active" if m is machine else "_filled"), alt)
+        write(m.name + ("_filled" if m is container else "_active"), alt)
 
     info = {"main_atlas": msize, "glow_atlas": gsize,
             "faces": len(jobs), "machine_elements": len(machine.boxes),

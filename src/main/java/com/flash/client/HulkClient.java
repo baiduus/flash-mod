@@ -29,6 +29,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class HulkClient {
 
     private static HulkModel model;
+    private static final boolean[] KEY_DOWN = new boolean[com.flash.hulk.HulkAbility.values().length];
     private static int scaledDepth;
 
     private HulkClient() {
@@ -50,7 +51,8 @@ public final class HulkClient {
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (HulkState.isTransformed(event.getEntity())) {
             event.getPoseStack().pushPose();
-            event.getPoseStack().scale(HulkPowers.SCALE, HulkPowers.SCALE, HulkPowers.SCALE);
+            float scale = HulkState.scale(event.getEntity());
+            event.getPoseStack().scale(scale, scale, scale);
             scaledDepth++;
         }
     }
@@ -68,10 +70,22 @@ public final class HulkClient {
         if (event.phase != TickEvent.Phase.END || Minecraft.getInstance().player == null) {
             return;
         }
+        Minecraft mc = Minecraft.getInstance();
         while (FlashKeys.HULK_TRANSFORM.consumeClick()) {
-            if (HulkState.has(Minecraft.getInstance().player)) {
+            if (HulkState.has(mc.player)) {
                 FlashNetwork.CHANNEL.sendToServer(new HulkTransformPacket());
             }
+        }
+        // Hulk abilities share the keys of the Flash abilities
+        com.flash.hulk.HulkAbility[] abilities = com.flash.hulk.HulkAbility.values();
+        boolean active = mc.screen == null && HulkState.isTransformed(mc.player);
+        for (int i = 0; i < abilities.length; i++) {
+            net.minecraft.client.KeyMapping key = FlashAbilityKeys.mapping(abilities[i].keySlot());
+            boolean down = active && key != null && key.isDown();
+            if (down && !KEY_DOWN[i]) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkAbilityPacket(i));
+            }
+            KEY_DOWN[i] = down;
         }
     }
 

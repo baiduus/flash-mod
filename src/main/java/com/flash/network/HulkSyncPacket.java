@@ -9,18 +9,41 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
-/** Server -> client: whether a player has the Hulk, is transformed, and (own player) the rage. */
-public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, float rage) {
+/** Server -> client: Hulk state of a player (scale for everyone, the rest for the player himself). */
+public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, float scale, int level,
+                             float rage, int tempTicks, int furyTicks, boolean destroy, boolean grow,
+                             int[] cooldowns) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUUID(this.playerId);
         buffer.writeBoolean(this.has);
         buffer.writeBoolean(this.transformed);
+        buffer.writeFloat(this.scale);
+        buffer.writeVarInt(this.level);
         buffer.writeFloat(this.rage);
+        buffer.writeVarInt(this.tempTicks);
+        buffer.writeVarInt(this.furyTicks);
+        buffer.writeBoolean(this.destroy);
+        buffer.writeBoolean(this.grow);
+        buffer.writeVarInt(this.cooldowns.length);
+        for (int c : this.cooldowns) {
+            buffer.writeVarInt(Math.max(0, c));
+        }
     }
 
     public HulkSyncPacket(FriendlyByteBuf buffer) {
-        this(buffer.readUUID(), buffer.readBoolean(), buffer.readBoolean(), buffer.readFloat());
+        this(buffer.readUUID(), buffer.readBoolean(), buffer.readBoolean(), buffer.readFloat(),
+                buffer.readVarInt(), buffer.readFloat(), buffer.readVarInt(), buffer.readVarInt(),
+                buffer.readBoolean(), buffer.readBoolean(), readInts(buffer));
+    }
+
+    private static int[] readInts(FriendlyByteBuf buffer) {
+        int n = Math.min(32, Math.max(0, buffer.readVarInt()));
+        int[] out = new int[n];
+        for (int i = 0; i < n; i++) {
+            out[i] = buffer.readVarInt();
+        }
+        return out;
     }
 
     public void handle(NetworkEvent.Context context) {
@@ -29,12 +52,14 @@ public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, fl
     }
 
     private static final class Client {
-        static void apply(HulkSyncPacket packet) {
+        static void apply(HulkSyncPacket p) {
             Minecraft mc = Minecraft.getInstance();
-            boolean local = mc.player != null && mc.player.getUUID().equals(packet.playerId);
-            HulkState.setClient(packet.playerId, packet.has, packet.transformed, packet.rage, local);
+            boolean local = mc.player != null && mc.player.getUUID().equals(p.playerId);
+            long now = mc.level != null ? mc.level.getGameTime() : 0L;
+            HulkState.setClient(p.playerId, p.has, p.transformed, p.scale, local, p.level, p.rage,
+                    p.tempTicks, p.furyTicks, p.destroy, p.grow, p.cooldowns, now);
             if (mc.level != null) {
-                Player player = mc.level.getPlayerByUUID(packet.playerId);
+                Player player = mc.level.getPlayerByUUID(p.playerId);
                 if (player != null) {
                     player.refreshDimensions();
                 }

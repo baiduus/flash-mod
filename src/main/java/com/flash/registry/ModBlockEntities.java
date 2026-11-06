@@ -43,6 +43,13 @@ public final class ModBlockEntities {
                             ModBlocks.TACHYON_EXTRACTOR.get()
                     ).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.flash.block.GammaChamberBlockEntity>> GAMMA_CHAMBER =
+            BLOCK_ENTITIES.register("gamma_chamber", () ->
+                    BlockEntityType.Builder.of(
+                            com.flash.block.GammaChamberBlockEntity::new,
+                            ModBlocks.GAMMA_CHAMBER.get()
+                    ).build(null));
+
     public static final RegistryObject<BlockEntityType<com.flash.block.GammaReactorBlockEntity>> GAMMA_REACTOR =
             BLOCK_ENTITIES.register("gamma_reactor", () ->
                     BlockEntityType.Builder.of(

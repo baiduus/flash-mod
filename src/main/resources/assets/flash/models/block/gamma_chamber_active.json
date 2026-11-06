@@ -1,0 +1,6 @@
+{
+ "parent": "flash:block/gamma_chamber",
+ "textures": {
+  "g": "flash:block/machine_glow_active"
+ }
+}

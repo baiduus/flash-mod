@@ -55,8 +55,9 @@ public final class HulkEvents {
         // scaling it again would grow the player on every refresh)
         EntityDimensions vanilla = event.getNewSize();
         float eyes = event.getNewEyeHeight();
-        event.setNewSize(vanilla.scale(HulkPowers.SCALE), false);
-        event.setNewEyeHeight(eyes * HulkPowers.SCALE);
+        float scale = HulkState.scale(player);
+        event.setNewSize(vanilla.scale(scale), false);
+        event.setNewEyeHeight(eyes * scale);
     }
 
     /** Super jump (both sides: the client moves the player). Crouch + jump = huge leap. */
@@ -124,13 +125,19 @@ public final class HulkEvents {
                 event.setCanceled(true);
                 return;
             }
+            // level 9: indestructible skin, explosions and projectiles do nothing
+            if (HulkPowers.level(victim) >= 9 && (event.getSource().is(DamageTypeTags.IS_EXPLOSION)
+                    || event.getSource().is(DamageTypeTags.IS_PROJECTILE))) {
+                event.setCanceled(true);
+                return;
+            }
             if (!event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
                 event.setAmount(event.getAmount() * HulkPowers.damageFactor(victim));
             }
-            HulkPowers.addRage(victim, 5.0F);
+            HulkPowers.addRage(victim, 7.0F);
         }
         if (event.getSource().getEntity() instanceof ServerPlayer attacker && HulkPowers.isTransformed(attacker)) {
-            HulkPowers.addRage(attacker, 3.0F);
+            HulkPowers.addRage(attacker, 5.0F);
         }
     }
 

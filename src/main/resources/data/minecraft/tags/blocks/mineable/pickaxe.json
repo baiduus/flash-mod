@@ -10,6 +10,7 @@
   "flash:tachyon_extractor",
   "flash:negative_stone",
   "flash:negative_crystal",
-  "flash:gamma_reactor"
+  "flash:gamma_reactor",
+  "flash:gamma_chamber"
  ]
 }
