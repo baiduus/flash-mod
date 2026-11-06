@@ -51,9 +51,12 @@ public final class HulkEvents {
         if (!HulkState.isTransformed(player)) {
             return;
         }
-        EntityDimensions old = event.getOldSize();
-        event.setNewSize(old.scale(HulkPowers.SCALE), false);
-        event.setNewEyeHeight(event.getOldEyeHeight() * HulkPowers.SCALE);
+        // always from the vanilla size of the pose (the old size may already be the Hulk's,
+        // scaling it again would grow the player on every refresh)
+        EntityDimensions vanilla = event.getNewSize();
+        float eyes = event.getNewEyeHeight();
+        event.setNewSize(vanilla.scale(HulkPowers.SCALE), false);
+        event.setNewEyeHeight(eyes * HulkPowers.SCALE);
     }
 
     /** Super jump (both sides: the client moves the player). Crouch + jump = huge leap. */
