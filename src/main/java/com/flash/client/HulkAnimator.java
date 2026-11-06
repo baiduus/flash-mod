@@ -409,20 +409,16 @@ public final class HulkAnimator {
             return;
         }
         net.minecraft.client.model.geom.ModelPart vanilla = side == HumanoidArm.RIGHT ? parent.rightArm : parent.leftArm;
-        GeoAnimation idle = anims.get("idle_pose");
-        if (idle != null) {
-            idle.apply(m, 0.0F);
-        }
-        float k = fit(m) * 1.55F;
+        // a straight arm in the place of the normal hand, only a little bigger than a player's
+        float k = fit(m) * 1.05F;
         pose.pushPose();
         pose.translate(vanilla.x / 16.0F, vanilla.y / 16.0F, vanilla.z / 16.0F);
         pose.mulPose(new org.joml.Quaternionf().rotationZYX(vanilla.zRot, vanilla.yRot, vanilla.xRot));
         pose.scale(k, k, k);
         // the Hulk's shoulder pivot lands on the vanilla shoulder
         pose.translate(-arm.pivotX() / 16.0F, -arm.pivotY() / 16.0F, -arm.pivotZ() / 16.0F);
-        // the Hulk's own (bent, massive) arm, not straightened like a player's
         m.renderBone(arm, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light,
-                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, false);
         pose.popPose();
     }
 }
