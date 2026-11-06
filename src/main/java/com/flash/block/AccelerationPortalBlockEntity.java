@@ -37,8 +37,8 @@ public class AccelerationPortalBlockEntity extends BlockEntity {
 
     private static final DustParticleOptions GOLD_DUST =
             new DustParticleOptions(new Vector3f(1.0F, 0.80F, 0.10F), 0.9F);
-    private static final DustParticleOptions ORANGE_DUST =
-            new DustParticleOptions(new Vector3f(1.0F, 0.45F, 0.05F), 0.9F);
+    private static final DustParticleOptions BLUE_DUST =
+            new DustParticleOptions(new Vector3f(0.30F, 0.60F, 1.0F), 0.9F);
     private static final DustParticleOptions RED_DUST =
             new DustParticleOptions(new Vector3f(0.95F, 0.08F, 0.10F), 0.9F);
     private static final DustParticleOptions DARK_RED_DUST =
@@ -151,7 +151,7 @@ public class AccelerationPortalBlockEntity extends BlockEntity {
             double side = Math.cos(angle) * r;
             boolean blue = i == 0;
             level.sendParticles(this.negative ? (blue ? RED_DUST : DARK_RED_DUST)
-                    : (blue ? ORANGE_DUST : GOLD_DUST),
+                    : (blue ? BLUE_DUST : GOLD_DUST),
                     cx + rx * side, cy + Math.sin(angle) * r, cz + rz * side,
                     1, 0.05D, 0.05D, 0.05D, 0.0D);
         }

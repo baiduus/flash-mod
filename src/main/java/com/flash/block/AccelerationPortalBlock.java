@@ -120,7 +120,7 @@ public class AccelerationPortalBlock extends BaseEntityBlock {
             double x = pos.getX() + 0.5D + rightX * Math.cos(angle) * ringRadius;
             double y = pos.getY() + 0.5D + Math.sin(angle) * ringRadius;
             double z = pos.getZ() + 0.5D + rightZ * Math.cos(angle) * ringRadius;
-            level.addParticle(portal.isNegative() ? ParticleTypes.CRIMSON_SPORE : ParticleTypes.FLAME, x, y, z,
+            level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, x, y, z,
                     (random.nextDouble() - 0.5D) * 0.02D,
                     (random.nextDouble() - 0.5D) * 0.02D,
                     (random.nextDouble() - 0.5D) * 0.02D);

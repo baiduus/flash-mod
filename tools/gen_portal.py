@@ -75,5 +75,3 @@ def ring(name, th, w=128, h=32):
 for name, th in THEMES.items():
     suffix = "" if name == "pos" else "_negative"
     swirl(name, th).save(f"{out}/portal_swirl{suffix}.png")
-    core(name, th).save(f"{out}/portal_core{suffix}.png")
-    ring(name, th).save(f"{out}/portal_ring{suffix}.png")

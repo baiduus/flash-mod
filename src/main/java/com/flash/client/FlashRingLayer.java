@@ -39,40 +39,33 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         poseStack.popPose();
     }
 
-    // colour index in ring_band.png (one pixel each)
-    private static final int GOLD = 0, LIGHT = 1, DARK = 2, RED = 3;
-
     /**
-     * The ring, modelled like the reference: a bevelled band that wraps the hand.
-     * Gold with a light top edge, a dark bottom edge and a thin red inlay. The pose
-     * must already be at the arm model part. Note that the arm box is not centred on
-     * the part origin: it spans x -3..1 (default) or -2..1 (slim), y -2..10.
+     * A small ring on the right hand: a thin gold band just outside the arm and
+     * the sleeve, with a little red gem on the outer side. The pose must already be
+     * at the arm model part.
      */
     public static void drawRing(PoseStack poseStack, MultiBufferSource buffers, int light, boolean slim) {
-        VertexConsumer c = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        // The arm box is not centred on the part origin: x -3..1 (default) or -2..1 (slim), y -2..10.
         float cx = slim ? -0.5F : -1.0F;
         float hx = slim ? 1.5F : 2.0F;
         float hz = 2.0F;
-        band(poseStack, c, light, cx, hx, hz, 7.45F, 7.70F, 0.16F, LIGHT);
-        band(poseStack, c, light, cx, hx, hz, 7.70F, 8.80F, 0.30F, GOLD);
-        band(poseStack, c, light, cx, hx, hz, 8.00F, 8.50F, 0.33F, RED);
-        band(poseStack, c, light, cx, hx, hz, 8.80F, 9.05F, 0.16F, DARK);
-    }
-
-    private static void band(PoseStack stack, VertexConsumer c, int light, float cx, float hx, float hz,
-                             float y0, float y1, float pad, int color) {
-        box(stack, c, light, cx - hx - pad, y0, -hz - pad, cx + hx + pad, y1, hz + pad, color);
+        float pad = 0.28F;
+        // small band in the middle of the hand
+        box(poseStack, consumer, light, cx - hx - pad, 7.8F, -hz - pad, cx + hx + pad, 8.7F, hz + pad, 0.0F);
+        // little gem on the outer side
+        box(poseStack, consumer, light, cx - hx - pad - 0.35F, 7.65F, -0.7F, cx - hx - pad + 0.1F, 8.85F, 0.7F, 0.5F);
     }
 
     /** Axis-aligned box in model pixels; {@code u} selects the gold (0.0) or the red (0.5) half of the texture. */
     private static void box(PoseStack stack, VertexConsumer c, int light,
-                            float x0, float y0, float z0, float x1, float y1, float z1, int color) {
+                            float x0, float y0, float z0, float x1, float y1, float z1, float u) {
         PoseStack.Pose pose = stack.last();
         Matrix4f m = pose.pose();
         Matrix3f n = pose.normal();
         float s = 1.0F / 16.0F;
         float ax = x0 * s, bx = x1 * s, ay = y0 * s, by = y1 * s, az = z0 * s, bz = z1 * s;
-        float u0 = color * 0.25F + 0.06F, u1 = color * 0.25F + 0.19F;
+        float u0 = u + 0.05F, u1 = u + 0.45F;
         // -Z / +Z / -X / +X / bottom / top
         quad(c, m, n, light, ax, ay, az, bx, ay, az, bx, by, az, ax, by, az, u0, u1, 0, 0, -1);
         quad(c, m, n, light, bx, ay, bz, ax, ay, bz, ax, by, bz, bx, by, bz, u0, u1, 0, 0, 1);
