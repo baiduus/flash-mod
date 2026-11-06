@@ -256,9 +256,12 @@ public final class HulkAbilities {
                 && !(e instanceof net.minecraft.world.entity.player.Player p && (p.isSpectator() || p.isCreative())));
     }
 
+    /** All the Hulk's ability hits deal twice their base damage (he is far stronger than a player). */
+    private static final float ABILITY_DAMAGE = 2.0F;
+
     private static void hit(ServerPlayer player, LivingEntity target, float damage, Vec3 push) {
         target.invulnerableTime = 0;
-        target.hurt(player.damageSources().playerAttack(player), damage);
+        target.hurt(player.damageSources().playerAttack(player), damage * ABILITY_DAMAGE);
         target.setDeltaMovement(push);
         target.hurtMarked = true;
         HulkPowers.addRage(player, 1.5F);
@@ -476,7 +479,7 @@ public final class HulkAbilities {
         boulder.setItem(rock.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : rock);
         float size = com.flash.entity.HulkBoulder.sizeFor(HulkPowers.activeLevel(player));
         boulder.setSize(size);
-        boulder.setDamage((10.0F + 2.0F * power(player)) * (0.6F + 0.4F * size));
+        boulder.setDamage((10.0F + 2.0F * power(player)) * (0.6F + 0.4F * size) * ABILITY_DAMAGE);
         boulder.setPos(player.getX(), player.getY() + player.getBbHeight() * 0.95D, player.getZ());
         boulder.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.9F, 0.5F);
         level.addFreshEntity(boulder);
@@ -566,7 +569,8 @@ public final class HulkAbilities {
         double force = 1.8D + 0.18D * HulkPowers.activeLevel(player);
         target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
         target.hurtMarked = true;
-        THROWN.put(target.getId(), new Thrown(player.getUUID(), 10.0F + 2.5F * power(player), player.tickCount));
+        THROWN.put(target.getId(), new Thrown(player.getUUID(), (10.0F + 2.5F * power(player)) * ABILITY_DAMAGE,
+                player.tickCount));
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 1.2F, 0.9F);
