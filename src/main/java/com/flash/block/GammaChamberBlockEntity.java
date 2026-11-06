@@ -95,6 +95,9 @@ public class GammaChamberBlockEntity extends BlockEntity {
             HulkPowers.grant(occupant, true);
             occupant.displayClientMessage(Component.translatable("message.flash.gamma_exposed"), false);
             chamber.stop(level, pos, state, false);
+            // the chamber cannot hold the new Hulk: it blows up (he is left out of his own blast)
+            level.removeBlock(pos, false);
+            level.explode(occupant, cx, y0 + 1.0D, cz, 5.0F, Level.ExplosionInteraction.TNT);
         }
     }
 
@@ -129,6 +132,6 @@ public class GammaChamberBlockEntity extends BlockEntity {
     /** The model is 3.5 blocks tall. */
     @Override
     public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        return new net.minecraft.world.phys.AABB(this.worldPosition).expandTowards(0.0D, 2.6D, 0.0D).inflate(0.2D);
+        return new net.minecraft.world.phys.AABB(this.worldPosition).expandTowards(0.0D, 3.8D, 0.0D).inflate(0.5D);
     }
 }

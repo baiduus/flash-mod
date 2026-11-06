@@ -72,7 +72,7 @@ public class HulkBoulder extends ThrowableItemProjectile {
             return;
         }
         float size = this.getSize();
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(1.0D + 1.5D * size),
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(2.0D + 3.5D * size),
                 e -> e != this.getOwner() && e.isAlive())) {
             if (e instanceof Player p && (p.isCreative() || p.isSpectator())) {
                 continue;
@@ -88,7 +88,7 @@ public class HulkBoulder extends ThrowableItemProjectile {
         if (this.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner) {
             // the rock bursts on impact (the Hulk is left out of the blast)
             // small rock, small blast; big rock, big blast
-            level.explode(this, this.getX(), this.getY(), this.getZ(), 1.0F + 1.8F * size,
+            level.explode(this, this.getX(), this.getY(), this.getZ(), 3.0F + 4.0F * size,
                     com.flash.hulk.HulkPowers.destroyBlocks(owner)
                             ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
                             : net.minecraft.world.level.Level.ExplosionInteraction.NONE);

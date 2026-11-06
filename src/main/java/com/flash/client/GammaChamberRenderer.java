@@ -59,7 +59,11 @@ public class GammaChamberRenderer implements BlockEntityRenderer<GammaChamberBlo
         }
         pose.pushPose();
         // model space: y down with the feet at 24 px
-        pose.translate(0.5D, 1.5D, 0.5D);
+        // a bit bigger than one block, so the Hulk fits inside
+        float size = 1.35F;
+        pose.translate(0.5D, 0.0D, 0.5D);
+        pose.scale(size, size, size);
+        pose.translate(0.0D, 1.5D, 0.0D);
         pose.scale(-1.0F, -1.0F, 1.0F);
         model.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light, overlay, 0,
                 1.0F, 1.0F, 1.0F, 1.0F);
