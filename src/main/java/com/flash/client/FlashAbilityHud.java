@@ -95,8 +95,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         int panelWidth = Math.max(MIN_WIDTH, rowWidth(font, transform, keyLabel(FlashKeys.HULK_TRANSFORM)));
         int active = Math.max(1, Math.min(level, com.flash.hulk.HulkState.activeLevel()));
         String levelName = Component.translatable("hud.flash.hulk_active", active, level).getString();
-        String levelKey = com.flash.config.FlashClientConfig.SCROLL_MODE.get()
-                ? Component.translatable("hud.flash.hulk_scroll").getString() : keyLabel(FlashKeys.INCREASE_SPEED);
+        String levelKey = Component.translatable("hud.flash.hulk_scroll").getString();
         if (form) {
             rows++;
             panelWidth = Math.max(panelWidth, rowWidth(font, levelName, levelKey));
@@ -104,7 +103,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
                 if (a.level() <= level) {
                     rows++;
                     panelWidth = Math.max(panelWidth, rowWidth(font, a.displayName().getString(),
-                            keyLabel(FlashAbilityKeys.mapping(a.keySlot()))));
+                            keyLabel(HulkClient.key(a))));
                 }
             }
         }
@@ -128,7 +127,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
             int cd = com.flash.hulk.HulkState.cooldown(a, now);
             boolean lit = a == com.flash.hulk.HulkAbility.FURY && furious;
             drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(),
-                    keyLabel(FlashAbilityKeys.mapping(a.keySlot())), cd, Math.max(1, a.cooldown()), lit);
+                    keyLabel(HulkClient.key(a)), cd, Math.max(1, a.cooldown()), lit);
             y += ROW_HEIGHT + ROW_GAP;
         }
     }

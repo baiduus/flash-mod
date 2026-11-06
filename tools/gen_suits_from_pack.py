@@ -111,4 +111,15 @@ for name, pal in SUITS.items():
     for piece, src in (("helmet", "head"), ("chestplate", "chest"), ("leggings", "legs"), ("boots", "feet")):
         icon = Image.open(SRC + "/item/armors/flash/flash_%s.png" % src).convert("RGBA")
         recolor(icon, pal).save(OUT + "item/%s_%s.png" % (name, piece), optimize=True)
+# glowing lenses (eyes_5) drawn full-bright over the closed mask
+GLOW = {"flash_suit": (255, 255, 255), "negative_suit": (255, 70, 50), "phantom_suit": (255, 40, 30)}
+eyes5 = Image.open(base + "eyes_5.png").convert("RGBA")
+for name, col in GLOW.items():
+    e = eyes5.copy()
+    px = e.load()
+    for y in range(e.height):
+        for x in range(e.width):
+            if px[x, y][3]:
+                px[x, y] = col + (px[x, y][3],)
+    e.save(OUT + "models/armor/%s_eyes.png" % name, optimize=True)
 print("ok")

@@ -318,6 +318,6 @@ def portal():
 
 
 if __name__ == "__main__":
-    chamber()
+    # the gamma chamber went back to its block model (tools/gen_machine.py)
     portal()
     print("ok")

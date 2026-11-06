@@ -17,7 +17,9 @@ public enum HulkAbility {
     BOULDER("boulder", 6, 200, FlashAbility.LIGHTNING_STRIKE),
     FURY("fury", 7, 1200, FlashAbility.ACCELERATION_FORCE),
     GAMMA_WAVE("gamma_wave", 8, 600, FlashAbility.MASS_PUNCH),
-    WORLD_BREAKER("world_breaker", 10, 900, FlashAbility.SPEED_MANIPULATION);
+    WORLD_BREAKER("world_breaker", 10, 900, FlashAbility.SPEED_MANIPULATION),
+    /** Grabs a creature / player and throws it on the second press (key V, no Flash slot). */
+    GRAB("grab", 1, 80, null);
 
     private final String id;
     private final int level;

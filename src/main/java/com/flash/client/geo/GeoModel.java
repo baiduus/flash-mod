@@ -145,6 +145,38 @@ public final class GeoModel {
         }
     }
 
+    /** Parent of every bone (for walking down to one bone). */
+    private final Map<Bone, Bone> parentOf = new HashMap<>();
+
+    /**
+     * Applies to {@code pose} the transforms of every bone from the root down to {@code name}
+     * (with the current animation), then moves to that bone's pivot: things drawn afterwards
+     * are held by that bone (an item in a hand, ...).
+     */
+    public boolean transformToBone(String name, PoseStack pose) {
+        Bone target = bones.get(name);
+        if (target == null) {
+            return false;
+        }
+        List<Bone> path = new ArrayList<>();
+        for (Bone b = target; b != null; b = parentOf.get(b)) {
+            path.add(0, b);
+        }
+        for (Bone bone : path) {
+            pose.translate((bone.px + bone.ax) / 16.0F, (bone.py + bone.ay) / 16.0F, (bone.pz + bone.az) / 16.0F);
+            float rx = bone.rx + rad(bone.arx);
+            float ry = bone.ry + rad(bone.ary);
+            float rz = bone.rz + rad(bone.arz);
+            if (rx != 0.0F || ry != 0.0F || rz != 0.0F) {
+                pose.mulPose(new Quaternionf().rotationZYX(rz, ry, rx));
+            }
+            pose.scale(bone.sx, bone.sy, bone.sz);
+            pose.translate(-bone.px / 16.0F, -bone.py / 16.0F, -bone.pz / 16.0F);
+        }
+        pose.translate(target.px / 16.0F, target.py / 16.0F, target.pz / 16.0F);
+        return true;
+    }
+
     // ------------------------------------------------------------------
     // Loading
     // ------------------------------------------------------------------
@@ -186,6 +218,7 @@ public final class GeoModel {
                 Bone parent = parents.containsKey(bone.name) ? model.bones.get(parents.get(bone.name)) : null;
                 if (parent != null) {
                     parent.children.add(bone);
+                    model.parentOf.put(bone, parent);
                 } else {
                     model.roots.add(bone);
                 }

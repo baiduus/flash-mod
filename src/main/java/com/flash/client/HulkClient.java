@@ -30,6 +30,11 @@ public final class HulkClient {
     private HulkClient() {
     }
 
+    /** Key of a Hulk ability: the Flash ability key it shares, or V for the grab. */
+    public static net.minecraft.client.KeyMapping key(com.flash.hulk.HulkAbility ability) {
+        return ability.keySlot() == null ? FlashKeys.INCREASE_SPEED : FlashAbilityKeys.mapping(ability.keySlot());
+    }
+
     static void resetModel() {
         HulkAnimator.reset();
     }
@@ -88,7 +93,7 @@ public final class HulkClient {
         com.flash.hulk.HulkAbility[] abilities = com.flash.hulk.HulkAbility.values();
         boolean active = mc.screen == null && HulkState.isTransformed(mc.player);
         for (int i = 0; i < abilities.length; i++) {
-            net.minecraft.client.KeyMapping key = FlashAbilityKeys.mapping(abilities[i].keySlot());
+            net.minecraft.client.KeyMapping key = key(abilities[i]);
             boolean down = active && key != null && key.isDown();
             if (down && !KEY_DOWN[i]) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkAbilityPacket(i));

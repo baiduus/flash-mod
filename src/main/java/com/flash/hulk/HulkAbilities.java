@@ -57,35 +57,128 @@ public final class HulkAbilities {
                     ability.displayName(), (cd + 19) / 20), true);
             return;
         }
-        if (RUNNING.containsKey(player.getUUID())) {
+        if (RUNNING.containsKey(player.getUUID()) || DELAYED.containsKey(player.getUUID())) {
             return;
         }
         ServerLevel level = (ServerLevel) player.level();
-        switch (ability) {
-            case GROUND_SMASH -> groundSmash(player, level);
-            case CHARGE -> RUNNING.put(player.getUUID(), new Running(ability, flatLook(player), player.position(), new int[] {0}));
-            case ROAR -> roar(player, level);
-            case THUNDERCLAP -> {
-                thunderclap(player, level);
-                RUNNING.put(player.getUUID(), new Running(ability, player.getLookAngle().normalize(),
-                        player.getEyePosition(), new int[] {0}));
+        Hold hold = HOLDS.get(player.getUUID());
+        if (hold != null) {
+            // second press: throw what is held (rock or creature)
+            if (hold.kind() == HOLD_ROCK && ability == HulkAbility.BOULDER) {
+                HOLDS.remove(player.getUUID());
+                throwRock(player, level, hold.rock());
+                finish(player, ability, ANIM_THROW_ROCK);
+            } else if (hold.kind() == HOLD_ENTITY && ability == HulkAbility.GRAB) {
+                HOLDS.remove(player.getUUID());
+                throwEntity(player, level, hold);
+                finish(player, ability, ANIM_THROW_ENTITY);
             }
-            case BOULDER -> boulder(player, level);
-            case FURY -> fury(player, level);
+            return;
+        }
+        int anim = ability.ordinal();
+        switch (ability) {
+            // the fists hit the ground 0.35 s into the "smash" animation
+            case GROUND_SMASH -> delay(player, 7, p -> groundSmash(p, (ServerLevel) p.level()));
+            case CHARGE -> RUNNING.put(player.getUUID(), new Running(ability, flatLook(player), player.position(), new int[] {0, 0}));
+            case ROAR -> {
+                roar(player, level);
+                anim = -1;
+            }
+            // the hands meet 0.8 s into the "thunderclap" animation
+            case THUNDERCLAP -> delay(player, 16, p -> {
+                int steps = thunderclap(p, (ServerLevel) p.level());
+                RUNNING.put(p.getUUID(), new Running(HulkAbility.THUNDERCLAP, p.getLookAngle().normalize(),
+                        p.getEyePosition(), new int[] {0, steps}));
+            });
+            case BOULDER -> {
+                // first press: rip a rock out of the ground and hold it over the head
+                HOLDS.put(player.getUUID(), new Hold(HOLD_ROCK, -1, pickRock(player, level), player.tickCount));
+                sendAnim(player, ANIM_HOLD_ROCK);
+                return;
+            }
+            case FURY -> {
+                fury(player, level);
+                anim = -1;
+            }
             case GAMMA_WAVE -> gammaWave(player, level);
             case WORLD_BREAKER -> {
-                RUNNING.put(player.getUUID(), new Running(ability, flatLook(player), player.position(), new int[] {0}));
+                RUNNING.put(player.getUUID(), new Running(ability, flatLook(player), player.position(), new int[] {0, 0}));
                 level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                         SoundSource.PLAYERS, 2.0F, 0.5F);
+            }
+            case GRAB -> {
+                LivingEntity target = grabTarget(player);
+                if (target == null) {
+                    player.displayClientMessage(Component.translatable("message.flash.hulk_grab_none"), true);
+                    return;
+                }
+                HOLDS.put(player.getUUID(), new Hold(HOLD_ENTITY, target.getId(), ItemStack.EMPTY, player.tickCount));
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ATTACK,
+                        SoundSource.PLAYERS, 1.5F, 0.6F);
+                sendAnim(player, ANIM_HOLD_ENTITY);
+                return;
             }
             default -> {
             }
         }
+        finish(player, ability, anim);
+    }
+
+    /** Cooldown, sync and the animation for everyone around (anim < 0 = none). */
+    private static void finish(ServerPlayer player, HulkAbility ability, int anim) {
         HulkPowers.setCooldown(player, ability);
         HulkPowers.syncSelf(player);
+        if (anim >= 0) {
+            sendAnim(player, anim);
+        }
+    }
+
+    // animation codes of HulkAnimPacket besides the ability ids
+    public static final int ANIM_HOLD_ROCK = 100;
+    public static final int ANIM_THROW_ROCK = 101;
+    public static final int ANIM_HOLD_ENTITY = 102;
+    public static final int ANIM_THROW_ENTITY = 103;
+    public static final int ANIM_RELEASE = 104;
+
+    private static void sendAnim(ServerPlayer player, int anim) {
         com.flash.network.FlashNetwork.CHANNEL.send(
                 net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
-                new com.flash.network.HulkAnimPacket(player.getUUID(), ability.ordinal()));
+                new com.flash.network.HulkAnimPacket(player.getUUID(), anim));
+    }
+
+    // ------------------------------------------------------------------
+    // Delayed hits (in time with the animations)
+    // ------------------------------------------------------------------
+
+    private record Delayed(int due, java.util.function.Consumer<ServerPlayer> action) {
+    }
+
+    private static final Map<UUID, Delayed> DELAYED = new ConcurrentHashMap<>();
+
+    private static void delay(ServerPlayer player, int ticks, java.util.function.Consumer<ServerPlayer> action) {
+        DELAYED.put(player.getUUID(), new Delayed(player.tickCount + ticks, action));
+    }
+
+    // ------------------------------------------------------------------
+    // Holding a rock or a creature
+    // ------------------------------------------------------------------
+
+    private static final int HOLD_ROCK = 0;
+    private static final int HOLD_ENTITY = 1;
+
+    private record Hold(int kind, int entityId, ItemStack rock, int since) {
+    }
+
+    private static final Map<UUID, Hold> HOLDS = new ConcurrentHashMap<>();
+
+    /** Thrown creatures: they take damage when they hit something. */
+    private record Thrown(UUID thrower, float damage, int since) {
+    }
+
+    private static final Map<Integer, Thrown> THROWN = new ConcurrentHashMap<>();
+
+    public static boolean isHolding(net.minecraft.world.entity.player.Player player) {
+        return HOLDS.containsKey(player.getUUID());
     }
 
     @SubscribeEvent
@@ -93,15 +186,27 @@ public final class HulkAbilities {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
             return;
         }
+        ServerLevel level = (ServerLevel) player.level();
+        boolean hulk = HulkPowers.isTransformed(player) && player.isAlive();
+        Delayed delayed = DELAYED.get(player.getUUID());
+        if (delayed != null) {
+            if (!hulk) {
+                DELAYED.remove(player.getUUID());
+            } else if (player.tickCount >= delayed.due()) {
+                DELAYED.remove(player.getUUID());
+                delayed.action().accept(player);
+            }
+        }
+        tickHold(player, level, hulk);
+        tickThrown(player, level);
         Running run = RUNNING.get(player.getUUID());
         if (run == null) {
             return;
         }
-        if (!HulkPowers.isTransformed(player) || !player.isAlive()) {
+        if (!hulk) {
             RUNNING.remove(player.getUUID());
             return;
         }
-        ServerLevel level = (ServerLevel) player.level();
         int t = ++run.ticks()[0];
         if (run.ability() == HulkAbility.CHARGE) {
             chargeTick(player, level, run.dir(), t);
@@ -109,13 +214,14 @@ public final class HulkAbilities {
                 RUNNING.remove(player.getUUID());
             }
         } else if (run.ability() == HulkAbility.THUNDERCLAP) {
-            thunderclapTick(player, level, run.origin(), run.dir(), t);
-            if (t >= 6) {
+            thunderclapTick(player, level, run.origin(), run.dir(), t, run.ticks()[1]);
+            if (t >= run.ticks()[1]) {
                 RUNNING.remove(player.getUUID());
             }
         } else if (run.ability() == HulkAbility.WORLD_BREAKER) {
             worldBreakerTick(player, level, run.origin(), t);
-            if (t >= 40) {
+            // the "tectonic_fury" animation is 5 s: the ability lasts as long
+            if (t >= 100) {
                 RUNNING.remove(player.getUUID());
             }
         } else {
@@ -293,24 +399,31 @@ public final class HulkAbilities {
         HulkPowers.addRage(player, 8.0F);
     }
 
-    /** Level 5: thunderclap - a clap that sends a frontal explosion forward (see thunderclapTick). */
-    private static void thunderclap(ServerPlayer player, ServerLevel level) {
+    /** Reach of the thunderclap by active level: 5 -> 5 blocks, 6 -> 7, 7 -> 10, 8 -> 13, 9 -> 16, 10 -> 20. */
+    public static double clapRange(int level) {
+        int[] reach = {5, 5, 5, 5, 5, 5, 7, 10, 13, 16, 20};
+        return reach[Math.max(0, Math.min(10, level))];
+    }
+
+    /**
+     * Level 5: thunderclap - when the hands meet, a frontal blast whose reach grows with the
+     * active level. Returns how many explosions follow (thunderclapTick).
+     */
+    private static int thunderclap(ServerPlayer player, ServerLevel level) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle().normalize();
         float damage = 20.0F + 3.0F * power(player);
-        double range = 20.0D;
-        player.swing(InteractionHand.MAIN_HAND, true);
-        player.swing(InteractionHand.OFF_HAND, true);
-        for (LivingEntity e : around(player, player.getBoundingBox().inflate(range))) {
+        double range = clapRange(HulkPowers.activeLevel(player));
+        for (LivingEntity e : around(player, player.getBoundingBox().inflate(range + 2.0D))) {
             Vec3 d = e.getBoundingBox().getCenter().subtract(eye);
             double dist = d.length();
-            if (dist > range || dist < 0.01D || d.normalize().dot(look) < 0.82D) {
+            if (dist > range + e.getBbWidth() || dist < 0.01D || d.normalize().dot(look) < 0.8D) {
                 continue;
             }
             hit(player, e, (float) (damage * (1.0D - dist / (range * 1.6D))), look.scale(3.0D).add(0.0D, 0.6D, 0.0D));
         }
         // the shockwave: rings of air flying forward
-        for (int d = 1; d <= 18; d += 2) {
+        for (int d = 1; d <= range; d += 2) {
             Vec3 c = eye.add(look.scale(d));
             level.sendParticles(ParticleTypes.CLOUD, c.x, c.y, c.z, 10 + d, 0.2D + d * 0.08D, 0.2D + d * 0.08D,
                     0.2D + d * 0.08D, 0.05D);
@@ -322,17 +435,19 @@ public final class HulkAbilities {
                 SoundSource.PLAYERS, 2.0F, 0.8F);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE,
                 SoundSource.PLAYERS, 1.6F, 0.5F);
+        return Math.max(1, (int) Math.ceil((range - 1.5D) / 2.25D));
     }
 
-    /** Thunderclap blast: a row of explosions flying forward, up to 15 blocks ahead. */
-    private static void thunderclapTick(ServerPlayer player, ServerLevel level, Vec3 eye, Vec3 look, int t) {
-        double d = 1.5D + 2.25D * t;
+    /** Thunderclap blast: a row of explosions flying forward up to the reach of the level. */
+    private static void thunderclapTick(ServerPlayer player, ServerLevel level, Vec3 eye, Vec3 look, int t, int steps) {
+        double range = 1.5D + 2.25D * steps;
+        double d = Math.min(range, 1.5D + 2.25D * t);
         Vec3 c = eye.add(look.scale(d));
         blast(player, level, c.x, c.y, c.z, 3.0F);
     }
 
-    /** Level 6: rips a rock out of the ground and throws it. */
-    private static void boulder(ServerPlayer player, ServerLevel level) {
+    /** Level 6 (first press): rips a rock out of the ground; the Hulk holds it over his head. */
+    private static ItemStack pickRock(ServerPlayer player, ServerLevel level) {
         Vec3 dir = flatLook(player);
         BlockPos g = ground(level, player.getX() + dir.x * 1.5D, player.getY(), player.getZ() + dir.z * 1.5D);
         BlockState state = level.getBlockState(g);
@@ -341,21 +456,131 @@ public final class HulkAbilities {
         if (HulkPowers.destroyBlocks(player) && movable(level, g)) {
             level.destroyBlock(g, false, player);
         }
+        dust(level, g, 20);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.STONE_BREAK,
+                SoundSource.PLAYERS, 1.4F, 0.5F);
+        return rock;
+    }
+
+    /** Level 6 (second press): throws the rock that is held. */
+    private static void throwRock(ServerPlayer player, ServerLevel level, ItemStack rock) {
         com.flash.entity.HulkBoulder boulder = new com.flash.entity.HulkBoulder(level, player);
-        boulder.setItem(rock);
+        boulder.setItem(rock.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : rock);
         boulder.setDamage(14.0F + 2.0F * power(player));
+        boulder.setPos(player.getX(), player.getY() + player.getBbHeight() * 0.95D, player.getZ());
         boulder.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.9F, 0.5F);
         level.addFreshEntity(boulder);
         player.swing(InteractionHand.MAIN_HAND, true);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.STONE_BREAK,
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ATTACK,
                 SoundSource.PLAYERS, 1.4F, 0.5F);
+    }
+
+    /** The creature in front of the Hulk, in reach of his hands. */
+    private static LivingEntity grabTarget(ServerPlayer player) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle().normalize();
+        double reach = 2.5D + player.getBbWidth() * 1.5D;
+        LivingEntity best = null;
+        double bestScore = Double.MAX_VALUE;
+        for (LivingEntity e : around(player, player.getBoundingBox().inflate(reach + 1.0D))) {
+            if (HOLDS.values().stream().anyMatch(h -> h.entityId() == e.getId())) {
+                continue;
+            }
+            Vec3 d = e.getBoundingBox().getCenter().subtract(eye);
+            double dist = d.length();
+            if (dist > reach + e.getBbWidth() || d.normalize().dot(look) < 0.55D) {
+                continue;
+            }
+            double score = dist - d.normalize().dot(look) * 2.0D;
+            if (score < bestScore) {
+                bestScore = score;
+                best = e;
+            }
+        }
+        return best;
+    }
+
+    /** Keeps the held creature over the Hulk's head; the rock / creature is dropped if he changes back. */
+    private static void tickHold(ServerPlayer player, ServerLevel level, boolean hulk) {
+        Hold hold = HOLDS.get(player.getUUID());
+        if (hold == null) {
+            return;
+        }
+        if (!hulk) {
+            HOLDS.remove(player.getUUID());
+            sendAnim(player, ANIM_RELEASE);
+            return;
+        }
+        if (hold.kind() != HOLD_ENTITY) {
+            return;
+        }
+        net.minecraft.world.entity.Entity e = level.getEntity(hold.entityId());
+        if (!(e instanceof LivingEntity target) || !target.isAlive()) {
+            HOLDS.remove(player.getUUID());
+            sendAnim(player, ANIM_RELEASE);
+            return;
+        }
+        // lifted over the head after the grab
+        double lift = Math.min(1.0D, (player.tickCount - hold.since()) / 10.0D);
+        Vec3 f = flatLook(player);
+        double x = player.getX() + f.x * (0.4D + player.getBbWidth() * 0.3D);
+        double z = player.getZ() + f.z * (0.4D + player.getBbWidth() * 0.3D);
+        double y = player.getY() + player.getBbHeight() * (0.45D + 0.6D * lift);
+        target.setDeltaMovement(Vec3.ZERO);
+        target.fallDistance = 0.0F;
+        if (target instanceof ServerPlayer held) {
+            held.connection.teleport(x, y, z, held.getYRot(), held.getXRot());
+        } else {
+            target.teleportTo(x, y, z);
+        }
+    }
+
+    private static void throwEntity(ServerPlayer player, ServerLevel level, Hold hold) {
+        net.minecraft.world.entity.Entity e = level.getEntity(hold.entityId());
+        if (!(e instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+        Vec3 look = player.getLookAngle().normalize();
+        double force = 1.8D + 0.18D * HulkPowers.activeLevel(player);
+        target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
+        target.hurtMarked = true;
+        THROWN.put(target.getId(), new Thrown(player.getUUID(), 10.0F + 2.5F * power(player), player.tickCount));
+        player.swing(InteractionHand.MAIN_HAND, true);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
+                SoundSource.PLAYERS, 1.2F, 0.9F);
+    }
+
+    /** Creatures thrown by this Hulk crash: damage when they hit a wall or the ground. */
+    private static void tickThrown(ServerPlayer player, ServerLevel level) {
+        if (THROWN.isEmpty()) {
+            return;
+        }
+        THROWN.entrySet().removeIf(entry -> {
+            Thrown thrown = entry.getValue();
+            if (!thrown.thrower().equals(player.getUUID())) {
+                return false;
+            }
+            int age = player.tickCount - thrown.since();
+            net.minecraft.world.entity.Entity e = level.getEntity(entry.getKey());
+            if (!(e instanceof LivingEntity target) || !target.isAlive() || age > 80) {
+                return true;
+            }
+            if (age > 2 && (target.horizontalCollision || target.onGround())) {
+                target.invulnerableTime = 0;
+                target.hurt(player.damageSources().playerAttack(player), thrown.damage());
+                dust(level, target.blockPosition().below(), 25);
+                level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.GENERIC_EXPLODE,
+                        SoundSource.PLAYERS, 1.0F, 0.7F);
+                HulkPowers.addRage(player, 3.0F);
+                return true;
+            }
+            return false;
+        });
     }
 
     /** Level 7: gamma fury - 20 seconds of more damage, toughness and faster healing. */
     private static void fury(ServerPlayer player, ServerLevel level) {
         HulkPowers.startFury(player);
-        level.sendParticles(HulkPowers.FURY_DUST, player.getX(), player.getY() + 1.5D, player.getZ(), 80,
-                player.getBbWidth(), player.getBbHeight() * 0.5D, player.getBbWidth(), 0.0D);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 2.5F, 0.4F);
         player.displayClientMessage(Component.translatable("message.flash.hulk_fury"), true);
@@ -377,7 +602,6 @@ public final class HulkAbilities {
             e.addEffect(new MobEffectInstance(MobEffects.POISON, 200, 1), player);
             e.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1), player);
         }
-        blast(player, level, player.getX(), player.getY() + 0.5D, player.getZ(), 5.0F);
         for (int ring = 1; ring <= 10; ring++) {
             for (int i = 0; i < 24; i++) {
                 double a = i * Math.PI * 2.0D / 24.0D;
@@ -385,21 +609,29 @@ public final class HulkAbilities {
                         player.getZ() + Math.sin(a) * ring, 1, 0.1D, 0.3D, 0.1D, 0.0D);
             }
         }
-        level.sendParticles(ParticleTypes.FLASH, player.getX(), player.getY() + 1.0D, player.getZ(), 2, 0.0D, 0.0D, 0.0D, 0.0D);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.WARDEN_SONIC_BOOM,
-                SoundSource.PLAYERS, 2.0F, 0.5F);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
+                SoundSource.PLAYERS, 3.0F, 0.4F);
     }
 
-    /** Level 10: stomps so hard that the ground explodes in rings spreading around the Hulk. */
+    /** Ticks of the 8 stomps of the "tectonic_fury" animation (0.65 s, 0.95 s, 1.65 s, ...). */
+    private static final int[] STOMPS = {13, 19, 33, 39, 53, 59, 73, 79};
+
+    /** Level 10: tectonic fury - every stomp blows up a wider ring of ground around the Hulk. */
     private static void worldBreakerTick(ServerPlayer player, ServerLevel level, Vec3 origin, int t) {
-        if (t % 4 != 0) {
+        int stomp = -1;
+        for (int i = 0; i < STOMPS.length; i++) {
+            if (STOMPS[i] == t) {
+                stomp = i;
+            }
+        }
+        if (stomp < 0) {
             return;
         }
-        double r = 2.0D + t * 0.4D;
+        double r = 3.0D + stomp * 2.2D;
         float damage = 18.0F + 2.0F * power(player);
         for (LivingEntity e : around(player, new AABB(origin, origin).inflate(r + 1.5D, 4.0D, r + 1.5D))) {
             double d = Math.hypot(e.getX() - origin.x, e.getZ() - origin.z);
-            if (Math.abs(d - r) > 1.6D) {
+            if (Math.abs(d - r) > 1.8D) {
                 continue;
             }
             Vec3 away = new Vec3(e.getX() - origin.x, 0.0D, e.getZ() - origin.z).normalize();
@@ -410,21 +642,20 @@ public final class HulkAbilities {
             double a = i * Math.PI * 2.0D / n;
             dust(level, ground(level, origin.x + Math.cos(a) * r, origin.y, origin.z + Math.sin(a) * r), 3);
         }
-        // the ground blows up along the ring
-        if (t % 8 == 0) {
-            int blasts = Math.max(4, Mth.ceil(Math.PI * 2.0D * r / 6.0D));
-            double offset = level.random.nextDouble() * Math.PI * 2.0D;
-            for (int i = 0; i < blasts; i++) {
-                double a = offset + i * Math.PI * 2.0D / blasts;
-                BlockPos g = ground(level, origin.x + Math.cos(a) * r, origin.y, origin.z + Math.sin(a) * r);
-                blast(player, level, g.getX() + 0.5D, g.getY() + 0.5D, g.getZ() + 0.5D, 3.5F);
-            }
+        int blasts = Math.max(4, Mth.ceil(Math.PI * 2.0D * r / 6.0D));
+        double offset = level.random.nextDouble() * Math.PI * 2.0D;
+        for (int i = 0; i < blasts; i++) {
+            double a = offset + i * Math.PI * 2.0D / blasts;
+            BlockPos g = ground(level, origin.x + Math.cos(a) * r, origin.y, origin.z + Math.sin(a) * r);
+            blast(player, level, g.getX() + 0.5D, g.getY() + 0.5D, g.getZ() + 0.5D, 3.5F);
         }
         level.playSound(null, origin.x, origin.y, origin.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
-                1.2F, 0.4F + t * 0.01F);
+                1.4F, 0.5F + stomp * 0.04F);
     }
 
     public static void reset(ServerPlayer player) {
         RUNNING.remove(player.getUUID());
+        DELAYED.remove(player.getUUID());
+        HOLDS.remove(player.getUUID());
     }
 }

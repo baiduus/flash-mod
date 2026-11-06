@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Applies the currently selected Flash speed level as a temporary attribute
- * modifier. Level 0 simply removes the modifier, returning the player to
- * vanilla movement speed.
+ * modifier while the player sprints. Walking (or level 0) removes the modifier,
+ * returning the player to vanilla movement speed.
  */
 public final class FlashSpeed {
 
@@ -32,7 +32,8 @@ public final class FlashSpeed {
         }
 
         int level = FlashPowers.getSelectedLevel(player);
-        if (level <= FlashSpeedLevels.MIN_LEVEL) {
+        // walking is vanilla speed: the selected level only applies while sprinting
+        if (level <= FlashSpeedLevels.MIN_LEVEL || !player.isSprinting()) {
             attribute.removeModifier(MODIFIER_UUID);
             return;
         }

@@ -977,8 +977,8 @@ def element(b, scale, uvs, atlas_main, atlas_glow, jobs, model_name):
 def main():
     machine = build_machine()
     container = build_container()
-    # the gamma chamber is now a geo model (tools/gen_geo_machines.py)
-    models = [machine, container]
+    gamma = build_gamma()
+    models = [machine, container, gamma]
     jobs = collect(models)
 
     main_rects = {k: (v[1], v[2]) for k, v in jobs.items() if not v[0].startswith("g:")}
@@ -1030,7 +1030,8 @@ def main():
             json.dump(data, fh, indent=1)
 
     for m, credit in ((machine, "Flash mod - transformation chamber v8"),
-                      (container, "Flash mod - potion container v8")):
+                      (container, "Flash mod - potion container v8"),
+                      (gamma, "Flash mod - gamma chamber v1")):
         els = [e for e in (element(b, m.scale, uvs, None, None, jobs, m.name)
                            for b in m.boxes) if e]
         data = {

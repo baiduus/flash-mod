@@ -59,7 +59,6 @@ public final class FlashClientEvents {
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new
         );
-        event.registerBlockEntityRenderer(ModBlockEntities.GAMMA_CHAMBER.get(), GammaChamberRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.TACHYON_EXTRACTOR.get(),
                 TachyonExtractorRenderer::new
@@ -71,10 +70,12 @@ public final class FlashClientEvents {
         for (String skin : new String[] {"default", "slim"}) {
             net.minecraft.client.renderer.entity.EntityRenderer<?> renderer = event.getSkin(skin);
             if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player) {
+                // the speedster pose goes first, so every following layer sees the posed body
+                FlashSpeedsterPose.install(player);
+                player.addLayer(new FlashGeoSuitLayer<>(player));
                 player.addLayer(new FlashRingLayer(player));
                 player.addLayer(new FlashAmplifierLayer(player));
                 player.addLayer(new HulkClient.Layer(player));
-                FlashSpeedsterPose.install(player);
             }
         }
     }

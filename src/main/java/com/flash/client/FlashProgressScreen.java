@@ -483,9 +483,10 @@ public class FlashProgressScreen extends Screen {
         Component tooltip = null;
         int row = 0;
         int total = com.flash.hulk.HulkAbility.values().length + passives.length;
+        int rowStep = Math.min(SKILL_ROW, (PH - 20 - top) / total);
         for (int k = 0; k < total; k++) {
-            int ry = top + row * SKILL_ROW;
-            int rh = SKILL_ROW - 2;
+            int ry = top + row * rowStep;
+            int rh = rowStep - 2;
             Component name;
             Component desc;
             int req;
@@ -502,7 +503,7 @@ public class FlashProgressScreen extends Screen {
                 desc = a.description();
                 req = a.level();
                 cooldown = com.flash.hulk.HulkState.cooldown(a, now);
-                net.minecraft.client.KeyMapping key = FlashAbilityKeys.mapping(a.keySlot());
+                net.minecraft.client.KeyMapping key = HulkClient.key(a);
                 right = cooldown > 0 ? Component.literal(formatTime(cooldown))
                         : key != null ? key.getTranslatedKeyMessage() : Component.empty();
             }
@@ -549,8 +550,6 @@ public class FlashProgressScreen extends Screen {
         configRow(g, HEIGHT_ROW, "gui.flash.hulk.cfg.height", "gui.flash.hulk.cfg.height.desc", mx, my);
         drawHeightBar(g);
         configRow(g, 3, "gui.flash.hulk.cfg.level_mode", "gui.flash.hulk.cfg.level_mode.desc", mx, my);
-        drawSegments(g, "hseg3", cfgY(3) + 7, "gui.flash.config.mode_keys", "gui.flash.config.mode_scroll",
-                FlashClientConfig.SCROLL_MODE.get(), mx, my);
         configRow(g, 4, "gui.flash.config.hud", "gui.flash.hulk.cfg.hud.desc", mx, my);
         drawSwitch(g, "hsw4", switchX(), cfgY(4) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
     }
@@ -639,14 +638,7 @@ public class FlashProgressScreen extends Screen {
             }
             return true;
         } else if (inRow(mx, my, 3)) {
-            Boolean pick = segmentAt(mx, my, cfgY(3) + 7);
-            boolean want = pick != null ? pick : !FlashClientConfig.SCROLL_MODE.get();
-            if (FlashClientConfig.SCROLL_MODE.get() != want) {
-                FlashClientConfig.SCROLL_MODE.set(want);
-                FlashClientConfig.SCROLL_MODE.save();
-                click();
-            }
-            return true;
+            return true; // information only: the Hulk always uses Alt + scroll
         } else if (inRow(mx, my, 4)) {
             FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
             click();
@@ -1347,7 +1339,8 @@ public class FlashProgressScreen extends Screen {
             return true;
         }
         // Only the active control mode works: keys mode here, Ctrl+scroll otherwise.
-        if (FlashClientForgeEvents.selectorAvailable() && !FlashClientConfig.SCROLL_MODE.get()) {
+        if (FlashClientForgeEvents.selectorAvailable() && !FlashClientConfig.SCROLL_MODE.get()
+                && !PowerTheme.localHulk()) {
             if (FlashKeys.INCREASE_SPEED.matches(keyCode, scanCode)) {
                 int direction = Screen.hasControlDown() ? -1 : 1;
                 FlashClientForgeEvents.changeLevel(Minecraft.getInstance(), direction, true);
@@ -1364,9 +1357,9 @@ public class FlashProgressScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (FlashClientConfig.SCROLL_MODE.get()
+        if ((FlashClientConfig.SCROLL_MODE.get() || PowerTheme.localHulk())
                 && minecraft.player != null
-                && Screen.hasControlDown()
+                && Screen.hasAltDown()
                 && FlashClientForgeEvents.selectorAvailable()
                 && delta != 0.0D) {
             FlashClientForgeEvents.changeLevel(minecraft, delta > 0.0D ? 1 : -1, false);

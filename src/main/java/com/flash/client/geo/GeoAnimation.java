@@ -70,6 +70,11 @@ public final class GeoAnimation {
 
     /** Applies the pose at {@code seconds} (looped or held on the last frame). */
     public void apply(GeoModel model, float seconds) {
+        apply(model, seconds, null);
+    }
+
+    /** Same, only for the bones accepted by {@code bones} (null = all). */
+    public void apply(GeoModel model, float seconds, java.util.function.Predicate<String> bones) {
         float t = seconds;
         if (loop && length > 0.0F) {
             t = seconds % length;
@@ -82,7 +87,7 @@ public final class GeoAnimation {
         float[] v = new float[3];
         for (BoneTrack track : tracks) {
             GeoModel.Bone bone = model.bone(track.bone());
-            if (bone == null) {
+            if (bone == null || (bones != null && !bones.test(track.bone()))) {
                 continue;
             }
             if (track.rotation() != null) {

@@ -49,6 +49,20 @@ public class HulkBoulderRenderer extends EntityRenderer<HulkBoulder> {
         super.render(entity, yaw, partialTick, pose, buffers, light);
     }
 
+    /** The rubble model centred on the pose, in a model space where y points down. */
+    public static void drawRock(PoseStack pose, MultiBufferSource buffers, int light, float scale) {
+        if (model == null) {
+            model = GeoModel.load(GEO, null);
+        }
+        model.reset();
+        pose.pushPose();
+        pose.scale(scale, scale, scale);
+        pose.translate(-model.centerX() / 16.0F, -model.centerY() / 16.0F, -model.centerZ() / 16.0F);
+        model.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light,
+                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+        pose.popPose();
+    }
+
     @Override
     public ResourceLocation getTextureLocation(HulkBoulder entity) {
         return TEXTURE;

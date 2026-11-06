@@ -181,8 +181,9 @@ public final class FlashEvents {
         FlashStatusEffects.tick(player);
         FlashAbilityManager.tick(player);
 
+        // every tick: the speed follows sprinting (walk = normal speed, sprint = selected level)
+        FlashSpeed.apply(player);
         if (player.tickCount % 20 == 0) {
-            FlashSpeed.apply(player);
             FlashStep.apply(player);
         }
         if (player.tickCount % 10 == 0 && FlashPowers.hasPowers(player)) {

@@ -47,8 +47,28 @@ public final class HulkAnimator {
     private static Map<String, GeoAnimation> anims;
     private static Map<String, GeoAnimation> transformAnims;
 
-    private record Playing(String animation, long start) {
+    /**
+     * An animation being played: from {@code offset} seconds, for {@code ticks} ticks when > 0
+     * (looping), otherwise until its end.
+     */
+    private record Playing(String animation, long start, int ticks, float offset) {
+        Playing(String animation, long start) {
+            this(animation, start, 0, 0.0F);
+        }
     }
+
+    /** Holding a rock (true) or a creature (false) over the head since {@code start}. */
+    private record Hold(boolean rock, long start) {
+    }
+
+    private static final Map<UUID, Hold> HOLDS = new ConcurrentHashMap<>();
+    /** Arm bones posed by the holding animation while the legs keep walking. */
+    private static final java.util.Set<String> ARM_BONES = java.util.Set.of("RightArm", "RightArmBottom",
+            "LeftArm", "LeftArmBottom", "RIGHT_ITEM", "LEFT_ITEM", "GrabPoint");
+    private static final String LIFT = "rubble_smash";
+    /** Moment of "rubble_smash" with the arms up (the hold pose) and the start of the throw. */
+    private static final float HOLD_POSE = 0.6F;
+    private static final float THROW_FROM = 0.8F;
 
     private record Transform(boolean toHulk, long start, float hulkScale) {
     }
@@ -85,6 +105,7 @@ public final class HulkAnimator {
     }
 
     public static void clear() {
+        HOLDS.clear();
         PLAYING.clear();
         TRANSFORMS.clear();
         AIRBORNE.clear();
@@ -108,29 +129,50 @@ public final class HulkAnimator {
     // ------------------------------------------------------------------
 
     /** Ability used (server packet): its animation plays for that player. */
-    public static void playAbility(UUID player, int abilityId) {
-        HulkAbility ability = HulkAbility.byId(abilityId);
+    public static void playAbility(UUID player, int code) {
+        long now = now();
+        switch (code) {
+            case com.flash.hulk.HulkAbilities.ANIM_HOLD_ROCK -> {
+                HOLDS.put(player, new Hold(true, now));
+                PLAYING.remove(player);
+                return;
+            }
+            case com.flash.hulk.HulkAbilities.ANIM_HOLD_ENTITY -> {
+                HOLDS.put(player, new Hold(false, now));
+                PLAYING.remove(player);
+                return;
+            }
+            case com.flash.hulk.HulkAbilities.ANIM_THROW_ROCK, com.flash.hulk.HulkAbilities.ANIM_THROW_ENTITY -> {
+                HOLDS.remove(player);
+                PLAYING.put(player, new Playing(LIFT, now, 0, THROW_FROM));
+                return;
+            }
+            case com.flash.hulk.HulkAbilities.ANIM_RELEASE -> {
+                HOLDS.remove(player);
+                return;
+            }
+            default -> {
+            }
+        }
+        HulkAbility ability = HulkAbility.byId(code);
         if (ability == null) {
             return;
         }
-        String name = switch (ability) {
-            case GROUND_SMASH -> "smash";
-            case CHARGE -> "rage_step";
-            case ROAR -> "radioactive_lockdown";
-            case THUNDERCLAP -> "thunderclap";
-            case BOULDER -> "rubble_smash";
-            case FURY -> "impact_punch";
-            case GAMMA_WAVE -> "gamma_bombardment";
-            case WORLD_BREAKER -> "tectonic_fury";
-        };
         Minecraft mc = Minecraft.getInstance();
-        if (ability == HulkAbility.GROUND_SMASH && mc.level != null) {
-            net.minecraft.world.entity.player.Player p = mc.level.getPlayerByUUID(player);
-            if (p != null && !p.onGround()) {
-                name = "smash_air";
+        switch (ability) {
+            case GROUND_SMASH -> {
+                net.minecraft.world.entity.player.Player p = mc.level != null ? mc.level.getPlayerByUUID(player) : null;
+                PLAYING.put(player, new Playing(p != null && !p.onGround() ? "smash_air" : "smash", now));
+            }
+            // the charge simply uses the Hulk's run (10 ticks)
+            case CHARGE -> PLAYING.put(player, new Playing("run", now, 10, 0.0F));
+            case THUNDERCLAP -> PLAYING.put(player, new Playing("thunderclap", now));
+            case GAMMA_WAVE -> PLAYING.put(player, new Playing("gamma_bombardment", now));
+            case WORLD_BREAKER -> PLAYING.put(player, new Playing("tectonic_fury", now));
+            default -> {
+                // roar and gamma fury: no animation (just the roar)
             }
         }
-        PLAYING.put(player, new Playing(name, now()));
     }
 
     /** The sync packet saw the form change: plays the transformation (not on login). */
@@ -185,6 +227,10 @@ public final class HulkAnimator {
         pose.translate(0.0F, -1.5F, 0.0F);
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         m.render(pose, vc, light, overlay, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+        Hold hold = HOLDS.get(player.getUUID());
+        if (hold != null && hold.rock() && (now() + partialTick - hold.start()) / 20.0F >= 0.3F) {
+            drawHeldRock(pose, buffers, light, m);
+        }
         pose.popPose();
     }
 
@@ -195,12 +241,24 @@ public final class HulkAnimator {
         Playing playing = PLAYING.get(id);
         if (playing != null) {
             GeoAnimation a = anims.get(playing.animation());
-            float t = (time - playing.start()) / 20.0F;
-            if (a != null && t >= 0.0F && t < a.length) {
-                a.apply(m, t);
+            float elapsed = (time - playing.start()) / 20.0F;
+            boolean alive = a != null && elapsed >= 0.0F && (playing.ticks() > 0
+                    ? elapsed * 20.0F < playing.ticks() : playing.offset() + elapsed < a.length);
+            if (alive) {
+                a.apply(m, playing.ticks() > 0 ? elapsed % a.length : playing.offset() + elapsed);
                 return;
             }
             PLAYING.remove(id);
+        }
+        Hold hold = HOLDS.get(id);
+        if (hold != null) {
+            GeoAnimation lift = anims.get(LIFT);
+            float t = (time - hold.start()) / 20.0F;
+            if (lift != null && t < HOLD_POSE) {
+                // ripping the rock out / grabbing: the whole body
+                lift.apply(m, hold.rock() ? t : Math.max(0.3F, t));
+                return;
+            }
         }
         boolean onGround = player.onGround();
         if (onGround || player.isInWater() || player.isPassenger()) {
@@ -233,7 +291,15 @@ public final class HulkAnimator {
             base = anims.get("idle_pose");
         }
         if (base != null) {
-            base.apply(m, t);
+            base.apply(m, t, hold != null ? bone -> !ARM_BONES.contains(bone) : null);
+        }
+        if (hold != null) {
+            GeoAnimation lift = anims.get(LIFT);
+            if (lift != null) {
+                // arms up holding the rock / creature, the legs keep walking
+                lift.apply(m, HOLD_POSE, ARM_BONES::contains);
+            }
+            return;
         }
         // punch: alternating right / left swing over the movement
         float attack = player.getAttackAnim(partialTick);
@@ -252,6 +318,22 @@ public final class HulkAnimator {
                 swing.apply(m, attack * swing.length);
             }
         }
+    }
+
+    /** The rock between the two hands (midpoint of the item bones). */
+    private static void drawHeldRock(PoseStack pose, MultiBufferSource buffers, int light, GeoModel m) {
+        PoseStack right = new PoseStack();
+        PoseStack left = new PoseStack();
+        if (!m.transformToBone("RIGHT_ITEM", right) || !m.transformToBone("LEFT_ITEM", left)) {
+            return;
+        }
+        org.joml.Vector3f a = right.last().pose().getTranslation(new org.joml.Vector3f());
+        org.joml.Vector3f b = left.last().pose().getTranslation(new org.joml.Vector3f());
+        pose.pushPose();
+        // a little above the hands
+        pose.translate((a.x() + b.x()) * 0.5F, (a.y() + b.y()) * 0.5F - 0.35F, (a.z() + b.z()) * 0.5F);
+        HulkBoulderRenderer.drawRock(pose, buffers, light, 1.6F);
+        pose.popPose();
     }
 
     private static void renderTransform(PoseStack pose, MultiBufferSource buffers, int light, int overlay,

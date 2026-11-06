@@ -57,8 +57,8 @@ public final class FlashClientForgeEvents {
 
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
         boolean decrease = drain(FlashKeys.DECREASE_SPEED);
-        if (FlashClientConfig.SCROLL_MODE.get()) {
-            // Ctrl + scroll mode is active: the V keys are disabled.
+        if (FlashClientConfig.SCROLL_MODE.get() || PowerTheme.localHulk()) {
+            // Alt + scroll mode is active (always for the Hulk, whose V key grabs): the V keys are disabled.
             increase = false;
             decrease = false;
         }
@@ -98,10 +98,10 @@ public final class FlashClientForgeEvents {
     @SubscribeEvent
     public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (!FlashClientConfig.SCROLL_MODE.get()
+        if (!(FlashClientConfig.SCROLL_MODE.get() || PowerTheme.localHulk())
                 || minecraft.player == null
                 || minecraft.screen != null
-                || !Screen.hasControlDown()
+                || !Screen.hasAltDown()
                 || minecraft.player.isSpectator()
                 || !selectorAvailable()) {
             return;

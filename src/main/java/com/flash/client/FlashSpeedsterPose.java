@@ -42,8 +42,8 @@ public final class FlashSpeedsterPose {
     private static final String RUN = "animation.player.speedster_run";
     private static final String RUN_END = "animation.player.speedster_run_end";
     private static final String RUN_JUMP = "animation.player.speedster_run_jump";
-    /** Blocks per tick above which the run animation plays (a normal sprint is about 0.28). */
-    private static final double RUN_SPEED = 0.34D;
+    /** Blocks per tick above which the run animation plays while sprinting with super speed. */
+    private static final double RUN_SPEED = 0.12D;
 
     private static Map<String, GeoAnimation> anims;
 
@@ -89,7 +89,8 @@ public final class FlashSpeedsterPose {
         float time = now + partialTick;
         State st = STATES.computeIfAbsent(player.getUUID(), id -> new State());
         double speed = Math.hypot(player.getX() - player.xo, player.getZ() - player.zo);
-        boolean running = player.isSprinting() && speed > RUN_SPEED;
+        // sprinting with a speed level: the speed of the level and the speedster run
+        boolean running = player.isSprinting() && speed > RUN_SPEED && !player.isCrouching();
         if (running) {
             st.lastRun = now;
         }

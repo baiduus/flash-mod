@@ -40,43 +40,18 @@ public final class FlashSuitClient {
     }
 
     /**
-     * Player-skin layout (64 x 64 UV on a 160-unit HD texture, like the Flash asset pack):
-     * every part has its base box and the outer-layer box, so the suit has the same
-     * two layers as a skin.
+     * The vanilla armor draw of the suits is empty: the suit is the geo model of the Flash
+     * asset pack, drawn by {@link FlashGeoSuitLayer} on the posed body.
      */
     private static LayerDefinition suitLayer(float grow) {
         net.minecraft.client.model.geom.builders.MeshDefinition mesh =
                 new net.minecraft.client.model.geom.builders.MeshDefinition();
         net.minecraft.client.model.geom.builders.PartDefinition root = mesh.getRoot();
-        CubeDeformation g = new CubeDeformation(grow);
-        CubeDeformation o = new CubeDeformation(grow + 0.25F);
-        root.addOrReplaceChild("head", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(0, 0).addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F, g),
-                net.minecraft.client.model.geom.PartPose.ZERO);
-        root.addOrReplaceChild("hat", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(32, 0).addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F, new CubeDeformation(grow + 0.5F)),
-                net.minecraft.client.model.geom.PartPose.ZERO);
-        root.addOrReplaceChild("body", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(16, 16).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, g)
-                        .texOffs(16, 32).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, o),
-                net.minecraft.client.model.geom.PartPose.ZERO);
-        root.addOrReplaceChild("right_arm", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(40, 16).addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, g)
-                        .texOffs(40, 32).addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, o),
-                net.minecraft.client.model.geom.PartPose.offset(-5.0F, 2.0F, 0.0F));
-        root.addOrReplaceChild("left_arm", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(32, 48).addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, g)
-                        .texOffs(48, 48).addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, o),
-                net.minecraft.client.model.geom.PartPose.offset(5.0F, 2.0F, 0.0F));
-        root.addOrReplaceChild("right_leg", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(0, 16).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, g)
-                        .texOffs(0, 32).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, o),
-                net.minecraft.client.model.geom.PartPose.offset(-1.9F, 12.0F, 0.0F));
-        root.addOrReplaceChild("left_leg", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
-                        .texOffs(16, 48).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, g)
-                        .texOffs(0, 48).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, o),
-                net.minecraft.client.model.geom.PartPose.offset(1.9F, 12.0F, 0.0F));
-        return LayerDefinition.create(mesh, 160, 160);
+        for (String part : new String[] {"head", "hat", "body", "right_arm", "left_arm", "right_leg", "left_leg"}) {
+            root.addOrReplaceChild(part, net.minecraft.client.model.geom.builders.CubeListBuilder.create(),
+                    net.minecraft.client.model.geom.PartPose.ZERO);
+        }
+        return LayerDefinition.create(mesh, 64, 64);
     }
 
     @SubscribeEvent
@@ -94,8 +69,9 @@ public final class FlashSuitClient {
             HulkClient.resetModel();
             HulkBoulderRenderer.reset();
             FlashSpeedsterPose.reset();
-            GammaChamberRenderer.reset();
             AccelerationPortalRenderer.resetFrame();
+            FlashGeoSuitLayer.reset();
+            FlashRingLayer.reset();
         });
     }
 
