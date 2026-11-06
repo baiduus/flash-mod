@@ -32,6 +32,7 @@ public final class FlashEvents {
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         FlashPowers.copy(event.getOriginal(), event.getEntity());
+        FlashRing.copy(event.getOriginal(), event.getEntity());
         if (event.getEntity() instanceof ServerPlayer player) {
             resetTransient(player);
             FlashSpeed.apply(player);
@@ -39,6 +40,7 @@ public final class FlashEvents {
             FlashStatusEffects.onLevelChanged(player);
             FlashSyncPacket.send(player);
             FlashVisualSyncPacket.send(player);
+            FlashRing.sync(player);
         }
     }
 
@@ -52,6 +54,7 @@ public final class FlashEvents {
             FlashDimensionTravel.onLogin(player);
             FlashSyncPacket.send(player);
             FlashVisualSyncPacket.send(player);
+            FlashRing.sync(player);
         }
     }
 
@@ -64,6 +67,7 @@ public final class FlashEvents {
             FlashStatusEffects.onLevelChanged(player);
             FlashSyncPacket.send(player);
             FlashVisualSyncPacket.send(player);
+            FlashRing.sync(player);
         }
     }
 
@@ -76,6 +80,15 @@ public final class FlashEvents {
             FlashStatusEffects.onLevelChanged(player);
             FlashSyncPacket.send(player);
             FlashVisualSyncPacket.send(player);
+            FlashRing.sync(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(net.minecraftforge.event.entity.player.PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer listener
+                && event.getTarget() instanceof ServerPlayer target) {
+            FlashRing.syncTo(listener, target);
         }
     }
 

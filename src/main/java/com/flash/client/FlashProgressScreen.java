@@ -57,6 +57,10 @@ public class FlashProgressScreen extends Screen {
     private static final int COLOR_BOX = 0xFF12151A;
     private static final int COLOR_BOX_BORDER = 0xFF2A2F38;
 
+    private static final int TAB_PROGRESS = 0;
+    private static final int TAB_CONFIG = 1;
+    private static final int TAB_EQUIP = 2;
+
     private static int tab = 0;
 
     private int leftPos;
@@ -84,20 +88,35 @@ public class FlashProgressScreen extends Screen {
         this.topPos = Math.round((this.height / this.uiScale - PH) / 2.0F);
     }
 
-    private static boolean negative() {
-        return FlashClientVisualLevels.isLocalNegative();
+    private static PowerTheme theme() {
+        return PowerTheme.current();
     }
 
     private static int accent() {
-        return negative() ? 0xFFFF4040 : 0xFFFFC21A;
+        return theme().accent();
     }
 
     private static int accentDark() {
-        return negative() ? 0xFF3C0C0E : 0xFF3F3207;
+        return theme().accentDark();
     }
 
     private static int accentSoft() {
-        return negative() ? 0xFF1E0A0B : 0xFF1F1A08;
+        return theme().accentSoft();
+    }
+
+    /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
+    private static int[] visibleTabs() {
+        return FlashClientData.hasPowers() ? new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG}
+                : new int[] {TAB_PROGRESS};
+    }
+
+    private static int activeTab() {
+        for (int id : visibleTabs()) {
+            if (id == tab) {
+                return id;
+            }
+        }
+        return TAB_PROGRESS;
     }
 
     // ------------------------------------------------------------------
@@ -128,8 +147,11 @@ public class FlashProgressScreen extends Screen {
         drawTabs(graphics, mx, my);
         graphics.fill(PAD, TAB_Y + TAB_H + 4, PW - PAD, TAB_Y + TAB_H + 5, COLOR_BOX_BORDER);
 
-        if (tab == 0) {
+        int current = activeTab();
+        if (current == TAB_PROGRESS) {
             drawProgressTab(graphics, mx, my);
+        } else if (current == TAB_EQUIP) {
+            drawEquipTab(graphics, mx, my);
         } else {
             drawConfigTab(graphics, mx, my);
         }
@@ -140,6 +162,9 @@ public class FlashProgressScreen extends Screen {
     }
 
     private Component footerText() {
+        if (!FlashClientData.hasPowers()) {
+            return Component.translatable("gui.flash.footer.neutral");
+        }
         return Component.translatable(FlashClientConfig.SCROLL_MODE.get()
                 ? "gui.flash.footer.scroll" : "gui.flash.footer.keys");
     }
@@ -147,10 +172,14 @@ public class FlashProgressScreen extends Screen {
     private void drawHeader(GuiGraphics g) {
         g.fillGradient(0, 0, PW, 58, accentDark(), 0x00000000);
         g.fill(0, 0, PW, 3, accent());
-        drawBolt(g, 24, 12, accent());
+        if (theme().icon() == PowerTheme.Icon.BOLT) {
+            drawBolt(g, 24, 12, accent());
+        } else {
+            drawNeutralIcon(g, 22, 12, accent());
+        }
 
-        scaledText(g, this.title, 64, 12, 1.5F, COLOR_TEXT);
-        g.drawString(this.font, Component.translatable("gui.flash.progress.subtitle"),
+        scaledText(g, Component.translatable(theme().titleKey()), 64, 12, 1.5F, COLOR_TEXT);
+        g.drawString(this.font, Component.translatable(theme().subtitleKey()),
                 64, 36, COLOR_MUTED, false);
 
         Component badge = FlashClientData.hasPowers()
@@ -169,6 +198,18 @@ public class FlashProgressScreen extends Screen {
         g.drawString(this.font, badge, bx + 9, by + 8, color, false);
     }
 
+    /** Neutral emblem: an empty ring. */
+    private static void drawNeutralIcon(GuiGraphics g, int x, int y, int c) {
+        g.fill(x + 8, y, x + 24, y + 4, c);
+        g.fill(x + 4, y + 4, x + 8, y + 8, c);
+        g.fill(x + 24, y + 4, x + 28, y + 8, c);
+        g.fill(x, y + 8, x + 4, y + 24, c);
+        g.fill(x + 28, y + 8, x + 32, y + 24, c);
+        g.fill(x + 4, y + 24, x + 8, y + 28, c);
+        g.fill(x + 24, y + 24, x + 28, y + 28, c);
+        g.fill(x + 8, y + 28, x + 24, y + 32, c);
+    }
+
     /** Chunky pixel lightning bolt. */
     private static void drawBolt(GuiGraphics g, int x, int y, int c) {
         g.fill(x + 12, y, x + 22, y + 6, c);
@@ -180,17 +221,19 @@ public class FlashProgressScreen extends Screen {
     }
 
     private void drawTabs(GuiGraphics g, int mx, int my) {
-        String[] keys = {"gui.flash.tab.progress", "gui.flash.tab.config"};
-        for (int i = 0; i < keys.length; i++) {
+        String[] keys = {"gui.flash.tab.progress", "gui.flash.tab.config", "gui.flash.tab.equipment"};
+        int[] visible = visibleTabs();
+        for (int i = 0; i < visible.length; i++) {
+            int id = visible[i];
             int tx = PAD + i * (TAB_W + 6);
-            boolean active = tab == i;
+            boolean active = activeTab() == id;
             boolean hovered = mx >= tx && mx < tx + TAB_W && my >= TAB_Y && my < TAB_Y + TAB_H;
             g.fill(tx, TAB_Y, tx + TAB_W, TAB_Y + TAB_H,
                     active ? accentDark() : (hovered ? 0xFF1B1F26 : 0xFF111419));
             if (active) {
                 g.fill(tx, TAB_Y, tx + TAB_W, TAB_Y + 2, accent());
             }
-            Component label = Component.translatable(keys[i]);
+            Component label = Component.translatable(keys[id]);
             g.drawString(this.font, label, tx + (TAB_W - this.font.width(label)) / 2,
                     TAB_Y + 8, active ? accent() : COLOR_MUTED, false);
         }
@@ -202,6 +245,10 @@ public class FlashProgressScreen extends Screen {
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
         boolean has = FlashClientData.hasPowers();
+        if (!has) {
+            drawEmptyState(g);
+            return;
+        }
         Component selected = has
                 ? Component.translatable("level.flash." + FlashClientData.getSelectedLevel())
                 : Component.translatable("gui.flash.progress.none");
@@ -216,6 +263,22 @@ public class FlashProgressScreen extends Screen {
         drawLevelGrid(g, mx, my);
         drawProgress(g);
         drawSkills(g, mx, my);
+    }
+
+    /** Neutral screen shown while the player has no power. */
+    private void drawEmptyState(GuiGraphics g) {
+        int cx = PW / 2;
+        int cy = CONTENT_Y + 90;
+        drawNeutralIcon(g, cx - 16 - 16, cy - 70, COLOR_DIM);
+        Component title = Component.translatable("gui.flash.empty.title");
+        Component hint = Component.translatable("gui.flash.empty.hint");
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(cx - this.font.width(title) * 1.5F / 2.0F, cy - 10, 0.0F);
+        pose.scale(1.5F, 1.5F, 1.0F);
+        g.drawString(this.font, title, 0, 0, COLOR_MUTED, false);
+        pose.popPose();
+        g.drawString(this.font, hint, cx - this.font.width(hint) / 2, cy + 20, COLOR_DIM, false);
     }
 
     private void statBox(GuiGraphics g, int x, int y, int w, int h, Component label, Component value) {
@@ -444,6 +507,112 @@ public class FlashProgressScreen extends Screen {
     }
 
     // ------------------------------------------------------------------
+    // Equipment tab (ring + suit)
+    // ------------------------------------------------------------------
+
+    private static final int SLOT_X = PAD + 10;
+    private static final int SLOT_Y = CONTENT_Y + 28;
+    private static final int SLOT_SIZE = 76;
+    private static final int BTN_X = PAD + 110;
+    private static final int BTN_W = 220;
+    private static final int BTN_H = 30;
+
+    private static int btnRingY() {
+        return CONTENT_Y + 30;
+    }
+
+    private static int btnSuitY() {
+        return CONTENT_Y + 74;
+    }
+
+    private static boolean suitWorn() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null && com.flash.item.FlashSuitItem.countWorn(mc.player) > 0;
+    }
+
+    private void drawEquipTab(GuiGraphics g, int mx, int my) {
+        boolean ring = FlashClientRing.isLocalEquipped();
+
+        g.drawString(this.font, Component.translatable("gui.flash.equip.ring_slot"),
+                PAD, CONTENT_Y, COLOR_TEXT, false);
+        // ring slot
+        g.fill(SLOT_X, SLOT_Y, SLOT_X + SLOT_SIZE, SLOT_Y + SLOT_SIZE, ring ? accent() : COLOR_BOX_BORDER);
+        g.fill(SLOT_X + 2, SLOT_Y + 2, SLOT_X + SLOT_SIZE - 2, SLOT_Y + SLOT_SIZE - 2, COLOR_BOX);
+        if (ring) {
+            g.fill(SLOT_X + 2, SLOT_Y + 2, SLOT_X + SLOT_SIZE - 2, SLOT_Y + 5, accent());
+            PoseStack pose = g.pose();
+            pose.pushPose();
+            pose.translate(SLOT_X + 12, SLOT_Y + 12, 0.0F);
+            pose.scale(3.0F, 3.0F, 1.0F);
+            g.renderItem(new net.minecraft.world.item.ItemStack(
+                    com.flash.registry.ModItems.FLASH_RING.get()), 0, 0);
+            pose.popPose();
+        } else {
+            Component empty = Component.translatable("gui.flash.equip.empty");
+            g.drawString(this.font, empty, SLOT_X + (SLOT_SIZE - this.font.width(empty)) / 2,
+                    SLOT_Y + SLOT_SIZE / 2 - 4, COLOR_DIM, false);
+        }
+
+        drawButton(g, BTN_X, btnRingY(), BTN_W, BTN_H,
+                Component.translatable(ring ? "gui.flash.equip.remove_ring" : "gui.flash.equip.put_ring"),
+                true, mx, my);
+        drawButton(g, BTN_X, btnSuitY(), BTN_W, BTN_H,
+                Component.translatable(suitWorn() ? "gui.flash.equip.take_off_suit" : "gui.flash.equip.put_on_suit"),
+                ring, mx, my);
+
+        Component key = Component.translatable("gui.flash.equip.key",
+                FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage());
+        g.drawString(this.font, key, BTN_X, btnSuitY() + BTN_H + 8, accent(), false);
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                        Component.translatable("gui.flash.equip.help").getString(), 330),
+                BTN_X, btnSuitY() + BTN_H + 22, COLOR_MUTED, false);
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                        Component.translatable("gui.flash.equip.help2").getString(), 330),
+                BTN_X, btnSuitY() + BTN_H + 34, COLOR_DIM, false);
+
+        // preview of the player with the ring and the suit
+        int px = PW - 120;
+        int py = CONTENT_Y + 230;
+        g.fill(PW - 220, CONTENT_Y - 2, PW - PAD, CONTENT_Y + 250, COLOR_BOX_BORDER);
+        g.fill(PW - 219, CONTENT_Y - 1, PW - PAD - 1, CONTENT_Y + 249, COLOR_BOX);
+        g.fill(PW - 219, CONTENT_Y - 1, PW - PAD - 1, CONTENT_Y + 2, accent());
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
+                    g, px, py, 95, (float) (px - mx), (float) (py - 100 - my), mc.player);
+        }
+    }
+
+    private void drawButton(GuiGraphics g, int x, int y, int w, int h, Component label,
+                            boolean enabled, int mx, int my) {
+        boolean hovered = enabled && mx >= x && mx < x + w && my >= y && my < y + h;
+        g.fill(x, y, x + w, y + h, enabled ? (hovered ? accent() : accentDark()) : COLOR_BOX_BORDER);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1,
+                enabled ? (hovered ? accentDark() : accentSoft()) : 0xFF0C0E11);
+        g.drawString(this.font, label, x + (w - this.font.width(label)) / 2, y + (h - 8) / 2,
+                enabled ? (hovered ? COLOR_TEXT : accent()) : COLOR_DIM, false);
+    }
+
+    private boolean clickEquip(double mx, double my) {
+        if (mx >= BTN_X && mx < BTN_X + BTN_W && my >= btnRingY() && my < btnRingY() + BTN_H) {
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashRingPacket(
+                    FlashClientRing.isLocalEquipped()
+                            ? com.flash.network.FlashRingPacket.UNEQUIP
+                            : com.flash.network.FlashRingPacket.EQUIP));
+            click();
+            return true;
+        }
+        if (FlashClientRing.isLocalEquipped()
+                && mx >= BTN_X && mx < BTN_X + BTN_W && my >= btnSuitY() && my < btnSuitY() + BTN_H) {
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashRingPacket(
+                    com.flash.network.FlashRingPacket.TOGGLE_SUIT));
+            click();
+            return true;
+        }
+        return false;
+    }
+
+    // ------------------------------------------------------------------
     // Small drawing helpers
     // ------------------------------------------------------------------
 
@@ -497,16 +666,20 @@ public class FlashProgressScreen extends Screen {
         double my = mouseY / this.uiScale - this.topPos;
 
         // tabs
-        for (int i = 0; i < 2; i++) {
+        int[] visible = visibleTabs();
+        for (int i = 0; i < visible.length; i++) {
             int tx = PAD + i * (TAB_W + 6);
             if (mx >= tx && mx < tx + TAB_W && my >= TAB_Y && my < TAB_Y + TAB_H) {
-                tab = i;
+                tab = visible[i];
                 click();
                 return true;
             }
         }
 
-        if (tab == 1) {
+        if (activeTab() == TAB_EQUIP) {
+            return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_CONFIG) {
             if (inRow(mx, my, 0)) {
                 boolean enabled = !FlashClientData.isDestroyBlocks();
                 FlashClientData.setDestroyBlocksOptimistic(enabled);

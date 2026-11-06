@@ -57,6 +57,16 @@ public final class FlashClientEvents {
     }
 
     @SubscribeEvent
+    public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
+        for (String skin : new String[] {"default", "slim"}) {
+            net.minecraft.client.renderer.entity.EntityRenderer<?> renderer = event.getSkin(skin);
+            if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player) {
+                player.addLayer(new FlashRingLayer(player));
+            }
+        }
+    }
+
+    @SubscribeEvent
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("flash_speed", new FlashHud());
         event.registerAboveAll("flash_abilities", new FlashAbilityHud());

@@ -47,6 +47,12 @@ public final class FlashClientForgeEvents {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashToggleSpeedPacket());
             }
         }
+        while (FlashKeys.TOGGLE_SUIT.consumeClick()) {
+            if (minecraft.screen == null) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashRingPacket(
+                        com.flash.network.FlashRingPacket.TOGGLE_SUIT));
+            }
+        }
         FlashWallRun.tick(minecraft);
 
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
@@ -139,5 +145,6 @@ public final class FlashClientForgeEvents {
         }
         FlashClientData.reset();
         FlashClientVisualLevels.reset();
+        FlashClientRing.reset();
     }
 }

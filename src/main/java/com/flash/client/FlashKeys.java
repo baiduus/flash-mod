@@ -57,6 +57,14 @@ public final class FlashKeys {
             CATEGORY
     );
 
+    /** Puts the suit on / takes it off using the ring in the K-screen slot (default U). */
+    public static final KeyMapping TOGGLE_SUIT = new KeyMapping(
+            "key.flash.suit.toggle",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_U,
+            CATEGORY
+    );
+
     private FlashKeys() {
     }
 
@@ -66,5 +74,6 @@ public final class FlashKeys {
         event.register(INCREASE_SPEED);
         event.register(DECREASE_SPEED);
         event.register(TOGGLE_SPEED);
+        event.register(TOGGLE_SUIT);
     }
 }

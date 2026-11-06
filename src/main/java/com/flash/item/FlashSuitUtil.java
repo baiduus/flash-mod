@@ -55,6 +55,9 @@ public final class FlashSuitUtil {
         for (EquipmentSlot slot : SLOTS) {
             ItemStack current = player.getItemBySlot(slot);
             if (!current.isEmpty() && !isSuit(current)) {
+                if (stored.contains(STORED + slot.getName())) {
+                    giveOrDrop(player, ItemStack.of(stored.getCompound(STORED + slot.getName())));
+                }
                 stored.put(STORED + slot.getName(), current.save(new CompoundTag()));
             }
             ItemStack suit = piece(slot, negative);

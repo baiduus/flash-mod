@@ -34,6 +34,13 @@ public final class FlashSuitEvents2 {
     }
 
     @SubscribeEvent
+    public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (event.getEntity() instanceof Player) {
+            event.getDrops().removeIf(drop -> FlashSuitUtil.isRingPiece(drop.getItem()));
+        }
+    }
+
+    @SubscribeEvent
     public static void onToss(ItemTossEvent event) {
         if (FlashSuitUtil.isRingPiece(event.getEntity().getItem())) {
             event.getEntity().discard();
