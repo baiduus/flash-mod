@@ -27,6 +27,8 @@ import net.minecraftforge.fml.common.Mod;
 public final class FlashClientPhase {
 
     private static boolean wasPhasing;
+    /** Ground height where the current vibration started. */
+    private static double startFloor;
 
     private FlashClientPhase() {
     }
@@ -47,19 +49,13 @@ public final class FlashClientPhase {
         }
         boolean phasing = isPhasing() && !player.isSpectator();
         if (phasing) {
-            player.noPhysics = true;
-            player.setNoGravity(true);
-            player.fallDistance = 0.0F;
-            // Horizontal momentum is untouched; only the vertical part follows
-            // the look direction / sneaking.
-            double vertical = 0.0D;
-            if (player.isShiftKeyDown() || player.getXRot() > 40.0F) {
-                vertical = -0.16D;
-            } else if (player.getXRot() < -40.0F) {
-                vertical = 0.16D;
+            if (!wasPhasing) {
+                startFloor = com.flash.ability.FlashPhase.startFloor(player);
             }
-            Vec3 motion = player.getDeltaMovement();
-            player.setDeltaMovement(motion.x, vertical, motion.z);
+            // walls are crossed, but gravity and jumping stay normal (the floor holds the feet)
+            player.noPhysics = true;
+            player.setNoGravity(false);
+            player.fallDistance = 0.0F;
         } else if (wasPhasing) {
             player.noPhysics = false;
             player.setNoGravity(false);
@@ -73,7 +69,12 @@ public final class FlashClientPhase {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof LocalPlayer player)) {
             return;
         }
-        if (FlashClientData.hasPowers() && FlashClientData.getSelectedLevel() >= 3 && !wasPhasing) {
+        if (wasPhasing) {
+            com.flash.ability.FlashPhase.holdFloor(player,
+                    com.flash.ability.FlashPhase.floor(player, startFloor));
+            return;
+        }
+        if (FlashClientData.hasPowers() && FlashClientData.getSelectedLevel() >= 3) {
             FlashWaterWalk.walk(player);
         }
     }

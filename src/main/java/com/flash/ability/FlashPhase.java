@@ -6,6 +6,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
@@ -14,10 +15,11 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Molecular-vibration phasing. Collision is disabled on both sides while the
- * key is held, but gravity is disabled as well and the vertical speed is only
- * changed by the player's look direction. Horizontal motion is never touched,
- * so the ability no longer slows the player down.
+ * Molecular-vibration phasing. Collisions are switched off on both sides while
+ * the key is held, so walls in the way are crossed, but the physics stay normal:
+ * gravity, jumping and falling work as usual. The player never sinks: the
+ * ground under the feet (or the floor height where the vibration started, if
+ * the ground drops away) holds them, see {@link #floor} / {@link #holdFloor}.
  *
  * <p>The ability stores the last position that was not inside a block. If the
  * player releases the key inside a wall, or falls below the world, a safe
@@ -37,11 +39,9 @@ public final class FlashPhase {
         state.phasingTicks = 0;
         state.lastSafe = player.position();
         player.noPhysics = true;
-        player.setNoGravity(true);
+        player.setNoGravity(false);
         player.fallDistance = 0.0F;
         player.setAirSupply(300);
-        player.setDeltaMovement(Vec3.ZERO);
-        player.hurtMarked = true;
         player.displayClientMessage(
                 Component.translatable("message.flash.phasing_started"), true);
         player.playNotifySound(SoundEvents.CHORUS_FRUIT_TELEPORT,
@@ -66,24 +66,8 @@ public final class FlashPhase {
         player.fallDistance = 0.0F;
         player.setAirSupply(300);
         player.noPhysics = true;
-        player.setNoGravity(true);
-
-        // No gravity and no residual velocity: the player only moves
-        // vertically when deliberately looking up or down. Horizontal input is
-        // completely untouched, which removes the old slowdown.
-        double vertical = 0.0D;
-        if (player.getXRot() > 40.0F) {
-            vertical = -0.16D;
-        } else if (player.getXRot() < -40.0F) {
-            vertical = 0.16D;
-        } else if (player.isShiftKeyDown()) {
-            vertical = -0.16D;
-        }
-        Vec3 motion = player.getDeltaMovement();
-        // Preserve horizontal momentum; only the vertical component is
-        // controlled. Setting hurtMarked here would resend the server's stale
-        // horizontal velocity and make the player feel slow.
-        player.setDeltaMovement(motion.x, vertical, motion.z);
+        player.setNoGravity(false);
+        // the movement itself comes from the client (normal physics, see holdFloor)
 
         if (player.getY() < level.getMinBuildHeight() + 2.0D
                 || player.getY() < state.lastSafe.y - MAX_SAFE_DROP) {
@@ -124,6 +108,74 @@ public final class FlashPhase {
                 Component.translatable("message.flash.phasing_stopped"), true);
         player.playNotifySound(SoundEvents.CHORUS_FRUIT_TELEPORT,
                 SoundSource.PLAYERS, 0.7F, 0.9F);
+    }
+
+    // ------------------------------------------------------------------
+    // Shared floor rule (client and server)
+    // ------------------------------------------------------------------
+
+    /**
+     * Height the feet may not go below: the top of the solid block right under the
+     * feet (only blocks the feet are above count, so walls being crossed are
+     * ignored), and never lower than {@code startFloor}, the ground where the
+     * vibration began.
+     */
+    public static double floor(Player player, double startFloor) {
+        Level level = player.level();
+        double feet = player.getY();
+        int x = (int) Math.floor(player.getX());
+        int z = (int) Math.floor(player.getZ());
+        int top = (int) Math.floor(feet + 0.05D);
+        for (int y = top; y >= top - 3; y--) {
+            BlockPos pos = new BlockPos(x, y, z);
+            net.minecraft.world.phys.shapes.VoxelShape shape =
+                    level.getBlockState(pos).getCollisionShape(level, pos);
+            if (shape.isEmpty()) {
+                continue;
+            }
+            double surface = y + shape.max(net.minecraft.core.Direction.Axis.Y);
+            if (surface <= feet + 0.05D) {
+                return Math.max(startFloor, surface);
+            }
+        }
+        return startFloor;
+    }
+
+    /** Ground where a vibration starting now stands (searches down if the player is in the air). */
+    public static double startFloor(Player player) {
+        if (player.onGround()) {
+            return player.getY();
+        }
+        Level level = player.level();
+        int x = (int) Math.floor(player.getX());
+        int z = (int) Math.floor(player.getZ());
+        for (int y = (int) Math.floor(player.getY()); y > level.getMinBuildHeight(); y--) {
+            BlockPos pos = new BlockPos(x, y, z);
+            net.minecraft.world.phys.shapes.VoxelShape shape =
+                    level.getBlockState(pos).getCollisionShape(level, pos);
+            if (!shape.isEmpty()) {
+                double surface = y + shape.max(net.minecraft.core.Direction.Axis.Y);
+                if (surface <= player.getY() + 0.05D) {
+                    return surface;
+                }
+            }
+        }
+        return player.getY();
+    }
+
+    /** End of the tick: stand on the floor instead of sinking; in the air, fall normally. */
+    public static void holdFloor(Player player, double floor) {
+        player.fallDistance = 0.0F;
+        if (player.getY() <= floor + 0.001D) {
+            player.setPos(player.getX(), floor, player.getZ());
+            Vec3 motion = player.getDeltaMovement();
+            if (motion.y < 0.0D) {
+                player.setDeltaMovement(motion.x, 0.0D, motion.z);
+            }
+            player.setOnGround(true);
+        } else {
+            player.setOnGround(false);
+        }
     }
 
     public static void restore(ServerPlayer player) {
