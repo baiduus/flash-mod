@@ -53,9 +53,17 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         // a small ring around the lower, outer-front corner of the hand (where a finger would be)
         box(poseStack, consumer, light, outer - pad, 8.5F, front - pad,
                 outer + 1.7F, 9.5F, front + 1.7F, 0.0F);
-        // little plate with the lightning emblem on the outer face of the ring
-        box(poseStack, consumer, light, outer - pad - 0.30F, 8.4F, front - pad + 0.1F,
-                outer - pad, 9.6F, front + 1.5F, 0.5F);
+        // thin polished rim on the top and bottom edge of the band
+        box(poseStack, consumer, light, outer - pad - 0.08F, 9.42F, front - pad - 0.08F,
+                outer + 1.78F, 9.58F, front + 1.78F, 0.0F);
+        box(poseStack, consumer, light, outer - pad - 0.08F, 8.42F, front - pad - 0.08F,
+                outer + 1.78F, 8.58F, front + 1.78F, 0.0F);
+        // gold setting around the gem
+        box(poseStack, consumer, light, outer - pad - 0.20F, 8.3F, front - pad + 0.02F,
+                outer - pad, 9.7F, front + 1.62F, 0.0F);
+        // the gem: red plate with the lightning bolt, glowing
+        box(poseStack, consumer, 0xF000F0, outer - pad - 0.38F, 8.5F, front - pad + 0.17F,
+                outer - pad - 0.20F, 9.5F, front + 1.47F, 0.5F);
     }
 
     /** Axis-aligned box in model pixels; {@code u} selects the gold (0.0) or the red (0.5) half of the texture. */
@@ -66,7 +74,7 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         Matrix3f n = pose.normal();
         float s = 1.0F / 16.0F;
         float ax = x0 * s, bx = x1 * s, ay = y0 * s, by = y1 * s, az = z0 * s, bz = z1 * s;
-        float u0 = u + 0.05F, u1 = u + 0.45F;
+        float u0 = u + 0.02F, u1 = u + 0.48F;
         // -Z / +Z / -X / +X / bottom / top
         quad(c, m, n, light, ax, ay, az, bx, ay, az, bx, by, az, ax, by, az, u0, u1, 0, 0, -1);
         quad(c, m, n, light, bx, ay, bz, ax, ay, bz, ax, by, bz, bx, by, bz, u0, u1, 0, 0, 1);

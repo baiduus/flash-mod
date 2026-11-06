@@ -96,18 +96,27 @@ public final class FlashPowers {
         return isTemporaryActive(player.getPersistentData().getCompound(ROOT), gameTime(player));
     }
 
+    /** Highest level reachable by this player: trained level, or 20 with the Tachyon Amplifier at 10. */
     public static int getMaxLevel(Player player) {
         if (!hasPowers(player)) {
             return 0;
         }
         CompoundTag flash = player.getPersistentData().getCompound(ROOT);
         if (flash.getBoolean(HAS_POWERS)) {
-            if (flash.contains(MAX_LEVEL)) {
-                return FlashSpeedLevels.clamp(flash.getInt(MAX_LEVEL));
+            int stored = getStoredMax(player);
+            if (stored >= FlashSpeedLevels.BASE_MAX_LEVEL && FlashAmplifier.isEquipped(player)) {
+                return FlashSpeedLevels.MAX_LEVEL;
             }
-            return FlashSpeedLevels.clamp(flash.getInt(LEGACY_RANK));
+            return stored;
         }
         return FlashSpeedLevels.clamp(flash.getInt(TEMP_LEVEL));
+    }
+
+    /** The trained level (never above 10), without the amplifier. */
+    private static int getStoredMax(Player player) {
+        CompoundTag flash = player.getPersistentData().getCompound(ROOT);
+        int value = flash.contains(MAX_LEVEL) ? flash.getInt(MAX_LEVEL) : flash.getInt(LEGACY_RANK);
+        return Math.max(FlashSpeedLevels.MIN_LEVEL, Math.min(FlashSpeedLevels.BASE_MAX_LEVEL, value));
     }
 
     public static int getSelectedLevel(Player player) {
@@ -141,7 +150,7 @@ public final class FlashPowers {
     }
 
     public static boolean isMaxLevel(Player player) {
-        return hasPermanentPowers(player) && getMaxLevel(player) >= FlashSpeedLevels.MAX_LEVEL;
+        return hasPermanentPowers(player) && getStoredMax(player) >= FlashSpeedLevels.BASE_MAX_LEVEL;
     }
 
     public static int getBlocksToNextLevel(Player player) {
@@ -208,7 +217,7 @@ public final class FlashPowers {
         }
         int max = getMaxLevel(player);
         int clamped = Math.max(FlashSpeedLevels.MIN_LEVEL, Math.min(level, max));
-        write(player, max, clamped, getDistance(player), getTotalDistance(player));
+        write(player, getStoredMax(player), clamped, getDistance(player), getTotalDistance(player));
         return clamped == level;
     }
 
@@ -216,7 +225,7 @@ public final class FlashPowers {
         if (!hasPermanentPowers(player) || isTemporary(player)) {
             return;
         }
-        int clamped = FlashSpeedLevels.clamp(level);
+        int clamped = Math.min(FlashSpeedLevels.BASE_MAX_LEVEL, FlashSpeedLevels.clamp(level));
         int selected = Math.min(getSelectedLevel(player), clamped);
         write(player, clamped, selected, getDistance(player), getTotalDistance(player));
     }
@@ -225,7 +234,7 @@ public final class FlashPowers {
         if (!hasPermanentPowers(player) || isTemporary(player)) {
             return;
         }
-        write(player, getMaxLevel(player), getSelectedLevel(player),
+        write(player, getStoredMax(player), getSelectedLevel(player),
                 Math.max(0.0D, distance), getTotalDistance(player));
     }
 
@@ -235,14 +244,14 @@ public final class FlashPowers {
             return 0;
         }
 
-        int max = getMaxLevel(player);
+        int max = getStoredMax(player);
         int selected = getSelectedLevel(player);
         double distance = getDistance(player) + amount;
         double total = getTotalDistance(player) + amount;
         int unlocked = 0;
 
         while (distance >= FlashSpeedLevels.BLOCKS_PER_LEVEL
-                && max < FlashSpeedLevels.MAX_LEVEL) {
+                && max < FlashSpeedLevels.BASE_MAX_LEVEL) {
             distance -= FlashSpeedLevels.BLOCKS_PER_LEVEL;
             max++;
             unlocked++;
@@ -320,9 +329,10 @@ public final class FlashPowers {
                 ? persistent.getCompound(ROOT).copy()
                 : new CompoundTag();
         flash.putBoolean(HAS_POWERS, true);
-        flash.putInt(MAX_LEVEL, FlashSpeedLevels.clamp(maxLevel));
+        flash.putInt(MAX_LEVEL,
+                Math.min(FlashSpeedLevels.BASE_MAX_LEVEL, FlashSpeedLevels.clamp(maxLevel)));
         flash.putInt(SELECTED_LEVEL,
-                Math.max(0, Math.min(selectedLevel, FlashSpeedLevels.clamp(maxLevel))));
+                Math.max(0, Math.min(selectedLevel, FlashSpeedLevels.MAX_LEVEL)));
         flash.putDouble(DISTANCE, Math.max(0.0D, distance));
         flash.putDouble(TOTAL_DISTANCE, Math.max(0.0D, totalDistance));
         flash.remove(TEMP_LEVEL);

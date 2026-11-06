@@ -36,7 +36,7 @@ public class FlashHud implements IGuiOverlay {
         String line1 = Component.translatable(
                 FlashClientVisualLevels.isLocalNegative() ? "hud.flash.level_negative" : "hud.flash.level", level).getString();
         String line2;
-        if (FlashClientData.getMaxLevel() >= FlashSpeedLevels.MAX_LEVEL) {
+        if (FlashClientData.getMaxLevel() >= FlashSpeedLevels.BASE_MAX_LEVEL) {
             line2 = Component.translatable("hud.flash.max_level").getString();
         } else {
             int travelled = Math.min(FlashSpeedLevels.BLOCKS_PER_LEVEL,
@@ -69,7 +69,7 @@ public class FlashHud implements IGuiOverlay {
             FlashHudStyle.gradientText(graphics, font, line3, x + 8, y + 26);
         }
         // Progress strip along the bottom edge (orange to yellow).
-        if (FlashClientData.getMaxLevel() < FlashSpeedLevels.MAX_LEVEL) {
+        if (FlashClientData.getMaxLevel() < FlashSpeedLevels.BASE_MAX_LEVEL) {
             float progress = Math.min(1.0F, (float) (FlashClientData.getDistance()
                     / FlashSpeedLevels.BLOCKS_PER_LEVEL));
             int filled = Math.round((boxWidth - 3) * progress);

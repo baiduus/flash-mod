@@ -62,6 +62,7 @@ public final class FlashClientEvents {
             net.minecraft.client.renderer.entity.EntityRenderer<?> renderer = event.getSkin(skin);
             if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player) {
                 player.addLayer(new FlashRingLayer(player));
+                player.addLayer(new FlashAmplifierLayer(player));
             }
         }
     }

@@ -5,20 +5,21 @@ import java.util.UUID;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
-/** Server -> client: whether a player has the ring in the slot (drives the hand model and the K tab). */
-public record FlashRingSyncPacket(UUID playerId, boolean equipped) {
+/** Server -> client: which slot items (ring, tachyon amplifier) a player has equipped. */
+public record FlashRingSyncPacket(UUID playerId, boolean equipped, boolean amplifier) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUUID(this.playerId);
         buffer.writeBoolean(this.equipped);
+        buffer.writeBoolean(this.amplifier);
     }
 
     public FlashRingSyncPacket(FriendlyByteBuf buffer) {
-        this(buffer.readUUID(), buffer.readBoolean());
+        this(buffer.readUUID(), buffer.readBoolean(), buffer.readBoolean());
     }
 
     public void handle(NetworkEvent.Context context) {
-        context.enqueueWork(() -> FlashClientRing.set(this.playerId, this.equipped));
+        context.enqueueWork(() -> FlashClientRing.set(this.playerId, this.equipped, this.amplifier));
         context.setPacketHandled(true);
     }
 }

@@ -11,6 +11,8 @@ public record FlashRingPacket(int action) {
     public static final int EQUIP = 0;
     public static final int UNEQUIP = 1;
     public static final int TOGGLE_SUIT = 2;
+    public static final int AMP_EQUIP = 3;
+    public static final int AMP_UNEQUIP = 4;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeVarInt(this.action);
@@ -30,6 +32,8 @@ public record FlashRingPacket(int action) {
             case EQUIP -> FlashRing.equip(player);
             case UNEQUIP -> FlashRing.unequip(player);
             case TOGGLE_SUIT -> FlashRing.toggleSuit(player);
+            case AMP_EQUIP -> com.flash.power.FlashAmplifier.equip(player);
+            case AMP_UNEQUIP -> com.flash.power.FlashAmplifier.unequip(player);
             default -> {
             }
         }

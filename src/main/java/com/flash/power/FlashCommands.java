@@ -44,7 +44,7 @@ public final class FlashCommands {
                                         EntityArgument.getPlayer(context, "target")))))
                 .then(Commands.literal("level")
                         .then(Commands.argument("level", IntegerArgumentType.integer(
-                                        FlashSpeedLevels.MIN_LEVEL, FlashSpeedLevels.MAX_LEVEL))
+                                        FlashSpeedLevels.MIN_LEVEL, FlashSpeedLevels.BASE_MAX_LEVEL))
                                 .executes(context -> level(context.getSource(),
                                         context.getSource().getPlayerOrException(),
                                         IntegerArgumentType.getInteger(context, "level")))
@@ -54,7 +54,7 @@ public final class FlashCommands {
                                                 IntegerArgumentType.getInteger(context, "level"))))))
                 .then(Commands.literal("unlock")
                         .then(Commands.argument("level", IntegerArgumentType.integer(
-                                        1, FlashSpeedLevels.MAX_LEVEL))
+                                        1, FlashSpeedLevels.BASE_MAX_LEVEL))
                                 .executes(context -> unlock(context.getSource(),
                                         context.getSource().getPlayerOrException(),
                                         IntegerArgumentType.getInteger(context, "level")))
@@ -64,7 +64,7 @@ public final class FlashCommands {
                                                 IntegerArgumentType.getInteger(context, "level"))))))
                 .then(Commands.literal("rank")
                         .then(Commands.argument("level", IntegerArgumentType.integer(
-                                        1, FlashSpeedLevels.MAX_LEVEL))
+                                        1, FlashSpeedLevels.BASE_MAX_LEVEL))
                                 .executes(context -> rank(context.getSource(),
                                         context.getSource().getPlayerOrException(),
                                         IntegerArgumentType.getInteger(context, "level")))

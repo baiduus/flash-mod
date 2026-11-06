@@ -44,6 +44,7 @@ public final class FlashEvents {
     public static void onClone(PlayerEvent.Clone event) {
         FlashPowers.copy(event.getOriginal(), event.getEntity());
         FlashRing.copy(event.getOriginal(), event.getEntity());
+        FlashAmplifier.copy(event.getOriginal(), event.getEntity());
         if (event.getEntity() instanceof ServerPlayer player) {
             resetTransient(player);
             FlashSpeed.apply(player);

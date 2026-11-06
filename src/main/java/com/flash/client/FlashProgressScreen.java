@@ -33,8 +33,18 @@ public class FlashProgressScreen extends Screen {
     private static final int TAB_H = 24;
     private static final int CONTENT_Y = 104;
 
-    private static final int CARD_COLUMNS = 4;
-    private static final int CARD_W = 90;
+    private static int cardColumns() {
+        return FlashClientRing.isLocalAmplifier() ? 7 : 4;
+    }
+
+    private static int cardW() {
+        return FlashClientRing.isLocalAmplifier() ? 80 : 90;
+    }
+
+    private static int maxShownLevel() {
+        return FlashClientRing.isLocalAmplifier() ? FlashSpeedLevels.MAX_LEVEL : FlashSpeedLevels.BASE_MAX_LEVEL;
+    }
+
     private static final int CARD_H = 40;
     private static final int CARD_GAP = 6;
     private static final int GRID_X = PAD;
@@ -294,12 +304,12 @@ public class FlashProgressScreen extends Screen {
         int selected = FlashClientData.getSelectedLevel();
         boolean has = FlashClientData.hasPowers();
 
-        for (int level = FlashSpeedLevels.MIN_LEVEL; level <= FlashSpeedLevels.MAX_LEVEL; level++) {
-            int cx = GRID_X + (level % CARD_COLUMNS) * (CARD_W + CARD_GAP);
-            int cy = GRID_Y + (level / CARD_COLUMNS) * (CARD_H + CARD_GAP);
+        for (int level = FlashSpeedLevels.MIN_LEVEL; level <= maxShownLevel(); level++) {
+            int cx = GRID_X + (level % cardColumns()) * (cardW() + CARD_GAP);
+            int cy = GRID_Y + (level / cardColumns()) * (CARD_H + CARD_GAP);
             boolean unlocked = has && level <= max;
             boolean inUse = has && level == selected;
-            boolean hovered = mx >= cx && mx < cx + CARD_W && my >= cy && my < cy + CARD_H;
+            boolean hovered = mx >= cx && mx < cx + cardW() && my >= cy && my < cy + CARD_H;
 
             int border = inUse ? accent() : unlocked ? 0xFF2F8F55 : COLOR_BOX_BORDER;
             int fill = inUse ? accentSoft() : unlocked ? 0xFF101A13 : 0xFF0E1013;
@@ -307,10 +317,10 @@ public class FlashProgressScreen extends Screen {
                 border = 0xFF9BE8B4;
                 fill = 0xFF17231B;
             }
-            g.fill(cx, cy, cx + CARD_W, cy + CARD_H, border);
-            g.fill(cx + 1, cy + 1, cx + CARD_W - 1, cy + CARD_H - 1, fill);
+            g.fill(cx, cy, cx + cardW(), cy + CARD_H, border);
+            g.fill(cx + 1, cy + 1, cx + cardW() - 1, cy + CARD_H - 1, fill);
             if (inUse) {
-                g.fill(cx + 1, cy + 1, cx + CARD_W - 1, cy + 3, accent());
+                g.fill(cx + 1, cy + 1, cx + cardW() - 1, cy + 3, accent());
             }
 
             scaledText(g, Component.literal(Integer.toString(level)), cx + 10, cy + 11, 2.0F,
@@ -322,19 +332,23 @@ public class FlashProgressScreen extends Screen {
                     ? Component.translatable("gui.flash.progress.unlocked")
                     : Component.translatable("gui.flash.progress.locked");
             int statusColor = inUse ? accent() : unlocked ? COLOR_GREEN : COLOR_DIM;
-            g.drawString(this.font, this.font.plainSubstrByWidth(status.getString(), 44),
-                    cx + 40, cy + 16, statusColor, false);
+            if (!FlashClientRing.isLocalAmplifier()) {
+                g.drawString(this.font, this.font.plainSubstrByWidth(status.getString(), 44),
+                        cx + 40, cy + 16, statusColor, false);
+            } else if (level >= 10) {
+                scaledText(g, Component.literal(level == 10 ? "" : "+"), cx + 52, cy + 11, 1.0F, statusColor);
+            }
             if (unlocked) {
-                drawCheck(g, cx + CARD_W - 16, cy + 6, inUse ? accent() : COLOR_GREEN);
+                drawCheck(g, cx + cardW() - 16, cy + 6, inUse ? accent() : COLOR_GREEN);
             } else {
-                drawLock(g, cx + CARD_W - 16, cy + 6, COLOR_DIM);
+                drawLock(g, cx + cardW() - 16, cy + 6, COLOR_DIM);
             }
         }
     }
 
     private void drawProgress(GuiGraphics g) {
         boolean has = FlashClientData.hasPowers();
-        boolean maxed = has && FlashClientData.getMaxLevel() >= FlashSpeedLevels.MAX_LEVEL;
+        boolean maxed = has && FlashClientData.getMaxLevel() >= FlashSpeedLevels.BASE_MAX_LEVEL;
         int y = 322;
 
         if (!has) {
@@ -530,6 +544,11 @@ public class FlashProgressScreen extends Screen {
         return CONTENT_Y + 74;
     }
 
+    // second, dedicated slot: Tachyon Amplifier
+    private static final int AMP_SLOT_Y = CONTENT_Y + 150;
+    private static final int AMP_SLOT_SIZE = 56;
+    private static final int AMP_BTN_Y = AMP_SLOT_Y + 13;
+
     private static boolean suitWorn() {
         Minecraft mc = Minecraft.getInstance();
         return mc.player != null && com.flash.item.FlashSuitItem.countWorn(mc.player) > 0;
@@ -575,6 +594,34 @@ public class FlashProgressScreen extends Screen {
                         Component.translatable("gui.flash.equip.help2").getString(), 330),
                 BTN_X, btnSuitY() + BTN_H + 34, COLOR_DIM, false);
 
+        // tachyon amplifier slot
+        boolean amp = FlashClientRing.isLocalAmplifier();
+        g.drawString(this.font, Component.translatable("gui.flash.equip.amplifier_slot"),
+                PAD, AMP_SLOT_Y - 12, COLOR_TEXT, false);
+        int ax = SLOT_X + 10;
+        g.fill(ax, AMP_SLOT_Y, ax + AMP_SLOT_SIZE, AMP_SLOT_Y + AMP_SLOT_SIZE, amp ? accent() : COLOR_BOX_BORDER);
+        g.fill(ax + 2, AMP_SLOT_Y + 2, ax + AMP_SLOT_SIZE - 2, AMP_SLOT_Y + AMP_SLOT_SIZE - 2, COLOR_BOX);
+        if (amp) {
+            g.fill(ax + 2, AMP_SLOT_Y + 2, ax + AMP_SLOT_SIZE - 2, AMP_SLOT_Y + 5, accent());
+            PoseStack apose = g.pose();
+            apose.pushPose();
+            apose.translate(ax + 8, AMP_SLOT_Y + 8, 0.0F);
+            apose.scale(2.5F, 2.5F, 1.0F);
+            g.renderItem(new net.minecraft.world.item.ItemStack(
+                    com.flash.registry.ModItems.TACHYON_AMPLIFIER.get()), 0, 0);
+            apose.popPose();
+        } else {
+            Component empty = Component.translatable("gui.flash.equip.empty");
+            g.drawString(this.font, empty, ax + (AMP_SLOT_SIZE - this.font.width(empty)) / 2,
+                    AMP_SLOT_Y + AMP_SLOT_SIZE / 2 - 4, COLOR_DIM, false);
+        }
+        drawButton(g, BTN_X, AMP_BTN_Y, BTN_W, BTN_H,
+                Component.translatable(amp ? "gui.flash.equip.remove_amplifier" : "gui.flash.equip.put_amplifier"),
+                true, mx, my);
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                        Component.translatable("gui.flash.equip.amplifier_help").getString(), 330),
+                BTN_X, AMP_BTN_Y + BTN_H + 8, COLOR_MUTED, false);
+
         // preview of the player with the ring and the suit
         int px = PW - 120;
         int py = CONTENT_Y + 230;
@@ -604,6 +651,14 @@ public class FlashProgressScreen extends Screen {
                     FlashClientRing.isLocalEquipped()
                             ? com.flash.network.FlashRingPacket.UNEQUIP
                             : com.flash.network.FlashRingPacket.EQUIP));
+            click();
+            return true;
+        }
+        if (mx >= BTN_X && mx < BTN_X + BTN_W && my >= AMP_BTN_Y && my < AMP_BTN_Y + BTN_H) {
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashRingPacket(
+                    FlashClientRing.isLocalAmplifier()
+                            ? com.flash.network.FlashRingPacket.AMP_UNEQUIP
+                            : com.flash.network.FlashRingPacket.AMP_EQUIP));
             click();
             return true;
         }
@@ -763,16 +818,16 @@ public class FlashProgressScreen extends Screen {
         if (gx < 0 || gy < 0) {
             return -1;
         }
-        int column = gx / (CARD_W + CARD_GAP);
+        int column = gx / (cardW() + CARD_GAP);
         int row = gy / (CARD_H + CARD_GAP);
-        if (column >= CARD_COLUMNS || row > 2) {
+        if (column >= cardColumns() || row > 2) {
             return -1;
         }
-        if (gx % (CARD_W + CARD_GAP) >= CARD_W || gy % (CARD_H + CARD_GAP) >= CARD_H) {
+        if (gx % (cardW() + CARD_GAP) >= cardW() || gy % (CARD_H + CARD_GAP) >= CARD_H) {
             return -1;
         }
-        int level = row * CARD_COLUMNS + column;
-        return level <= FlashSpeedLevels.MAX_LEVEL ? level : -1;
+        int level = row * cardColumns() + column;
+        return level <= maxShownLevel() ? level : -1;
     }
 
     @Override

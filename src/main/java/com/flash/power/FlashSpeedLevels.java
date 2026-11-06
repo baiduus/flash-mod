@@ -30,8 +30,14 @@ public final class FlashSpeedLevels {
             6.00D, // level 7 - unchanged from the previous version
             16.875D, // level 8 - 2.5x the previous level-8 value
             18.75D,  // level 9 - 2.5x the previous level-9 value
-            20.625D  // level 10 - 2.5x the previous 8.25x value
+            20.625D, // level 10 - 2.5x the previous 8.25x value
+            // levels 11..20 are only reachable with the Tachyon Amplifier (same +1.875 step)
+            22.500D, 24.375D, 26.250D, 28.125D, 30.000D,
+            31.875D, 33.750D, 35.625D, 37.500D, 39.375D
     };
+
+    /** Highest level reachable by training alone (without the Tachyon Amplifier). */
+    public static final int BASE_MAX_LEVEL = 10;
 
     /** Level at which real combustion and the electric visuals start. */
     public static final int FIRE_LEVEL = 3;

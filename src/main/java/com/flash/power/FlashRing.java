@@ -108,13 +108,15 @@ public final class FlashRing {
 
     public static void sync(ServerPlayer player) {
         FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
-                new FlashRingSyncPacket(player.getUUID(), isEquipped(player)));
+                new FlashRingSyncPacket(player.getUUID(), isEquipped(player),
+                        FlashAmplifier.isEquipped(player)));
     }
 
     /** Tells one client about the ring state of another player it just started tracking. */
     public static void syncTo(ServerPlayer listener, ServerPlayer target) {
         FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> listener),
-                new FlashRingSyncPacket(target.getUUID(), isEquipped(target)));
+                new FlashRingSyncPacket(target.getUUID(), isEquipped(target),
+                        FlashAmplifier.isEquipped(target)));
     }
 
     public static void copy(Player from, Player to) {
