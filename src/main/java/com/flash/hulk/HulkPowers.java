@@ -373,6 +373,24 @@ public final class HulkPowers {
         applyAttributes(player);
     }
 
+    private static final String NO_COOLDOWNS = "noCooldowns";
+
+    /** Test mode (command): the abilities have no cooldown. */
+    public static boolean noCooldowns(Player player) {
+        return has(player) && tag(player).getBoolean(NO_COOLDOWNS);
+    }
+
+    /** Command: clears the current cooldowns; {@code disable} non-null also turns test mode on/off. */
+    public static void resetCooldowns(ServerPlayer player, Boolean disable) {
+        CompoundTag tag = tag(player).copy();
+        tag.remove(COOLDOWNS);
+        if (disable != null) {
+            tag.putBoolean(NO_COOLDOWNS, disable);
+        }
+        save(player, tag);
+        syncSelf(player);
+    }
+
     public static int cooldown(Player player, HulkAbility ability) {
         if (!has(player)) {
             return 0;
@@ -382,6 +400,9 @@ public final class HulkPowers {
     }
 
     public static void setCooldown(Player player, HulkAbility ability) {
+        if (noCooldowns(player)) {
+            return;
+        }
         CompoundTag tag = tag(player).copy();
         CompoundTag cds = tag.getCompound(COOLDOWNS);
         cds.putLong(ability.id(), player.level().getGameTime() + ability.cooldown());

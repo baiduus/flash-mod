@@ -440,5 +440,9 @@
   "gui.flash.hulk.punch_damage": "Dano do soco: %s (%s corações)",
   "gui.flash.hulk.strength_level": "No nível ativo %s (o soco normal é 1)",
   "gui.flash.hulk.strength_banner": "Ao se transformar, no nível %s",
-  "gui.flash.hulk.strength_fury": "Com a Fúria Gama ativa (+50%%)"
+  "gui.flash.hulk.strength_fury": "Com a Fúria Gama ativa (+50%%)",
+  "commands.flash.hulk.cooldown_reset": "Recargas das habilidades de %s zeradas.",
+  "commands.flash.hulk.cooldown_off": "Recargas desligadas para %s (modo de teste).",
+  "commands.flash.hulk.cooldown_on": "Recargas religadas para %s.",
+  "commands.flash.hulk.none": "%s não tem o poder do Hulk."
 }

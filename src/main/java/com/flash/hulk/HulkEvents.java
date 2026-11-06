@@ -217,10 +217,35 @@ public final class HulkEvents {
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(c -> rage(EntityArgument.getPlayer(c, "player"),
                                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "percent"), c.getSource())))))
+                .then(Commands.literal("cooldown")
+                        .then(cooldownMode("reset", null))
+                        .then(cooldownMode("off", Boolean.TRUE))
+                        .then(cooldownMode("on", Boolean.FALSE)))
                 .then(Commands.literal("remove")
                         .executes(c -> remove(c.getSource().getPlayerOrException(), c.getSource()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> remove(EntityArgument.getPlayer(c, "player"), c.getSource())))));
+    }
+
+    /** /hulk cooldown reset|off|on [player]: clears the cooldowns, or turns them off / back on. */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack>
+            cooldownMode(String name, Boolean disable) {
+        return Commands.literal(name)
+                .executes(c -> cooldowns(c.getSource().getPlayerOrException(), disable, c.getSource()))
+                .then(Commands.argument("player", EntityArgument.player())
+                        .executes(c -> cooldowns(EntityArgument.getPlayer(c, "player"), disable, c.getSource())));
+    }
+
+    private static int cooldowns(ServerPlayer player, Boolean disable, net.minecraft.commands.CommandSourceStack source) {
+        if (!HulkPowers.has(player)) {
+            source.sendFailure(Component.translatable("commands.flash.hulk.none", player.getDisplayName()));
+            return 0;
+        }
+        HulkPowers.resetCooldowns(player, disable);
+        String key = disable == null ? "commands.flash.hulk.cooldown_reset"
+                : disable ? "commands.flash.hulk.cooldown_off" : "commands.flash.hulk.cooldown_on";
+        source.sendSuccess(() -> Component.translatable(key, player.getDisplayName()), true);
+        return 1;
     }
 
     private static int give(ServerPlayer player, net.minecraft.commands.CommandSourceStack source) {

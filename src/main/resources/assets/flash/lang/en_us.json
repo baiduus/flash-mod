@@ -440,5 +440,9 @@
   "gui.flash.hulk.punch_damage": "Punch damage: %s (%s hearts)",
   "gui.flash.hulk.strength_level": "At active level %s (a normal punch is 1)",
   "gui.flash.hulk.strength_banner": "When transformed, at level %s",
-  "gui.flash.hulk.strength_fury": "With Gamma Fury active (+50%%)"
+  "gui.flash.hulk.strength_fury": "With Gamma Fury active (+50%%)",
+  "commands.flash.hulk.cooldown_reset": "%s's ability cooldowns cleared.",
+  "commands.flash.hulk.cooldown_off": "Cooldowns turned off for %s (test mode).",
+  "commands.flash.hulk.cooldown_on": "Cooldowns turned back on for %s.",
+  "commands.flash.hulk.none": "%s does not have the Hulk's power."
 }
