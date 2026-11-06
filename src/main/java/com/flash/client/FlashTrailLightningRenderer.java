@@ -56,6 +56,10 @@ public final class FlashTrailLightningRenderer {
                     continue;
                 }
                 List<FlashTrailTracker.TrailPoint> points = new ArrayList<>(stream.points);
+                points = clipToPlayer(level, state, points, event.getPartialTick());
+                if (points.size() < 2) {
+                    continue;
+                }
                 AABB bounds = bounds(points);
                 if (!event.getFrustum().isVisible(bounds)) {
                     continue;
@@ -96,6 +100,46 @@ public final class FlashTrailLightningRenderer {
 
         poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
+    }
+
+    /**
+     * Points are recorded at the end of each tick, but the player is drawn at
+     * the interpolated position, which lags behind. At high speed the newest
+     * points would float ahead of the player, so everything beyond the drawn
+     * position is cut off and the trail ends exactly on the player.
+     */
+    private static List<FlashTrailTracker.TrailPoint> clipToPlayer(
+            ClientLevel level, FlashTrailTracker.TrailState state,
+            List<FlashTrailTracker.TrailPoint> points, float partialTick) {
+        net.minecraft.world.entity.player.Player player = level.getPlayerByUUID(state.id);
+        int count = points.size();
+        if (player == null || count < 2) {
+            return points;
+        }
+        Vec3 rendered = player.getPosition(partialTick);
+        Vec3 heading = points.get(count - 1).base().subtract(points.get(count - 2).base());
+        if (heading.lengthSqr() < 1.0E-8D) {
+            return points;
+        }
+        heading = heading.normalize();
+
+        int keep = count;
+        while (keep > 0 && points.get(keep - 1).base().subtract(rendered).dot(heading) > 0.0D) {
+            keep--;
+        }
+        if (keep == count) {
+            return points;
+        }
+        List<FlashTrailTracker.TrailPoint> clipped = new ArrayList<>(points.subList(0, keep));
+        if (keep > 0) {
+            FlashTrailTracker.TrailPoint last = points.get(keep - 1);
+            FlashTrailTracker.TrailPoint next = points.get(keep);
+            // Head of the trail: the drawn player position plus this stream's lane offset.
+            Vec3 offset = next.position().subtract(next.base());
+            clipped.add(new FlashTrailTracker.TrailPoint(
+                    rendered.add(offset), last.createdAt(), last.lane(), rendered));
+        }
+        return clipped;
     }
 
     private static AABB bounds(List<FlashTrailTracker.TrailPoint> points) {

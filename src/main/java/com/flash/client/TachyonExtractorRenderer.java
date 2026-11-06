@@ -71,9 +71,9 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
     private static final net.minecraft.resources.ResourceLocation GLASS =
             new net.minecraft.resources.ResourceLocation("flash", "textures/block/tachyon_extractor_glass.png");
 
-    /** Real translucent glass over the window (block models here are cutout, which cannot blend). */
+    /** Translucent glass over the window. It uses a render type that does not write depth, so the item behind it is never hidden. */
     private void drawGlass(PoseStack poseStack, MultiBufferSource buffers, int light) {
-        VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(GLASS));
+        VertexConsumer consumer = buffers.getBuffer(RenderType.beaconBeam(GLASS, true));
         PoseStack.Pose pose = poseStack.last();
         float x0 = 4.0F / 16.0F;
         float x1 = 12.0F / 16.0F;
@@ -89,8 +89,7 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
     private static void glassVertex(VertexConsumer consumer, PoseStack.Pose pose, float x, float y,
                                     float z, float u, float v, int light) {
         consumer.vertex(pose.pose(), x, y, z).color(255, 255, 255, 255).uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
-                .normal(pose.normal(), 0.0F, 0.0F, -1.0F).endVertex();
+                .uv2(light).normal(pose.normal(), 0.0F, 0.0F, -1.0F).endVertex();
     }
 
     /** Orange bar on the front panel; fills along the track (0 to 6 px). */

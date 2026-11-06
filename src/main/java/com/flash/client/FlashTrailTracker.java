@@ -116,7 +116,7 @@ public final class FlashTrailTracker {
                 Vec3 point = current.add(0.0D, 0.92D, 0.0D)
                         .add(side.scale(SIDE_OFFSET[lane] + jitterSide))
                         .add(0.0D, UP_OFFSET[lane] + jitterUp, 0.0D);
-                state.streams[lane].points.addLast(new TrailPoint(point, gameTime, lane));
+                state.streams[lane].points.addLast(new TrailPoint(point, gameTime, lane, current));
                 while (state.streams[lane].points.size() > MAX_POINTS_PER_STREAM) {
                     state.streams[lane].points.removeFirst();
                 }
@@ -137,6 +137,7 @@ public final class FlashTrailTracker {
     static final class TrailState {
         final TrailStream[] streams = new TrailStream[STREAM_COUNT];
         final long seed;
+        final UUID id;
         Vec3 lastPosition = Vec3.ZERO;
         Vec3 lastDirection = new Vec3(0.0D, 0.0D, 1.0D);
         boolean initialized;
@@ -144,6 +145,7 @@ public final class FlashTrailTracker {
         boolean negative;
 
         TrailState(UUID id, long gameTime) {
+            this.id = id;
             this.seed = id.getMostSignificantBits()
                     ^ Long.rotateLeft(id.getLeastSignificantBits(), 31);
             for (int i = 0; i < STREAM_COUNT; i++) {
@@ -179,6 +181,7 @@ public final class FlashTrailTracker {
         }
     }
 
-    record TrailPoint(Vec3 position, long createdAt, int lane) {
+    /** {@code base} is the player's own position when the point was recorded. */
+    record TrailPoint(Vec3 position, long createdAt, int lane, Vec3 base) {
     }
 }
