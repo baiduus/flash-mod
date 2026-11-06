@@ -125,4 +125,10 @@ public class GammaChamberBlockEntity extends BlockEntity {
         this.ticks = tag.contains("Ticks") ? tag.getInt("Ticks") : -1;
         this.occupant = tag.hasUUID("Occupant") ? tag.getUUID("Occupant") : null;
     }
+
+    /** The model is 3.5 blocks tall. */
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox() {
+        return new net.minecraft.world.phys.AABB(this.worldPosition).expandTowards(0.0D, 2.6D, 0.0D).inflate(0.2D);
+    }
 }

@@ -94,6 +94,8 @@ public final class FlashSuitClient {
             HulkClient.resetModel();
             HulkBoulderRenderer.reset();
             FlashSpeedsterPose.reset();
+            GammaChamberRenderer.reset();
+            AccelerationPortalRenderer.resetFrame();
         });
     }
 

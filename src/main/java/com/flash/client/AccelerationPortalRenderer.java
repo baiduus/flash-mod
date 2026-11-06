@@ -143,6 +143,8 @@ public final class AccelerationPortalRenderer
                 vis * (0.22F + 0.12F * pulse));
         disc(poseStack, buffers.getBuffer(HALO), r * 1.30F, 0.0F, away * 0.03F, pal.deep(),
                 vis * (0.45F + 0.15F * pulse));
+        // 4b. the frame: a geo model (rings, lightning fins, claws) turning around the rim
+        drawFrame(poseStack, buffers, radius, t, vis, pal);
         // 5. embers spiralling in
         drawEmbers(poseStack, buffers.getBuffer(SPARK), portal.seed(), radius, t, vis, away, pal);
         // 6. lightning crackling around the rim
@@ -166,6 +168,48 @@ public final class AccelerationPortalRenderer
             source.endBatch(SPARK);
             source.endBatch(FlashLightningRibbon.RENDER_TYPE);
         }
+    }
+
+    private static final ResourceLocation FRAME_TEX =
+            new ResourceLocation(FlashMod.MODID, "textures/entity/acceleration_portal_frame.png");
+    private static final ResourceLocation FRAME_GEO =
+            new ResourceLocation(FlashMod.MODID, "geo/acceleration_portal_frame.geo.json");
+    private static final ResourceLocation FRAME_ANIMS =
+            new ResourceLocation(FlashMod.MODID, "animations/acceleration_portal_frame.animation.json");
+    private static com.flash.client.geo.GeoModel frame;
+    private static java.util.Map<String, com.flash.client.geo.GeoAnimation> frameAnims;
+
+    public static void resetFrame() {
+        frame = null;
+        frameAnims = null;
+    }
+
+    /** Geo frame (tools/gen_geo_machines.py), tinted with the force's colours, always lit. */
+    private static void drawFrame(PoseStack poseStack, MultiBufferSource buffers, float radius, float seconds,
+                                  float vis, Palette pal) {
+        if (frame == null) {
+            frame = com.flash.client.geo.GeoModel.load(FRAME_GEO, null, true);
+            frameAnims = com.flash.client.geo.GeoAnimation.load(FRAME_ANIMS);
+        }
+        frame.reset();
+        com.flash.client.geo.GeoAnimation spin = frameAnims.get("spin");
+        if (spin != null) {
+            spin.apply(frame, seconds);
+        }
+        // the ring of the model has a radius of about 18 px: it hugs the rim of the portal
+        float s = radius / 1.12F;
+        poseStack.pushPose();
+        poseStack.scale(-s, -s, s);
+        poseStack.translate(0.0F, -1.5F, 0.0F);
+        float[] mid = pal.mid();
+        float[] hot = pal.hot();
+        int light = LightTexture.FULL_BRIGHT;
+        frame.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(FRAME_TEX)), light,
+                OverlayTexture.NO_OVERLAY, 0, 0.35F + 0.65F * mid[0], 0.35F + 0.65F * mid[1],
+                0.35F + 0.65F * mid[2], vis);
+        frame.render(poseStack, buffers.getBuffer(RenderType.entityTranslucentEmissive(FRAME_TEX)), light,
+                OverlayTexture.NO_OVERLAY, 1, hot[0], hot[1], hot[2], vis);
+        poseStack.popPose();
     }
 
     private static float smooth(float x) {

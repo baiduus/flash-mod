@@ -153,6 +153,14 @@ public final class GeoModel {
      * @param skinSubtree name of a bone whose subtree uses the player skin (64 x 64 UV), or null
      */
     public static GeoModel load(ResourceLocation location, String skinSubtree) {
+        return load(location, skinSubtree, false);
+    }
+
+    /**
+     * @param glowByName bones whose name starts with "glow" (and their children) go to group 1,
+     *                   with the model's own texture size (drawn full-bright by the renderer)
+     */
+    public static GeoModel load(ResourceLocation location, String skinSubtree, boolean glowByName) {
         GeoModel model = new GeoModel();
         try (Reader reader = Minecraft.getInstance().getResourceManager().getResourceOrThrow(location).openAsReader()) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -185,14 +193,21 @@ public final class GeoModel {
             if (skinSubtree != null && model.bones.containsKey(skinSubtree)) {
                 markGroup(model.bones.get(skinSubtree), 1);
             }
+            if (glowByName) {
+                for (Bone bone : model.bones.values()) {
+                    if (bone.name.startsWith("glow")) {
+                        markGroup(bone, 1);
+                    }
+                }
+            }
             for (JsonElement e : boneArray) {
                 JsonObject b = e.getAsJsonObject();
                 Bone bone = model.bones.get(b.get("name").getAsString());
                 if (!b.has("cubes")) {
                     continue;
                 }
-                int w = bone.group == 1 ? 64 : texW;
-                int h = bone.group == 1 ? 64 : texH;
+                int w = bone.group == 1 && !glowByName ? 64 : texW;
+                int h = bone.group == 1 && !glowByName ? 64 : texH;
                 for (JsonElement ce : b.getAsJsonArray("cubes")) {
                     bone.cubes.add(model.cube(ce.getAsJsonObject(), w, h));
                 }
