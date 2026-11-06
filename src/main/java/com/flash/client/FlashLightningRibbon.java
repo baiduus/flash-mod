@@ -36,6 +36,11 @@ public final class FlashLightningRibbon {
     public static final float[] RED_MID_COLOR = {1.0F, 0.12F, 0.10F, 0.42F};
     public static final float[] RED_CORE_COLOR = {1.0F, 0.72F, 0.66F, 0.92F};
 
+    // Velocity-9 (same blue as the V-9 body and trail bolts)
+    public static final float[] BLUE_GLOW_COLOR = {0.05F, 0.25F, 1.0F, 0.22F};
+    public static final float[] BLUE_MID_COLOR = {0.20F, 0.75F, 1.0F, 0.42F};
+    public static final float[] BLUE_CORE_COLOR = {0.82F, 0.95F, 1.0F, 0.92F};
+
     public static final float BODY_GLOW_WIDTH = 0.052F;
     public static final float BODY_MID_WIDTH = 0.022F;
     public static final float BODY_CORE_WIDTH = 0.0085F;
