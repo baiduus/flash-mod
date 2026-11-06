@@ -34,7 +34,7 @@ public final class FlashClientPhase {
     }
 
     public static boolean isPhasing() {
-        if (!FlashClientData.hasPowers() || FlashClientData.getSelectedLevel() < 3
+        if (!FlashClientData.hasPowers() || FlashClientData.getSelectedLevel() < 1
                 || FlashClientData.getMaxLevel() < FlashAbility.PHASING.requiredLevel()) {
             return false;
         }

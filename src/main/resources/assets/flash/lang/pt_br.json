@@ -128,7 +128,7 @@
   "message.flash.ability_lightning_charge": "Carregando o raio...",
   "message.flash.ability_temp_granted": "Poderes nível 5 concedidos a %s por cinco minutos.",
   "key.categories.flash.abilities": "Habilidades do Flash",
-  "ability.flash.phasing.description": "Segure para atravessar blocos sem perder velocidade; olhe para cima/baixo para subir/descer.",
+  "ability.flash.phasing.description": "Segure para atravessar paredes com a física normal: você nunca afunda abaixo do chão. Funciona em qualquer nível selecionado a partir do 1 depois de desbloqueada.",
   "block.flash.acceleration_crystal": "Cristal da Aceleração",
   "key.flash.ability.mass_punch": "Soco de Massa Infinita",
   "ability.flash.speed_tornado": "Tornado de Velocidade",

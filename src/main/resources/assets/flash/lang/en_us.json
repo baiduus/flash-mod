@@ -128,7 +128,7 @@
   "message.flash.ability_lightning_charge": "Charging the lightning...",
   "message.flash.ability_temp_granted": "Granted level 5 powers to %s for five minutes.",
   "key.categories.flash.abilities": "Flash abilities",
-  "ability.flash.phasing.description": "Hold to vibrate through solid blocks without losing speed; look up/down to move vertically.",
+  "ability.flash.phasing.description": "Hold to walk through walls with normal physics: you never sink below the floor. Works at any selected level from 1 once unlocked.",
   "block.flash.acceleration_crystal": "Acceleration Crystal",
   "key.flash.ability.mass_punch": "Infinite Mass Punch",
   "ability.flash.speed_tornado": "Speed Tornado",

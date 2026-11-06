@@ -54,7 +54,7 @@ public final class FlashPhase {
 
     public static boolean tick(ServerPlayer player, FlashAbilityManager.PlayerState state) {
         if (!FlashPowers.hasPowers(player)
-                || FlashPowers.getSelectedLevel(player) < 3) {
+                || FlashPowers.getSelectedLevel(player) < 1) {
             return false;
         }
         state.phasingTicks++;
