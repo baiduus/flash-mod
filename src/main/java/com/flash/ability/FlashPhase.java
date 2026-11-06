@@ -17,9 +17,9 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Molecular-vibration phasing. Collisions are switched off on both sides while
  * the key is held, so walls in the way are crossed, but the physics stay normal:
- * gravity, jumping and falling work as usual. The player never sinks: the
- * ground under the feet (or the floor height where the vibration started, if
- * the ground drops away) holds them, see {@link #floor} / {@link #holdFloor}.
+ * gravity, jumping and falling work as usual (walking off an edge falls down to
+ * the next ground). The player never sinks into the ground: the solid block
+ * under the feet holds them, see {@link #floor} / {@link #holdFloor}.
  *
  * <p>The ability stores the last position that was not inside a block. If the
  * player releases the key inside a wall, or falls below the world, a safe
@@ -117,16 +117,18 @@ public final class FlashPhase {
     /**
      * Height the feet may not go below: the top of the solid block right under the
      * feet (only blocks the feet are above count, so walls being crossed are
-     * ignored), and never lower than {@code startFloor}, the ground where the
-     * vibration began.
+     * ignored); {@code minimum} is a lower bound (use negative infinity for none).
+     * Without ground under the feet the player falls.
      */
-    public static double floor(Player player, double startFloor) {
+    public static double floor(Player player, double minimum) {
         Level level = player.level();
-        double feet = player.getY();
+        // the highest of this tick and the last one: a fast fall cannot skip through the ground
+        double feet = Math.max(player.getY(), player.yOld);
         int x = (int) Math.floor(player.getX());
         int z = (int) Math.floor(player.getZ());
         int top = (int) Math.floor(feet + 0.05D);
-        for (int y = top; y >= top - 3; y--) {
+        int bottom = (int) Math.floor(Math.min(player.getY(), player.yOld)) - 1;
+        for (int y = top; y >= bottom; y--) {
             BlockPos pos = new BlockPos(x, y, z);
             net.minecraft.world.phys.shapes.VoxelShape shape =
                     level.getBlockState(pos).getCollisionShape(level, pos);
@@ -135,32 +137,10 @@ public final class FlashPhase {
             }
             double surface = y + shape.max(net.minecraft.core.Direction.Axis.Y);
             if (surface <= feet + 0.05D) {
-                return Math.max(startFloor, surface);
+                return Math.max(minimum, surface);
             }
         }
-        return startFloor;
-    }
-
-    /** Ground where a vibration starting now stands (searches down if the player is in the air). */
-    public static double startFloor(Player player) {
-        if (player.onGround()) {
-            return player.getY();
-        }
-        Level level = player.level();
-        int x = (int) Math.floor(player.getX());
-        int z = (int) Math.floor(player.getZ());
-        for (int y = (int) Math.floor(player.getY()); y > level.getMinBuildHeight(); y--) {
-            BlockPos pos = new BlockPos(x, y, z);
-            net.minecraft.world.phys.shapes.VoxelShape shape =
-                    level.getBlockState(pos).getCollisionShape(level, pos);
-            if (!shape.isEmpty()) {
-                double surface = y + shape.max(net.minecraft.core.Direction.Axis.Y);
-                if (surface <= player.getY() + 0.05D) {
-                    return surface;
-                }
-            }
-        }
-        return player.getY();
+        return minimum;
     }
 
     /** End of the tick: stand on the floor instead of sinking; in the air, fall normally. */

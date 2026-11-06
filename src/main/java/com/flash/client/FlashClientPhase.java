@@ -27,8 +27,6 @@ import net.minecraftforge.fml.common.Mod;
 public final class FlashClientPhase {
 
     private static boolean wasPhasing;
-    /** Ground height where the current vibration started. */
-    private static double startFloor;
 
     private FlashClientPhase() {
     }
@@ -49,9 +47,6 @@ public final class FlashClientPhase {
         }
         boolean phasing = isPhasing() && !player.isSpectator();
         if (phasing) {
-            if (!wasPhasing) {
-                startFloor = com.flash.ability.FlashPhase.startFloor(player);
-            }
             // walls are crossed, but gravity and jumping stay normal (the floor holds the feet)
             player.noPhysics = true;
             player.setNoGravity(false);
@@ -71,7 +66,7 @@ public final class FlashClientPhase {
         }
         if (wasPhasing) {
             com.flash.ability.FlashPhase.holdFloor(player,
-                    com.flash.ability.FlashPhase.floor(player, startFloor));
+                    com.flash.ability.FlashPhase.floor(player, Double.NEGATIVE_INFINITY));
             return;
         }
         if (FlashClientData.hasPowers() && FlashClientData.getSelectedLevel() >= 3) {
