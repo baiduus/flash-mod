@@ -23,6 +23,8 @@ public final class HulkState {
     private static volatile boolean destroy = true;
     private static volatile boolean grow = true;
     private static volatile long syncedAt;
+    private static volatile int activeLevel;
+    private static volatile float height;
     private static final int[] COOLDOWNS = new int[HulkAbility.values().length];
 
     private HulkState() {
@@ -52,7 +54,7 @@ public final class HulkState {
     /** Client: called by the sync packet. */
     public static void setClient(UUID id, boolean has, boolean transformed, float scale, boolean local,
                                  int lvl, float rg, int temp, int fury, boolean dst, boolean grw, int[] cds,
-                                 long now) {
+                                 int active, float hgt, long now) {
         if (has) {
             CLIENT.put(id, transformed ? scale : 0.0F);
         } else {
@@ -66,6 +68,8 @@ public final class HulkState {
             destroy = dst;
             grow = grw;
             syncedAt = now;
+            activeLevel = active;
+            height = hgt;
             for (int i = 0; i < COOLDOWNS.length; i++) {
                 COOLDOWNS[i] = cds != null && i < cds.length ? cds[i] : 0;
             }
@@ -74,6 +78,23 @@ public final class HulkState {
 
     public static int level() {
         return level;
+    }
+
+    /** Local player's active level (level selector). */
+    public static int activeLevel() {
+        return activeLevel > 0 ? activeLevel : level;
+    }
+
+    /** Active level of a player (server: real; client: only the local player is known). */
+    public static int activeLevel(Player player) {
+        if (player.level().isClientSide) {
+            return activeLevel();
+        }
+        return HulkPowers.activeLevel(player);
+    }
+
+    public static float height() {
+        return height;
     }
 
     public static float rage() {
@@ -88,9 +109,12 @@ public final class HulkState {
         return grow;
     }
 
-    public static void setSettingsOptimistic(boolean dst, boolean grw) {
+    public static void setSettingsOptimistic(boolean dst, boolean grw, float hgt) {
         destroy = dst;
         grow = grw;
+        if (hgt > 0.0F) {
+            height = hgt;
+        }
     }
 
     private static int elapsed(long now) {
@@ -113,6 +137,8 @@ public final class HulkState {
     public static void resetClient() {
         CLIENT.clear();
         level = 0;
+        activeLevel = 0;
+        height = 0.0F;
         rage = 0.0F;
         tempTicks = 0;
         furyTicks = 0;

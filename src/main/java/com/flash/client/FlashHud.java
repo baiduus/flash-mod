@@ -132,7 +132,9 @@ public class FlashHud implements IGuiOverlay {
         int temp = com.flash.hulk.HulkState.tempTicks(now);
         int fury = com.flash.hulk.HulkState.furyTicks(now);
         var font = mc.font;
-        String line1 = form ? Component.translatable("hud.flash.hulk_level", level).getString()
+        int active = Math.max(1, Math.min(level, com.flash.hulk.HulkState.activeLevel()));
+        String line1 = form ? Component.translatable("hud.flash.hulk_level",
+                        active < level ? active + "/" + level : String.valueOf(level)).getString()
                 : Component.translatable("hud.flash.banner").getString();
         String line2 = form
                 ? (level >= com.flash.hulk.HulkPowers.MAX_LEVEL

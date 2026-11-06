@@ -426,5 +426,14 @@
   "commands.flash.hulk.level": "%s is now Hulk level %s.",
   "commands.flash.hulk.rage": "%s's rage set to %s%%.",
   "hud.flash.hulk_transform": "Transform",
-  "hud.flash.hulk_rage_max": "Maximum rage"
+  "hud.flash.hulk_rage_max": "Maximum rage",
+  "message.flash.hulk_select": "Hulk active level: %s/%s",
+  "hud.flash.hulk_active": "Level %s/%s",
+  "hud.flash.hulk_scroll": "Ctrl+Scroll",
+  "gui.flash.hulk.height_value": "%s blocks",
+  "gui.flash.hulk.cfg.height": "Transformation height",
+  "gui.flash.hulk.cfg.height.desc": "Turn off \"Grow with level\" and drag to pick the exact height.",
+  "gui.flash.hulk.cfg.height_auto": "Automatic (by level)",
+  "gui.flash.hulk.cfg.level_mode": "Level selector",
+  "gui.flash.hulk.cfg.level_mode.desc": "Key raises / Ctrl + key lowers, or Ctrl + scroll."
 }

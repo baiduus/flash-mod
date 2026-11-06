@@ -103,7 +103,7 @@ public final class FlashClientForgeEvents {
                 || minecraft.screen != null
                 || !Screen.hasControlDown()
                 || minecraft.player.isSpectator()
-                || !FlashClientData.hasPowers()) {
+                || !selectorAvailable()) {
             return;
         }
 
@@ -117,7 +117,16 @@ public final class FlashClientForgeEvents {
         changeLevel(minecraft, delta > 0.0D ? 1 : -1, false);
     }
 
+    /** The level selector works for the Flash (speed) and for the Hulk (active level). */
+    static boolean selectorAvailable() {
+        return FlashClientData.hasPowers() || PowerTheme.localHulk();
+    }
+
     static void changeLevel(Minecraft minecraft, int direction, boolean showMessages) {
+        if (PowerTheme.localHulk()) {
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkLevelPacket(direction));
+            return;
+        }
         if (!FlashClientData.hasPowers()) {
             if (showMessages) {
                 minecraft.player.displayClientMessage(

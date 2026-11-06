@@ -122,7 +122,7 @@ public final class HulkAbilities {
     }
 
     private static float power(ServerPlayer player) {
-        return HulkPowers.level(player) * (HulkPowers.isFurious(player) ? 1.5F : 1.0F);
+        return HulkPowers.activeLevel(player) * (HulkPowers.isFurious(player) ? 1.5F : 1.0F);
     }
 
     private static List<LivingEntity> around(ServerPlayer player, AABB box) {

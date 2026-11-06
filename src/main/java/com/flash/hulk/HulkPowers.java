@@ -39,6 +39,12 @@ public final class HulkPowers {
     private static final String DESTROY = "destroyBlocks";
     private static final String GROW = "grow";
     private static final String COOLDOWNS = "cooldowns";
+    private static final String SELECTED = "selected";
+    private static final String HEIGHT = "height";
+
+    /** Smallest height (blocks) the height bar allows. */
+    public static final float MIN_HEIGHT = 2.0F;
+    private static final int REGEN_TICKS = 80;
 
     public static final float MAX_RAGE = 100.0F;
     public static final int MAX_LEVEL = 10;
@@ -103,6 +109,36 @@ public final class HulkPowers {
         return Math.max(1, Math.min(MAX_LEVEL, tag(player).getInt(LEVEL)));
     }
 
+    /** Level picked with the level selector (1..level); 0 stored = always the highest. */
+    public static int activeLevel(Player player) {
+        int max = level(player);
+        if (max <= 0) {
+            return 0;
+        }
+        int sel = tag(player).getInt(SELECTED);
+        return sel <= 0 ? max : Math.max(1, Math.min(max, sel));
+    }
+
+    /** Height chosen in the options bar (blocks; 0 = not chosen yet). */
+    public static float chosenHeight(Player player) {
+        return has(player) ? tag(player).getFloat(HEIGHT) : 0.0F;
+    }
+
+    /** Tallest height the level allows (7 blocks at level 10). */
+    public static float maxHeight(int level) {
+        return scaleFor(level, true) * 1.8F;
+    }
+
+    /** Scale from the options: grows with the active level, or the exact chosen height. */
+    public static float scaleOf(int activeLevel, int maxLevel, boolean grow, float height) {
+        if (grow) {
+            return scaleFor(activeLevel, true);
+        }
+        float h = height <= 0.0F ? MIN_SCALE * 1.8F : height;
+        h = Math.max(MIN_HEIGHT, Math.min(maxHeight(maxLevel), h));
+        return h / 1.8F;
+    }
+
     public static float rage(Player player) {
         return has(player) ? tag(player).getFloat(RAGE) : 0.0F;
     }
@@ -137,7 +173,8 @@ public final class HulkPowers {
     }
 
     public static float scale(Player player) {
-        return isTransformed(player) ? scaleFor(level(player), growWithLevel(player)) : 1.0F;
+        return isTransformed(player)
+                ? scaleOf(activeLevel(player), level(player), growWithLevel(player), chosenHeight(player)) : 1.0F;
     }
 
     // ------------------------------------------------------------------
@@ -206,6 +243,7 @@ public final class HulkPowers {
         }
         player.getPersistentData().remove(KEY);
         removeAttributes(player);
+        removeRegeneration(player);
         player.refreshDimensions();
         sync(player);
     }
@@ -250,6 +288,7 @@ public final class HulkPowers {
             applyAttributes(player);
         } else {
             removeAttributes(player);
+            removeRegeneration(player);
         }
         player.refreshDimensions();
         if (hulk) {
@@ -279,16 +318,35 @@ public final class HulkPowers {
     // Settings, fury, cooldowns
     // ------------------------------------------------------------------
 
-    public static void setSettings(ServerPlayer player, boolean destroy, boolean grow) {
+    public static void setSettings(ServerPlayer player, boolean destroy, boolean grow, float height) {
         if (!has(player)) {
             return;
         }
         CompoundTag tag = tag(player).copy();
         tag.putBoolean(DESTROY, destroy);
         tag.putBoolean(GROW, grow);
+        if (height > 0.0F) {
+            tag.putFloat(HEIGHT, Math.max(MIN_HEIGHT, Math.min(maxHeight(MAX_LEVEL), height)));
+        }
         save(player, tag);
         applyAttributes(player);
         player.refreshDimensions();
+        sync(player);
+    }
+
+    /** Level selector (key / Ctrl + key / Ctrl + scroll): moves the active level by one. */
+    public static void selectLevel(ServerPlayer player, int direction) {
+        if (!has(player)) {
+            return;
+        }
+        int max = level(player);
+        int next = Math.max(1, Math.min(max, activeLevel(player) + (direction > 0 ? 1 : -1)));
+        CompoundTag tag = tag(player).copy();
+        tag.putInt(SELECTED, next >= max ? 0 : next);
+        save(player, tag);
+        applyAttributes(player);
+        player.refreshDimensions();
+        player.displayClientMessage(Component.translatable("message.flash.hulk_select", next, max), true);
         sync(player);
     }
 
@@ -301,6 +359,7 @@ public final class HulkPowers {
         tag.putInt(LEVEL, Math.max(1, Math.min(MAX_LEVEL, level)));
         tag.putFloat(RAGE, Math.max(0.0F, Math.min(MAX_RAGE, rage)));
         tag.remove(TEMP_UNTIL);
+        tag.remove(SELECTED);
         save(player, tag);
         applyAttributes(player);
         player.refreshDimensions();
@@ -372,7 +431,7 @@ public final class HulkPowers {
 
     /** Damage taken by the Hulk is multiplied by this (tougher every level, more with fury). */
     public static float damageFactor(Player player) {
-        float cut = 0.35F + 0.045F * level(player) + (isFurious(player) ? 0.1F : 0.0F);
+        float cut = 0.35F + 0.045F * activeLevel(player) + (isFurious(player) ? 0.1F : 0.0F);
         return 1.0F - Math.min(0.88F, cut);
     }
 
@@ -391,13 +450,8 @@ public final class HulkPowers {
             return;
         }
         player.clearFire();
-        if (player.tickCount % 10 == 0 && player.getHealth() < player.getMaxHealth()) {
-            // regeneration: stronger every level and with a fuller rage bar (6 hearts/s at level 10)
-            float perSecond = (0.5F + 0.25F * level(player)) * (1.0F + rageFraction(player));
-            if (isFurious(player)) {
-                perSecond *= 1.5F;
-            }
-            player.heal(perSecond / 2.0F);
+        if (player.tickCount % 10 == 0) {
+            applyRegeneration(player);
         }
         if (isFurious(player) && player.level() instanceof ServerLevel level && player.tickCount % 3 == 0) {
             level.sendParticles(FURY_DUST, player.getX(), player.getY() + player.getBbHeight() * 0.5D,
@@ -411,6 +465,46 @@ public final class HulkPowers {
     }
 
     // ------------------------------------------------------------------
+    // Regeneration (the vanilla effect, like the Flash's)
+    // ------------------------------------------------------------------
+
+    /** Regeneration I at levels 1-3, II at 4-6, III at 7-9, IV at 10; the fury adds one (up to IV). */
+    public static int regenerationAmplifier(Player player) {
+        int lvl = activeLevel(player);
+        int amp = (lvl - 1) / 3 + (isFurious(player) ? 1 : 0);
+        return Math.max(0, Math.min(3, amp));
+    }
+
+    private static boolean isOurRegeneration(net.minecraft.world.effect.MobEffectInstance e) {
+        return e != null && !e.isVisible() && !e.isAmbient() && e.getDuration() <= REGEN_TICKS;
+    }
+
+    private static void applyRegeneration(ServerPlayer player) {
+        int amp = regenerationAmplifier(player);
+        var effect = net.minecraft.world.effect.MobEffects.REGENERATION;
+        net.minecraft.world.effect.MobEffectInstance current = player.getEffect(effect);
+        boolean ours = isOurRegeneration(current);
+        if (current != null && !ours && current.getAmplifier() >= amp) {
+            return; // a stronger (or equal) potion is active: leave it alone
+        }
+        if (ours && current.getAmplifier() == amp && current.getDuration() > REGEN_TICKS / 2) {
+            return;
+        }
+        if (ours && current.getAmplifier() != amp) {
+            player.removeEffect(effect);
+        }
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(effect, REGEN_TICKS, amp,
+                false, false, true));
+    }
+
+    public static void removeRegeneration(ServerPlayer player) {
+        var effect = net.minecraft.world.effect.MobEffects.REGENERATION;
+        if (isOurRegeneration(player.getEffect(effect))) {
+            player.removeEffect(effect);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Attributes
     // ------------------------------------------------------------------
 
@@ -419,11 +513,11 @@ public final class HulkPowers {
             removeAttributes(player);
             return;
         }
-        int level = level(player);
+        int level = activeLevel(player);
         float scale = scale(player);
         double fury = isFurious(player) ? 1.5D : 1.0D;
         set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, (4.0D + 2.0D * level) * fury, AttributeModifier.Operation.ADDITION);
-        set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.3D + 0.04D * level, AttributeModifier.Operation.MULTIPLY_BASE);
+        set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.45D + 0.06D * level, AttributeModifier.Operation.MULTIPLY_BASE);
         set(player, Attributes.MAX_HEALTH, HEALTH_ID, 10.0D + 3.0D * level, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0D, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.ATTACK_KNOCKBACK, PUNCH_ID, 1.0D + 0.3D * level, AttributeModifier.Operation.ADDITION);
@@ -486,7 +580,7 @@ public final class HulkPowers {
         }
         return new HulkSyncPacket(player.getUUID(), has(player), isTransformed(player), scale(player),
                 level(player), rage(player), temporaryTicks(player), furyTicks(player),
-                destroyBlocks(player), growWithLevel(player), cds);
+                destroyBlocks(player), growWithLevel(player), cds, activeLevel(player), chosenHeight(player));
     }
 
     public static void sync(ServerPlayer player) {

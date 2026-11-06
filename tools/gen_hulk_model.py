@@ -133,10 +133,9 @@ def painter(kind, face, fw, fh):
     if kind == "jaw":
         def f(x, y):
             if face == "front":
+                # closed mouth: a line in the skin tone, just a little darker
                 if y == 0 and 1 <= x <= fw - 2:
-                    return (30, 16, 16)
-                if y == 1 and 1 <= x <= fw - 2:
-                    return (225, 225, 205) if x % 2 else (200, 200, 180)
+                    return G[1]
             return skin(x, y, 2)
         return f
     if kind == "face":

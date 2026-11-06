@@ -67,13 +67,16 @@ public final class HulkEvents {
             return;
         }
         Vec3 motion = player.getDeltaMovement();
+        // jump grows with the active level: close at level 1, very far at level 10
+        double t = (Math.max(1, HulkState.activeLevel(player)) - 1) / (double) (HulkPowers.MAX_LEVEL - 1);
         if (player.isShiftKeyDown()) {
             Vec3 look = player.getLookAngle();
             Vec3 flat = new Vec3(look.x, 0.0D, look.z);
             flat = flat.lengthSqr() < 1.0E-4D ? Vec3.ZERO : flat.normalize();
-            player.setDeltaMovement(flat.x * 3.2D, 1.7D, flat.z * 3.2D);
+            double forward = 1.0D + 3.2D * t;
+            player.setDeltaMovement(flat.x * forward, 0.8D + 1.3D * t, flat.z * forward);
         } else {
-            player.setDeltaMovement(motion.x, motion.y * 1.75D, motion.z);
+            player.setDeltaMovement(motion.x, motion.y * (1.2D + 0.8D * t), motion.z);
         }
         player.hasImpulse = true;
     }

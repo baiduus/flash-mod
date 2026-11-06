@@ -394,13 +394,17 @@ public class FlashProgressScreen extends Screen {
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
         boolean form = mc.player != null && com.flash.hulk.HulkState.isTransformed(mc.player);
         int level = Math.max(1, com.flash.hulk.HulkState.level());
+        int active = Math.max(1, Math.min(level, com.flash.hulk.HulkState.activeLevel()));
         float rage = Math.max(0.0F, Math.min(1.0F, com.flash.hulk.HulkState.rage() / com.flash.hulk.HulkPowers.MAX_RAGE));
         int temp = com.flash.hulk.HulkState.tempTicks(now);
         int half = (LEFT_W - 8) / 2;
+        float blocks = com.flash.hulk.HulkPowers.scaleOf(active, level, com.flash.hulk.HulkState.grow(),
+                com.flash.hulk.HulkState.height()) * 1.8F;
         statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.level"),
-                Component.translatable("gui.flash.hulk.level_value", level),
-                temp > 0 ? Component.literal(formatTime(temp)) : Component.literal(String.format(java.util.Locale.ROOT,
-                        "%.1fx", com.flash.hulk.HulkPowers.scaleFor(level, com.flash.hulk.HulkState.grow()))));
+                active < level ? Component.translatable("gui.flash.hulk.level_value", active + "/" + level)
+                        : Component.translatable("gui.flash.hulk.level_value", level),
+                temp > 0 ? Component.literal(formatTime(temp)) : Component.translatable("gui.flash.hulk.height_value",
+                        String.format(java.util.Locale.ROOT, "%.1f", blocks)));
         statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.form"),
                 Component.translatable(form ? "gui.flash.hulk.form_hulk" : "gui.flash.hulk.form_banner"),
                 Component.translatable("gui.flash.hulk.key_short", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()));
@@ -514,13 +518,92 @@ public class FlashProgressScreen extends Screen {
     // Hulk options
     // ------------------------------------------------------------------
 
+    private static final int HEIGHT_ROW = 2;
+    /** True while the height bar knob is being dragged. */
+    private boolean draggingHeight;
+
     private void drawHulkConfig(GuiGraphics g, int mx, int my) {
         configRow(g, 0, "gui.flash.hulk.cfg.destroy", "gui.flash.hulk.cfg.destroy.desc", mx, my);
         drawSwitch(g, "hsw0", switchX(), cfgY(0) + 8, com.flash.hulk.HulkState.destroyBlocks());
         configRow(g, 1, "gui.flash.hulk.cfg.grow", "gui.flash.hulk.cfg.grow.desc", mx, my);
         drawSwitch(g, "hsw1", switchX(), cfgY(1) + 8, com.flash.hulk.HulkState.grow());
-        configRow(g, 2, "gui.flash.config.hud", "gui.flash.hulk.cfg.hud.desc", mx, my);
-        drawSwitch(g, "hsw2", switchX(), cfgY(2) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+        configRow(g, HEIGHT_ROW, "gui.flash.hulk.cfg.height", "gui.flash.hulk.cfg.height.desc", mx, my);
+        drawHeightBar(g);
+        configRow(g, 3, "gui.flash.hulk.cfg.level_mode", "gui.flash.hulk.cfg.level_mode.desc", mx, my);
+        drawSegments(g, "hseg3", cfgY(3) + 7, "gui.flash.config.mode_keys", "gui.flash.config.mode_scroll",
+                FlashClientConfig.SCROLL_MODE.get(), mx, my);
+        configRow(g, 4, "gui.flash.config.hud", "gui.flash.hulk.cfg.hud.desc", mx, my);
+        drawSwitch(g, "hsw4", switchX(), cfgY(4) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+    }
+
+    private static int heightBarX() {
+        return segX(0);
+    }
+
+    private static int heightBarW() {
+        return 2 * SEG_W;
+    }
+
+    private static int heightBarY() {
+        return cfgY(HEIGHT_ROW) + 22;
+    }
+
+    private static float heightMax() {
+        return com.flash.hulk.HulkPowers.maxHeight(Math.max(1, com.flash.hulk.HulkState.level()));
+    }
+
+    private static float shownHeight() {
+        float h = com.flash.hulk.HulkState.height();
+        if (h <= 0.0F) {
+            h = com.flash.hulk.HulkPowers.MIN_SCALE * 1.8F;
+        }
+        return Math.max(com.flash.hulk.HulkPowers.MIN_HEIGHT, Math.min(heightMax(), h));
+    }
+
+    /** Height bar: from 2 blocks up to the tallest the level allows; only used with "grow" off. */
+    private void drawHeightBar(GuiGraphics g) {
+        boolean enabled = !com.flash.hulk.HulkState.grow();
+        int x = heightBarX();
+        int w = heightBarW();
+        int y = heightBarY();
+        float min = com.flash.hulk.HulkPowers.MIN_HEIGHT;
+        float max = heightMax();
+        float value = shownHeight();
+        float t = max - min < 1.0E-3F ? 1.0F : (value - min) / (max - min);
+        int knob = x + Math.round((w - 6) * t);
+        g.fill(x, y, x + w, y + 4, COLOR_TRACK);
+        if (enabled) {
+            for (int i = 0; i < knob - x + 3; i++) {
+                float f = i / (float) Math.max(1, w);
+                g.fill(x + i, y, x + i + 1, y + 4, lerpColor(FlashHudStyle.HULK_GREEN, FlashHudStyle.HULK_PURPLE, f));
+            }
+        }
+        g.fill(knob, y - 4, knob + 6, y + 8, enabled ? 0xFFFFFFFF : COLOR_DIM);
+        String label = enabled
+                ? Component.translatable("gui.flash.hulk.height_value", String.format(java.util.Locale.ROOT, "%.1f", value)).getString()
+                : Component.translatable("gui.flash.hulk.cfg.height_auto").getString();
+        g.drawString(this.font, label, x + w - this.font.width(label), cfgY(HEIGHT_ROW) + 7,
+                enabled ? accent() : COLOR_DIM, false);
+    }
+
+    private boolean onHeightBar(int mx, int my) {
+        return mx >= heightBarX() - 4 && mx <= heightBarX() + heightBarW() + 4
+                && my >= heightBarY() - 7 && my <= heightBarY() + 11;
+    }
+
+    private static void setHeightFromMouse(double mx) {
+        float t = (float) ((mx - heightBarX() - 3) / (heightBarW() - 6));
+        t = Math.max(0.0F, Math.min(1.0F, t));
+        float min = com.flash.hulk.HulkPowers.MIN_HEIGHT;
+        float value = min + (heightMax() - min) * t;
+        value = Math.round(value * 10.0F) / 10.0F;
+        com.flash.hulk.HulkState.setSettingsOptimistic(com.flash.hulk.HulkState.destroyBlocks(),
+                com.flash.hulk.HulkState.grow(), value);
+    }
+
+    private static void sendHulkSettings() {
+        FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkSettingsPacket(
+                com.flash.hulk.HulkState.destroyBlocks(), com.flash.hulk.HulkState.grow(), shownHeight()));
     }
 
     private boolean clickHulkConfig(int mx, int my) {
@@ -530,17 +613,52 @@ public class FlashProgressScreen extends Screen {
             destroy = !destroy;
         } else if (inRow(mx, my, 1)) {
             grow = !grow;
-        } else if (inRow(mx, my, 2)) {
+        } else if (inRow(mx, my, HEIGHT_ROW)) {
+            if (!grow && onHeightBar(mx, my)) {
+                draggingHeight = true;
+                setHeightFromMouse(mx);
+            }
+            return true;
+        } else if (inRow(mx, my, 3)) {
+            Boolean pick = segmentAt(mx, my, cfgY(3) + 7);
+            boolean want = pick != null ? pick : !FlashClientConfig.SCROLL_MODE.get();
+            if (FlashClientConfig.SCROLL_MODE.get() != want) {
+                FlashClientConfig.SCROLL_MODE.set(want);
+                FlashClientConfig.SCROLL_MODE.save();
+                click();
+            }
+            return true;
+        } else if (inRow(mx, my, 4)) {
             FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
             click();
             return true;
         } else {
             return false;
         }
-        com.flash.hulk.HulkState.setSettingsOptimistic(destroy, grow);
-        FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkSettingsPacket(destroy, grow));
+        com.flash.hulk.HulkState.setSettingsOptimistic(destroy, grow, 0.0F);
+        sendHulkSettings();
         click();
         return true;
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (draggingHeight && button == 0) {
+            setHeightFromMouse(mouseX / this.uiScale - this.leftPos);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (draggingHeight && button == 0) {
+            draggingHeight = false;
+            sendHulkSettings();
+            click();
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 
     /** Pixel fist (about 26 x 26). */
@@ -1210,7 +1328,7 @@ public class FlashProgressScreen extends Screen {
             return true;
         }
         // Only the active control mode works: keys mode here, Ctrl+scroll otherwise.
-        if (FlashClientData.hasPowers() && !FlashClientConfig.SCROLL_MODE.get()) {
+        if (FlashClientForgeEvents.selectorAvailable() && !FlashClientConfig.SCROLL_MODE.get()) {
             if (FlashKeys.INCREASE_SPEED.matches(keyCode, scanCode)) {
                 int direction = Screen.hasControlDown() ? -1 : 1;
                 FlashClientForgeEvents.changeLevel(Minecraft.getInstance(), direction, true);
@@ -1230,7 +1348,7 @@ public class FlashProgressScreen extends Screen {
         if (FlashClientConfig.SCROLL_MODE.get()
                 && minecraft.player != null
                 && Screen.hasControlDown()
-                && FlashClientData.hasPowers()
+                && FlashClientForgeEvents.selectorAvailable()
                 && delta != 0.0D) {
             FlashClientForgeEvents.changeLevel(minecraft, delta > 0.0D ? 1 : -1, false);
             return true;

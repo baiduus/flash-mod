@@ -93,7 +93,13 @@ public final class FlashAbilityHud implements IGuiOverlay {
         String transform = Component.translatable("hud.flash.hulk_transform").getString();
         int rows = 1;
         int panelWidth = Math.max(MIN_WIDTH, rowWidth(font, transform, keyLabel(FlashKeys.HULK_TRANSFORM)));
+        int active = Math.max(1, Math.min(level, com.flash.hulk.HulkState.activeLevel()));
+        String levelName = Component.translatable("hud.flash.hulk_active", active, level).getString();
+        String levelKey = com.flash.config.FlashClientConfig.SCROLL_MODE.get()
+                ? Component.translatable("hud.flash.hulk_scroll").getString() : keyLabel(FlashKeys.INCREASE_SPEED);
         if (form) {
+            rows++;
+            panelWidth = Math.max(panelWidth, rowWidth(font, levelName, levelKey));
             for (com.flash.hulk.HulkAbility a : com.flash.hulk.HulkAbility.values()) {
                 if (a.level() <= level) {
                     rows++;
@@ -112,6 +118,8 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (!form) {
             return;
         }
+        drawRow(graphics, font, x, y, panelWidth, levelName, levelKey, 0, 1, false);
+        y += ROW_HEIGHT + ROW_GAP;
         boolean furious = com.flash.hulk.HulkState.furyTicks(now) > 0;
         for (com.flash.hulk.HulkAbility a : com.flash.hulk.HulkAbility.values()) {
             if (a.level() > level) {

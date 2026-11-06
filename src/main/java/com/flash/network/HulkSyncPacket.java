@@ -12,7 +12,7 @@ import net.minecraftforge.network.NetworkEvent;
 /** Server -> client: Hulk state of a player (scale for everyone, the rest for the player himself). */
 public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, float scale, int level,
                              float rage, int tempTicks, int furyTicks, boolean destroy, boolean grow,
-                             int[] cooldowns) {
+                             int[] cooldowns, int activeLevel, float height) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUUID(this.playerId);
@@ -29,12 +29,15 @@ public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, fl
         for (int c : this.cooldowns) {
             buffer.writeVarInt(Math.max(0, c));
         }
+        buffer.writeVarInt(this.activeLevel);
+        buffer.writeFloat(this.height);
     }
 
     public HulkSyncPacket(FriendlyByteBuf buffer) {
         this(buffer.readUUID(), buffer.readBoolean(), buffer.readBoolean(), buffer.readFloat(),
                 buffer.readVarInt(), buffer.readFloat(), buffer.readVarInt(), buffer.readVarInt(),
-                buffer.readBoolean(), buffer.readBoolean(), readInts(buffer));
+                buffer.readBoolean(), buffer.readBoolean(), readInts(buffer), buffer.readVarInt(),
+                buffer.readFloat());
     }
 
     private static int[] readInts(FriendlyByteBuf buffer) {
@@ -57,7 +60,7 @@ public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, fl
             boolean local = mc.player != null && mc.player.getUUID().equals(p.playerId);
             long now = mc.level != null ? mc.level.getGameTime() : 0L;
             HulkState.setClient(p.playerId, p.has, p.transformed, p.scale, local, p.level, p.rage,
-                    p.tempTicks, p.furyTicks, p.destroy, p.grow, p.cooldowns, now);
+                    p.tempTicks, p.furyTicks, p.destroy, p.grow, p.cooldowns, p.activeLevel, p.height, now);
             if (mc.level != null) {
                 Player player = mc.level.getPlayerByUUID(p.playerId);
                 if (player != null) {
