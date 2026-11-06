@@ -435,5 +435,10 @@
   "gui.flash.hulk.cfg.height.desc": "Turn off \"Grow with level\" and drag to pick the exact height.",
   "gui.flash.hulk.cfg.height_auto": "Automatic (by level)",
   "gui.flash.hulk.cfg.level_mode": "Level selector",
-  "gui.flash.hulk.cfg.level_mode.desc": "Key raises / Ctrl + key lowers, or Ctrl + scroll."
+  "gui.flash.hulk.cfg.level_mode.desc": "Key raises / Ctrl + key lowers, or Ctrl + scroll.",
+  "gui.flash.hulk.strength": "Strength",
+  "gui.flash.hulk.punch_damage": "Punch damage: %s (%s hearts)",
+  "gui.flash.hulk.strength_level": "At active level %s (a normal punch is 1)",
+  "gui.flash.hulk.strength_banner": "When transformed, at level %s",
+  "gui.flash.hulk.strength_fury": "With Gamma Fury active (+50%%)"
 }

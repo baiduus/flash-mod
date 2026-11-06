@@ -438,6 +438,25 @@ public class FlashProgressScreen extends Screen {
             }
         }
 
+        // strength: multiplier over a normal punch and the current punch damage
+        boolean furious = com.flash.hulk.HulkState.furyTicks(now) > 0;
+        double punch = com.flash.hulk.HulkPowers.punchDamage(active, furious);
+        int sy = GRID_Y + 2 * (ch + GRID_GAP) + 6;
+        int sh = PROGRESS_Y - 6 - sy;
+        card(g, PAD, sy, LEFT_W, sh, 0.0F);
+        g.fill(PAD, sy + 6, PAD + 2, sy + sh - 6, accent());
+        g.drawString(this.font, Component.translatable("gui.flash.hulk.strength"), PAD + 10, sy + 7, COLOR_MUTED, false);
+        scaledText(g, Component.literal(String.format(java.util.Locale.ROOT, "x%.1f", punch)), PAD + 10, sy + 19,
+                1.5F, furious ? 0xFFFF5A3C : accent());
+        Component dmg = Component.translatable("gui.flash.hulk.punch_damage",
+                String.format(java.util.Locale.ROOT, "%.1f", punch),
+                String.format(java.util.Locale.ROOT, "%.1f", punch / 2.0D));
+        g.drawString(this.font, dmg, PAD + LEFT_W - 10 - this.font.width(dmg), sy + 9, COLOR_TEXT, false);
+        Component note = Component.translatable(furious ? "gui.flash.hulk.strength_fury"
+                : form ? "gui.flash.hulk.strength_level" : "gui.flash.hulk.strength_banner", active);
+        g.drawString(this.font, this.font.plainSubstrByWidth(note.getString(), LEFT_W - 90),
+                PAD + LEFT_W - 10 - Math.min(LEFT_W - 90, this.font.width(note)), sy + 22, COLOR_MUTED, false);
+
         // rage = progress to the next level
         int y = PROGRESS_Y;
         card(g, PAD, y, LEFT_W, CONTENT_BOTTOM - y, 0.0F);

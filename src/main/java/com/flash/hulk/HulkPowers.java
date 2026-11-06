@@ -516,7 +516,7 @@ public final class HulkPowers {
         int level = activeLevel(player);
         float scale = scale(player);
         double fury = isFurious(player) ? 1.5D : 1.0D;
-        set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, (4.0D + 2.0D * level) * fury, AttributeModifier.Operation.ADDITION);
+        set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, bonusDamage(level, fury > 1.0D), AttributeModifier.Operation.ADDITION);
         set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.45D + 0.06D * level, AttributeModifier.Operation.MULTIPLY_BASE);
         set(player, Attributes.MAX_HEALTH, HEALTH_ID, 10.0D + 3.0D * level, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0D, AttributeModifier.Operation.ADDITION);
@@ -527,6 +527,16 @@ public final class HulkPowers {
                 (scale - 1.0D) * 2.5D, AttributeModifier.Operation.ADDITION);
         set(player, net.minecraftforge.common.ForgeMod.STEP_HEIGHT_ADDITION.get(), STEP_ID,
                 0.6D + (scale - 1.0D) * 0.8D, AttributeModifier.Operation.ADDITION);
+    }
+
+    /** Extra punch damage of a level (the fury multiplies it by 1.5). */
+    public static double bonusDamage(int level, boolean furious) {
+        return (4.0D + 2.0D * Math.max(1, level)) * (furious ? 1.5D : 1.0D);
+    }
+
+    /** Punch damage of the Hulk (a normal empty-hand punch is 1). */
+    public static double punchDamage(int level, boolean furious) {
+        return 1.0D + bonusDamage(level, furious);
     }
 
     /** Puts the modifier only when it changed (re-adding it every time would reset the health). */

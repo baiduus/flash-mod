@@ -435,5 +435,10 @@
   "gui.flash.hulk.cfg.height.desc": "Desligue \"Crescer com o nível\" e arraste para escolher a altura exata.",
   "gui.flash.hulk.cfg.height_auto": "Automática (pelo nível)",
   "gui.flash.hulk.cfg.level_mode": "Seletor de nível",
-  "gui.flash.hulk.cfg.level_mode.desc": "Tecla aumenta / Ctrl + tecla diminui, ou Ctrl + scroll."
+  "gui.flash.hulk.cfg.level_mode.desc": "Tecla aumenta / Ctrl + tecla diminui, ou Ctrl + scroll.",
+  "gui.flash.hulk.strength": "Força",
+  "gui.flash.hulk.punch_damage": "Dano do soco: %s (%s corações)",
+  "gui.flash.hulk.strength_level": "No nível ativo %s (o soco normal é 1)",
+  "gui.flash.hulk.strength_banner": "Ao se transformar, no nível %s",
+  "gui.flash.hulk.strength_fury": "Com a Fúria Gama ativa (+50%%)"
 }
