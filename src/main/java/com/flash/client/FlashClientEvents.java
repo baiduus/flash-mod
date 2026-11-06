@@ -48,6 +48,8 @@ public final class FlashClientEvents {
                 FlashSuitStandRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.ACCELERATION_PHANTOM.get(),
                 AccelerationPhantomRenderer::new);
+        event.registerEntityRenderer(com.flash.registry.ModEntities.GAMMA_BOMB.get(),
+                net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new
@@ -65,6 +67,7 @@ public final class FlashClientEvents {
             if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player) {
                 player.addLayer(new FlashRingLayer(player));
                 player.addLayer(new FlashAmplifierLayer(player));
+                player.addLayer(new HulkClient.Layer(player));
             }
         }
     }

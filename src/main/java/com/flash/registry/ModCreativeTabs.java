@@ -36,6 +36,11 @@ public final class ModCreativeTabs {
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
                                 com.flash.item.SyringeContents.NEGATIVE_FORCE));
                         output.accept(ModItems.V9_CAPSULE.get());
+                        output.accept(ModItems.GAMMA_CAPSULE.get());
+                        output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
+                                com.flash.item.SyringeContents.GAMMA));
+                        output.accept(ModItems.GAMMA_BOMB.get());
+                        output.accept(ModItems.GAMMA_REACTOR.get());
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
                                 com.flash.item.SyringeContents.V9));
                         output.accept(ModItems.NEGATIVE_STONE.get());

@@ -116,6 +116,14 @@ public final class ModBlocks {
                     .lightLevel(state -> 15)
                     .requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> GAMMA_REACTOR = BLOCKS.register(
+            "gamma_reactor",
+            () -> new com.flash.block.GammaReactorBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_GREEN)
+                    .strength(5.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .lightLevel(state -> 9)));
+
     private ModBlocks() {
     }
 }

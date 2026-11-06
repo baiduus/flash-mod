@@ -164,6 +164,19 @@ public final class ModItems {
             () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.PHANTOM,
                     net.minecraft.world.item.ArmorItem.Type.BOOTS));
 
+    public static final RegistryObject<Item> GAMMA_REACTOR = ITEMS.register(
+            "gamma_reactor",
+            () -> new net.minecraft.world.item.BlockItem(ModBlocks.GAMMA_REACTOR.get(),
+                    new Item.Properties()));
+
+    public static final RegistryObject<Item> GAMMA_BOMB = ITEMS.register(
+            "gamma_bomb", com.flash.item.GammaBombItem::new);
+
+    public static final RegistryObject<Item> GAMMA_CAPSULE = ITEMS.register(
+            "gamma_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16),
+                    "tooltip.flash.gamma_capsule"));
+
     private ModItems() {
     }
 

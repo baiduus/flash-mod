@@ -139,6 +139,9 @@ public class FlashProgressScreen extends Screen {
 
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
+        if (PowerTheme.localHulk()) {
+            return new int[] {TAB_PROGRESS};
+        }
         return FlashClientData.hasPowers() ? new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG}
                 : new int[] {TAB_PROGRESS};
     }
@@ -266,13 +269,19 @@ public class FlashProgressScreen extends Screen {
         g.fill(0, 0, PW, 2, accent());
         if (theme().icon() == PowerTheme.Icon.BOLT) {
             drawBolt(g, 14, 8, accent());
+        } else if (theme().icon() == PowerTheme.Icon.FIST) {
+            drawFist(g, 12, 9, accent());
         } else {
             drawNeutralIcon(g, 12, 9, accent());
         }
         scaledText(g, Component.translatable(theme().titleKey()), 46, 10, 1.35F, COLOR_TEXT);
         g.drawString(this.font, Component.translatable(theme().subtitleKey()), 46, 28, COLOR_MUTED, false);
 
-        Component badge = FlashClientData.hasPowers()
+        boolean hulkPower = PowerTheme.localHulk();
+        boolean hulkForm = hulkPower && com.flash.hulk.HulkState.isTransformed(Minecraft.getInstance().player);
+        Component badge = hulkPower
+                ? Component.translatable(hulkForm ? "gui.flash.hulk.badge_hulk" : "gui.flash.hulk.badge_banner")
+                : FlashClientData.hasPowers()
                 ? (FlashClientData.isTemporary()
                     ? Component.translatable("gui.flash.progress.temporary",
                         formatTime(FlashClientData.getTemporaryRemaining()))
@@ -283,7 +292,7 @@ public class FlashProgressScreen extends Screen {
         int bw = tw + 22;
         int bx = PW - PAD - bw;
         int by = 13;
-        int color = FlashClientData.hasPowers() ? accent() : COLOR_MUTED;
+        int color = FlashClientData.hasPowers() || hulkPower ? accent() : COLOR_MUTED;
         g.fill(bx, by, bx + bw, by + 20, withAlpha(color, 0.55F));
         g.fill(bx + 1, by + 1, bx + bw - 1, by + 19, accentSoft());
         // little live dot
@@ -334,7 +343,9 @@ public class FlashProgressScreen extends Screen {
     }
 
     private void drawFooter(GuiGraphics g) {
-        Component text = !FlashClientData.hasPowers()
+        Component text = PowerTheme.localHulk()
+                ? Component.translatable("gui.flash.footer.hulk", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage())
+                : !FlashClientData.hasPowers()
                 ? Component.translatable("gui.flash.footer.neutral")
                 : Component.translatable(FlashClientConfig.SCROLL_MODE.get()
                     ? "gui.flash.footer.scroll" : "gui.flash.footer.keys");
@@ -350,6 +361,10 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
+        if (PowerTheme.localHulk()) {
+            drawHulkTab(g, mx, my);
+            return;
+        }
         if (!FlashClientData.hasPowers()) {
             drawEmptyState(g);
             return;
@@ -366,6 +381,84 @@ public class FlashProgressScreen extends Screen {
         drawLevelGrid(g, mx, my);
         drawProgress(g);
         drawSkills(g, mx, my);
+    }
+
+    // ------------------------------------------------------------------
+    // Hulk page
+    // ------------------------------------------------------------------
+
+    private static final String[] HULK_SKILLS = {"strength", "jump", "resistance", "regeneration", "speed"};
+
+    private void drawHulkTab(GuiGraphics g, int mx, int my) {
+        Minecraft mc = Minecraft.getInstance();
+        boolean form = mc.player != null && com.flash.hulk.HulkState.isTransformed(mc.player);
+        float rage = Math.max(0.0F, Math.min(1.0F, com.flash.hulk.HulkState.clientRage() / com.flash.hulk.HulkPowers.MAX_RAGE));
+        int half = (LEFT_W - 8) / 2;
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.form"),
+                Component.translatable(form ? "gui.flash.hulk.form_hulk" : "gui.flash.hulk.form_banner"),
+                Component.literal(form ? "1.5x" : ""));
+        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.hulk.rage"),
+                Component.literal(Math.round(rage * 100.0F) + "%"),
+                Component.translatable("gui.flash.hulk.rage_bonus", Math.round(8 + 14 * rage)));
+
+        // rage meter
+        int y = GRID_Y - 4;
+        card(g, PAD, y, LEFT_W, 58, 0.0F);
+        g.drawString(this.font, Component.translatable("gui.flash.hulk.rage_meter"), PAD + 10, y + 8, COLOR_TEXT, false);
+        if (this.shownProgress < 0.0F) {
+            this.shownProgress = 0.0F;
+        }
+        this.shownProgress += (rage - this.shownProgress) * Math.min(1.0F, this.dt * 5.0F);
+        drawBar(g, PAD + 10, y + 22, LEFT_W - 20, this.shownProgress, rage > 0.75F ? 0xFFFF5A3C : accent());
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                        Component.translatable("gui.flash.hulk.rage_hint").getString(), LEFT_W - 20),
+                PAD + 10, y + 38, COLOR_MUTED, false);
+
+        // controls
+        int cy = y + 66;
+        card(g, PAD, cy, LEFT_W, CONTENT_BOTTOM - cy, 0.0F);
+        g.drawString(this.font, Component.translatable("gui.flash.hulk.key_transform",
+                FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()), PAD + 10, cy + 9, accent(), false);
+        g.drawString(this.font, Component.translatable("gui.flash.hulk.key_jump"), PAD + 10, cy + 23, COLOR_TEXT, false);
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                        Component.translatable("gui.flash.hulk.origin").getString(), LEFT_W - 20),
+                PAD + 10, cy + 37, COLOR_DIM, false);
+
+        // abilities
+        sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
+        int top = CONTENT_Y + 14;
+        String tooltip = null;
+        for (int i = 0; i < HULK_SKILLS.length; i++) {
+            int ry = top + i * 34;
+            int rh = 31;
+            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            float hv = hover("hulkskill" + i, hovered);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            g.fill(RIGHT_X, ry + 4, RIGHT_X + 2, ry + rh - 4, lerpColor(withAlpha(accent(), 0.5F), accent(), hv));
+            g.drawString(this.font, Component.translatable("gui.flash.hulk.skill." + HULK_SKILLS[i]),
+                    RIGHT_X + 10, ry + 6, form ? COLOR_TEXT : COLOR_MUTED, false);
+            g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable(
+                            "gui.flash.hulk.skill." + HULK_SKILLS[i] + ".short").getString(), RIGHT_W - 16),
+                    RIGHT_X + 10, ry + 18, COLOR_DIM, false);
+            if (hovered) {
+                tooltip = "gui.flash.hulk.skill." + HULK_SKILLS[i] + ".description";
+            }
+        }
+        if (tooltip != null) {
+            g.renderTooltip(this.font, Component.translatable(tooltip), mx, my);
+        }
+    }
+
+    /** Pixel fist (about 26 x 26). */
+    private static void drawFist(GuiGraphics g, int x, int y, int c) {
+        g.fill(x + 4, y + 2, x + 24, y + 8, c);
+        g.fill(x + 2, y + 8, x + 26, y + 20, c);
+        g.fill(x + 6, y + 20, x + 22, y + 28, c);
+        int gap = 0xFF0D1F0B;
+        g.fill(x + 9, y + 2, x + 10, y + 9, gap);
+        g.fill(x + 14, y + 2, x + 15, y + 9, gap);
+        g.fill(x + 19, y + 2, x + 20, y + 9, gap);
+        g.fill(x + 2, y + 12, x + 9, y + 13, gap);
     }
 
     private static Component multiplier(int level) {

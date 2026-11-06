@@ -43,6 +43,7 @@ public final class FlashSuitClient {
         event.registerLayerDefinition(OUTER, () -> LayerDefinition.create(
                 HumanoidModel.createMesh(new CubeDeformation(OUTER_GROW), 0.0F), 64, 32));
         event.registerLayerDefinition(FlashSuitStandModel.LAYER, FlashSuitStandModel::createLayer);
+        event.registerLayerDefinition(HulkModel.LAYER, HulkModel::createLayer);
         event.registerLayerDefinition(INNER, () -> LayerDefinition.create(
                 HumanoidModel.createMesh(new CubeDeformation(INNER_GROW), 0.0F), 64, 32));
     }
@@ -52,6 +53,7 @@ public final class FlashSuitClient {
         event.registerReloadListener((ResourceManagerReloadListener) manager -> {
             outerModel = null;
             innerModel = null;
+            HulkClient.resetModel();
         });
     }
 

@@ -65,6 +65,14 @@ public final class FlashKeys {
             CATEGORY
     );
 
+    /** Bruce Banner <-> Hulk (default H). */
+    public static final KeyMapping HULK_TRANSFORM = new KeyMapping(
+            "key.flash.hulk.transform",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            CATEGORY
+    );
+
     private FlashKeys() {
     }
 
@@ -75,5 +83,6 @@ public final class FlashKeys {
         event.register(DECREASE_SPEED);
         event.register(TOGGLE_SPEED);
         event.register(TOGGLE_SUIT);
+        event.register(HULK_TRANSFORM);
     }
 }

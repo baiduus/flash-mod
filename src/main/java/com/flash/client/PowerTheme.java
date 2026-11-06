@@ -9,7 +9,7 @@ package com.flash.client;
 public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
                          String titleKey, String subtitleKey, Icon icon, boolean hasPower) {
 
-    public enum Icon { NONE, BOLT }
+    public enum Icon { NONE, BOLT, FIST }
 
     /** No power at all: grey, nothing that names a specific power. */
     public static final PowerTheme NEUTRAL = new PowerTheme("neutral",
@@ -31,7 +31,21 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFF3FB4FF, 0xFF0B2A44, 0xFF08162A,
             "gui.flash.theme.v9.title", "gui.flash.progress.subtitle", Icon.BOLT, true);
 
+    /** The Hulk: emerald green. */
+    public static final PowerTheme HULK = new PowerTheme("hulk",
+            0xFF5BD94A, 0xFF143A12, 0xFF0D1F0B,
+            "gui.flash.theme.hulk.title", "gui.flash.theme.hulk.subtitle", Icon.FIST, true);
+
+    /** True when the local player carries the Hulk. */
+    public static boolean localHulk() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && com.flash.hulk.HulkState.has(player);
+    }
+
     public static PowerTheme current() {
+        if (localHulk()) {
+            return HULK;
+        }
         if (!FlashClientData.hasPowers()) {
             return NEUTRAL;
         }

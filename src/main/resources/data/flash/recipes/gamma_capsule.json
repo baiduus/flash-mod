@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " G ",
+  "EDE",
+  " G "
+ ],
+ "key": {
+  "G": {
+   "item": "minecraft:glass_pane"
+  },
+  "E": {
+   "item": "minecraft:emerald"
+  },
+  "D": {
+   "item": "minecraft:glowstone_dust"
+  }
+ },
+ "result": {
+  "item": "flash:gamma_capsule",
+  "count": 2
+ }
+}

@@ -33,6 +33,10 @@ public final class SyringeContents {
     public static final SyringeContent V9 = register(new SyringeContent(
             "v9", 2, ModItems.V9_CAPSULE::get, com.flash.power.FlashV9::inject));
 
+    /** Gamma radiation: the Hulk (removes the Acceleration Force). */
+    public static final SyringeContent GAMMA = register(new SyringeContent(
+            "gamma", 3, ModItems.GAMMA_CAPSULE::get, com.flash.hulk.HulkPowers::injectGamma));
+
     private SyringeContents() {
     }
 

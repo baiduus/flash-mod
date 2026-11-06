@@ -31,6 +31,15 @@ public final class ModEntities {
                             .updateInterval(1) // it is very fast: send its position every tick
                             .build("acceleration_phantom"));
 
+    public static final RegistryObject<EntityType<com.flash.entity.GammaBomb>> GAMMA_BOMB =
+            ENTITY_TYPES.register("gamma_bomb",
+                    () -> EntityType.Builder.<com.flash.entity.GammaBomb>of(
+                                    com.flash.entity.GammaBomb::new, MobCategory.MISC)
+                            .sized(0.3F, 0.3F)
+                            .clientTrackingRange(4)
+                            .updateInterval(10)
+                            .build("gamma_bomb"));
+
     private ModEntities() {
     }
 }

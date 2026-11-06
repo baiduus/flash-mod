@@ -26,6 +26,10 @@ public class FlashHud implements IGuiOverlay {
                 || minecraft.options.renderDebug) {
             return;
         }
+        if (PowerTheme.localHulk()) {
+            drawHulk(graphics, minecraft);
+            return;
+        }
         if (!FlashClientData.hasPowers()) {
             // the 30 seconds without powers after the V-9
             int lock = FlashClientVisualLevels.localLockTicks();
@@ -115,6 +119,31 @@ public class FlashHud implements IGuiOverlay {
             int gg = (int) (((from >> 8) & 0xFF) * (1 - t) + ((to >> 8) & 0xFF) * t);
             int b = (int) ((from & 0xFF) * (1 - t) + (to & 0xFF) * t);
             g.fill(x + 3 + i, y + h - 3, x + 4 + i, y + h - 1, 0xFF000000 | (r << 16) | (gg << 8) | b);
+        }
+    }
+
+    /** Hulk HUD: form and the rage meter. */
+    private static void drawHulk(GuiGraphics g, Minecraft mc) {
+        boolean form = com.flash.hulk.HulkState.isTransformed(mc.player);
+        float rage = Math.max(0.0F, Math.min(1.0F,
+                com.flash.hulk.HulkState.clientRage() / com.flash.hulk.HulkPowers.MAX_RAGE));
+        var font = mc.font;
+        String line1 = Component.translatable(form ? "hud.flash.hulk" : "hud.flash.banner").getString();
+        String line2 = form
+                ? Component.translatable("hud.flash.hulk_rage", Math.round(rage * 100.0F)).getString()
+                : Component.translatable("hud.flash.banner_hint", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()).getString();
+        int w = Math.max(font.width(line1), font.width(line2)) + 14;
+        int h = 26;
+        int x = 6;
+        int y = 6;
+        g.fill(x, y, x + w, y + h, FlashHudStyle.PANEL);
+        g.fill(x, y, x + 3, y + h, 0xFF5BD94A);
+        g.drawString(font, line1, x + 8, y + 4, 0xFF7CF06A, true);
+        g.drawString(font, line2, x + 8, y + 15, FlashHudStyle.TEXT_MUTED, true);
+        if (form) {
+            int bar = Math.round((w - 3) * rage);
+            int color = rage > 0.75F ? 0xFFFF5A3C : 0xFF5BD94A;
+            g.fill(x + 3, y + h - 2, x + 3 + bar, y + h, color);
         }
     }
 }

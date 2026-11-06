@@ -208,6 +208,11 @@ public final class FlashPowers {
     // ------------------------------------------------------------------
 
     public static void grant(Player player) {
+        // only one power at a time: becoming a speedster removes the Hulk
+        if (player instanceof net.minecraft.server.level.ServerPlayer server
+                && com.flash.hulk.HulkPowers.has(server)) {
+            com.flash.hulk.HulkPowers.revoke(server);
+        }
         FlashV9.adoptPowers(player);
         if (hasPermanentPowers(player)) {
             int max = Math.max(1, getMaxLevel(player));

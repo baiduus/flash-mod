@@ -151,12 +151,16 @@ public final class FlashClientForgeEvents {
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */
     private static boolean drawingRingHand;
 
-    /** First person: the empty hand is drawn here so the ring can be added on top of it. */
+    /** First person: the empty hand is drawn here so the ring / the Hulk's arm can be added on top of it. */
     @SubscribeEvent
     public static void onRenderArm(net.minecraftforge.client.event.RenderArmEvent event) {
-        if (drawingRingHand
-                || event.getArm() != net.minecraft.world.entity.HumanoidArm.RIGHT
-                || !FlashClientRing.has(event.getPlayer())) {
+        if (drawingRingHand) {
+            return;
+        }
+        boolean right = event.getArm() == net.minecraft.world.entity.HumanoidArm.RIGHT;
+        boolean ring = right && FlashClientRing.has(event.getPlayer());
+        boolean hulk = com.flash.hulk.HulkState.isTransformed(event.getPlayer());
+        if (!ring && !hulk) {
             return;
         }
         net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
@@ -168,15 +172,26 @@ public final class FlashClientForgeEvents {
         drawingRingHand = true;
         try {
             // the nested event passes through untouched, so the vanilla hand is drawn
-            player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),
-                    event.getPackedLight(), event.getPlayer());
+            if (right) {
+                player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),
+                        event.getPackedLight(), event.getPlayer());
+            } else {
+                player.renderLeftHand(event.getPoseStack(), event.getMultiBufferSource(),
+                        event.getPackedLight(), event.getPlayer());
+            }
         } finally {
             drawingRingHand = false;
         }
-        event.getPoseStack().pushPose();
-        player.getModel().rightArm.translateAndRotate(event.getPoseStack());
-        FlashRingLayer.drawRing(event.getPoseStack(), event.getMultiBufferSource(),
-                event.getPackedLight(), "slim".equals(event.getPlayer().getModelName()));
-        event.getPoseStack().popPose();
+        if (hulk) {
+            HulkClient.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
+                    event.getPlayer(), player.getModel(), event.getArm());
+        }
+        if (ring) {
+            event.getPoseStack().pushPose();
+            player.getModel().rightArm.translateAndRotate(event.getPoseStack());
+            FlashRingLayer.drawRing(event.getPoseStack(), event.getMultiBufferSource(),
+                    event.getPackedLight(), "slim".equals(event.getPlayer().getModelName()));
+            event.getPoseStack().popPose();
+        }
     }
 }

@@ -1,0 +1,8 @@
+{
+ "parent": "minecraft:block/cube_bottom_top",
+ "textures": {
+  "side": "flash:block/gamma_reactor_side",
+  "top": "flash:block/gamma_reactor_top",
+  "bottom": "flash:block/gamma_reactor_bottom"
+ }
+}

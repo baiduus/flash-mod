@@ -12,6 +12,12 @@
     "flash:content": 2
    },
    "model": "flash:item/syringe_v9"
+  },
+  {
+   "predicate": {
+    "flash:content": 3
+   },
+   "model": "flash:item/syringe_gamma"
   }
  ]
 }
