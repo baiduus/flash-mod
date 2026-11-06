@@ -21,7 +21,7 @@ SUITS = {
     "flash_suit": None,
     "negative_suit": {"main": (0.135, 0.85, 1.00), "accent": (0.0, 0.92, 0.95)},
     "phantom_suit": {"main": (0.0, 0.0, 0.17), "accent": (0.0, 0.95, 0.95)},
-    "zoom_suit": {"main": (0.62, 0.35, 0.20), "accent": (0.58, 0.85, 1.00)},
+    "zoom_suit": {"main": (0.62, 0.12, 0.20), "accent": (0.58, 0.85, 1.00), "two_tone": True},
 }
 
 
@@ -53,7 +53,17 @@ def recolor(img, pal):
             th, ts, tv = pal[k]
             # keep the shading: the source brightness relative to its usual level
             rel = v / (0.88 if k == "main" else 0.95)
-            nr, ng, nb = colorsys.hsv_to_rgb(th, ts, max(0.0, min(1.0, tv * rel)))
+            val = tv * rel
+            boots = (x < 16 * U and 16 * U <= y < 32 * U) or (16 * U <= x < 32 * U and 48 * U <= y < 64 * U)
+            if k == "accent" and pal.get("two_tone") and boots:
+                # Zoom's boots are black too (only the lightning is blue)
+                k = "main"
+                th, ts, tv = pal[k]
+                v = 0.62 + 0.3 * rel
+            if k == "main" and pal.get("two_tone"):
+                # Zoom: black and a lighter black alternate, so the details of the suit read
+                val = 0.05 if v < 0.62 else 0.11 + 0.22 * min(1.0, (v - 0.62) / 0.3)
+            nr, ng, nb = colorsys.hsv_to_rgb(th, ts, max(0.0, min(1.0, val)))
             px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
     return img
 

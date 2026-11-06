@@ -38,6 +38,17 @@ public class HulkBoulder extends ThrowableItemProjectile {
         return this.entityData.get(SIZE);
     }
 
+    /**
+     * Blast of the rock (TNT = 4): about 2 TNTs for the smallest rock (level 1) up to the
+     * force of 15 TNTs (60) for the biggest one (level 10).
+     */
+    public static float blastPower(float size) {
+        float min = sizeFor(1);
+        float max = sizeFor(10);
+        float t = Math.max(0.0F, Math.min(1.0F, (size - min) / (max - min)));
+        return 8.0F + 52.0F * t * t;
+    }
+
     /** Rock size from the Hulk's active level: small at level 1, twice as big at level 10. */
     public static float sizeFor(int activeLevel) {
         return 0.6F + 0.14F * Math.max(1, Math.min(10, activeLevel));
@@ -88,7 +99,7 @@ public class HulkBoulder extends ThrowableItemProjectile {
         if (this.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner) {
             // the rock bursts on impact (the Hulk is left out of the blast)
             // small rock, small blast; big rock, big blast
-            level.explode(this, this.getX(), this.getY(), this.getZ(), 3.0F + 4.0F * size,
+            level.explode(this, this.getX(), this.getY(), this.getZ(), blastPower(size),
                     com.flash.hulk.HulkPowers.destroyBlocks(owner)
                             ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
                             : net.minecraft.world.level.Level.ExplosionInteraction.NONE);
