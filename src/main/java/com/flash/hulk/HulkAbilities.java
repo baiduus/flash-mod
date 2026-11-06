@@ -83,6 +83,9 @@ public final class HulkAbilities {
         }
         HulkPowers.setCooldown(player, ability);
         HulkPowers.syncSelf(player);
+        com.flash.network.FlashNetwork.CHANNEL.send(
+                net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                new com.flash.network.HulkAnimPacket(player.getUUID(), ability.ordinal()));
     }
 
     @SubscribeEvent
@@ -378,7 +381,7 @@ public final class HulkAbilities {
         for (int ring = 1; ring <= 10; ring++) {
             for (int i = 0; i < 24; i++) {
                 double a = i * Math.PI * 2.0D / 24.0D;
-                level.sendParticles(HulkPowers.GAMMA_DUST, player.getX() + Math.cos(a) * ring, player.getY() + 0.6D,
+                level.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), player.getX() + Math.cos(a) * ring, player.getY() + 0.6D,
                         player.getZ() + Math.sin(a) * ring, 1, 0.1D, 0.3D, 0.1D, 0.0D);
             }
         }

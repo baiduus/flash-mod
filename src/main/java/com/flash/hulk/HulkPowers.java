@@ -307,7 +307,7 @@ public final class HulkPowers {
 
     public static void burst(ServerPlayer player) {
         if (player.level() instanceof ServerLevel level) {
-            level.sendParticles(GAMMA_DUST, player.getX(), player.getY() + 1.2D, player.getZ(),
+            level.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), player.getX(), player.getY() + 1.2D, player.getZ(),
                     60, 0.6D, 1.0D, 0.6D, 0.0D);
             level.sendParticles(ParticleTypes.HAPPY_VILLAGER, player.getX(), player.getY() + 1.2D,
                     player.getZ(), 20, 0.6D, 1.0D, 0.6D, 0.0D);

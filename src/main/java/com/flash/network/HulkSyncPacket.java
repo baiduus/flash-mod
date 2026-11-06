@@ -59,6 +59,12 @@ public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, fl
             Minecraft mc = Minecraft.getInstance();
             boolean local = mc.player != null && mc.player.getUUID().equals(p.playerId);
             long now = mc.level != null ? mc.level.getGameTime() : 0L;
+            Float before = HulkState.clientEntry(p.playerId);
+            if (before != null && p.has && (before > 0.0F) != p.transformed) {
+                // the form changed while we were watching: play the transformation
+                com.flash.client.HulkAnimator.onFormChange(p.playerId, p.transformed,
+                        p.transformed ? p.scale : before);
+            }
             HulkState.setClient(p.playerId, p.has, p.transformed, p.scale, local, p.level, p.rage,
                     p.tempTicks, p.furyTicks, p.destroy, p.grow, p.cooldowns, p.activeLevel, p.height, now);
             if (mc.level != null) {

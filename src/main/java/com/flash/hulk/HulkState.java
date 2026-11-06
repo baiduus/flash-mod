@@ -51,6 +51,11 @@ public final class HulkState {
         return HulkPowers.scale(player);
     }
 
+    /** Client: cached entry of a player (null = no power, 0 = Bruce Banner, > 0 = Hulk scale). */
+    public static Float clientEntry(UUID id) {
+        return CLIENT.get(id);
+    }
+
     /** Client: called by the sync packet. */
     public static void setClient(UUID id, boolean has, boolean transformed, float scale, boolean local,
                                  int lvl, float rg, int temp, int fury, boolean dst, boolean grw, int[] cds,

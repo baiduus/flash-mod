@@ -44,7 +44,7 @@ public class GammaReactorBlockEntity extends BlockEntity {
         double z = pos.getZ() + 0.5D;
         float t = reactor.overload / (float) OVERLOAD_TICKS;
         int count = 2 + (int) (t * 14);
-        server.sendParticles(HulkPowers.GAMMA_DUST, x, y + 0.6D, z, count, 0.4D + t, 0.5D + t, 0.4D + t, 0.0D);
+        server.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), x, y + 0.6D, z, count, 0.4D + t, 0.5D + t, 0.4D + t, 0.0D);
         if (reactor.overload % 4 == 0) {
             server.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y + 0.6D, z, 4, 0.5D, 0.5D, 0.5D, 0.05D);
         }

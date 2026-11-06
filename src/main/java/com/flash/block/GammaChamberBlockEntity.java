@@ -75,7 +75,7 @@ public class GammaChamberBlockEntity extends BlockEntity {
         for (int i = 0; i < n; i++) {
             double a = chamber.ticks * (0.25D + t * 0.5D) + i * Math.PI * 2.0D / n;
             double h = (chamber.ticks * 0.06D + i * 0.4D) % 2.8D;
-            server.sendParticles(HulkPowers.GAMMA_DUST, cx + Math.cos(a) * 0.7D, y0 + h, cz + Math.sin(a) * 0.7D,
+            server.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), cx + Math.cos(a) * 0.7D, y0 + h, cz + Math.sin(a) * 0.7D,
                     1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
         if (chamber.ticks % 4 == 0) {
@@ -86,7 +86,7 @@ public class GammaChamberBlockEntity extends BlockEntity {
             occupant.hurt(server.damageSources().magic(), 0.5F);
         }
         if (chamber.ticks >= SEQUENCE_TICKS) {
-            server.sendParticles(HulkPowers.GAMMA_DUST, cx, y0 + 1.2D, cz, 200, 0.8D, 1.4D, 0.8D, 0.0D);
+            server.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), cx, y0 + 1.2D, cz, 200, 0.8D, 1.4D, 0.8D, 0.0D);
             server.sendParticles(ParticleTypes.FLASH, cx, y0 + 1.2D, cz, 2, 0.0D, 0.0D, 0.0D, 0.0D);
             server.playSound(null, pos, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.BLOCKS, 1.6F, 0.6F);
             if (HulkPowers.isTemporary(occupant)) {

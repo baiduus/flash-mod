@@ -43,13 +43,18 @@ public final class FlashClientEvents {
     }
 
     @SubscribeEvent
+    public static void onRegisterParticles(net.minecraftforge.client.event.RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(com.flash.registry.ModParticles.GAMMA.get(), GammaParticle.Provider::new);
+    }
+
+    @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(com.flash.registry.ModEntities.FLASH_SUIT_STAND.get(),
                 FlashSuitStandRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.ACCELERATION_PHANTOM.get(),
                 AccelerationPhantomRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.HULK_BOULDER.get(),
-                net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+                HulkBoulderRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new
