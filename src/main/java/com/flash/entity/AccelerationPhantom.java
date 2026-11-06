@@ -98,14 +98,13 @@ public class AccelerationPhantom extends Monster {
     private static final double LEVEL10_STEP =
             FlashSpeedLevels.totalMultiplier(FlashSpeedLevels.BASE_MAX_LEVEL) * 0.2158D * 1.3D;
 
-    private enum Action { NONE, BARRAGE, TORNADO, LIGHTNING, MASS_PUNCH }
+    private enum Action { NONE, BARRAGE, TORNADO, LIGHTNING }
 
     private final int[] cooldowns = new int[FlashAbility.values().length];
     private Action action = Action.NONE;
     private int actionTicks;
     private Vec3 actionCenter = Vec3.ZERO;
     private double actionAngle;
-    private Vec3 actionAim = Vec3.ZERO;
 
     @Override
     public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
@@ -193,14 +192,6 @@ public class AccelerationPhantom extends Monster {
             this.playSound(SoundEvents.RESPAWN_ANCHOR_CHARGE, 1.0F, 1.4F);
             return true;
         }
-        if (sees && dist <= 16.0D && ready(FlashAbility.MASS_PUNCH) && this.random.nextInt(4) == 0) {
-            use(FlashAbility.MASS_PUNCH);
-            start(Action.MASS_PUNCH);
-            this.actionCenter = this.position();
-            this.actionAim = target.getEyePosition().subtract(this.getEyePosition()).normalize();
-            this.playSound(SoundEvents.BEACON_ACTIVATE, 1.2F, 1.5F);
-            return true;
-        }
         if (sees && dist > 6.0D && dist <= 24.0D && ready(FlashAbility.DASH_PUNCH)) {
             use(FlashAbility.DASH_PUNCH);
             dashPunch(target);
@@ -275,37 +266,6 @@ public class AccelerationPhantom extends Monster {
                     FlashBeamPacket.sendFrom(this, start, end, 0xFFFF2020, 16, 1.25F, true);
                     FlashAbilityCombat.spawnImpact(level, end, 2.5F);
                     FlashAbilityCombat.playThunder(level, end);
-                    this.action = Action.NONE;
-                }
-            }
-            case MASS_PUNCH -> {
-                // circles at speed to charge, then one huge punch where it was aiming
-                if (this.actionTicks < 30) {
-                    this.actionAngle += 0.33D;
-                    Vec3 c = this.actionCenter;
-                    double x = c.x + Math.cos(this.actionAngle) * 7.5D;
-                    double z = c.z + Math.sin(this.actionAngle) * 7.5D;
-                    this.teleportTo(x, FlashDimensionTravel.safeY(level, x, z), z);
-                    level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, this.getY() + 1.0D, z, 4, 0.2D, 0.5D, 0.2D, 0.05D);
-                } else {
-                    Vec3 c = this.actionCenter;
-                    this.teleportTo(c.x, c.y, c.z);
-                    Vec3 start = this.getEyePosition();
-                    Vec3 end = start.add(this.actionAim.scale(15.0D));
-                    for (LivingEntity hit : level.getEntitiesOfClass(LivingEntity.class,
-                            this.getBoundingBox().inflate(16.0D), e -> e != this && e.isAlive())) {
-                        Vec3 d = hit.getBoundingBox().getCenter().subtract(start);
-                        if (d.length() <= 15.0D && d.normalize().dot(this.actionAim) > 0.45D) {
-                            hit.invulnerableTime = 0;
-                            hit.hurt(this.damageSources().mobAttack(this), 40.0F);
-                            hit.setDeltaMovement(this.actionAim.scale(2.0D).add(0.0D, 0.45D, 0.0D));
-                            hit.hurtMarked = true;
-                        }
-                    }
-                    FlashBeamPacket.sendFrom(this, start, end, 0xFFFF2020, 20, 2.2F, true);
-                    FlashAbilityCombat.spawnImpact(level, end, 4.0F);
-                    FlashAbilityCombat.playThunder(level, end);
-                    this.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
                     this.action = Action.NONE;
                 }
             }
