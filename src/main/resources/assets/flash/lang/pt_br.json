@@ -317,5 +317,7 @@
   "tooltip.flash.ring.full": "Contém um traje.",
   "tooltip.flash.ring.empty": "Vazio: vista um traje e use o anel para guardá-lo.",
   "message.flash.ring_stored": "Traje guardado no anel.",
-  "message.flash.ring_empty": "O anel está vazio: vista um traje e use o anel para guardá-lo."
+  "message.flash.ring_empty": "O anel está vazio: vista um traje e use o anel para guardá-lo.",
+  "hud.flash.v9_timer": "V-9 acaba em %s",
+  "hud.flash.v9_lock": "Sem poderes por %s"
 }

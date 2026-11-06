@@ -27,6 +27,12 @@ public class FlashHud implements IGuiOverlay {
             return;
         }
         if (!FlashClientData.hasPowers()) {
+            // the 30 seconds without powers after the V-9
+            int lock = FlashClientVisualLevels.localLockTicks();
+            if (lock > 0) {
+                drawTimer(graphics, minecraft.font, 6, 6, "hud.flash.v9_lock", lock,
+                        com.flash.power.FlashV9.NO_POWERS_TICKS, 0xFF6A6F78, 0xFFB9C0C8);
+            }
             return;
         }
 
@@ -72,6 +78,12 @@ public class FlashHud implements IGuiOverlay {
         if (line3 != null) {
             FlashHudStyle.gradientText(graphics, font, line3, x + 8, y + 26);
         }
+        // V-9 countdown right under the panel
+        int v9 = FlashClientVisualLevels.localV9Ticks();
+        if (v9 > 0) {
+            drawTimer(graphics, font, x, y + boxHeight + 3, "hud.flash.v9_timer", v9,
+                    com.flash.power.FlashV9.DURATION_TICKS, 0xFF1A5CFF, 0xFF7FE0FF);
+        }
         // Progress strip along the bottom edge (orange to yellow).
         if (FlashClientData.getMaxLevel() < FlashSpeedLevels.BASE_MAX_LEVEL) {
             float progress = Math.min(1.0F, (float) (FlashClientData.getDistance()
@@ -80,6 +92,29 @@ public class FlashHud implements IGuiOverlay {
             if (filled > 0) {
                 FlashHudStyle.barHorizontal(graphics, x + 3, y + boxHeight - 2, filled, 2);
             }
+        }
+    }
+
+    /** Small panel "label m:ss" with a bar that empties as the time runs out (blinks in the last 10 s). */
+    private static void drawTimer(GuiGraphics g, net.minecraft.client.gui.Font font, int x, int y,
+                                  String key, int ticks, int total, int from, int to) {
+        int seconds = (ticks + 19) / 20;
+        String text = Component.translatable(key,
+                String.format(java.util.Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60)).getString();
+        int w = Math.max(120, font.width(text) + 14);
+        int h = 18;
+        g.fill(x, y, x + w, y + h, FlashHudStyle.PANEL);
+        g.fill(x, y, x + 3, y + h, to);
+        boolean blink = seconds <= 10 && (ticks / 5) % 2 == 0;
+        g.drawString(font, text, x + 8, y + 3, blink ? 0xFFFFFFFF : to, true);
+        float left = Math.min(1.0F, ticks / (float) total);
+        int bar = Math.round((w - 3) * left);
+        for (int i = 0; i < bar; i++) {
+            float t = i / (float) Math.max(1, w - 3);
+            int r = (int) (((from >> 16) & 0xFF) * (1 - t) + ((to >> 16) & 0xFF) * t);
+            int gg = (int) (((from >> 8) & 0xFF) * (1 - t) + ((to >> 8) & 0xFF) * t);
+            int b = (int) ((from & 0xFF) * (1 - t) + (to & 0xFF) * t);
+            g.fill(x + 3 + i, y + h - 3, x + 4 + i, y + h - 1, 0xFF000000 | (r << 16) | (gg << 8) | b);
         }
     }
 }

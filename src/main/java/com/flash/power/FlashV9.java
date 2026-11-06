@@ -108,6 +108,15 @@ public final class FlashV9 {
         return player.getPersistentData().contains(KEY) && isActive(player) ? BONUS_LEVELS : 0;
     }
 
+    /** Ticks left of the 30 seconds without powers (0 when not running). */
+    public static int suppressedTicks(Player player) {
+        CompoundTag tag = tag(player);
+        if (!tag.contains(NO_POWERS_UNTIL)) {
+            return 0;
+        }
+        return (int) Math.max(0L, tag.getLong(NO_POWERS_UNTIL) - now(player));
+    }
+
     /** Ticks left of the boost (0 when not active). */
     public static int remainingTicks(Player player) {
         CompoundTag tag = tag(player);

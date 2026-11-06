@@ -25,6 +25,39 @@ public final class FlashClientVisualLevels {
         set(playerId, level, 0);
     }
 
+    /** Local player only: client game time when the V-9 / the time without powers ends. */
+    private static long v9End;
+    private static long lockEnd;
+
+    public static void set(UUID playerId, int level, int activeMask, boolean negative, boolean v9,
+                           int v9Ticks, int lockTicks) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.level != null && mc.player.getUUID().equals(playerId)) {
+            long now = mc.level.getGameTime();
+            v9End = v9Ticks > 0 ? now + v9Ticks : 0L;
+            lockEnd = lockTicks > 0 ? now + lockTicks : 0L;
+        }
+        set(playerId, level, activeMask, negative, v9);
+    }
+
+    /** Ticks left of the local player's V-9 (0 when not running). */
+    public static int localV9Ticks() {
+        return remaining(v9End);
+    }
+
+    /** Ticks left of the local player's 30 seconds without powers. */
+    public static int localLockTicks() {
+        return remaining(lockEnd);
+    }
+
+    private static int remaining(long end) {
+        Minecraft mc = Minecraft.getInstance();
+        if (end <= 0L || mc.level == null) {
+            return 0;
+        }
+        return (int) Math.max(0L, end - mc.level.getGameTime());
+    }
+
     public static void set(UUID playerId, int level, int activeMask, boolean negative, boolean v9) {
         if (v9) {
             V9.add(playerId);
@@ -98,6 +131,8 @@ public final class FlashClientVisualLevels {
     }
 
     public static void reset() {
+        v9End = 0L;
+        lockEnd = 0L;
         V9.clear();
         LEVELS.clear();
         ACTIVE.clear();

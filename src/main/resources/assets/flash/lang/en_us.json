@@ -317,5 +317,7 @@
   "tooltip.flash.ring.full": "Holds a suit.",
   "tooltip.flash.ring.empty": "Empty: wear a suit and use the ring to store it.",
   "message.flash.ring_stored": "Suit stored in the ring.",
-  "message.flash.ring_empty": "The ring is empty: wear a suit and use the ring to store it."
+  "message.flash.ring_empty": "The ring is empty: wear a suit and use the ring to store it.",
+  "hud.flash.v9_timer": "V-9 ends in %s",
+  "hud.flash.v9_lock": "No powers for %s"
 }
