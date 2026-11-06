@@ -39,7 +39,7 @@ public class FlashMuseumStructure extends Structure {
         LevelHeightAccessor heights = context.heightAccessor();
         RandomState random = context.randomState();
 
-        int half = 17;
+        int half = WIDTH / 2;
         int[][] samples = {{0, 0}, {-half, -half}, {half, -half}, {-half, half}, {half, half},
                 {0, -half}, {0, half}, {-half, 0}, {half, 0}};
         int min = Integer.MAX_VALUE;
@@ -60,7 +60,7 @@ public class FlashMuseumStructure extends Structure {
             min = Math.min(min, y);
             max = Math.max(max, y);
         }
-        if (centerY <= generator.getSeaLevel() || max - min > 7) {
+        if (centerY <= generator.getSeaLevel() || max - min > 8) {
             return Optional.empty();
         }
 
@@ -76,9 +76,9 @@ public class FlashMuseumStructure extends Structure {
     }
 
     /** Footprint of the building before orientation. */
-    public static final int WIDTH = 33;
-    public static final int DEPTH = 31;
-    public static final int HEIGHT = 24;
+    public static final int WIDTH = FlashMuseumData.W;
+    public static final int DEPTH = FlashMuseumData.D;
+    public static final int HEIGHT = FlashMuseumData.H;
 
     static BoundingBox box(int centerX, int baseY, int centerZ, Direction direction) {
         boolean sideways = direction.getAxis() == Direction.Axis.X;

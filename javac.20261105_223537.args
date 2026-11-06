@@ -1,0 +1,6 @@
+-proc:none
+-d
+/tmp/claude-0/-home-claude/d1dc5723-1a31-54d1-8dc6-9a82b51cda8b/scratchpad/jc8
+src/main/java/com/flash/worldgen/FlashMuseumData.java
+src/main/java/com/flash/worldgen/FlashMuseumPiece.java
+src/main/java/com/flash/worldgen/FlashMuseumStructure.java
