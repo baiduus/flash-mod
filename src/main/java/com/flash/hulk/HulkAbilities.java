@@ -65,7 +65,11 @@ public final class HulkAbilities {
             case GROUND_SMASH -> groundSmash(player, level);
             case CHARGE -> RUNNING.put(player.getUUID(), new Running(ability, flatLook(player), player.position(), new int[] {0}));
             case ROAR -> roar(player, level);
-            case THUNDERCLAP -> thunderclap(player, level);
+            case THUNDERCLAP -> {
+                thunderclap(player, level);
+                RUNNING.put(player.getUUID(), new Running(ability, player.getLookAngle().normalize(),
+                        player.getEyePosition(), new int[] {0}));
+            }
             case BOULDER -> boulder(player, level);
             case FURY -> fury(player, level);
             case GAMMA_WAVE -> gammaWave(player, level);
@@ -99,6 +103,11 @@ public final class HulkAbilities {
         if (run.ability() == HulkAbility.CHARGE) {
             chargeTick(player, level, run.dir(), t);
             if (t >= 10) {
+                RUNNING.remove(player.getUUID());
+            }
+        } else if (run.ability() == HulkAbility.THUNDERCLAP) {
+            thunderclapTick(player, level, run.origin(), run.dir(), t);
+            if (t >= 6) {
                 RUNNING.remove(player.getUUID());
             }
         } else if (run.ability() == HulkAbility.WORLD_BREAKER) {
@@ -168,6 +177,16 @@ public final class HulkAbilities {
         block.dropItem = false;
     }
 
+    /**
+     * A real explosion caused by the Hulk (it breaks blocks like TNT; with destruction off it only
+     * hurts). The Hulk himself is left out of it in {@code HulkEvents.onDetonate}.
+     */
+    static void blast(ServerPlayer player, ServerLevel level, double x, double y, double z, float power) {
+        level.explode(player, x, y, z, power, HulkPowers.destroyBlocks(player)
+                ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
+                : net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+    }
+
     private static void dust(ServerLevel level, BlockPos pos, int count) {
         BlockState state = level.getBlockState(pos);
         if (!state.isAir()) {
@@ -180,32 +199,24 @@ public final class HulkAbilities {
     // Abilities
     // ------------------------------------------------------------------
 
-    /** Level 2: smashes the ground; everything in a line ahead is hit and, with destruction on, lifted. */
+    /** Level 2: punches the ground - a TNT explosion where the fist lands. */
     private static void groundSmash(ServerPlayer player, ServerLevel level) {
         Vec3 dir = flatLook(player);
-        Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
+        double ahead = player.getBbWidth() * 0.5D + 1.5D;
+        BlockPos g = ground(level, player.getX() + dir.x * ahead, player.getY(), player.getZ() + dir.z * ahead);
         float damage = 8.0F + 2.0F * power(player);
-        boolean destroy = HulkPowers.destroyBlocks(player);
         player.swing(InteractionHand.MAIN_HAND, true);
         player.swing(InteractionHand.OFF_HAND, true);
-        int lifted = 0;
-        for (int d = 1; d <= 10; d++) {
+        for (int d = 1; d <= 6; d++) {
             Vec3 c = player.position().add(dir.scale(d));
             for (LivingEntity e : around(player, new AABB(c, c).inflate(1.6D, 2.0D, 1.6D))) {
-                hit(player, e, damage * (1.0F - d * 0.04F), dir.scale(0.4D).add(0.0D, 0.9D, 0.0D));
-            }
-            for (int s = -1; s <= 1; s++) {
-                Vec3 p = c.add(side.scale(s * (0.6D + d * 0.12D)));
-                BlockPos g = ground(level, p.x, player.getY(), p.z);
-                dust(level, g, 6);
-                if (destroy && lifted < 30 && level.random.nextFloat() < 0.75F) {
-                    lift(level, g, 0.35D + level.random.nextDouble() * 0.45D, dir.scale(0.05D));
-                    lifted++;
-                }
+                hit(player, e, damage * (1.0F - d * 0.05F), dir.scale(0.6D).add(0.0D, 0.9D, 0.0D));
             }
         }
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE,
-                SoundSource.PLAYERS, 1.4F, 0.6F);
+        dust(level, g, 30);
+        // TNT is power 4; a little stronger every level (6.25 at level 10)
+        float tnt = 4.0F + 0.25F * (HulkPowers.activeLevel(player) - 1);
+        blast(player, level, g.getX() + 0.5D, g.getY() + 0.5D, g.getZ() + 0.5D, tnt);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ANVIL_LAND,
                 SoundSource.PLAYERS, 1.0F, 0.5F);
     }
@@ -220,14 +231,16 @@ public final class HulkAbilities {
         }
         if (HulkPowers.destroyBlocks(player)) {
             AABB front = player.getBoundingBox().move(dir.scale(1.0D)).deflate(0.05D, 0.0D, 0.05D);
+            // everything but the hardest blocks (obsidian, bedrock...) is smashed through
             BlockPos.betweenClosedStream(new AABB(front.minX, front.minY + 0.6D, front.minZ,
-                            front.maxX, front.maxY, front.maxZ))
-                    .limit(40)
+                            front.maxX, front.maxY, front.maxZ).inflate(0.5D, 0.0D, 0.5D))
+                    .limit(160)
                     .forEach(p -> {
                         BlockState state = level.getBlockState(p);
-                        if (!state.isAir() && !state.hasBlockEntity() && state.getDestroySpeed(level, p) >= 0.0F
-                                && state.getDestroySpeed(level, p) <= 3.0F) {
-                            level.destroyBlock(p, true, player);
+                        if (!state.isAir() && state.getFluidState().isEmpty() && !state.hasBlockEntity()
+                                && state.getDestroySpeed(level, p) >= 0.0F
+                                && state.getDestroySpeed(level, p) < 30.0F) {
+                            level.destroyBlock(p, level.random.nextInt(4) == 0, player);
                         }
                     });
         }
@@ -249,6 +262,23 @@ public final class HulkAbilities {
             e.setDeltaMovement(push);
             e.hurtMarked = true;
         }
+        if (HulkPowers.destroyBlocks(player)) {
+            // the roar shatters glass and strips leaves around
+            BlockPos center = player.blockPosition();
+            int broken = 0;
+            for (BlockPos p : BlockPos.betweenClosed(center.offset(-10, -4, -10), center.offset(10, 8, 10))) {
+                BlockState state = level.getBlockState(p);
+                if ((state.is(net.minecraft.tags.BlockTags.LEAVES)
+                        || state.is(net.minecraftforge.common.Tags.Blocks.GLASS)
+                        || state.is(net.minecraftforge.common.Tags.Blocks.GLASS_PANES))
+                        && p.distSqr(center) <= 100.0D) {
+                    level.destroyBlock(p, false, player);
+                    if (++broken >= 300) {
+                        break;
+                    }
+                }
+            }
+        }
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 3.0F, 0.45F);
         Vec3 eye = player.getEyePosition();
@@ -260,7 +290,7 @@ public final class HulkAbilities {
         HulkPowers.addRage(player, 8.0F);
     }
 
-    /** Level 5: thunderclap - a clap so strong that everything ahead is blown away and broken. */
+    /** Level 5: thunderclap - a clap that sends a frontal explosion forward (see thunderclapTick). */
     private static void thunderclap(ServerPlayer player, ServerLevel level) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle().normalize();
@@ -276,31 +306,6 @@ public final class HulkAbilities {
             }
             hit(player, e, (float) (damage * (1.0D - dist / (range * 1.6D))), look.scale(3.0D).add(0.0D, 0.6D, 0.0D));
         }
-        if (HulkPowers.destroyBlocks(player)) {
-            int broken = 0;
-            for (int d = 2; d <= 16 && broken < 90; d++) {
-                double radius = 0.8D + d * 0.18D;
-                Vec3 c = eye.add(look.scale(d));
-                for (int i = 0; i < 10 && broken < 90; i++) {
-                    double a = level.random.nextDouble() * Math.PI * 2.0D;
-                    double r = level.random.nextDouble() * radius;
-                    Vec3 side = look.cross(new Vec3(0.0D, 1.0D, 0.0D));
-                    if (side.lengthSqr() < 1.0E-4D) {
-                        side = new Vec3(1.0D, 0.0D, 0.0D);
-                    }
-                    side = side.normalize();
-                    Vec3 up = side.cross(look).normalize();
-                    Vec3 p = c.add(side.scale(Math.cos(a) * r)).add(up.scale(Math.sin(a) * r));
-                    BlockPos pos = BlockPos.containing(p);
-                    BlockState state = level.getBlockState(pos);
-                    if (!state.isAir() && state.getFluidState().isEmpty() && !state.hasBlockEntity()
-                            && state.getDestroySpeed(level, pos) >= 0.0F && state.getDestroySpeed(level, pos) < 30.0F) {
-                        level.destroyBlock(pos, level.random.nextInt(3) == 0, player);
-                        broken++;
-                    }
-                }
-            }
-        }
         // the shockwave: rings of air flying forward
         for (int d = 1; d <= 18; d += 2) {
             Vec3 c = eye.add(look.scale(d));
@@ -314,6 +319,13 @@ public final class HulkAbilities {
                 SoundSource.PLAYERS, 2.0F, 0.8F);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE,
                 SoundSource.PLAYERS, 1.6F, 0.5F);
+    }
+
+    /** Thunderclap blast: a row of explosions flying forward, up to 15 blocks ahead. */
+    private static void thunderclapTick(ServerPlayer player, ServerLevel level, Vec3 eye, Vec3 look, int t) {
+        double d = 1.5D + 2.25D * t;
+        Vec3 c = eye.add(look.scale(d));
+        blast(player, level, c.x, c.y, c.z, 3.0F);
     }
 
     /** Level 6: rips a rock out of the ground and throws it. */
@@ -358,7 +370,11 @@ public final class HulkAbilities {
             }
             Vec3 push = new Vec3(away.x, 0.0D, away.z).normalize().scale(2.0D).add(0.0D, 0.7D, 0.0D);
             hit(player, e, (float) (damage * (1.0D - d / (radius * 1.5D))), push);
+            // gamma radiation sickness: Poison II and Nausea II
+            e.addEffect(new MobEffectInstance(MobEffects.POISON, 200, 1), player);
+            e.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1), player);
         }
+        blast(player, level, player.getX(), player.getY() + 0.5D, player.getZ(), 5.0F);
         for (int ring = 1; ring <= 10; ring++) {
             for (int i = 0; i < 24; i++) {
                 double a = i * Math.PI * 2.0D / 24.0D;
@@ -371,7 +387,7 @@ public final class HulkAbilities {
                 SoundSource.PLAYERS, 2.0F, 0.5F);
     }
 
-    /** Level 10: stomps so hard that the ground breaks in rings around the Hulk. */
+    /** Level 10: stomps so hard that the ground explodes in rings spreading around the Hulk. */
     private static void worldBreakerTick(ServerPlayer player, ServerLevel level, Vec3 origin, int t) {
         if (t % 4 != 0) {
             return;
@@ -386,17 +402,19 @@ public final class HulkAbilities {
             Vec3 away = new Vec3(e.getX() - origin.x, 0.0D, e.getZ() - origin.z).normalize();
             hit(player, e, damage, away.scale(0.8D).add(0.0D, 1.0D, 0.0D));
         }
-        boolean destroy = HulkPowers.destroyBlocks(player);
         int n = Mth.ceil(r * 3.0D);
         for (int i = 0; i < n; i++) {
             double a = i * Math.PI * 2.0D / n;
-            double x = origin.x + Math.cos(a) * r;
-            double z = origin.z + Math.sin(a) * r;
-            BlockPos g = ground(level, x, origin.y, z);
-            dust(level, g, 3);
-            if (destroy && i % 2 == 0) {
-                lift(level, g, 0.5D + level.random.nextDouble() * 0.4D,
-                        new Vec3(Math.cos(a), 0.0D, Math.sin(a)).scale(0.1D));
+            dust(level, ground(level, origin.x + Math.cos(a) * r, origin.y, origin.z + Math.sin(a) * r), 3);
+        }
+        // the ground blows up along the ring
+        if (t % 8 == 0) {
+            int blasts = Math.max(4, Mth.ceil(Math.PI * 2.0D * r / 6.0D));
+            double offset = level.random.nextDouble() * Math.PI * 2.0D;
+            for (int i = 0; i < blasts; i++) {
+                double a = offset + i * Math.PI * 2.0D / blasts;
+                BlockPos g = ground(level, origin.x + Math.cos(a) * r, origin.y, origin.z + Math.sin(a) * r);
+                blast(player, level, g.getX() + 0.5D, g.getY() + 0.5D, g.getZ() + 0.5D, 3.5F);
             }
         }
         level.playSound(null, origin.x, origin.y, origin.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,

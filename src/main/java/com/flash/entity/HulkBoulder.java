@@ -61,6 +61,13 @@ public class HulkBoulder extends ThrowableItemProjectile {
         level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, this.getItem()), this.getX(), this.getY(),
                 this.getZ(), 40, 0.5D, 0.5D, 0.5D, 0.2D);
         level.sendParticles(ParticleTypes.EXPLOSION, this.getX(), this.getY(), this.getZ(), 2, 0.3D, 0.3D, 0.3D, 0.0D);
+        if (this.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner) {
+            // the rock bursts on impact (the Hulk is left out of the blast)
+            level.explode(this, this.getX(), this.getY(), this.getZ(), 3.0F,
+                    com.flash.hulk.HulkPowers.destroyBlocks(owner)
+                            ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
+                            : net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+        }
         level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
                 1.0F, 0.8F);
         this.discard();

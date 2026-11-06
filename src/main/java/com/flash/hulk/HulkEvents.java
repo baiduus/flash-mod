@@ -81,6 +81,14 @@ public final class HulkEvents {
         player.hasImpulse = true;
     }
 
+    /** The Hulk's own explosions (abilities, rock) never hurt or throw him. */
+    @SubscribeEvent
+    public static void onDetonate(net.minecraftforge.event.level.ExplosionEvent.Detonate event) {
+        if (event.getExplosion().getIndirectSourceEntity() instanceof Player hulk && HulkState.isTransformed(hulk)) {
+            event.getAffectedEntities().remove(hulk);
+        }
+    }
+
     /** No fall damage; a heavy landing sends a shockwave around. */
     @SubscribeEvent
     public static void onFall(LivingFallEvent event) {
