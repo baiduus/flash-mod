@@ -104,9 +104,26 @@ layer0 = Image.open(base + "layer_0.png").convert("RGBA")
 layer0_open = Image.open(base + "layer_0_skinless.png").convert("RGBA")
 layer1 = Image.open(base + "layer_1_skinless.png").convert("RGBA")
 closed = cover_face(layer0)
+# colour patches for the rebuilt chest emblem (tools/fix_suit_emblem.py): disc at (100, 0), accent at (116, 0)
+EMBLEM = {"flash_suit": ((245, 245, 240), (255, 205, 40)), "negative_suit": ((20, 20, 22), (225, 30, 25)),
+          "phantom_suit": ((15, 15, 18), (230, 25, 20)), "zoom_suit": ((15, 18, 26), (60, 160, 255))}
+
+
+def emblem(img, name):
+    img = img.copy()
+    px = img.load()
+    disc, accent = EMBLEM[name]
+    for (u0, col) in ((100, disc), (116, accent)):
+        for y in range(0, 16 * U):
+            for x in range(u0 * U, (u0 + 16) * U):
+                k = 0.92 + 0.08 * (((x // U) + (y // U)) % 2)
+                px[x, y] = (int(col[0] * k), int(col[1] * k), int(col[2] * k), 255)
+    return img
+
+
 for name, pal in SUITS.items():
-    eyes(recolor(closed, pal), name).save(OUT + "models/armor/%s_layer_1.png" % name, optimize=True)
-    recolor(layer0_open, pal).save(OUT + "models/armor/%s_open_layer_1.png" % name, optimize=True)
+    emblem(eyes(recolor(closed, pal), name), name).save(OUT + "models/armor/%s_layer_1.png" % name, optimize=True)
+    emblem(recolor(layer0_open, pal), name).save(OUT + "models/armor/%s_open_layer_1.png" % name, optimize=True)
     recolor(layer1, pal).save(OUT + "models/armor/%s_layer_2.png" % name, optimize=True)
     for piece, src in (("helmet", "head"), ("chestplate", "chest"), ("leggings", "legs"), ("boots", "feet")):
         icon = Image.open(SRC + "/item/armors/flash/flash_%s.png" % src).convert("RGBA")

@@ -19,6 +19,29 @@ import net.minecraft.world.phys.HitResult;
 public class HulkBoulder extends ThrowableItemProjectile {
 
     private float damage = 14.0F;
+    /** Size of the rock (1 = normal): the model and the explosion grow with it. */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> SIZE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(HulkBoulder.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(SIZE, 1.0F);
+    }
+
+    public void setSize(float size) {
+        this.entityData.set(SIZE, Math.max(0.3F, Math.min(3.0F, size)));
+    }
+
+    public float getSize() {
+        return this.entityData.get(SIZE);
+    }
+
+    /** Rock size from the Hulk's active level: small at level 1, twice as big at level 10. */
+    public static float sizeFor(int activeLevel) {
+        return 0.6F + 0.14F * Math.max(1, Math.min(10, activeLevel));
+    }
 
     public HulkBoulder(EntityType<? extends HulkBoulder> type, Level level) {
         super(type, level);
@@ -48,7 +71,8 @@ public class HulkBoulder extends ThrowableItemProjectile {
         if (!(this.level() instanceof ServerLevel level)) {
             return;
         }
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(2.5D),
+        float size = this.getSize();
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(1.0D + 1.5D * size),
                 e -> e != this.getOwner() && e.isAlive())) {
             if (e instanceof Player p && (p.isCreative() || p.isSpectator())) {
                 continue;
@@ -59,11 +83,12 @@ public class HulkBoulder extends ThrowableItemProjectile {
             e.hurtMarked = true;
         }
         level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, this.getItem()), this.getX(), this.getY(),
-                this.getZ(), 40, 0.5D, 0.5D, 0.5D, 0.2D);
+                this.getZ(), (int) (25 * size), 0.4D * size, 0.4D * size, 0.4D * size, 0.2D);
         level.sendParticles(ParticleTypes.EXPLOSION, this.getX(), this.getY(), this.getZ(), 2, 0.3D, 0.3D, 0.3D, 0.0D);
         if (this.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner) {
             // the rock bursts on impact (the Hulk is left out of the blast)
-            level.explode(this, this.getX(), this.getY(), this.getZ(), 3.0F,
+            // small rock, small blast; big rock, big blast
+            level.explode(this, this.getX(), this.getY(), this.getZ(), 1.0F + 1.8F * size,
                     com.flash.hulk.HulkPowers.destroyBlocks(owner)
                             ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
                             : net.minecraft.world.level.Level.ExplosionInteraction.NONE);

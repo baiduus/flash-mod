@@ -57,14 +57,19 @@ public final class HulkAnimator {
         }
     }
 
-    /** Holding a rock (true) or a creature (false) over the head since {@code start}. */
-    private record Hold(boolean rock, long start) {
+    /**
+     * Holding a rock (with its size) or a creature since {@code start}; a small creature is
+     * held in the right hand only.
+     */
+    private record Hold(boolean rock, long start, float size, boolean oneHand) {
     }
 
     private static final Map<UUID, Hold> HOLDS = new ConcurrentHashMap<>();
     /** Arm bones posed by the holding animation while the legs keep walking. */
     private static final java.util.Set<String> ARM_BONES = java.util.Set.of("RightArm", "RightArmBottom",
             "LeftArm", "LeftArmBottom", "RIGHT_ITEM", "LEFT_ITEM", "GrabPoint");
+    private static final java.util.Set<String> RIGHT_ARM = java.util.Set.of("RightArm", "RightArmBottom",
+            "RIGHT_ITEM", "GrabPoint");
     private static final String LIFT = "rubble_smash";
     /** Moment of "rubble_smash" with the arms up (the hold pose) and the start of the throw. */
     private static final float HOLD_POSE = 0.6F;
@@ -133,12 +138,17 @@ public final class HulkAnimator {
         long now = now();
         switch (code) {
             case com.flash.hulk.HulkAbilities.ANIM_HOLD_ROCK -> {
-                HOLDS.put(player, new Hold(true, now));
+                HOLDS.put(player, new Hold(true, now, 1.0F, false));
                 PLAYING.remove(player);
                 return;
             }
             case com.flash.hulk.HulkAbilities.ANIM_HOLD_ENTITY -> {
-                HOLDS.put(player, new Hold(false, now));
+                HOLDS.put(player, new Hold(false, now, 1.0F, false));
+                PLAYING.remove(player);
+                return;
+            }
+            case com.flash.hulk.HulkAbilities.ANIM_HOLD_SMALL -> {
+                HOLDS.put(player, new Hold(false, now, 1.0F, true));
                 PLAYING.remove(player);
                 return;
             }
@@ -153,6 +163,12 @@ public final class HulkAnimator {
             }
             default -> {
             }
+        }
+        if (code >= 200 && code < 300) {
+            // rock held, with its size
+            HOLDS.put(player, new Hold(true, now, (code - 200) / 10.0F, false));
+            PLAYING.remove(player);
+            return;
         }
         HulkAbility ability = HulkAbility.byId(code);
         if (ability == null) {
@@ -229,7 +245,7 @@ public final class HulkAnimator {
         m.render(pose, vc, light, overlay, 0, 1.0F, 1.0F, 1.0F, 1.0F);
         Hold hold = HOLDS.get(player.getUUID());
         if (hold != null && hold.rock() && (now() + partialTick - hold.start()) / 20.0F >= 0.3F) {
-            drawHeldRock(pose, buffers, light, m);
+            drawHeldRock(pose, buffers, light, m, hold.size());
         }
         pose.popPose();
     }
@@ -254,7 +270,7 @@ public final class HulkAnimator {
         if (hold != null) {
             GeoAnimation lift = anims.get(LIFT);
             float t = (time - hold.start()) / 20.0F;
-            if (lift != null && t < HOLD_POSE) {
+            if (lift != null && t < HOLD_POSE && !hold.oneHand()) {
                 // ripping the rock out / grabbing: the whole body
                 lift.apply(m, hold.rock() ? t : Math.max(0.3F, t));
                 return;
@@ -291,9 +307,19 @@ public final class HulkAnimator {
             base = anims.get("idle_pose");
         }
         if (base != null) {
-            base.apply(m, t, hold != null ? bone -> !ARM_BONES.contains(bone) : null);
+            java.util.function.Predicate<String> free = hold == null ? null
+                    : hold.oneHand() ? bone -> !RIGHT_ARM.contains(bone) : bone -> !ARM_BONES.contains(bone);
+            base.apply(m, t, free);
         }
         if (hold != null) {
+            if (hold.oneHand()) {
+                // the small creature in the right hand, arm forward
+                GeoAnimation grab = anims.get("hulk_grab");
+                if (grab != null) {
+                    grab.apply(m, 0.2F, RIGHT_ARM::contains);
+                }
+                return;
+            }
             GeoAnimation lift = anims.get(LIFT);
             if (lift != null) {
                 // arms up holding the rock / creature, the legs keep walking
@@ -321,7 +347,7 @@ public final class HulkAnimator {
     }
 
     /** The rock between the two hands (midpoint of the item bones). */
-    private static void drawHeldRock(PoseStack pose, MultiBufferSource buffers, int light, GeoModel m) {
+    private static void drawHeldRock(PoseStack pose, MultiBufferSource buffers, int light, GeoModel m, float size) {
         PoseStack right = new PoseStack();
         PoseStack left = new PoseStack();
         if (!m.transformToBone("RIGHT_ITEM", right) || !m.transformToBone("LEFT_ITEM", left)) {
@@ -331,8 +357,8 @@ public final class HulkAnimator {
         org.joml.Vector3f b = left.last().pose().getTranslation(new org.joml.Vector3f());
         pose.pushPose();
         // a little above the hands
-        pose.translate((a.x() + b.x()) * 0.5F, (a.y() + b.y()) * 0.5F - 0.35F, (a.z() + b.z()) * 0.5F);
-        HulkBoulderRenderer.drawRock(pose, buffers, light, 1.6F);
+        pose.translate((a.x() + b.x()) * 0.5F, (a.y() + b.y()) * 0.5F - 0.3F * size, (a.z() + b.z()) * 0.5F);
+        HulkBoulderRenderer.drawRock(pose, buffers, light, 1.2F * size);
         pose.popPose();
     }
 
@@ -383,15 +409,20 @@ public final class HulkAnimator {
             return;
         }
         net.minecraft.client.model.geom.ModelPart vanilla = side == HumanoidArm.RIGHT ? parent.rightArm : parent.leftArm;
-        float k = fit(m) * 1.25F;
+        GeoAnimation idle = anims.get("idle_pose");
+        if (idle != null) {
+            idle.apply(m, 0.0F);
+        }
+        float k = fit(m) * 1.55F;
         pose.pushPose();
         pose.translate(vanilla.x / 16.0F, vanilla.y / 16.0F, vanilla.z / 16.0F);
         pose.mulPose(new org.joml.Quaternionf().rotationZYX(vanilla.zRot, vanilla.yRot, vanilla.xRot));
         pose.scale(k, k, k);
         // the Hulk's shoulder pivot lands on the vanilla shoulder
         pose.translate(-arm.pivotX() / 16.0F, -arm.pivotY() / 16.0F, -arm.pivotZ() / 16.0F);
+        // the Hulk's own (bent, massive) arm, not straightened like a player's
         m.renderBone(arm, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light,
-                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, false);
+                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
         pose.popPose();
     }
 }

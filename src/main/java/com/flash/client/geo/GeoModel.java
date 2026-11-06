@@ -74,6 +74,8 @@ public final class GeoModel {
         public float sz = 1.0F;
         /** False: the bone and its children are not drawn. */
         public boolean visible = true;
+        /** True: only this bone's own cubes are skipped (the children are drawn). */
+        public boolean hideCubes;
 
         Bone(String name, float px, float py, float pz, float rx, float ry, float rz) {
             this.name = name;
@@ -90,6 +92,7 @@ public final class GeoModel {
             arx = ary = arz = 0.0F;
             sx = sy = sz = 1.0F;
             visible = true;
+            hideCubes = false;
         }
 
         public float pivotX() {
@@ -230,6 +233,8 @@ public final class GeoModel {
                 for (Bone bone : model.bones.values()) {
                     if (bone.name.startsWith("glow")) {
                         markGroup(bone, 1);
+                    } else if (bone.name.startsWith("glass")) {
+                        markGroup(bone, 2); // translucent, drawn last
                     }
                 }
             }
@@ -437,7 +442,7 @@ public final class GeoModel {
             pose.scale(bone.sx, bone.sy, bone.sz);
         }
         pose.translate(-bone.px / 16.0F, -bone.py / 16.0F, -bone.pz / 16.0F);
-        if (bone.group == group) {
+        if (bone.group == group && !bone.hideCubes) {
             for (Cube cube : bone.cubes) {
                 drawCube(cube, pose, consumer, light, overlay, r, g, b, a);
             }

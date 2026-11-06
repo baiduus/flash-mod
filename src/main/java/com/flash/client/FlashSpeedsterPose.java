@@ -247,6 +247,23 @@ public final class FlashSpeedsterPose {
                     b.visible = !suit;
                 }
             }
+            // the skin under the suit pieces is not drawn (like FlashSuitSkinHider)
+            net.minecraft.world.entity.EquipmentSlot H = net.minecraft.world.entity.EquipmentSlot.HEAD;
+            net.minecraft.world.entity.EquipmentSlot C = net.minecraft.world.entity.EquipmentSlot.CHEST;
+            net.minecraft.world.entity.EquipmentSlot L = net.minecraft.world.entity.EquipmentSlot.LEGS;
+            net.minecraft.world.entity.EquipmentSlot F = net.minecraft.world.entity.EquipmentSlot.FEET;
+            if (FlashSuitSkinHider.worn(player, H) && !com.flash.config.FlashClientConfig.MASK_OPEN_MOUTH.get()) {
+                hide(body, "head");
+            }
+            if (FlashSuitSkinHider.worn(player, C)) {
+                hide(body, "torso");
+                hide(body, "right_arm");
+                hide(body, "left_arm");
+            }
+            if (FlashSuitSkinHider.worn(player, L) && FlashSuitSkinHider.worn(player, F)) {
+                hide(body, "right_leg");
+                hide(body, "left_leg");
+            }
             body.render(pose, buffers.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())),
                     light, overlay, 0, 1.0F, 1.0F, 1.0F, 1.0F);
             if (suit) {
@@ -285,6 +302,14 @@ public final class FlashSpeedsterPose {
                 }
                 pose.popPose();
             }
+        }
+    }
+
+    /** Hides the skin cube of a bone (the child bones, like the ring position, still move). */
+    private static void hide(com.flash.client.geo.GeoModel body, String bone) {
+        com.flash.client.geo.GeoModel.Bone b = body.bone(bone);
+        if (b != null) {
+            b.hideCubes = true;
         }
     }
 

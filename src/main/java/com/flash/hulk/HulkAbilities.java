@@ -93,7 +93,8 @@ public final class HulkAbilities {
             case BOULDER -> {
                 // first press: rip a rock out of the ground and hold it over the head
                 HOLDS.put(player.getUUID(), new Hold(HOLD_ROCK, -1, pickRock(player, level), player.tickCount));
-                sendAnim(player, ANIM_HOLD_ROCK);
+                // the size of the rock goes with the code (200 + size x 10)
+                sendAnim(player, 200 + Math.round(com.flash.entity.HulkBoulder.sizeFor(HulkPowers.activeLevel(player)) * 10.0F));
                 return;
             }
             case FURY -> {
@@ -115,7 +116,7 @@ public final class HulkAbilities {
                 HOLDS.put(player.getUUID(), new Hold(HOLD_ENTITY, target.getId(), ItemStack.EMPTY, player.tickCount));
                 level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ATTACK,
                         SoundSource.PLAYERS, 1.5F, 0.6F);
-                sendAnim(player, ANIM_HOLD_ENTITY);
+                sendAnim(player, oneHand(player, target) ? ANIM_HOLD_SMALL : ANIM_HOLD_ENTITY);
                 return;
             }
             default -> {
@@ -139,6 +140,13 @@ public final class HulkAbilities {
     public static final int ANIM_HOLD_ENTITY = 102;
     public static final int ANIM_THROW_ENTITY = 103;
     public static final int ANIM_RELEASE = 104;
+    public static final int ANIM_HOLD_SMALL = 105;
+
+    /** Small creatures (by hitbox, compared with the Hulk's size) are held in one hand. */
+    static boolean oneHand(ServerPlayer hulk, net.minecraft.world.entity.Entity target) {
+        return target.getBbHeight() <= Math.max(1.0F, hulk.getBbHeight() * 0.3F)
+                && target.getBbWidth() <= Math.max(0.9F, hulk.getBbWidth() * 0.5F);
+    }
 
     private static void sendAnim(ServerPlayer player, int anim) {
         com.flash.network.FlashNetwork.CHANNEL.send(
@@ -466,7 +474,9 @@ public final class HulkAbilities {
     private static void throwRock(ServerPlayer player, ServerLevel level, ItemStack rock) {
         com.flash.entity.HulkBoulder boulder = new com.flash.entity.HulkBoulder(level, player);
         boulder.setItem(rock.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : rock);
-        boulder.setDamage(14.0F + 2.0F * power(player));
+        float size = com.flash.entity.HulkBoulder.sizeFor(HulkPowers.activeLevel(player));
+        boulder.setSize(size);
+        boulder.setDamage((10.0F + 2.0F * power(player)) * (0.6F + 0.4F * size));
         boulder.setPos(player.getX(), player.getY() + player.getBbHeight() * 0.95D, player.getZ());
         boulder.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.9F, 0.5F);
         level.addFreshEntity(boulder);
@@ -520,12 +530,24 @@ public final class HulkAbilities {
             sendAnim(player, ANIM_RELEASE);
             return;
         }
-        // lifted over the head after the grab
-        double lift = Math.min(1.0D, (player.tickCount - hold.since()) / 10.0D);
         Vec3 f = flatLook(player);
-        double x = player.getX() + f.x * (0.4D + player.getBbWidth() * 0.3D);
-        double z = player.getZ() + f.z * (0.4D + player.getBbWidth() * 0.3D);
-        double y = player.getY() + player.getBbHeight() * (0.45D + 0.6D * lift);
+        double x;
+        double y;
+        double z;
+        if (oneHand(player, target)) {
+            // in the right hand, in front of the chest
+            double fwd = 0.35D + player.getBbWidth() * 0.6D;
+            double side = player.getBbWidth() * 0.45D;
+            x = player.getX() + f.x * fwd - f.z * side;
+            z = player.getZ() + f.z * fwd + f.x * side;
+            y = player.getY() + player.getBbHeight() * 0.5D - target.getBbHeight() * 0.5D;
+        } else {
+            // with both hands, lifted over the head after the grab
+            double lift = Math.min(1.0D, (player.tickCount - hold.since()) / 10.0D);
+            x = player.getX() + f.x * (0.4D + player.getBbWidth() * 0.3D);
+            z = player.getZ() + f.z * (0.4D + player.getBbWidth() * 0.3D);
+            y = player.getY() + player.getBbHeight() * (0.45D + 0.6D * lift);
+        }
         target.setDeltaMovement(Vec3.ZERO);
         target.fallDistance = 0.0F;
         if (target instanceof ServerPlayer held) {

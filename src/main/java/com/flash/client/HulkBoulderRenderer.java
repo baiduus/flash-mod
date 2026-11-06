@@ -38,7 +38,7 @@ public class HulkBoulderRenderer extends EntityRenderer<HulkBoulder> {
         pose.translate(0.0D, entity.getBbHeight() * 0.5D, 0.0D);
         pose.mulPose(Axis.YP.rotationDegrees(-yaw));
         pose.mulPose(Axis.XP.rotationDegrees((entity.tickCount + partialTick) * 25.0F));
-        float s = 0.6F;
+        float s = 0.6F * entity.getSize();
         // model space has y pointing down
         pose.scale(-s, -s, s);
         pose.translate(-model.centerX() / 16.0F, -model.centerY() / 16.0F, -model.centerZ() / 16.0F);

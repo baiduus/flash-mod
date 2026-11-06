@@ -269,6 +269,98 @@ def chamber():
 
 
 # ----------------------------------------------------------------------------------
+# gamma chamber v3: round (16-sided) chamber, 1 block footprint, 3.5 blocks tall
+# ----------------------------------------------------------------------------------
+
+def chamber_round():
+    m = Model("gamma_chamber", 256, 256)
+    DARK = metal((44, 48, 54))
+    MID = metal((120, 126, 134), seams=8.0)
+    GOLD = metal((230, 160, 30), seams=0, rivets=False)
+    GLASS = glass((90, 230, 110))
+    GREEN = glow((40, 210, 70))
+    BEAM = glow((60, 255, 90), alpha=170)
+    N = 16
+    step = 360.0 / N
+
+    def ring(bone, radius, y, w, h, d, mat, offset=0.0):
+        for i in range(N):
+            m.cube(bone, (-w / 2, y, radius - d), (w, h, d), mat, rotation=(0, step * i + offset, 0), pivot=(0, 0, 0))
+
+    def octagon(bone, r, y, h, mat):
+        m.cube(bone, (-r, y, -r), (2 * r, h, 2 * r), mat)
+        m.cube(bone, (-r, y, -r), (2 * r, h, 2 * r), mat, rotation=(0, 45, 0), pivot=(0, 0, 0))
+
+    frame = m.bone("frame")
+    # base: round plinth with a gold trim
+    ring(frame, 8.0, 0, 3.4, 3, 3, DARK)
+    octagon(frame, 5.0, 0, 3, DARK)
+    ring(frame, 7.6, 3, 3.2, 1, 1.4, GOLD)
+    ring(frame, 6.2, 3, 2.6, 0.5, 1.6, MID)
+    # four pillars
+    for k in range(4):
+        a = 45 + 90 * k
+        m.cube(frame, (-1, 4, 6.0), (2, 39, 2), MID, rotation=(0, a, 0), pivot=(0, 0, 0))
+        m.cube(frame, (-1.5, 3, 5.5), (3, 2, 3), DARK, rotation=(0, a, 0), pivot=(0, 0, 0))
+        m.cube(frame, (-1.5, 41, 5.5), (3, 2, 3), DARK, rotation=(0, a, 0), pivot=(0, 0, 0))
+    # top: round cap, gold trim, dome and the capsule holder
+    ring(frame, 8.0, 43, 3.4, 3, 3, DARK)
+    octagon(frame, 5.0, 45, 1, DARK)
+    ring(frame, 7.6, 46, 3.2, 1, 1.4, GOLD)
+    ring(frame, 5.5, 46, 2.3, 2, 2, MID)
+    octagon(frame, 3.6, 47, 2, MID)
+    octagon(frame, 1.8, 49, 1, DARK)
+    # control panel on the front
+    m.cube(frame, (-2, 0, -9.2), (4, 6, 1.4), DARK)
+
+    glassb = m.bone("glass_tube")
+    ring(glassb, 6.4, 4, 2.7, 39, 0.4, GLASS)
+
+    pad = m.bone("glow_pad", (0, 3, 0))
+    octagon(pad, 4.2, 3, 1, GREEN)
+    top = m.bone("glow_top", (0, 42, 0))
+    octagon(top, 4.2, 42, 1, GREEN)
+    scr = m.bone("glow_screen", (0, 4, -9))
+    m.cube(scr, (-1.5, 2, -9.5), (3, 3, 0.5), screen())
+    for name, y in (("glow_ring_low", 11), ("glow_ring_high", 30)):
+        b = m.bone(name, (0, y, 0))
+        ring(b, 5.9, y, 2.4, 1, 0.7, GREEN)
+    beam = m.bone("glow_beam", (0, 4, 0))
+    m.cube(beam, (-1.5, 4, -1.5), (3, 38, 3), BEAM)
+    m.cube(beam, (-1.5, 4, -1.5), (3, 38, 3), BEAM, rotation=(0, 45, 0), pivot=(0, 0, 0))
+    cap = m.bone("glow_capsule", (0, 50, 0))
+    m.cube(cap, (-1, 50, -1), (2, 5, 2), GREEN)
+    m.cube(cap, (-1, 50, -1), (2, 5, 2), GREEN, rotation=(0, 45, 0), pivot=(0, 0, 0))
+    m.cube(cap, (-1.5, 55, -1.5), (3, 1, 3), DARK)
+    m.save()
+
+    hidden = keys([(0, [0, 1, 0])])
+    save_anims("gamma_chamber", {
+        "idle": (8.0, {
+            "glow_ring_low": {"position": wave(8.0, 2.0), "rotation": spin(8.0, 1.0)},
+            "glow_ring_high": {"position": wave(8.0, 2.0, phase=math.pi), "rotation": spin(8.0, -1.0)},
+            "glow_beam": {"scale": hidden},
+        }),
+        "loaded": (2.0, {
+            "glow_ring_low": {"position": wave(2.0, 4.0), "rotation": spin(2.0, 1.0)},
+            "glow_ring_high": {"position": wave(2.0, 4.0, phase=math.pi), "rotation": spin(2.0, -1.0)},
+            "glow_beam": {"scale": keys([(0, [0.25, 1, 0.25]), (1.0, [0.4, 1, 0.4]), (2.0, [0.25, 1, 0.25])])},
+            "glow_capsule": {"scale": keys([(0, [1, 1, 1]), (1.0, [1.25, 1.05, 1.25]), (2.0, [1, 1, 1])])},
+        }),
+        "active": (1.0, {
+            "glow_ring_low": {"position": keys([(0, [0, 0, 0]), (0.5, [0, 28, 0]), (1.0, [0, 0, 0])]),
+                              "rotation": spin(1.0, 2.0)},
+            "glow_ring_high": {"position": keys([(0, [0, 0, 0]), (0.5, [0, -24, 0]), (1.0, [0, 0, 0])]),
+                               "rotation": spin(1.0, -2.0)},
+            "glow_beam": {"scale": keys([(0, [0.9, 1, 0.9]), (0.25, [1.7, 1, 1.7]), (0.5, [1.0, 1, 1.0]),
+                                         (0.75, [1.9, 1, 1.9]), (1.0, [0.9, 1, 0.9])])},
+            "glow_capsule": {"scale": keys([(0, [1, 1, 1]), (0.5, [1.35, 0.9, 1.35]), (1.0, [1, 1, 1])])},
+            "glow_pad": {"scale": keys([(0, [1, 1, 1]), (0.5, [1.15, 1, 1.15]), (1.0, [1, 1, 1])])},
+        }),
+    })
+
+
+# ----------------------------------------------------------------------------------
 # Acceleration Force portal frame (ring in the XY plane, radius ~ 1 block = 16 px)
 # ----------------------------------------------------------------------------------
 
@@ -318,6 +410,6 @@ def portal():
 
 
 if __name__ == "__main__":
-    # the gamma chamber went back to its block model (tools/gen_machine.py)
+    chamber_round()
     portal()
     print("ok")

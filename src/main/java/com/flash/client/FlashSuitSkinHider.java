@@ -29,21 +29,32 @@ public final class FlashSuitSkinHider {
         if (!(model instanceof PlayerModel<?> playerModel)) {
             return;
         }
+        // the suit replaces the skin under it, so the two never fight for the same pixels
         if (worn(player, EquipmentSlot.HEAD)) {
             playerModel.hat.visible = false;
+            if (!com.flash.config.FlashClientConfig.MASK_OPEN_MOUTH.get()) {
+                playerModel.head.visible = false; // closed mask: nothing of the face shows
+            }
         }
         if (worn(player, EquipmentSlot.CHEST)) {
             playerModel.jacket.visible = false;
             playerModel.leftSleeve.visible = false;
             playerModel.rightSleeve.visible = false;
+            playerModel.body.visible = false;
+            playerModel.leftArm.visible = false;
+            playerModel.rightArm.visible = false;
         }
         if (worn(player, EquipmentSlot.LEGS) || worn(player, EquipmentSlot.FEET)) {
             playerModel.leftPants.visible = false;
             playerModel.rightPants.visible = false;
         }
+        if (worn(player, EquipmentSlot.LEGS) && worn(player, EquipmentSlot.FEET)) {
+            playerModel.leftLeg.visible = false;
+            playerModel.rightLeg.visible = false;
+        }
     }
 
-    private static boolean worn(Player player, EquipmentSlot slot) {
+    static boolean worn(Player player, EquipmentSlot slot) {
         return player.getItemBySlot(slot).getItem() instanceof FlashSuitItem;
     }
 }

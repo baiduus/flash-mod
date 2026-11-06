@@ -71,6 +71,7 @@ public final class FlashSuitClient {
             FlashSpeedsterPose.reset();
             AccelerationPortalRenderer.resetFrame();
             FlashGeoSuitLayer.reset();
+            GammaChamberRenderer.reset();
             FlashRingLayer.reset();
         });
     }
