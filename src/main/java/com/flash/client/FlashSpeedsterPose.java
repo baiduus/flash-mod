@@ -142,28 +142,22 @@ public final class FlashSpeedsterPose {
                 m.leftSleeve, m.rightLeg, m.leftLeg, m.rightPants, m.leftPants};
     }
 
-    /**
-     * First of the pre-render handlers: the player model is shared by every player, and
-     * Minecraft's setupAnim does not reset every offset (head / body x and z, leg x), so a
-     * posed frame would leave the next ones with a displaced head and body. Every part goes
-     * back to its rest pose before Minecraft poses it again.
-     */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onRenderLivingFirst(RenderLivingEvent.Pre<?, ?> event) {
-        if (event.getEntity() instanceof AbstractClientPlayer
-                && event.getRenderer().getModel() instanceof PlayerModel<?> model) {
-            for (ModelPart part : parts(model)) {
-                part.resetPose();
-            }
-        }
+    /** Player being drawn by the speedster run this frame (its body, suit and ring). */
+    private static UUID posingFor;
+
+    public static boolean isPosing(AbstractClientPlayer player) {
+        return posingFor != null && posingFor.equals(player.getUUID());
     }
 
     /** Last of the pre-render handlers (after the skin hiders): hides the body draw when posing. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer player)
-                || !(event.getRenderer().getModel() instanceof PlayerModel<?> model)
-                || event.isCanceled() || choose(player, event.getPartialTick()) == null) {
+                || !(event.getRenderer().getModel() instanceof PlayerModel<?> model)) {
+            return;
+        }
+        posingFor = null;
+        if (event.isCanceled() || choose(player, event.getPartialTick()) == null) {
             return;
         }
         ModelPart[] ps = parts(model);
@@ -173,24 +167,36 @@ public final class FlashSpeedsterPose {
             ps[i].visible = false;
         }
         hiddenFor = player.getUUID();
+        posingFor = player.getUUID();
     }
 
-    // ------------------------------------------------------------------
-    // The posing layer (first layer of the player renderer)
-    // ------------------------------------------------------------------
-
-    /** Puts the posing layer before the armor layer (falls back to the end of the list). */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static void install(PlayerRenderer renderer) {
-        Layer layer = new Layer(renderer);
-        try {
-            List layers = net.minecraftforge.fml.util.ObfuscationReflectionHelper.getPrivateValue(
-                    LivingEntityRenderer.class, renderer, "f_115291_");
-            layers.add(0, layer);
-        } catch (Exception ex) {
-            renderer.addLayer(layer);
+    @SubscribeEvent
+    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
+        if (event.getEntity() instanceof AbstractClientPlayer player && isPosing(player)) {
+            posingFor = null;
         }
     }
+
+    // ------------------------------------------------------------------
+    // The layer that draws the animated body
+    // ------------------------------------------------------------------
+
+    public static void install(PlayerRenderer renderer) {
+        renderer.addLayer(new Layer(renderer));
+    }
+
+    private static final ResourceLocation SKIN_GEO = new ResourceLocation(FlashMod.MODID, "geo/player_skin.geo.json");
+    private static final ResourceLocation SKIN_SLIM_GEO =
+            new ResourceLocation(FlashMod.MODID, "geo/player_skin_slim.geo.json");
+    private static com.flash.client.geo.GeoModel skin;
+    private static com.flash.client.geo.GeoModel skinSlim;
+    /** Root ("body" bone) pivot: 0.7 blocks above the feet, in model pixels (y down, feet at 24). */
+    private static final float ROOT_PIVOT_Y = 24.0F - 11.2F;
+    private static final String[] OUTER = {"torso_layer", "head_layer", "right_arm_layer", "left_arm_layer",
+            "right_leg_layer", "left_leg_layer"};
+    /** Suit bone (the pack names its +x limbs "right") and the animation bone that moves it. */
+    private static final String[][] SUIT_BONES = {{"head", "head"}, {"body", "torso"}, {"right_arm", "left_arm"},
+            {"left_arm", "right_arm"}, {"right_leg", "left_leg"}, {"left_leg", "right_leg"}};
 
     public static class Layer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
@@ -206,124 +212,83 @@ public final class FlashSpeedsterPose {
                 return;
             }
             hiddenFor = null;
-            PlayerModel<AbstractClientPlayer> model = this.getParentModel();
-            ModelPart[] ps = parts(model);
+            PlayerModel<AbstractClientPlayer> parent = this.getParentModel();
+            ModelPart[] ps = parts(parent);
             for (int i = 0; i < ps.length && savedVisible != null && i < savedVisible.length; i++) {
                 ps[i].visible = savedVisible[i];
             }
-            Choice c = choose(player, partialTick);
-            if (c != null) {
-                applyPose(model, c.animation(), c.seconds());
-            }
             int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
-            model.renderToBuffer(pose, buffers.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())),
-                    light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Pose
-    // ------------------------------------------------------------------
-
-    /** Root ("body" bone) pivot: 0.7 blocks above the feet, in model pixels (y down, feet at 24). */
-    private static final float ROOT_PIVOT_Y = 24.0F - 11.2F;
-
-    private static void applyPose(PlayerModel<?> m, GeoAnimation a, float t) {
-        float[] rot = new float[3];
-        float[] pos = new float[3];
-        // root: rotation about its pivot plus a translation, applied to every part
-        double[][] rootR = identity();
-        double[] rootT = {0.0D, 0.0D, 0.0D};
-        if (a.sampleBone("body", t, rot, pos)) {
-            rootR = rotZYX(rad(rot[2]), rad(rot[1]), rad(rot[0]));
-            rootT = new double[] {pos[0], -pos[1], pos[2]};
-        }
-        pose(m.body, a, "torso", t, 0.0F, 0.0F, 0.0F, rootR, rootT, rot, pos, false);
-        pose(m.head, a, "head", t, 0.0F, 0.0F, 0.0F, rootR, rootT, rot, pos, true);
-        pose(m.rightArm, a, "right_arm", t, -5.0F, 2.0F, 0.0F, rootR, rootT, rot, pos, false);
-        pose(m.leftArm, a, "left_arm", t, 5.0F, 2.0F, 0.0F, rootR, rootT, rot, pos, false);
-        pose(m.rightLeg, a, "right_leg", t, -1.9F, 12.0F, 0.0F, rootR, rootT, rot, pos, false);
-        pose(m.leftLeg, a, "left_leg", t, 1.9F, 12.0F, 0.0F, rootR, rootT, rot, pos, false);
-        m.hat.copyFrom(m.head);
-        m.jacket.copyFrom(m.body);
-        m.rightSleeve.copyFrom(m.rightArm);
-        m.leftSleeve.copyFrom(m.leftArm);
-        m.rightPants.copyFrom(m.rightLeg);
-        m.leftPants.copyFrom(m.leftLeg);
-    }
-
-    /**
-     * One part: the animated local transform (the head keeps looking around on top of it),
-     * then the root transform.
-     */
-    private static void pose(ModelPart part, GeoAnimation a, String bone, float t, float dx, float dy, float dz,
-                             double[][] rootR, double[] rootT, float[] rot, float[] pos, boolean keepLook) {
-        double[] offset;
-        double[][] r;
-        if (a.sampleBone(bone, t, rot, pos)) {
-            offset = new double[] {dx + pos[0], dy - pos[1], dz + pos[2]};
-            float lx = keepLook ? part.xRot : 0.0F;
-            float ly = keepLook ? part.yRot : 0.0F;
-            r = rotZYX(rad(rot[2]), rad(rot[1]) + ly, rad(rot[0]) + lx);
-        } else {
-            // not animated by this clip: the normal pose (head look, ...) at the default place
-            offset = new double[] {dx, dy, dz};
-            r = rotZYX(part.zRot, part.yRot, part.xRot);
-            if (!keepLook) {
-                r = rotZYX(0.0F, 0.0F, 0.0F);
+            Choice c = choose(player, partialTick);
+            if (c == null) {
+                // stopped between the two checks: the normal body
+                parent.renderToBuffer(pose, buffers.getBuffer(RenderType.entityTranslucent(
+                        player.getSkinTextureLocation())), light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+                return;
+            }
+            GeoAnimation a = c.animation();
+            float t = c.seconds();
+            boolean slim = "slim".equals(player.getModelName());
+            if (skin == null) {
+                skin = com.flash.client.geo.GeoModel.load(SKIN_GEO, null);
+                skinSlim = com.flash.client.geo.GeoModel.load(SKIN_SLIM_GEO, null);
+            }
+            com.flash.client.geo.GeoModel body = slim ? skinSlim : skin;
+            body.reset();
+            a.apply(body, t);
+            com.flash.client.geo.GeoModel.Bone head = body.bone("head");
+            if (head != null) {
+                head.ary += netHeadYaw;
+                head.arx += headPitch;
+            }
+            boolean suit = com.flash.item.FlashSuitItem.countWorn(player) > 0;
+            for (String outer : OUTER) {
+                com.flash.client.geo.GeoModel.Bone b = body.bone(outer);
+                if (b != null) {
+                    b.visible = !suit;
+                }
+            }
+            body.render(pose, buffers.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())),
+                    light, overlay, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+            if (suit) {
+                float[] rot = new float[3];
+                float[] pos = new float[3];
+                pose.pushPose();
+                if (a.sampleBone("body", t, rot, pos)) {
+                    pose.translate(pos[0] / 16.0F, (ROOT_PIVOT_Y - pos[1]) / 16.0F, pos[2] / 16.0F);
+                    pose.mulPose(new org.joml.Quaternionf().rotationZYX(rad(rot[2]), rad(rot[1]), rad(rot[0])));
+                    pose.translate(0.0F, -ROOT_PIVOT_Y / 16.0F, 0.0F);
+                }
+                FlashGeoSuitLayer.drawAnimated(player, pose, buffers, light, suitModel -> {
+                    for (String[] pair : SUIT_BONES) {
+                        com.flash.client.geo.GeoModel.Bone b = suitModel.bone(pair[0]);
+                        if (b == null || !a.sampleBone(pair[1], t, rot, pos)) {
+                            continue;
+                        }
+                        b.arx += rot[0];
+                        b.ary += rot[1];
+                        b.arz += rot[2];
+                        b.ax += pos[0];
+                        b.ay -= pos[1];
+                        b.az += pos[2];
+                        if ("head".equals(pair[0])) {
+                            b.ary += netHeadYaw;
+                            b.arx += headPitch;
+                        }
+                    }
+                });
+                pose.popPose();
+            }
+            if (FlashClientRing.has(player)) {
+                pose.pushPose();
+                if (body.transformToBone("right_arm", pose)) {
+                    FlashRingLayer.drawRing(pose, buffers, light, slim);
+                }
+                pose.popPose();
             }
         }
-        // offset' = R_root (offset - pivot) + pivot + T_root ; rotation' = R_root * R
-        double[] rel = {offset[0], offset[1] - ROOT_PIVOT_Y, offset[2]};
-        double[] moved = mul(rootR, rel);
-        part.x = (float) (moved[0] + rootT[0]);
-        part.y = (float) (moved[1] + ROOT_PIVOT_Y + rootT[1]);
-        part.z = (float) (moved[2] + rootT[2]);
-        double[][] fin = mul(rootR, r);
-        // decompose Rz * Ry * Rx
-        double sy = -fin[2][0];
-        sy = Math.max(-1.0D, Math.min(1.0D, sy));
-        part.yRot = (float) Math.asin(sy);
-        part.xRot = (float) Math.atan2(fin[2][1], fin[2][2]);
-        part.zRot = (float) Math.atan2(fin[1][0], fin[0][0]);
     }
 
     private static float rad(float deg) {
         return deg * ((float) Math.PI / 180.0F);
-    }
-
-    private static double[][] identity() {
-        return new double[][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-    }
-
-    /** Rz(z) * Ry(y) * Rx(x), like {@code Quaternionf.rotationZYX(z, y, x)} of a ModelPart. */
-    private static double[][] rotZYX(double z, double y, double x) {
-        double cx = Math.cos(x);
-        double sx = Math.sin(x);
-        double cy = Math.cos(y);
-        double sy = Math.sin(y);
-        double cz = Math.cos(z);
-        double sz = Math.sin(z);
-        double[][] rx = {{1, 0, 0}, {0, cx, -sx}, {0, sx, cx}};
-        double[][] ry = {{cy, 0, sy}, {0, 1, 0}, {-sy, 0, cy}};
-        double[][] rz = {{cz, -sz, 0}, {sz, cz, 0}, {0, 0, 1}};
-        return mul(rz, mul(ry, rx));
-    }
-
-    private static double[][] mul(double[][] a, double[][] b) {
-        double[][] out = new double[3][3];
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                out[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
-            }
-        }
-        return out;
-    }
-
-    private static double[] mul(double[][] a, double[] v) {
-        return new double[] {
-                a[0][0] * v[0] + a[0][1] * v[1] + a[0][2] * v[2],
-                a[1][0] * v[0] + a[1][1] * v[1] + a[1][2] * v[2],
-                a[2][0] * v[0] + a[2][1] * v[1] + a[2][2] * v[2]};
     }
 }

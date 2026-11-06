@@ -24,7 +24,7 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
     public void render(PoseStack poseStack, MultiBufferSource buffers, int light,
                        AbstractClientPlayer player, float limbSwing, float limbSwingAmount,
                        float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (!FlashClientRing.has(player) || player.isInvisible()) {
+        if (!FlashClientRing.has(player) || player.isInvisible() || FlashSpeedsterPose.isPosing(player)) {
             return;
         }
         poseStack.pushPose();
