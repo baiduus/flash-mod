@@ -142,6 +142,22 @@ public final class FlashSpeedsterPose {
                 m.leftSleeve, m.rightLeg, m.leftLeg, m.rightPants, m.leftPants};
     }
 
+    /**
+     * First of the pre-render handlers: the player model is shared by every player, and
+     * Minecraft's setupAnim does not reset every offset (head / body x and z, leg x), so a
+     * posed frame would leave the next ones with a displaced head and body. Every part goes
+     * back to its rest pose before Minecraft poses it again.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onRenderLivingFirst(RenderLivingEvent.Pre<?, ?> event) {
+        if (event.getEntity() instanceof AbstractClientPlayer
+                && event.getRenderer().getModel() instanceof PlayerModel<?> model) {
+            for (ModelPart part : parts(model)) {
+                part.resetPose();
+            }
+        }
+    }
+
     /** Last of the pre-render handlers (after the skin hiders): hides the body draw when posing. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderLiving(RenderLivingEvent.Pre<?, ?> event) {

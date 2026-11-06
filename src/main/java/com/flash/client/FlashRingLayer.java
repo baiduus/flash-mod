@@ -53,10 +53,10 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         }
         ring.reset();
         float outer = slim ? -2.0F : -3.0F;
-        float scale = 0.17F;
+        float scale = 0.13F;
         poseStack.pushPose();
         // the finger: just inside the outer-front corner of the hand
-        poseStack.translate((outer + 0.65F) / 16.0F, 9.2F / 16.0F, -1.35F / 16.0F);
+        poseStack.translate((outer + 0.5F) / 16.0F, 9.2F / 16.0F, -1.5F / 16.0F);
         // the emblem of the model faces -Z: turn it to the outer side of the hand
         poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(90.0F));
         poseStack.scale(scale, scale, scale);
