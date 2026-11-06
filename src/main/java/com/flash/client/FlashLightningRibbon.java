@@ -52,6 +52,14 @@ public final class FlashLightningRibbon {
     private static final float[] BOLT_RED_BRIGHT = {1.0F, 0.26F, 0.18F};
     private static final float[] BOLT_RED_WHITE = {1.0F, 0.84F, 0.80F};
 
+    // Velocity-9 (Zoom-like electric blue)
+    private static final float[] BOLT_BLUE_DARK = {0.05F, 0.25F, 1.0F};
+    private static final float[] BOLT_BLUE_BRIGHT = {0.20F, 0.75F, 1.0F};
+    private static final float[] BOLT_BLUE_WHITE = {0.82F, 0.95F, 1.0F};
+
+    /** Set by the renderers while they draw a player under V-9: every bolt turns blue. */
+    public static boolean blue;
+
     private FlashLightningRibbon() {
     }
 
@@ -81,9 +89,9 @@ public final class FlashLightningRibbon {
     private static void drawGradientPass(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
                                          List<Vec3> points, float width, float whiten, float alpha,
                                          boolean negative) {
-        float[] from = negative ? BOLT_RED_DARK : BOLT_ORANGE;
-        float[] to = negative ? BOLT_RED_BRIGHT : BOLT_YELLOW;
-        float[] white = negative ? BOLT_RED_WHITE : BOLT_WHITE;
+        float[] from = blue ? BOLT_BLUE_DARK : negative ? BOLT_RED_DARK : BOLT_ORANGE;
+        float[] to = blue ? BOLT_BLUE_BRIGHT : negative ? BOLT_RED_BRIGHT : BOLT_YELLOW;
+        float[] white = blue ? BOLT_BLUE_WHITE : negative ? BOLT_RED_WHITE : BOLT_WHITE;
         int n = points.size();
         for (int i = 1; i < n; i++) {
             Vec3 start = points.get(i - 1);

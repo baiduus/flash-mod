@@ -46,6 +46,9 @@ public final class FlashPowers {
         if (!data.contains(ROOT)) {
             return false;
         }
+        if (FlashV9.isSuppressed(player)) {
+            return false; // the 30 seconds without powers after the V-9
+        }
         CompoundTag flash = data.getCompound(ROOT);
         return flash.getBoolean(HAS_POWERS)
                 || isTemporaryActive(flash, gameTime(player));
@@ -104,12 +107,19 @@ public final class FlashPowers {
         CompoundTag flash = player.getPersistentData().getCompound(ROOT);
         if (flash.getBoolean(HAS_POWERS)) {
             int stored = getStoredMax(player);
-            if (stored >= FlashSpeedLevels.BASE_MAX_LEVEL && FlashAmplifier.isEquipped(player)) {
-                return FlashSpeedLevels.MAX_LEVEL;
-            }
-            return stored;
+            int limit = stored >= FlashSpeedLevels.BASE_MAX_LEVEL && FlashAmplifier.isEquipped(player)
+                    ? FlashSpeedLevels.MAX_LEVEL
+                    : stored;
+            // the V-9 adds five levels for as long as it lasts
+            return FlashSpeedLevels.clamp(limit + FlashV9.bonus(player));
         }
         return FlashSpeedLevels.clamp(flash.getInt(TEMP_LEVEL));
+    }
+
+    /** The stored selection, even while the powers are suppressed. */
+    private static int storedSelected(Player player) {
+        CompoundTag flash = player.getPersistentData().getCompound(ROOT);
+        return flash.contains(SELECTED_LEVEL) ? flash.getInt(SELECTED_LEVEL) : getStoredMax(player);
     }
 
     /** The trained level (never above 10), without the amplifier. */
@@ -234,7 +244,7 @@ public final class FlashPowers {
         if (!hasPermanentPowers(player) || isTemporary(player)) {
             return;
         }
-        write(player, getStoredMax(player), getSelectedLevel(player),
+        write(player, getStoredMax(player), storedSelected(player),
                 Math.max(0.0D, distance), getTotalDistance(player));
     }
 
@@ -245,7 +255,7 @@ public final class FlashPowers {
         }
 
         int max = getStoredMax(player);
-        int selected = getSelectedLevel(player);
+        int selected = storedSelected(player);
         double distance = getDistance(player) + amount;
         double total = getTotalDistance(player) + amount;
         int unlocked = 0;

@@ -286,5 +286,16 @@
   "level.flash.17": "Nível 17",
   "level.flash.18": "Nível 18",
   "level.flash.19": "Nível 19",
-  "level.flash.20": "Nível 20"
+  "level.flash.20": "Nível 20",
+  "item.flash.v9_capsule": "Cápsula V-9",
+  "tooltip.flash.v9_capsule": "Velocidade-9. Arraste sobre uma seringa vazia no inventário.",
+  "item.flash.syringe.v9": "Seringa com V-9",
+  "tooltip.flash.syringe.v9": "Segure o botão direito para injetar: +5 níveis de velocidade por 5 minutos.",
+  "message.flash.v9_injected": "Velocidade-9! Nível %s por 5 minutos.",
+  "message.flash.v9_first": "A Velocidade-9 te deu os poderes de velocidade! Nível %s por 5 minutos.",
+  "message.flash.v9_busy": "Seu corpo ainda está reagindo à última dose de V-9.",
+  "message.flash.v9_ended": "O V-9 acabou: suas células estão se decompondo e os poderes somem por 30 segundos.",
+  "message.flash.v9_powers_back": "Seus poderes voltaram.",
+  "gui.flash.theme.v9.title": "VELOCIDADE-9",
+  "message.flash.stand_nothing": "Agache e clique com o botão direito vestindo o traje, ou num suporte que tenha um."
 }

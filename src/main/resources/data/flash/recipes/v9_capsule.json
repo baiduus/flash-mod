@@ -1,0 +1,27 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " G ",
+  "SRS",
+  " L "
+ ],
+ "key": {
+  "G": {
+   "item": "minecraft:glass_pane"
+  },
+  "S": {
+   "item": "minecraft:sugar"
+  },
+  "R": {
+   "item": "minecraft:redstone"
+  },
+  "L": {
+   "item": "minecraft:lapis_lazuli"
+  }
+ },
+ "result": {
+  "item": "flash:v9_capsule",
+  "count": 2
+ }
+}

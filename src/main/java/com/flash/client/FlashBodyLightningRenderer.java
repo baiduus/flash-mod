@@ -87,8 +87,13 @@ public final class FlashBodyLightningRenderer {
         poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
         Matrix4f matrix = poseStack.last().pose();
         for (Player player : visible) {
-            renderPlayer(consumer, matrix, cameraPos, player,
-                    FlashClientVisualLevels.get(player), partialTick);
+            FlashLightningRibbon.blue = FlashClientVisualLevels.isV9(player);
+            try {
+                renderPlayer(consumer, matrix, cameraPos, player,
+                        FlashClientVisualLevels.get(player), partialTick);
+            } finally {
+                FlashLightningRibbon.blue = false;
+            }
         }
         poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);

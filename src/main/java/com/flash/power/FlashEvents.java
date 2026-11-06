@@ -45,6 +45,7 @@ public final class FlashEvents {
         FlashPowers.copy(event.getOriginal(), event.getEntity());
         FlashRing.copy(event.getOriginal(), event.getEntity());
         FlashAmplifier.copy(event.getOriginal(), event.getEntity());
+        FlashV9.copy(event.getOriginal(), event.getEntity());
         if (event.getEntity() instanceof ServerPlayer player) {
             resetTransient(player);
             FlashSpeed.apply(player);
@@ -167,6 +168,7 @@ public final class FlashEvents {
                     Component.translatable("message.flash.temporary_expired"), true);
         }
 
+        FlashV9.tick(player);
         FlashProgression.tick(player);
         FlashCombustion.tick(player);
         FlashStatusEffects.tick(player);

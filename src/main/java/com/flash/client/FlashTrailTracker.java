@@ -70,6 +70,7 @@ public final class FlashTrailTracker {
             TrailState state = STATES.computeIfAbsent(id, key -> new TrailState(key, gameTime));
             state.level = playerLevel;
             state.negative = FlashClientVisualLevels.isNegative(player);
+            state.v9 = FlashClientVisualLevels.isV9(player);
             // Never draw the trail of the local player in first person: it
             // would cover the view.
             if (player == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
@@ -143,6 +144,7 @@ public final class FlashTrailTracker {
         boolean initialized;
         int level = 3;
         boolean negative;
+        boolean v9;
 
         TrailState(UUID id, long gameTime) {
             this.id = id;

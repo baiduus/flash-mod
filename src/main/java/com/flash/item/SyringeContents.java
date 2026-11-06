@@ -29,6 +29,10 @@ public final class SyringeContents {
             "negative_force", 1, ModItems.NEGATIVE_CAPSULE::get,
             SyringeContents::injectNegativeForce));
 
+    /** Velocity-9: five extra levels for five minutes (see {@link com.flash.power.FlashV9}). */
+    public static final SyringeContent V9 = register(new SyringeContent(
+            "v9", 2, ModItems.V9_CAPSULE::get, com.flash.power.FlashV9::inject));
+
     private SyringeContents() {
     }
 

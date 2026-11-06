@@ -23,11 +23,17 @@ final class FlashHudStyle {
 
     /** Start colour of the gradient: orange, or dark red for the Negative force. */
     static int from() {
+        if (FlashClientVisualLevels.isLocalV9()) {
+            return 0xFF1A5CFF;
+        }
         return FlashClientVisualLevels.isLocalNegative() ? RED_DARK : ORANGE;
     }
 
     /** End colour of the gradient: yellow, or bright red for the Negative force. */
     static int to() {
+        if (FlashClientVisualLevels.isLocalV9()) {
+            return 0xFF7FE0FF;
+        }
         return FlashClientVisualLevels.isLocalNegative() ? RED_BRIGHT : YELLOW;
     }
 

@@ -14,22 +14,25 @@ import net.minecraftforge.network.PacketDistributor;
  * renderer. It is broadcast to the player and to every client tracking them,
  * so other players see the aura at the correct intensity.
  */
-public record FlashVisualSyncPacket(UUID playerId, int level, int activeMask, boolean negative) {
+public record FlashVisualSyncPacket(UUID playerId, int level, int activeMask, boolean negative,
+                                    boolean v9) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUUID(this.playerId);
         buffer.writeVarInt(this.level);
         buffer.writeVarInt(this.activeMask);
         buffer.writeBoolean(this.negative);
+        buffer.writeBoolean(this.v9);
     }
 
     public FlashVisualSyncPacket(FriendlyByteBuf buffer) {
-        this(buffer.readUUID(), buffer.readVarInt(), buffer.readVarInt(), buffer.readBoolean());
+        this(buffer.readUUID(), buffer.readVarInt(), buffer.readVarInt(), buffer.readBoolean(),
+                buffer.readBoolean());
     }
 
     public void handle(NetworkEvent.Context context) {
         context.enqueueWork(() -> FlashClientVisualLevels.set(
-                this.playerId, this.level, this.activeMask, this.negative));
+                this.playerId, this.level, this.activeMask, this.negative, this.v9));
         context.setPacketHandled(true);
     }
 
@@ -46,7 +49,8 @@ public record FlashVisualSyncPacket(UUID playerId, int level, int activeMask, bo
         FlashNetwork.CHANNEL.send(
                 PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
                 new FlashVisualSyncPacket(player.getUUID(), clamped, mask,
-                        clamped > 0 && FlashPowers.isNegative(player))
+                        clamped > 0 && FlashPowers.isNegative(player),
+                        clamped > 0 && com.flash.power.FlashV9.isActive(player))
         );
     }
 }

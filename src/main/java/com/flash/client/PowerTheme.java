@@ -26,9 +26,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFFFF4040, 0xFF3C0C0E, 0xFF1E0A0B,
             "gui.flash.theme.negative.title", "gui.flash.progress.subtitle", Icon.BOLT, true);
 
+    /** Velocity-9 running: electric blue. */
+    public static final PowerTheme V9 = new PowerTheme("v9",
+            0xFF3FB4FF, 0xFF0B2A44, 0xFF08162A,
+            "gui.flash.theme.v9.title", "gui.flash.progress.subtitle", Icon.BOLT, true);
+
     public static PowerTheme current() {
         if (!FlashClientData.hasPowers()) {
             return NEUTRAL;
+        }
+        if (FlashClientVisualLevels.isLocalV9()) {
+            return V9;
         }
         return FlashClientVisualLevels.isLocalNegative() ? NEGATIVE : FLASH;
     }

@@ -6,6 +6,12 @@
     "flash:content": 1
    },
    "model": "flash:item/syringe_negative"
+  },
+  {
+   "predicate": {
+    "flash:content": 2
+   },
+   "model": "flash:item/syringe_v9"
   }
  ]
 }

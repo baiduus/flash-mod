@@ -16,12 +16,32 @@ public final class FlashClientVisualLevels {
     private static final Map<UUID, Integer> LEVELS = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> ACTIVE = new ConcurrentHashMap<>();
     private static final java.util.Set<UUID> NEGATIVE = ConcurrentHashMap.newKeySet();
+    private static final java.util.Set<UUID> V9 = ConcurrentHashMap.newKeySet();
 
     private FlashClientVisualLevels() {
     }
 
     public static void set(UUID playerId, int level) {
         set(playerId, level, 0);
+    }
+
+    public static void set(UUID playerId, int level, int activeMask, boolean negative, boolean v9) {
+        if (v9) {
+            V9.add(playerId);
+        } else {
+            V9.remove(playerId);
+        }
+        set(playerId, level, activeMask, negative);
+    }
+
+    /** True while the player is under Velocity-9 (blue lightning). */
+    public static boolean isV9(Player player) {
+        return V9.contains(player.getUUID());
+    }
+
+    public static boolean isLocalV9() {
+        Player player = Minecraft.getInstance().player;
+        return player != null && V9.contains(player.getUUID());
     }
 
     public static void set(UUID playerId, int level, int activeMask, boolean negative) {
@@ -78,6 +98,7 @@ public final class FlashClientVisualLevels {
     }
 
     public static void reset() {
+        V9.clear();
         LEVELS.clear();
         ACTIVE.clear();
         NEGATIVE.clear();

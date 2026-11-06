@@ -38,30 +38,71 @@ public class FlashAmplifierLayer extends RenderLayer<AbstractClientPlayer, Playe
         if (!FlashClientRing.hasAmplifier(player) || player.isInvisible()) {
             return;
         }
-        // body box: x -4..4, y 0..12, z -2..2. Armor on the chest sits one pixel further out.
-        boolean armored = !player.getItemBySlot(EquipmentSlot.CHEST).isEmpty();
-        float z = armored ? -3.35F : -2.3F;
+        // Sits right on the chest surface: the suit hugs the body (+0.28), other armour
+        // is inflated by 1.0 and the bare skin's jacket layer by 0.25.
+        net.minecraft.world.item.ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        float surface;
+        if (chest.getItem() instanceof com.flash.item.FlashSuitItem) {
+            surface = -2.0F - 0.28F;
+        } else if (chest.getItem() instanceof net.minecraft.world.item.ArmorItem) {
+            surface = -3.0F;
+        } else {
+            surface = -2.0F - 0.25F;
+        }
+        surface -= 0.01F;
         ResourceLocation texture = FlashClientVisualLevels.isNegative(player) ? NEGATIVE : POSITIVE;
 
         poseStack.pushPose();
         this.getParentModel().body.translateAndRotate(poseStack);
         VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
-        PoseStack.Pose pose = poseStack.last();
-        Matrix4f m = pose.pose();
-        Matrix3f n = pose.normal();
-        float s = 1.0F / 16.0F;
-        // 7x7 pixel square centred on the chest (the texture has transparent corners)
-        float x0 = -3.5F * s, x1 = 3.5F * s, y0 = 0.7F * s, y1 = 7.7F * s, zz = z * s;
-        vertex(consumer, m, n, x1, y1, zz, 0.0F, 0.0F);
-        vertex(consumer, m, n, x1, y0, zz, 0.0F, 1.0F);
-        vertex(consumer, m, n, x0, y0, zz, 1.0F, 1.0F);
-        vertex(consumer, m, n, x0, y1, zz, 1.0F, 0.0F);
+        // base plate with the four gold clamps (7x7 px, half a pixel thick)
+        box(poseStack, consumer, light, -3.5F, 0.5F, surface - 0.5F, 3.5F, 7.5F, surface,
+                0, 0, 7, 14);
+        // glowing tachyon core with the bolt (5x5 px), standing out a bit more
+        box(poseStack, consumer, FULL_BRIGHT, -2.5F, 1.5F, surface - 1.0F, 2.5F, 6.5F, surface - 0.5F,
+                8, 0, 5, 15);
         poseStack.popPose();
     }
 
-    private static void vertex(VertexConsumer c, Matrix4f m, Matrix3f n,
-                               float x, float y, float z, float u, float v) {
+    /**
+     * Box in model pixels. The front (-Z) face shows the {@code size}x{@code size} texels at
+     * ({@code u}, {@code v}); the other faces use the single texel at column {@code sideU}.
+     */
+    private static void box(PoseStack stack, VertexConsumer c, int light,
+                            float x0, float y0, float z0, float x1, float y1, float z1,
+                            int u, int v, int size, int sideU) {
+        PoseStack.Pose pose = stack.last();
+        Matrix4f m = pose.pose();
+        Matrix3f n = pose.normal();
+        float s = 1.0F / 16.0F;
+        float ax = x0 * s, bx = x1 * s, ay = y0 * s, by = y1 * s, az = z0 * s, bz = z1 * s;
+        float t = 1.0F / 16.0F;
+        float fu0 = u * t, fu1 = (u + size) * t, fv0 = v * t, fv1 = (v + size) * t;
+        float su0 = (sideU + 0.25F) * t, su1 = (sideU + 0.75F) * t, sv0 = 0.25F * t, sv1 = 0.75F * t;
+        // front (towards the viewer, -Z): the model's y grows downwards, x is mirrored on the front
+        quad(c, m, n, light, bx, ay, az, ax, ay, az, ax, by, az, bx, by, az, fu0, fv0, fu1, fv1, 0, 0, -1);
+        // sides, top, bottom
+        quad(c, m, n, light, ax, ay, bz, ax, ay, az, ax, by, az, ax, by, bz, su0, sv0, su1, sv1, -1, 0, 0);
+        quad(c, m, n, light, bx, ay, az, bx, ay, bz, bx, by, bz, bx, by, az, su0, sv0, su1, sv1, 1, 0, 0);
+        quad(c, m, n, light, ax, ay, bz, bx, ay, bz, bx, ay, az, ax, ay, az, su0, sv0, su1, sv1, 0, -1, 0);
+        quad(c, m, n, light, ax, by, az, bx, by, az, bx, by, bz, ax, by, bz, su0, sv0, su1, sv1, 0, 1, 0);
+    }
+
+    /** Corners in order: top-left, top-right, bottom-right, bottom-left of the texture rect. */
+    private static void quad(VertexConsumer c, Matrix4f m, Matrix3f n, int light,
+                             float x1, float y1, float z1, float x2, float y2, float z2,
+                             float x3, float y3, float z3, float x4, float y4, float z4,
+                             float u0, float v0, float u1, float v1, float nx, float ny, float nz) {
+        vertex(c, m, n, light, x1, y1, z1, u0, v0, nx, ny, nz);
+        vertex(c, m, n, light, x2, y2, z2, u1, v0, nx, ny, nz);
+        vertex(c, m, n, light, x3, y3, z3, u1, v1, nx, ny, nz);
+        vertex(c, m, n, light, x4, y4, z4, u0, v1, nx, ny, nz);
+    }
+
+    private static void vertex(VertexConsumer c, Matrix4f m, Matrix3f n, int light,
+                               float x, float y, float z, float u, float v,
+                               float nx, float ny, float nz) {
         c.vertex(m, x, y, z).color(255, 255, 255, 255).uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(FULL_BRIGHT).normal(n, 0.0F, 0.0F, -1.0F).endVertex();
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(n, nx, ny, nz).endVertex();
     }
 }

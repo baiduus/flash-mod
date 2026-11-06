@@ -51,6 +51,7 @@ public final class FlashTrailLightningRenderer {
         Matrix4f matrix = poseStack.last().pose();
 
         for (FlashTrailTracker.TrailState state : FlashTrailTracker.states()) {
+            FlashLightningRibbon.blue = state.v9;
             for (FlashTrailTracker.TrailStream stream : state.streams) {
                 if (stream.points.size() < 2) {
                     continue;
@@ -98,6 +99,7 @@ public final class FlashTrailLightningRenderer {
             }
         }
 
+        FlashLightningRibbon.blue = false;
         poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
     }

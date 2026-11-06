@@ -45,7 +45,7 @@ public final class FlashClientEvents {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(com.flash.registry.ModEntities.FLASH_SUIT_STAND.get(),
-                net.minecraft.client.renderer.entity.ArmorStandRenderer::new);
+                FlashSuitStandRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new

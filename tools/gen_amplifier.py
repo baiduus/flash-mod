@@ -60,9 +60,65 @@ RED = dict(steel_dark=(46, 30, 34, 255), steel=(104, 70, 76, 255), steel_light=(
            glow_edge=(200, 30, 20, 255), glow_mid=(255, 70, 40), glow_core=(255, 190, 120),
            core=(80, 8, 8, 255), bolt=(255, 240, 200, 255))
 
-device(32, BLUE).save(RES + "misc/tachyon_device.png")
-device(32, RED).save(RES + "misc/tachyon_device_negative.png")
-device(16, BLUE).save(RES + "item/tachyon_amplifier.png")
+PLATE = ["HGFFFGH",
+         "GHFFFHG",
+         "FFIIIFF",
+         "FFIIIFF",
+         "FFIIIFF",
+         "GHFFFHG",
+         "HGFFFGH"]
+CORE = [".ooo.",
+        "ocwbo",
+        "owbwo",
+        "obwco",
+        ".ooo."]
+
+# same palette as the suits (1 texel per model pixel, like the suit textures)
+SUIT = dict(F=(0x75, 0x0e, 0x24), I=(0x49, 0x08, 0x25), G=(0xc7, 0x92, 0x68), H=(0xe5, 0xc4, 0x8b),
+            o=(0x3f, 0xb4, 0xff), c=(0x9f, 0xe6, 0xff), w=(0xde, 0xff, 0xff), b=(0xe5, 0xc4, 0x8b),
+            side=(0x58, 0x08, 0x28), core_side=(0x2a, 0x7c, 0xc4))
+NEG = dict(F=(0xc8, 0xa1, 0x20), I=(0x9e, 0x7e, 0x15), G=(0xaf, 0x34, 0x3e), H=(0xcc, 0x3d, 0x49),
+           o=(0xff, 0x3b, 0x30), c=(0xff, 0x9a, 0x80), w=(0xff, 0xe8, 0xd8), b=(0xff, 0xd4, 0x48),
+           side=(0x88, 0x6d, 0x15), core_side=(0xb0, 0x20, 0x20))
+
+
+def device_texture(pal, path):
+    # 16x16: plate front at (0,0) 7x7, core front at (8,0) 5x5, side texels at (14,0) and (15,0)
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = img.load()
+    for y, row in enumerate(PLATE):
+        for x, ch in enumerate(row):
+            px[x, y] = pal[ch] + (255,)
+    for y, row in enumerate(CORE):
+        for x, ch in enumerate(row):
+            if ch != ".":
+                px[8 + x, y] = pal[ch] + (255,)
+    px[14, 0] = pal["side"] + (255,)
+    px[15, 0] = pal["core_side"] + (255,)
+    img.save(path)
+
+
+def icon(pal, path):
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = img.load()
+    # plate 7x7 scaled x2 -> 14x14, core 5x5 x2 on top
+    for y, row in enumerate(PLATE):
+        for x, ch in enumerate(row):
+            for dy in range(2):
+                for dx in range(2):
+                    px[1 + x * 2 + dx, 1 + y * 2 + dy] = pal[ch] + (255,)
+    for y, row in enumerate(CORE):
+        for x, ch in enumerate(row):
+            if ch != ".":
+                for dy in range(2):
+                    for dx in range(2):
+                        px[3 + x * 2 + dx, 3 + y * 2 + dy] = pal[ch] + (255,)
+    img.save(path)
+
+
+device_texture(SUIT, RES + "misc/tachyon_device.png")
+device_texture(NEG, RES + "misc/tachyon_device_negative.png")
+icon(SUIT, RES + "item/tachyon_amplifier.png")
 
 
 def ring_texture():

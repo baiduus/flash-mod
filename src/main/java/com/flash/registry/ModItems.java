@@ -66,6 +66,11 @@ public final class ModItems {
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16),
                     "tooltip.flash.negative_capsule"));
 
+    public static final RegistryObject<Item> V9_CAPSULE = ITEMS.register(
+            "v9_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16),
+                    "tooltip.flash.v9_capsule"));
+
     public static final RegistryObject<Item> SYRINGE = ITEMS.register(
             "syringe",
             () -> new SyringeItem(new Item.Properties().stacksTo(1)));
