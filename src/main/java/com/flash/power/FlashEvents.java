@@ -86,6 +86,12 @@ public final class FlashEvents {
 
     @SubscribeEvent
     public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer leaving && leaving.getServer() != null) {
+            net.minecraft.server.level.ServerLevel from = leaving.getServer().getLevel(event.getFrom());
+            if (from != null) {
+                com.flash.entity.AccelerationPhantom.dismiss(leaving, from);
+            }
+        }
         if (event.getEntity() instanceof ServerPlayer player) {
             resetTransient(player);
             FlashSpeed.apply(player);
@@ -202,5 +208,21 @@ public final class FlashEvents {
         FlashAbilityManager.reset(player);
         FlashCombustion.reset(player, true);
         FlashStep.remove(player);
+    }
+
+    @SubscribeEvent
+    public static void onLoggedOutGhost(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && player.level() instanceof net.minecraft.server.level.ServerLevel level) {
+            com.flash.entity.AccelerationPhantom.dismiss(player, level);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onDeathGhost(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && player.level() instanceof net.minecraft.server.level.ServerLevel level) {
+            com.flash.entity.AccelerationPhantom.dismiss(player, level);
+        }
     }
 }

@@ -98,6 +98,34 @@ public class AccelerationPhantom extends Monster {
     private static final double LEVEL10_STEP =
             FlashSpeedLevels.totalMultiplier(FlashSpeedLevels.BASE_MAX_LEVEL) * 0.2158D * 1.3D;
 
+    /** The player this ghost followed into the dimension. */
+    private java.util.UUID hunted;
+
+    @Override
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (this.hunted != null) {
+            tag.putUUID("Hunted", this.hunted);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.hunted = tag.hasUUID("Hunted") ? tag.getUUID("Hunted") : null;
+    }
+
+    /** The player left the dimension (or the game, or died there): their ghost vanishes. */
+    public static void dismiss(ServerPlayer player, ServerLevel level) {
+        // all loaded ghosts of that level (the player may already be in another dimension)
+        for (AccelerationPhantom ghost : level.getEntities(ModEntities.ACCELERATION_PHANTOM.get(),
+                g -> player.getUUID().equals(g.hunted))) {
+            level.sendParticles(RED_TRAIL, ghost.getX(), ghost.getY() + 1.0D, ghost.getZ(),
+                    20, 0.3D, 0.6D, 0.3D, 0.0D);
+            ghost.discard();
+        }
+    }
+
     private enum Action { NONE, BARRAGE, TORNADO, LIGHTNING }
 
     private final int[] cooldowns = new int[FlashAbility.values().length];
@@ -114,6 +142,14 @@ public class AccelerationPhantom extends Monster {
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
+        // it only exists while its prey is in the dimension
+        if (this.hunted != null && this.tickCount % 20 == 0) {
+            Player prey = this.level().getPlayerByUUID(this.hunted);
+            if (prey == null || prey.level() != this.level()) {
+                this.discard();
+                return;
+            }
+        }
         for (int i = 0; i < this.cooldowns.length; i++) {
             if (this.cooldowns[i] > 0) {
                 this.cooldowns[i]--;
@@ -356,7 +392,11 @@ public class AccelerationPhantom extends Monster {
         List<AccelerationPhantom> existing = level.getEntitiesOfClass(AccelerationPhantom.class,
                 player.getBoundingBox().inflate(128.0D));
         if (!existing.isEmpty()) {
-            existing.forEach(ghost -> ghost.setTarget(player));
+            existing.forEach(ghost -> {
+                ghost.setTarget(player);
+        ghost.hunted = player.getUUID();
+                ghost.hunted = player.getUUID();
+            });
             return;
         }
         AccelerationPhantom ghost = ModEntities.ACCELERATION_PHANTOM.get().create(level);
