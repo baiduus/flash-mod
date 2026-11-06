@@ -126,7 +126,7 @@ public class AccelerationPhantom extends Monster {
         }
     }
 
-    private enum Action { NONE, BARRAGE, TORNADO, LIGHTNING }
+    private enum Action { NONE, BARRAGE, TORNADO }
 
     private final int[] cooldowns = new int[FlashAbility.values().length];
     private Action action = Action.NONE;
@@ -221,13 +221,6 @@ public class AccelerationPhantom extends Monster {
             this.actionCenter = target.position();
             return true;
         }
-        if (sees && dist > 6.0D && dist <= 40.0D && ready(FlashAbility.LIGHTNING_STRIKE)) {
-            use(FlashAbility.LIGHTNING_STRIKE);
-            start(Action.LIGHTNING);
-            this.actionCenter = this.position();
-            this.playSound(SoundEvents.RESPAWN_ANCHOR_CHARGE, 1.0F, 1.4F);
-            return true;
-        }
         if (sees && dist > 6.0D && dist <= 24.0D && ready(FlashAbility.DASH_PUNCH)) {
             use(FlashAbility.DASH_PUNCH);
             dashPunch(target);
@@ -282,26 +275,6 @@ public class AccelerationPhantom extends Monster {
                 level.sendParticles(ParticleTypes.CLOUD, c.x, c.y + 1.0D, c.z, 6, 1.6D, 1.2D, 1.6D, 0.05D);
                 level.sendParticles(RED_TRAIL, x, this.getY() + 1.0D, z, 3, 0.2D, 0.5D, 0.2D, 0.0D);
                 if (this.actionTicks >= 60) {
-                    this.action = Action.NONE;
-                }
-            }
-            case LIGHTNING -> {
-                // spins up for 12 ticks, then throws the lightning at the target
-                this.actionAngle += 0.8D;
-                Vec3 c = this.actionCenter;
-                double x = c.x + Math.cos(this.actionAngle) * 1.5D;
-                double z = c.z + Math.sin(this.actionAngle) * 1.5D;
-                this.teleportTo(x, FlashDimensionTravel.safeY(level, x, z), z);
-                if (this.actionTicks >= 12) {
-                    this.face(target);
-                    Vec3 start = this.getEyePosition();
-                    Vec3 end = target.getBoundingBox().getCenter();
-                    target.invulnerableTime = 0;
-                    target.hurt(this.damageSources().indirectMagic(this, this), 25.0F);
-                    target.setSecondsOnFire(8);
-                    FlashBeamPacket.sendFrom(this, start, end, 0xFFFF2020, 16, 1.25F, true);
-                    FlashAbilityCombat.spawnImpact(level, end, 2.5F);
-                    FlashAbilityCombat.playThunder(level, end);
                     this.action = Action.NONE;
                 }
             }
