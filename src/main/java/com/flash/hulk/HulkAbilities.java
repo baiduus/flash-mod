@@ -65,9 +65,8 @@ public final class HulkAbilities {
         if (hold != null) {
             // second press: throw what is held (rock or creature)
             if (hold.kind() == HOLD_ROCK && ability == HulkAbility.BOULDER) {
-                HOLDS.remove(player.getUUID());
-                throwRock(player, level, hold.rock());
-                finish(player, ability, ANIM_THROW_ROCK);
+                // the throw comes with the force bar (HulkThrowPacket) when the key is released
+                return;
             } else if (hold.kind() == HOLD_ENTITY && ability == HulkAbility.GRAB) {
                 HOLDS.remove(player.getUUID());
                 throwEntity(player, level, hold);
@@ -474,14 +473,28 @@ public final class HulkAbilities {
     }
 
     /** Level 6 (second press): throws the rock that is held. */
-    private static void throwRock(ServerPlayer player, ServerLevel level, ItemStack rock) {
+    /** The rock key was released: throws the held rock with the charged force (0..1). */
+    public static void throwHeldRock(ServerPlayer player, float charge) {
+        Hold hold = HOLDS.get(player.getUUID());
+        if (hold == null || hold.kind() != HOLD_ROCK || !HulkPowers.isTransformed(player)) {
+            return;
+        }
+        HOLDS.remove(player.getUUID());
+        throwRock(player, (ServerLevel) player.level(), hold.rock(), charge);
+        finish(player, HulkAbility.BOULDER, ANIM_THROW_ROCK);
+    }
+
+    private static void throwRock(ServerPlayer player, ServerLevel level, ItemStack rock, float charge) {
         com.flash.entity.HulkBoulder boulder = new com.flash.entity.HulkBoulder(level, player);
         boulder.setItem(rock.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : rock);
         float size = com.flash.entity.HulkBoulder.sizeFor(HulkPowers.activeLevel(player));
         boulder.setSize(size);
-        boulder.setDamage((10.0F + 2.0F * power(player)) * (0.6F + 0.4F * size) * ABILITY_DAMAGE);
+        boulder.setDamage((10.0F + 2.0F * power(player)) * (0.6F + 0.4F * size) * ABILITY_DAMAGE
+                * (0.4F + 0.6F * charge));
+        boulder.setCharge(charge);
         boulder.setPos(player.getX(), player.getY() + player.getBbHeight() * 0.95D, player.getZ());
-        boulder.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.9F, 0.5F);
+        // the fuller the bar, the farther it goes
+        boulder.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 0.9F + 2.4F * charge, 0.5F);
         level.addFreshEntity(boulder);
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ATTACK,

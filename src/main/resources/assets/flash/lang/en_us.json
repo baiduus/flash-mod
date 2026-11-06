@@ -416,7 +416,7 @@
   "ability.flash.hulk.thunderclap": "Thunderclap",
   "ability.flash.hulk.thunderclap.description": "A clap that releases a frontal blast; its reach grows with the level (level 5: 5 blocks, level 10: 20 blocks).",
   "ability.flash.hulk.boulder": "Boulder Throw",
-  "ability.flash.hulk.boulder.description": "Rips a rock out of the ground and holds it over the head; press again to throw it.",
+  "ability.flash.hulk.boulder.description": "Rips out a rock and holds it; hold the key again to charge the force and release to throw (more force = farther and a bigger blast).",
   "ability.flash.hulk.fury": "Gamma Fury",
   "ability.flash.hulk.fury.description": "A roar that unleashes the Gamma Fury: more damage, toughness and healing for 20 seconds.",
   "ability.flash.hulk.gamma_wave": "Gamma Wave",
@@ -447,5 +447,6 @@
   "commands.flash.hulk.none": "%s does not have the Hulk's power.",
   "ability.flash.hulk.grab": "Grab",
   "ability.flash.hulk.grab.description": "V grabs the creature or player in front and lifts it; V again throws it (damage on impact).",
-  "message.flash.hulk_grab_none": "Nothing in reach to grab."
+  "message.flash.hulk_grab_none": "Nothing in reach to grab.",
+  "hud.flash.hulk_throw": "Throw force: %s%%"
 }

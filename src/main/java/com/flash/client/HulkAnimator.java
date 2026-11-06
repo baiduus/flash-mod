@@ -191,6 +191,12 @@ public final class HulkAnimator {
         }
     }
 
+    /** True while that player holds a rock over his head. */
+    public static boolean holdingRock(UUID player) {
+        Hold hold = HOLDS.get(player);
+        return hold != null && hold.rock();
+    }
+
     /** The sync packet saw the form change: plays the transformation (not on login). */
     public static void onFormChange(UUID player, boolean toHulk, float hulkScale) {
         TRANSFORMS.put(player, new Transform(toHulk, now(), hulkScale));

@@ -62,6 +62,13 @@ public class HulkBoulder extends ThrowableItemProjectile {
         super(ModEntities.HULK_BOULDER.get(), thrower, level);
     }
 
+    /** Force bar of the throw (0..1): the blast grows with it (server only). */
+    private float charge = 1.0F;
+
+    public void setCharge(float charge) {
+        this.charge = charge;
+    }
+
     public void setDamage(float damage) {
         this.damage = damage;
     }
@@ -99,7 +106,8 @@ public class HulkBoulder extends ThrowableItemProjectile {
         if (this.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner) {
             // the rock bursts on impact (the Hulk is left out of the blast)
             // small rock, small blast; big rock, big blast
-            level.explode(this, this.getX(), this.getY(), this.getZ(), blastPower(size),
+            level.explode(this, this.getX(), this.getY(), this.getZ(),
+                    blastPower(size) * (0.2F + 0.8F * this.charge),
                     com.flash.hulk.HulkPowers.destroyBlocks(owner)
                             ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
                             : net.minecraft.world.level.Level.ExplosionInteraction.NONE);

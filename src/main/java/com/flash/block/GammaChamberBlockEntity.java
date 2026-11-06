@@ -132,6 +132,6 @@ public class GammaChamberBlockEntity extends BlockEntity {
     /** The model is 3.5 blocks tall. */
     @Override
     public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        return new net.minecraft.world.phys.AABB(this.worldPosition).expandTowards(0.0D, 3.8D, 0.0D).inflate(0.5D);
+        return new net.minecraft.world.phys.AABB(this.worldPosition).expandTowards(0.0D, 7.0D, 0.0D).inflate(1.2D);
     }
 }

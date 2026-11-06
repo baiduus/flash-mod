@@ -32,6 +32,9 @@ public final class FlashAbilityHud implements IGuiOverlay {
                     && !minecraft.options.renderDebug
                     && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
                 renderHulk(graphics, minecraft, width, height);
+                if (HulkClient.charging()) {
+                    drawThrowBar(graphics, minecraft.font, width, height);
+                }
             }
             return;
         }
@@ -82,6 +85,21 @@ public final class FlashAbilityHud implements IGuiOverlay {
                     cooldown, Math.max(1, ability.cooldownTicks()), active);
             y += ROW_HEIGHT + ROW_GAP;
         }
+    }
+
+    /** Force bar of the rock throw, centred above the hotbar. */
+    private static void drawThrowBar(GuiGraphics g, Font font, int width, int height) {
+        int w = 120;
+        int x = (width - w) / 2;
+        int y = height - 62;
+        float f = HulkClient.chargeFraction();
+        g.fill(x - 2, y - 2, x + w + 2, y + 7, FlashHudStyle.PANEL);
+        int filled = Math.round(w * f);
+        if (filled > 0) {
+            FlashHudStyle.barHorizontal(g, x, y, filled, 5);
+        }
+        String label = Component.translatable("hud.flash.hulk_throw", Math.round(f * 100.0F)).getString();
+        FlashHudStyle.gradientText(g, font, label, (width - font.width(label)) / 2, y - 12);
     }
 
     /** Same panel for the Hulk: the transform key and the unlocked Hulk abilities. */

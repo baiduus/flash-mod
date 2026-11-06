@@ -416,7 +416,7 @@
   "ability.flash.hulk.thunderclap": "Palma Trovejante",
   "ability.flash.hulk.thunderclap.description": "Uma palma que solta uma explosão frontal; o alcance cresce com o nível (nível 5: 5 blocos, nível 10: 20 blocos).",
   "ability.flash.hulk.boulder": "Arremesso de Rocha",
-  "ability.flash.hulk.boulder.description": "Arranca uma rocha do chão e a segura acima da cabeça; aperte de novo para arremessar.",
+  "ability.flash.hulk.boulder.description": "Arranca uma rocha e a segura; segure a tecla de novo para carregar a força e solte para arremessar (mais força = mais longe e explosão maior).",
   "ability.flash.hulk.fury": "Fúria Gama",
   "ability.flash.hulk.fury.description": "Um rugido que libera a Fúria Gama: mais dano, resistência e cura por 20 segundos.",
   "ability.flash.hulk.gamma_wave": "Onda Gama",
@@ -447,5 +447,6 @@
   "commands.flash.hulk.none": "%s não tem o poder do Hulk.",
   "ability.flash.hulk.grab": "Agarrar",
   "ability.flash.hulk.grab.description": "V agarra a criatura ou o jogador à frente e o levanta; V de novo arremessa (dano ao bater).",
-  "message.flash.hulk_grab_none": "Não há nada ao alcance para agarrar."
+  "message.flash.hulk_grab_none": "Não há nada ao alcance para agarrar.",
+  "hud.flash.hulk_throw": "Força do arremesso: %s%%"
 }
