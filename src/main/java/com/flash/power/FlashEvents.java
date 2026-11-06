@@ -29,6 +29,17 @@ public final class FlashEvents {
     private FlashEvents() {
     }
 
+    /** With the speed active (level 1 or higher) the player takes no fall damage. */
+    @SubscribeEvent
+    public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player player
+                && FlashPowers.hasPowers(player) && FlashPowers.getSelectedLevel(player) >= 1) {
+            event.setDistance(0.0F);
+            event.setDamageMultiplier(0.0F);
+            event.setCanceled(true);
+        }
+    }
+
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         FlashPowers.copy(event.getOriginal(), event.getEntity());

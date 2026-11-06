@@ -147,4 +147,26 @@ public final class FlashClientForgeEvents {
         FlashClientVisualLevels.reset();
         FlashClientRing.reset();
     }
+
+    /** First person: the empty hand is drawn here so the ring can be added on top of it. */
+    @SubscribeEvent
+    public static void onRenderArm(net.minecraftforge.client.event.RenderArmEvent event) {
+        if (event.getArm() != net.minecraft.world.entity.HumanoidArm.RIGHT
+                || !FlashClientRing.has(event.getPlayer())) {
+            return;
+        }
+        net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
+                Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(event.getPlayer());
+        if (!(renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player)) {
+            return;
+        }
+        event.setCanceled(true);
+        player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),
+                event.getPackedLight(), event.getPlayer());
+        event.getPoseStack().pushPose();
+        player.getModel().rightArm.translateAndRotate(event.getPoseStack());
+        FlashRingLayer.drawRing(event.getPoseStack(), event.getMultiBufferSource(),
+                event.getPackedLight(), "slim".equals(event.getPlayer().getModelName()));
+        event.getPoseStack().popPose();
+    }
 }

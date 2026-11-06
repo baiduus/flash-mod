@@ -33,19 +33,25 @@ public class FlashRingLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         if (!FlashClientRing.has(player) || player.isInvisible()) {
             return;
         }
-        boolean slim = "slim".equals(player.getModelName());
-        float half = slim ? 2.2F : 2.7F;   // a little wider than the arm and the suit sleeve
-
         poseStack.pushPose();
-        this.getParentModel().leftArm.translateAndRotate(poseStack);
-        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
-        float y0 = 10.0F;
-        float y1 = 11.6F;
-        box(poseStack, consumer, light, -half, y0, -half, half, y1, half, 0.0F);
-        // the gem sits on the outer side of the hand
-        float gx = half + 0.35F;
-        box(poseStack, consumer, light, half - 0.1F, y0 - 0.3F, -0.9F, gx, y1 + 0.3F, 0.9F, 0.5F);
+        this.getParentModel().rightArm.translateAndRotate(poseStack);
+        drawRing(poseStack, buffers, light, "slim".equals(player.getModelName()));
         poseStack.popPose();
+    }
+
+    /**
+     * A small ring on the right hand: a thin gold band just outside the arm and
+     * the sleeve, with a little red gem on the outer side. The pose must already be
+     * at the arm model part.
+     */
+    public static void drawRing(PoseStack poseStack, MultiBufferSource buffers, int light, boolean slim) {
+        float half = slim ? 1.85F : 2.35F;
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        float y0 = 10.4F;
+        float y1 = 11.3F;
+        box(poseStack, consumer, light, -half, y0, -half, half, y1, half, 0.0F);
+        // gem on the outer side of the hand
+        box(poseStack, consumer, light, -half - 0.4F, y0 - 0.15F, -0.7F, -half + 0.1F, y1 + 0.15F, 0.7F, 0.5F);
     }
 
     /** Axis-aligned box in model pixels; {@code u} selects the gold (0.0) or the red (0.5) half of the texture. */
