@@ -36,7 +36,7 @@ import org.joml.Vector3f;
 /**
  * Ghost of the Acceleration Force: a decayed speedster in a black suit with red
  * lightning (inspired by the Black Flash). It follows whoever enters the
- * Acceleration Force and hunts them there. 100 health, very fast, drops a nether
+ * Acceleration Force and hunts them there. 50 health, very fast, drops a nether
  * star and fragments of its suit.
  */
 public class AccelerationPhantom extends Monster {
@@ -52,7 +52,7 @@ public class AccelerationPhantom extends Monster {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 100.0D)
+                .add(Attributes.MAX_HEALTH, 50.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.42D)
                 .add(Attributes.ATTACK_DAMAGE, 9.0D)
                 .add(Attributes.ARMOR, 6.0D)
