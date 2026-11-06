@@ -17,7 +17,8 @@ import org.joml.Vector3f;
 /**
  * Velocity-9. Injected from the syringe:
  * <ul>
- *   <li>a player without powers gets the Flash powers normally (level 1);</li>
+ *   <li>a player without powers gets the speed powers (level 1) only for as long
+ *       as the dose lasts: no progression, and they are gone again afterwards;</li>
  *   <li>then, for 5 minutes, the speed limit and the selected level rise by 5
  *       (blue lightning, blue K screen);</li>
  *   <li>when it wears off the player goes back to the level used before, loses
@@ -43,7 +44,7 @@ public final class FlashV9 {
     private static final String DECAY_UNTIL = "decayUntil";
 
     private static final DustParticleOptions DECAY_DUST =
-            new DustParticleOptions(new Vector3f(0.30F, 0.27F, 0.24F), 1.3F);
+            new DustParticleOptions(new Vector3f(0.12F, 0.12F, 0.13F), 1.2F);
 
     private FlashV9() {
     }
@@ -84,6 +85,24 @@ public final class FlashV9 {
         return tag.contains(DECAY_UNTIL) && tag.getLong(DECAY_UNTIL) > now(player);
     }
 
+    /** True while the only powers the player has come from the V-9 (no progression for them). */
+    public static boolean isBorrowedPowers(Player player) {
+        if (!player.getPersistentData().contains(KEY)) {
+            return false;
+        }
+        CompoundTag tag = tag(player);
+        return tag.getBoolean(FIRST_POWERS) && tag.contains(ACTIVE_UNTIL);
+    }
+
+    /** The player got the real Acceleration Force meanwhile: the powers are no longer taken away. */
+    public static void adoptPowers(Player player) {
+        if (isBorrowedPowers(player)) {
+            CompoundTag tag = tag(player).copy();
+            tag.putBoolean(FIRST_POWERS, false);
+            save(player, tag);
+        }
+    }
+
     /** Extra levels on top of the normal limit while the effect runs. */
     public static int bonus(Player player) {
         return player.getPersistentData().contains(KEY) && isActive(player) ? BONUS_LEVELS : 0;
@@ -107,7 +126,7 @@ public final class FlashV9 {
         }
         boolean first = !FlashPowers.hasPermanentPowers(player);
         if (first) {
-            // gets the Flash powers normally (replaces a temporary grant, if any)
+            // borrowed speed powers for the duration of the dose (replaces a temporary grant, if any)
             FlashPowers.grant(player);
             FlashAbilityManager.reset(player);
         }
@@ -139,18 +158,28 @@ public final class FlashV9 {
 
         if (tag.contains(ACTIVE_UNTIL) && tag.getLong(ACTIVE_UNTIL) <= now) {
             int previous = tag.getInt(PREVIOUS_SELECTED);
+            boolean borrowed = tag.getBoolean(FIRST_POWERS);
             tag.remove(ACTIVE_UNTIL);
             tag.remove(PREVIOUS_SELECTED);
             tag.remove(FIRST_POWERS);
             save(player, tag);
-            // back to the level used before (stored; it shows again after the 30 s)
-            FlashPowers.setSelectedLevel(player, previous);
+            if (borrowed) {
+                // the powers only came from the dose: they go away with it
+                FlashPowers.revoke(player);
+            } else {
+                // back to the level used before (stored; it shows again after the 30 s)
+                FlashPowers.setSelectedLevel(player, previous);
+            }
             tag.putLong(NO_POWERS_UNTIL, now + NO_POWERS_TICKS);
             tag.putLong(DECAY_UNTIL, now + DECAY_TICKS);
             save(player, tag);
             FlashAbilityManager.reset(player);
             refresh(player);
-            player.displayClientMessage(Component.translatable("message.flash.v9_ended"), false);
+            player.removeEffect(net.minecraft.world.effect.MobEffects.HUNGER);
+            player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.WITHER, DECAY_TICKS, 0, false, true, true));
+            player.displayClientMessage(Component.translatable(
+                    borrowed ? "message.flash.v9_ended_borrowed" : "message.flash.v9_ended"), false);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.WITHER_HURT, SoundSource.PLAYERS, 0.6F, 0.6F);
             return;
@@ -163,7 +192,9 @@ public final class FlashV9 {
             tag.remove(NO_POWERS_UNTIL);
             save(player, tag);
             refresh(player);
-            player.displayClientMessage(Component.translatable("message.flash.v9_powers_back"), true);
+            if (FlashPowers.hasPowers(player)) {
+                player.displayClientMessage(Component.translatable("message.flash.v9_powers_back"), true);
+            }
             return;
         }
         if (changed) {
@@ -178,7 +209,7 @@ public final class FlashV9 {
         double x = player.getX();
         double y = player.getY() + player.getBbHeight() * 0.5D;
         double z = player.getZ();
-        level.sendParticles(DECAY_DUST, x, y, z, 6, 0.30D, 0.55D, 0.30D, 0.0D);
+        level.sendParticles(DECAY_DUST, x, y, z, 3, 0.30D, 0.55D, 0.30D, 0.0D);
         level.sendParticles(ParticleTypes.ASH, x, y, z, 4, 0.35D, 0.6D, 0.35D, 0.0D);
         if (player.tickCount % 3 == 0) {
             level.sendParticles(ParticleTypes.SMOKE, x, y, z, 2, 0.25D, 0.5D, 0.25D, 0.01D);

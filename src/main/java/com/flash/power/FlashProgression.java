@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
  * <p>The travelled distance is the sum of the real horizontal displacement of
  * every server tick. This naturally handles direction changes and only counts
  * movement while the player is actually running with a Flash level selected.
- * Flying, falling, swimming, riding and teleports are ignored.</p>
+ * Flying, falling, diving, riding and teleports are ignored; running on water counts.</p>
  */
 public final class FlashProgression {
 
@@ -48,6 +48,8 @@ public final class FlashProgression {
                 && step <= MAX_STEP
                 && FlashPowers.hasPowers(player)
                 && !FlashPowers.isTemporary(player)
+                // only the real Acceleration Force (positive or negative) grows; V-9-only powers do not
+                && !FlashV9.isBorrowedPowers(player)
                 && FlashPowers.getSelectedLevel(player) >= 1
                 && !FlashPowers.isMaxLevel(player)) {
             int unlocked = FlashPowers.addDistance(player, step);
@@ -67,8 +69,11 @@ public final class FlashProgression {
         if (player.getAbilities().flying || player.isFallFlying()) {
             return false;
         }
-        if (player.isInWater() || player.isInLava()) {
+        if (player.isInLava() || player.isUnderWater()) {
             return false;
+        }
+        if (player.isInWater()) {
+            return true; // running over (or through) water counts
         }
         // Walking, sprinting and jumping count. Sustained falling does not.
         if (!player.onGround()) {

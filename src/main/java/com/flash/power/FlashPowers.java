@@ -208,6 +208,7 @@ public final class FlashPowers {
     // ------------------------------------------------------------------
 
     public static void grant(Player player) {
+        FlashV9.adoptPowers(player);
         if (hasPermanentPowers(player)) {
             int max = Math.max(1, getMaxLevel(player));
             int selected = Math.max(1, Math.min(getSelectedLevel(player), max));

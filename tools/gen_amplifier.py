@@ -67,24 +67,30 @@ PLATE = ["HGFFFGH",
          "FFIIIFF",
          "GHFFFHG",
          "HGFFFGH"]
-CORE = [".ooo.",
-        "ocwbo",
-        "owbwo",
-        "obwco",
-        ".ooo."]
+# 10x10 core (2 texels per pixel): lightning bolt from the top right to the bottom left
+CORE = ["..oooooo..",
+        ".occcWWWo.",
+        "occcWWWcco",
+        "occWWWccco",
+        "ocWWWWWWco",
+        "occcWWWcco",
+        "occcWWccco",
+        "occWWcccco",
+        ".ocWcccco.",
+        "..oooooo.."]
 
-# same palette as the suits (1 texel per model pixel, like the suit textures)
-SUIT = dict(F=(0x75, 0x0e, 0x24), I=(0x49, 0x08, 0x25), G=(0xc7, 0x92, 0x68), H=(0xe5, 0xc4, 0x8b),
-            o=(0x3f, 0xb4, 0xff), c=(0x9f, 0xe6, 0xff), w=(0xde, 0xff, 0xff), b=(0xe5, 0xc4, 0x8b),
-            side=(0x58, 0x08, 0x28), core_side=(0x2a, 0x7c, 0xc4))
-NEG = dict(F=(0xc8, 0xa1, 0x20), I=(0x9e, 0x7e, 0x15), G=(0xaf, 0x34, 0x3e), H=(0xcc, 0x3d, 0x49),
-           o=(0xff, 0x3b, 0x30), c=(0xff, 0x9a, 0x80), w=(0xff, 0xe8, 0xd8), b=(0xff, 0xd4, 0x48),
-           side=(0x88, 0x6d, 0x15), core_side=(0xb0, 0x20, 0x20))
+# grey metal casing, bright blue tachyon core (1 texel per model pixel, like the suits)
+SUIT = dict(F=(0x6b, 0x70, 0x78), I=(0x3c, 0x40, 0x47), G=(0x8e, 0x94, 0x9e), H=(0xb8, 0xbe, 0xc6),
+            o=(0x1e, 0x7c, 0xff), c=(0x5c, 0xc8, 0xff), W=(0xf4, 0xfd, 0xff),
+            side=(0x4f, 0x53, 0x5a), core_side=(0x1e, 0x7c, 0xff))
+NEG = dict(F=(0x6b, 0x70, 0x78), I=(0x3c, 0x40, 0x47), G=(0x8e, 0x94, 0x9e), H=(0xb8, 0xbe, 0xc6),
+           o=(0xff, 0x2a, 0x1e), c=(0xff, 0x7a, 0x5a), W=(0xff, 0xf2, 0xd8),
+           side=(0x4f, 0x53, 0x5a), core_side=(0xff, 0x2a, 0x1e))
 
 
 def device_texture(pal, path):
-    # 16x16: plate front at (0,0) 7x7, core front at (8,0) 5x5, side texels at (14,0) and (15,0)
-    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    # 32x16: plate front at (0,0) 7x7, core front at (8,0) 10x10, side texels at (30,0) and (31,0)
+    img = Image.new("RGBA", (32, 16), (0, 0, 0, 0))
     px = img.load()
     for y, row in enumerate(PLATE):
         for x, ch in enumerate(row):
@@ -93,26 +99,23 @@ def device_texture(pal, path):
         for x, ch in enumerate(row):
             if ch != ".":
                 px[8 + x, y] = pal[ch] + (255,)
-    px[14, 0] = pal["side"] + (255,)
-    px[15, 0] = pal["core_side"] + (255,)
+    px[30, 0] = pal["side"] + (255,)
+    px[31, 0] = pal["core_side"] + (255,)
     img.save(path)
 
 
 def icon(pal, path):
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     px = img.load()
-    # plate 7x7 scaled x2 -> 14x14, core 5x5 x2 on top
-    for y, row in enumerate(PLATE):
+    for y, row in enumerate(PLATE):            # plate 7x7 scaled x2 -> 14x14
         for x, ch in enumerate(row):
             for dy in range(2):
                 for dx in range(2):
                     px[1 + x * 2 + dx, 1 + y * 2 + dy] = pal[ch] + (255,)
-    for y, row in enumerate(CORE):
+    for y, row in enumerate(CORE):             # core 10x10 on top
         for x, ch in enumerate(row):
             if ch != ".":
-                for dy in range(2):
-                    for dx in range(2):
-                        px[3 + x * 2 + dx, 3 + y * 2 + dy] = pal[ch] + (255,)
+                px[3 + x, 3 + y] = pal[ch] + (255,)
     img.save(path)
 
 

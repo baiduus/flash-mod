@@ -115,6 +115,26 @@ public final class ModItems {
             () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.NEGATIVE,
                     net.minecraft.world.item.ArmorItem.Type.BOOTS));
 
+    public static final RegistryObject<Item> ZOOM_SUIT_HELMET = ITEMS.register(
+            "zoom_suit_helmet",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.ZOOM,
+                    net.minecraft.world.item.ArmorItem.Type.HELMET));
+
+    public static final RegistryObject<Item> ZOOM_SUIT_CHESTPLATE = ITEMS.register(
+            "zoom_suit_chestplate",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.ZOOM,
+                    net.minecraft.world.item.ArmorItem.Type.CHESTPLATE));
+
+    public static final RegistryObject<Item> ZOOM_SUIT_LEGGINGS = ITEMS.register(
+            "zoom_suit_leggings",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.ZOOM,
+                    net.minecraft.world.item.ArmorItem.Type.LEGGINGS));
+
+    public static final RegistryObject<Item> ZOOM_SUIT_BOOTS = ITEMS.register(
+            "zoom_suit_boots",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.ZOOM,
+                    net.minecraft.world.item.ArmorItem.Type.BOOTS));
+
     private ModItems() {
     }
 

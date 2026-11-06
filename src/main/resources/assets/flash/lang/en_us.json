@@ -292,10 +292,15 @@
   "item.flash.syringe.v9": "Syringe with V-9",
   "tooltip.flash.syringe.v9": "Hold right click to inject: +5 speed levels for 5 minutes.",
   "message.flash.v9_injected": "Velocity-9! Level %s for 5 minutes.",
-  "message.flash.v9_first": "Velocity-9 gave you the speed powers! Level %s for 5 minutes.",
+  "message.flash.v9_first": "Velocity-9 lends you the speed powers! Level %s for 5 minutes (no progression).",
   "message.flash.v9_busy": "Your body is still dealing with the last dose of V-9.",
   "message.flash.v9_ended": "The V-9 wore off: your cells are breaking down and the powers are gone for 30 seconds.",
   "message.flash.v9_powers_back": "Your powers are back.",
   "gui.flash.theme.v9.title": "VELOCITY-9",
-  "message.flash.stand_nothing": "Crouch + right click with the suit on, or on a stand that holds one."
+  "message.flash.stand_nothing": "Crouch + right click with the suit on, or on a stand that holds one.",
+  "message.flash.v9_ended_borrowed": "The V-9 wore off: the borrowed speed is gone and your cells are breaking down.",
+  "item.flash.zoom_suit_helmet": "Hood - Zoom Suit",
+  "item.flash.zoom_suit_chestplate": "Chestplate - Zoom Suit",
+  "item.flash.zoom_suit_leggings": "Pants - Zoom Suit",
+  "item.flash.zoom_suit_boots": "Boots - Zoom Suit"
 }

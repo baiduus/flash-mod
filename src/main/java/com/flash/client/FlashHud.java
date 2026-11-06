@@ -31,7 +31,9 @@ public class FlashHud implements IGuiOverlay {
         }
 
         int level = FlashClientData.getSelectedLevel();
-        boolean combustion = level >= FlashSpeedLevels.FIRE_LEVEL;
+        // any suit protects from the combustion, so the warning only shows without one
+        boolean combustion = level >= FlashSpeedLevels.FIRE_LEVEL
+                && com.flash.item.FlashSuitItem.countWorn(minecraft.player) == 0;
 
         String line1 = Component.translatable(
                 FlashClientVisualLevels.isLocalNegative() ? "hud.flash.level_negative" : "hud.flash.level", level).getString();

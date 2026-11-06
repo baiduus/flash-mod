@@ -48,6 +48,10 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.NEGATIVE_SUIT_CHESTPLATE.get());
                         output.accept(ModItems.NEGATIVE_SUIT_LEGGINGS.get());
                         output.accept(ModItems.NEGATIVE_SUIT_BOOTS.get());
+                        output.accept(ModItems.ZOOM_SUIT_HELMET.get());
+                        output.accept(ModItems.ZOOM_SUIT_CHESTPLATE.get());
+                        output.accept(ModItems.ZOOM_SUIT_LEGGINGS.get());
+                        output.accept(ModItems.ZOOM_SUIT_BOOTS.get());
                         output.accept(ModItems.FLASH_RING.get());
                         output.accept(ModItems.TACHYON_AMPLIFIER.get());
                         output.accept(ModItems.FLASH_SUIT_STAND.get());

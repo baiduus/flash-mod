@@ -142,6 +142,9 @@ public final class FlashAbilityManager {
                 state.massTicks = 0;
                 state.massCenter = player.position();
                 state.massAngle = 0.0D;
+                // the camera stays where the player was aiming; only the body circles
+                state.massYaw = player.getYRot();
+                state.massPitch = player.getXRot();
                 player.displayClientMessage(
                         Component.translatable("message.flash.ability_mass_charge"), true);
                 player.playNotifySound(SoundEvents.BEACON_ACTIVATE,
@@ -278,7 +281,12 @@ public final class FlashAbilityManager {
                 massChargeTick(player, state);
                 state.massTicks++;
             } else {
-                massPunch(player);
+                // back to the starting point, still aiming the same way, then punch
+                if (state.massCenter != null) {
+                    player.connection.teleport(state.massCenter.x, state.massCenter.y, state.massCenter.z,
+                            state.massYaw, state.massPitch);
+                }
+                massPunch(player, Vec3.directionFromRotation(state.massPitch, state.massYaw));
                 state.massTicks = -1;
                 sendSync(player, FlashAbility.MASS_PUNCH, false);
             }
@@ -788,8 +796,7 @@ public final class FlashAbilityManager {
         AABB target = player.getBoundingBox().move(
                 x - player.getX(), y - player.getY(), z - player.getZ());
         if (level.noCollision(player, target)) {
-            float yaw = (float) Math.toDegrees(angle);
-            player.connection.teleport(x, y, z, yaw, 0.0F);
+            player.connection.teleport(x, y, z, state.massYaw, state.massPitch);
             player.setDeltaMovement(Vec3.ZERO);
             player.fallDistance = 0.0F;
             player.hurtMarked = true;
@@ -818,9 +825,9 @@ public final class FlashAbilityManager {
         }
     }
 
-    private static void massPunch(ServerPlayer player) {
+    private static void massPunch(ServerPlayer player, Vec3 aim) {
         ServerLevel level = (ServerLevel) player.level();
-        Vec3 look = player.getLookAngle().normalize();
+        Vec3 look = aim.normalize();
         Vec3 start = player.getEyePosition();
         Vec3 end = start.add(look.scale(15.0D));
 
@@ -1026,6 +1033,8 @@ public final class FlashAbilityManager {
         int massTicks = -1;
         Vec3 massCenter = Vec3.ZERO;
         double massAngle;
+        float massYaw;
+        float massPitch;
         int portalTicks = -1;
         boolean portalExit;
         FlashDashPunch.Run dash;

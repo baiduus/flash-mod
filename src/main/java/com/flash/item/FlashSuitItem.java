@@ -15,10 +15,12 @@ import org.jetbrains.annotations.Nullable;
 public class FlashSuitItem extends ArmorItem {
 
     private final boolean negative;
+    private final FlashSuitMaterial suit;
 
     public FlashSuitItem(FlashSuitMaterial material, Type type) {
         super(material, type, new Item.Properties().stacksTo(1).fireResistant());
         this.negative = material == FlashSuitMaterial.NEGATIVE;
+        this.suit = material;
     }
 
     public boolean isNegativeSuit() {
@@ -46,7 +48,8 @@ public class FlashSuitItem extends ArmorItem {
         if (slot == net.minecraft.world.entity.EquipmentSlot.HEAD && type == null
                 && com.flash.config.FlashClientConfig.MASK_OPEN_MOUTH.get()) {
             return "flash:textures/models/armor/"
-                    + (this.negative ? "negative_suit" : "flash_suit") + "_open_layer_1.png";
+                    + (this.suit == FlashSuitMaterial.ZOOM ? "zoom_suit"
+                    : this.negative ? "negative_suit" : "flash_suit") + "_open_layer_1.png";
         }
         return null;
     }

@@ -13,7 +13,9 @@ import net.minecraft.world.item.crafting.Ingredient;
  */
 public enum FlashSuitMaterial implements ArmorMaterial {
     POSITIVE("flash:flash_suit"),
-    NEGATIVE("flash:negative_suit");
+    NEGATIVE("flash:negative_suit"),
+    /** Black suit of Zoom (Hunter Zolomon). */
+    ZOOM("flash:zoom_suit");
 
     private final String name;
 

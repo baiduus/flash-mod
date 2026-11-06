@@ -42,6 +42,39 @@ public final class FlashAbilityPoses {
                         }
                     });
 
+    private static float animTime(net.minecraft.world.entity.LivingEntity entity) {
+        return entity.tickCount + net.minecraft.client.Minecraft.getInstance().getFrameTime();
+    }
+
+    /** Barrage: fast alternating straight punches with both fists. */
+    public static final HumanoidModel.ArmPose BARRAGE_PUNCHES =
+            HumanoidModel.ArmPose.create("FLASH_BARRAGE", true,
+                    (model, entity, arm) -> {
+                        float phase = animTime(entity) * 2.4F;
+                        boolean right = arm == HumanoidArm.RIGHT;
+                        float ext = Math.max(0.0F, Mth.sin(phase + (right ? 0.0F : Mth.PI)));
+                        net.minecraft.client.model.geom.ModelPart part = right ? model.rightArm : model.leftArm;
+                        part.xRot = -1.25F - 0.35F * ext;
+                        part.yRot = (right ? -1.0F : 1.0F) * (0.30F * ext - 0.10F);
+                        part.zRot = 0.0F;
+                        part.z = -3.2F * ext;
+                    });
+
+    /** Punch rush: wide open-hand slaps, swinging sideways, one hand after the other. */
+    public static final HumanoidModel.ArmPose SLAPS =
+            HumanoidModel.ArmPose.create("FLASH_SLAPS", true,
+                    (model, entity, arm) -> {
+                        float phase = animTime(entity) * 1.3F;
+                        boolean right = arm == HumanoidArm.RIGHT;
+                        float swing = Mth.sin(phase + (right ? 0.0F : Mth.PI));
+                        net.minecraft.client.model.geom.ModelPart part = right ? model.rightArm : model.leftArm;
+                        part.xRot = -1.35F + 0.15F * Math.abs(swing);
+                        // from the outside across the body and back
+                        part.yRot = (right ? 1.0F : -1.0F) * 0.25F - (right ? 1.0F : -1.0F) * 0.95F * Math.max(0.0F, swing);
+                        part.zRot = (right ? 1.0F : -1.0F) * 0.35F * Math.max(0.0F, -swing);
+                        part.z = -1.2F * Math.max(0.0F, swing);
+                    });
+
     private static boolean pushedPhase;
     private static float vibrateSign = 1.0F;
 
@@ -57,6 +90,14 @@ public final class FlashAbilityPoses {
         PlayerModel<AbstractClientPlayer> model = event.getRenderer().getModel();
         PoseStack stack = event.getPoseStack();
         pushedPhase = false;
+
+        if (FlashClientVisualLevels.isActive(client, FlashAbility.BARRAGE.ordinal())) {
+            model.rightArmPose = BARRAGE_PUNCHES;
+            model.leftArmPose = BARRAGE_PUNCHES;
+        } else if (FlashClientVisualLevels.isActive(client, FlashAbility.DASH_PUNCH.ordinal())) {
+            model.rightArmPose = SLAPS;
+            model.leftArmPose = SLAPS;
+        }
 
         if (FlashClientVisualLevels.isActive(client, FlashAbility.WIND_HANDS.ordinal())) {
             model.rightArmPose = WIND_HANDS;
@@ -74,6 +115,24 @@ public final class FlashAbilityPoses {
             stack.pushPose();
             stack.translate(sideX * amount, 0.0F, sideZ * amount);
             pushedPhase = true;
+        }
+    }
+
+    /** First person: the visible hand keeps punching / slapping while the ability runs. */
+    @SubscribeEvent
+    public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) {
+            return;
+        }
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null || mc.isPaused() || !mc.options.getCameraType().isFirstPerson()) {
+            return;
+        }
+        int every = FlashClientVisualLevels.isActive(mc.player, FlashAbility.BARRAGE.ordinal()) ? 3
+                : FlashClientVisualLevels.isActive(mc.player, FlashAbility.DASH_PUNCH.ordinal()) ? 5 : 0;
+        if (every > 0 && mc.player.tickCount % every == 0) {
+            // local only (no packet): the server already tells everyone else
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, false);
         }
     }
 
