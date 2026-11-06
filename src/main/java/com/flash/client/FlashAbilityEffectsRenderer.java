@@ -120,29 +120,35 @@ public final class FlashAbilityEffectsRenderer {
 
         for (int side = -1; side <= 1; side += 2) {
             Vec3 origin = hand(player, partialTick, look, right, side);
-            for (int strand = 0; strand < 4; strand++) {
-                int segments = 34;
+            // Dense funnel: many interleaved spiral lines with different twist,
+            // radius and length so it reads as a thick mass of wind.
+            for (int strand = 0; strand < 16; strand++) {
+                int segments = 30;
                 List<Vec3> points = new ArrayList<>(segments + 1);
-                double phase = time * 0.55D * side + strand * (Mth.TWO_PI / 4.0D);
+                double twist = 9.0D + (strand % 4) * 2.2D;
+                double spread = 0.70D + (strand % 5) * 0.14D;
+                double length = 4.8D + (strand % 3) * 1.1D + (strand % 2) * 0.8D;
+                double phase = time * (0.50D + (strand % 3) * 0.11D) * side
+                        + strand * (Mth.TWO_PI / 16.0D) * 1.7D;
                 for (int i = 0; i <= segments; i++) {
                     double t = i / (double) segments;
-                    double distance = 0.25D + t * 7.0D;
-                    double radius = 0.05D + t * t * 1.0D + t * 0.2D;
-                    double angle = phase + t * 11.0D * side;
+                    double distance = 0.2D + t * length;
+                    double radius = 0.04D + t * t * spread + t * 0.15D;
+                    double angle = phase + t * twist * side;
                     points.add(origin
                             .add(look.scale(distance))
                             .add(right.scale(Math.cos(angle) * radius))
                             .add(up.scale(Math.sin(angle) * radius)));
                 }
-                float w = 1.0F - strand * 0.12F;
+                float w = 0.55F + (strand % 4) * 0.12F;
                 FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, points,
-                        0.060F * w, 0.026F * w, 0.009F * w, glow, mid, core, fade);
+                        0.050F * w, 0.022F * w, 0.008F * w, glow, mid, core, fade);
             }
 
             // Fine electric sparks riding the funnel.
             RandomSource random = RandomSource.create(
                     player.getUUID().getLeastSignificantBits() + side * 31L + (long) (time * 0.5F) * 7919L);
-            for (int k = 0; k < 2; k++) {
+            for (int k = 0; k < 4; k++) {
                 double t0 = 0.2D + random.nextDouble() * 0.6D;
                 double angle = random.nextDouble() * Mth.TWO_PI;
                 double r = 0.1D + t0 * t0 * 1.0D;

@@ -34,7 +34,6 @@ public final class FlashClientEvents {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.TRANSFORMATION_CHAMBER.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.POTION_CONTAINER.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.ACCELERATION_PORTAL.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.TACHYON_EXTRACTOR.get(), RenderType.translucent());
             // Syringe model changes with its content (flash:content: 0 empty, 1 negative force, ...).
             net.minecraft.client.renderer.item.ItemProperties.register(
                     ModItems.SYRINGE.get(),

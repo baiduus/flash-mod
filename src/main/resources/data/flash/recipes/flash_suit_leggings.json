@@ -2,16 +2,13 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "NCN",
-    "N N",
-    "N N"
+    "III",
+    "I I",
+    "I I"
   ],
   "key": {
-    "N": {
-      "item": "minecraft:netherite_ingot"
-    },
-    "C": {
-      "item": "flash:acceleration_crystal"
+    "I": {
+      "item": "minecraft:redstone"
     }
   },
   "result": {

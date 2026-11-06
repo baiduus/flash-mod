@@ -213,5 +213,8 @@
   "key.flash.ability.dash_punch": "Dash Punch",
   "key.flash.ability.time_slow": "Time Slow",
   "message.flash.dash_no_targets": "Nobody is close enough.",
-  "message.flash.time_slow_started": "Time slowed down!"
+  "message.flash.time_slow_started": "Time slowed down!",
+  "key.flash.speed.toggle": "Speed on/off (keeps level)",
+  "message.flash.speed_off": "Speed off",
+  "message.flash.speed_on": "Speed on: level %s"
 }

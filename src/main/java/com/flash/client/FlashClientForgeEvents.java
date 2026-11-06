@@ -42,6 +42,13 @@ public final class FlashClientForgeEvents {
         FlashAbilityKeys.tick();
 
 
+        while (FlashKeys.TOGGLE_SPEED.consumeClick()) {
+            if (minecraft.screen == null && FlashClientData.hasPowers()) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashToggleSpeedPacket());
+            }
+        }
+        FlashWallRun.tick(minecraft);
+
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
         boolean decrease = drain(FlashKeys.DECREASE_SPEED);
 

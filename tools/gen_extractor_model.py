@@ -58,7 +58,7 @@ def build(on):
             "up": g([4, 4, 12, 12], "#top_e"), "north": g([4, 0, 12, 1], "#side_e"),
             "south": g([4, 0, 12, 1], "#side_e"), "east": g([4, 0, 12, 1], "#side_e"),
             "west": g([4, 0, 12, 1], "#side_e")}})
-    return {"credit": "Flash mod - tachyon extractor", "render_type": "minecraft:translucent",
+    return {"credit": "Flash mod - tachyon extractor", "render_type": "minecraft:cutout",
             "textures": textures, "elements": els}
 
 for name, on in (("tachyon_extractor", False), ("tachyon_extractor_on", True)):

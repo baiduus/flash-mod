@@ -264,20 +264,53 @@ public class FlashMuseumPiece extends StructurePiece {
         put(level, box, Blocks.DARK_OAK_TRAPDOOR.defaultBlockState(), 14, FLOOR + 2, 1);
         put(level, box, Blocks.DARK_OAK_TRAPDOOR.defaultBlockState(), 18, FLOOR + 3, 1);
 
-        // pediment: stepped triangle above the entrance with an oxidised medallion
-        for (int row = 0; row < 6; row++) {
-            int half = 12 - row * 2;
-            for (int x = 16 - half; x <= 16 + half; x++) {
-                put(level, box, random.nextInt(6) == 0 ? CRACKED_DEEPSLATE : DEEPSLATE_BRICKS,
-                        x, CEILING + row, 0);
-                put(level, box, aged(random), x, CEILING + row, 1);
+        // central tower above the entrance carrying the Flash lightning emblem
+        for (int x = 9; x <= 23; x++) {
+            for (int y = CEILING; y <= FlashMuseumStructure.HEIGHT - 1; y++) {
+                put(level, box, aged(random), x, y, 0);
+                put(level, box, aged(random), x, y, 1);
             }
         }
-        fill(level, box, 15, CEILING + 1, 0, 17, CEILING + 3, 0, OXIDIZED);
-        put(level, box, GOLD, 16, CEILING + 2, 0);
-        put(level, box, ROD, 16, CEILING + 6, 0);
+        emblem(level, box);
+        put(level, box, ROD, 8, CEILING + 1, 0);
+        put(level, box, ROD, 24, CEILING + 1, 0);
         put(level, box, ROD, 4, CEILING + 1, 0);
         put(level, box, ROD, 28, CEILING + 1, 0);
+    }
+
+    /** Big lightning-bolt emblem (dark disc, gilded ring, yellow bolt) so the museum is recognisable. */
+    private void emblem(WorldGenLevel level, BoundingBox box) {
+        boolean mirrored = this.getOrientation() == Direction.SOUTH || this.getOrientation() == Direction.WEST;
+        int cx = 16;
+        int cy = 17;
+        int[][] bolt = {
+                {2, 5}, {3, 5}, {1, 4}, {2, 4}, {3, 4}, {0, 3}, {1, 3}, {2, 3}, {-1, 2}, {0, 2}, {1, 2},
+                {-2, 1}, {-1, 1}, {0, 1}, {1, 1}, {2, 1}, {3, 1}, {0, 0}, {1, 0}, {2, 0}, {-1, -1}, {0, -1},
+                {1, -1}, {-2, -2}, {-1, -2}, {0, -2}, {-3, -3}, {-2, -3}, {-1, -3}, {-3, -4}, {-2, -4}, {-4, -5}
+        };
+        for (int dx = -6; dx <= 6; dx++) {
+            for (int dy = -6; dy <= 6; dy++) {
+                double dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 6.4D) {
+                    continue;
+                }
+                BlockState state = dist > 5.3D ? GILDED : BLACK_BRICKS;
+                put(level, box, state, mirrored ? W - 1 - (cx + dx) : cx + dx, cy + dy, 0);
+            }
+        }
+        BlockState yellow = Blocks.YELLOW_CONCRETE.defaultBlockState();
+        BlockState orange = Blocks.ORANGE_CONCRETE.defaultBlockState();
+        for (int[] cell : bolt) {
+            int bx = cx + cell[0];
+            put(level, box, orange, mirrored ? W - 1 - bx : bx, cy + cell[1], 0);
+        }
+        for (int[] cell : bolt) {
+            if ((cell[0] + cell[1]) % 2 != 0) {
+                continue;
+            }
+            int bx = cx + cell[0];
+            put(level, box, yellow, mirrored ? W - 1 - bx : bx, cy + cell[1], 0);
+        }
     }
 
     private void roof(WorldGenLevel level, BoundingBox box, RandomSource random) {

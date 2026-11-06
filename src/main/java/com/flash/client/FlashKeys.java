@@ -49,6 +49,14 @@ public final class FlashKeys {
             CATEGORY
     );
 
+    /** Turns the speed off / back on, keeping the level (default J). */
+    public static final KeyMapping TOGGLE_SPEED = new KeyMapping(
+            "key.flash.speed.toggle",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_J,
+            CATEGORY
+    );
+
     private FlashKeys() {
     }
 
@@ -57,5 +65,6 @@ public final class FlashKeys {
         event.register(OPEN_PROGRESS);
         event.register(INCREASE_SPEED);
         event.register(DECREASE_SPEED);
+        event.register(TOGGLE_SPEED);
     }
 }

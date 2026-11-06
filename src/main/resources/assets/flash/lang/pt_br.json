@@ -213,5 +213,8 @@
   "key.flash.ability.dash_punch": "Corrida de Socos",
   "key.flash.ability.time_slow": "Câmera Lenta",
   "message.flash.dash_no_targets": "Ninguém por perto.",
-  "message.flash.time_slow_started": "Tempo desacelerado!"
+  "message.flash.time_slow_started": "Tempo desacelerado!",
+  "key.flash.speed.toggle": "Velocidade liga/desliga (mantém o nível)",
+  "message.flash.speed_off": "Velocidade desligada",
+  "message.flash.speed_on": "Velocidade ligada: nível %s"
 }

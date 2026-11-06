@@ -49,7 +49,7 @@ public final class FlashAbilityKeys {
                 GLFW.GLFW_KEY_N, // Soco de massa infinita
                 GLFW.GLFW_KEY_M, // Manipulação de velocidade
                 GLFW.GLFW_KEY_P, // Força de Aceleração
-                GLFW.GLFW_KEY_V, // Corrida de socos
+                GLFW.GLFW_KEY_Z, // Corrida de socos
                 GLFW.GLFW_KEY_H  // Câmera lenta
         };
         for (int i = 0; i < ORDER.length; i++) {

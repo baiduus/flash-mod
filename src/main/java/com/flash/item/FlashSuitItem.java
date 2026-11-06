@@ -1,6 +1,7 @@
 package com.flash.item;
 
 import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
@@ -22,6 +23,20 @@ public class FlashSuitItem extends ArmorItem {
 
     public boolean isNegativeSuit() {
         return this.negative;
+    }
+
+    @Override
+    public void initializeClient(Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(new net.minecraftforge.client.extensions.common.IClientItemExtensions() {
+            @Override
+            public net.minecraft.client.model.HumanoidModel<?> getHumanoidArmorModel(
+                    net.minecraft.world.entity.LivingEntity entity, ItemStack stack,
+                    net.minecraft.world.entity.EquipmentSlot slot,
+                    net.minecraft.client.model.HumanoidModel<?> original) {
+                return com.flash.client.FlashSuitClient.model(
+                        slot == net.minecraft.world.entity.EquipmentSlot.LEGS);
+            }
+        });
     }
 
     @Override
