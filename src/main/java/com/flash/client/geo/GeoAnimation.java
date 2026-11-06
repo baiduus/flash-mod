@@ -107,6 +107,30 @@ public final class GeoAnimation {
         }
     }
 
+    /**
+     * Raw values of one bone at {@code seconds} (clamped to the length): rotation in degrees
+     * and position in bedrock pixels (y up). Missing channels stay 0.
+     * @return false when the animation does not move that bone
+     */
+    public boolean sampleBone(String bone, float seconds, float[] rot, float[] pos) {
+        float t = Math.max(0.0F, Math.min(length, seconds));
+        for (BoneTrack track : tracks) {
+            if (!track.bone().equals(bone)) {
+                continue;
+            }
+            rot[0] = rot[1] = rot[2] = 0.0F;
+            pos[0] = pos[1] = pos[2] = 0.0F;
+            if (track.rotation() != null) {
+                track.rotation().sample(t, rot);
+            }
+            if (track.position() != null) {
+                track.position().sample(t, pos);
+            }
+            return true;
+        }
+        return false;
+    }
+
     // ------------------------------------------------------------------
     // Loading
     // ------------------------------------------------------------------

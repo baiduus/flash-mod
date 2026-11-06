@@ -73,6 +73,7 @@ public final class FlashClientEvents {
                 player.addLayer(new FlashRingLayer(player));
                 player.addLayer(new FlashAmplifierLayer(player));
                 player.addLayer(new HulkClient.Layer(player));
+                FlashSpeedsterPose.install(player);
             }
         }
     }
