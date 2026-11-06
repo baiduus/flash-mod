@@ -135,6 +135,35 @@ public final class ModItems {
             () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.ZOOM,
                     net.minecraft.world.item.ArmorItem.Type.BOOTS));
 
+    public static final RegistryObject<Item> PHANTOM_FRAGMENT = ITEMS.register(
+            "phantom_fragment",
+            () -> new FlashTooltipItem(new Item.Properties().fireResistant(), "tooltip.flash.phantom_fragment"));
+
+    public static final RegistryObject<Item> ACCELERATION_PHANTOM_SPAWN_EGG = ITEMS.register(
+            "acceleration_phantom_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(ModEntities.ACCELERATION_PHANTOM,
+                    0x121214, 0xC8141C, new Item.Properties()));
+
+    public static final RegistryObject<Item> PHANTOM_SUIT_HELMET = ITEMS.register(
+            "phantom_suit_helmet",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.PHANTOM,
+                    net.minecraft.world.item.ArmorItem.Type.HELMET));
+
+    public static final RegistryObject<Item> PHANTOM_SUIT_CHESTPLATE = ITEMS.register(
+            "phantom_suit_chestplate",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.PHANTOM,
+                    net.minecraft.world.item.ArmorItem.Type.CHESTPLATE));
+
+    public static final RegistryObject<Item> PHANTOM_SUIT_LEGGINGS = ITEMS.register(
+            "phantom_suit_leggings",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.PHANTOM,
+                    net.minecraft.world.item.ArmorItem.Type.LEGGINGS));
+
+    public static final RegistryObject<Item> PHANTOM_SUIT_BOOTS = ITEMS.register(
+            "phantom_suit_boots",
+            () -> new com.flash.item.FlashSuitItem(com.flash.item.FlashSuitMaterial.PHANTOM,
+                    net.minecraft.world.item.ArmorItem.Type.BOOTS));
+
     private ModItems() {
     }
 

@@ -46,6 +46,8 @@ public final class FlashClientEvents {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(com.flash.registry.ModEntities.FLASH_SUIT_STAND.get(),
                 FlashSuitStandRenderer::new);
+        event.registerEntityRenderer(com.flash.registry.ModEntities.ACCELERATION_PHANTOM.get(),
+                AccelerationPhantomRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new

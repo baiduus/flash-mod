@@ -135,6 +135,8 @@ public final class FlashDimensionTravel {
         teleport(player, target, player.getX(), y, player.getZ());
         player.displayClientMessage(
                 Component.translatable("message.flash.dimension_entered"), true);
+        // something always follows a speedster into the Acceleration Force
+        com.flash.entity.AccelerationPhantom.huntOnArrival(player, target);
         target.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 1.0F, 0.7F);
         target.sendParticles(ParticleTypes.ELECTRIC_SPARK,

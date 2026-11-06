@@ -24,6 +24,8 @@ public class FlashAmplifierLayer extends RenderLayer<AbstractClientPlayer, Playe
             new ResourceLocation("flash", "textures/misc/tachyon_device.png");
     private static final ResourceLocation NEGATIVE =
             new ResourceLocation("flash", "textures/misc/tachyon_device_negative.png");
+    private static final ResourceLocation V9 =
+            new ResourceLocation("flash", "textures/misc/tachyon_device_v9.png");
 
     private static final int FULL_BRIGHT = 0xF000F0;
 
@@ -50,7 +52,9 @@ public class FlashAmplifierLayer extends RenderLayer<AbstractClientPlayer, Playe
             surface = -2.0F - 0.25F;
         }
         surface -= 0.01F;
-        ResourceLocation texture = FlashClientVisualLevels.isNegative(player) ? NEGATIVE : POSITIVE;
+        // core colour follows the lightning: positive (yellow) -> red, negative (red) -> yellow, V-9 -> blue
+        ResourceLocation texture = FlashClientVisualLevels.isV9(player) ? V9
+                : FlashClientVisualLevels.isNegative(player) ? NEGATIVE : POSITIVE;
 
         // the core breathes: brightness pulses about once a second
         float time = player.tickCount + partialTick;

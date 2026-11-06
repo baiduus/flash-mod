@@ -16,5 +16,6 @@ public final class FlashEntityEvents {
     @SubscribeEvent
     public static void onAttributes(EntityAttributeCreationEvent event) {
         event.put(ModEntities.FLASH_SUIT_STAND.get(), LivingEntity.createLivingAttributes().build());
+        event.put(ModEntities.ACCELERATION_PHANTOM.get(), AccelerationPhantom.createAttributes().build());
     }
 }

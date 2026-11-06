@@ -155,7 +155,9 @@ for dx in range(-7, 8):
     for dy in range(-7, 8):
         dist = math.hypot(dx, dy)
         if dist <= 7.0:
-            put(ECX + dx, ECY + dy, 6, "GILD" if dist > 5.9 else "BLKB")
+            ring = dist > 5.9
+            glow = ring and round(math.degrees(math.atan2(dy, dx)) / 30.0) % 2 == 0
+            put(ECX + dx, ECY + dy, 6, ("SHROOM" if glow else "GILD") if ring else "BLKB")
 bolt = [(2,5),(3,5),(1,4),(2,4),(3,4),(0,3),(1,3),(2,3),(-1,2),(0,2),(1,2),(-2,1),(-1,1),(0,1),(1,1),
         (2,1),(3,1),(0,0),(1,0),(2,0),(-1,-1),(0,-1),(1,-1),(-2,-2),(-1,-2),(0,-2),(-3,-3),(-2,-3),
         (-1,-3),(-3,-4),(-2,-4),(-4,-5)]
@@ -401,7 +403,7 @@ for x in range(9, 30):
         r = hr(x, z)
         if r <= 8.5:
             if r < 2.0:
-                k = "GOLD"
+                k = "GOLD" if (x + z) % 2 else "SHROOM"
             elif r < 3.2:
                 k = "BLK"
             elif r < 6.2:
@@ -487,6 +489,8 @@ def case(cx, cz, suit):
                 for y in range(3, 7):
                     put(x, y, z, "GLASS")
             put(x, 7, z, "GILD" if suit else "BLKB")
+    put(cx, 2, cz, "SEAL")      # lit plinth under the stand
+    put(cx, 7, cz, "SEAL")      # and a light in the case roof
     put(cx, 3, cz, "STAND_SUIT" if suit else "STAND_OLD")
 for z in (11, 17, 23):
     case(6, z, False); case(32, z, True)
@@ -502,6 +506,33 @@ for z in (14, 20, 28, 40, 46):
 for z in (14, 20):
     for x in (9, 10):
         put(x, 2, z, "BENCH_" + ("E" if x == 9 else "W")) if False else None
+
+# --------------------------------------------------------------------------
+# 8. Extra splendour: plaza obelisks and the golden bolt hanging in the rotunda
+# --------------------------------------------------------------------------
+for ox in (2, 36):
+    oz = 0
+    box(ox - 1, 2, oz - 1, ox + 1, 2, oz + 1, "BLKB")
+    put(ox, 2, oz, "GILD")
+    for y in range(3, 9):
+        put(ox, y, oz, "QP" if y < 8 else "QC")
+    put(ox, 9, oz, "GOLD"); put(ox, 10, oz, "SHROOM"); put(ox, 11, oz, "ROD")
+    for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        put(ox + dx, 3, oz + dz, "LANT")
+
+# a giant gilded lightning bolt hanging under the dome (plane z = 34)
+SCULPT = {17: (1, 3), 16: (0, 2), 15: (-1, 1), 14: (-2, 3), 13: (0, 2), 12: (-1, 1), 11: (-2, 0), 10: (-3, -2)}
+for y, (a, b) in SCULPT.items():
+    for dx in range(a, b + 1):
+        edge = dx in (a, b)
+        put(CX + dx, y, 34, "GOLD" if edge else "SHROOM")
+for y in range(18, DOME_Y + 12):
+    if grid.get((CX + 2, y, 34)) in (None, "AIR"):
+        put(CX + 2, y, 34, "CHAIN")
+    if grid.get((CX - 1, y, 34)) in (None, "AIR"):
+        put(CX - 1, y, 34, "CHAIN")
+for y in range(16, 18):
+    put(CX - 1, y, 34, "CHAIN") if grid.get((CX - 1, y, 34)) in (None, "AIR") else None
 
 # --------------------------------------------------------------------------
 # Output
@@ -522,6 +553,7 @@ PALETTE = {
     "ORANGE": "ORANGE_CONCRETE", "YELLOW": "YELLOW_CONCRETE",
     "LANT": "LANTERN", "HLANT": "LANTERN_HANGING", "CHAIN": "CHAIN", "ROD": "ROD",
     "MOSS": "MOSS", "MOSSC": "MOSS_CARPET", "AZALEA": "AZALEA",
+    "SHROOM": "SHROOMLIGHT", "SEAL": "SEA_LANTERN",
     "CHEST": "AIR", "STAND_GOLD": "AIR", "STAND_SUIT": "AIR", "STAND_OLD": "AIR",
 }
 # the data file
@@ -587,6 +619,7 @@ if len(sys.argv) > 2:
            "YCARPET": (220, 190, 40), "RFLOOR": (150, 60, 45), "ORANGE": (240, 120, 20), "YELLOW": (250, 220, 20),
            "LANT": (255, 200, 90), "HLANT": (255, 200, 90), "CHAIN": (60, 60, 70), "ROD": (200, 120, 80),
            "MOSS": (80, 120, 40), "MOSSC": (90, 130, 50), "AZALEA": (60, 140, 60), "CHEST": (150, 100, 40),
+           "SHROOM": (255, 170, 60), "SEAL": (200, 230, 230),
            "STAND_GOLD": (255, 255, 255), "STAND_SUIT": (255, 255, 255), "STAND_OLD": (255, 255, 255)}
     def c(k, shade=1.0):
         r, g, b = COL.get(k, (255, 0, 255))

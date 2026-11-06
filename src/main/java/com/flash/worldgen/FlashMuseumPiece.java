@@ -187,6 +187,8 @@ public class FlashMuseumPiece extends StructurePiece {
             case "MOSS" -> MOSS;
             case "MOSSC" -> MOSS_CARPET;
             case "AZALEA" -> AZALEA;
+            case "SHROOM" -> Blocks.SHROOMLIGHT.defaultBlockState();
+            case "SEAL" -> Blocks.SEA_LANTERN.defaultBlockState();
             default -> AIR;
         };
     }
@@ -225,11 +227,12 @@ public class FlashMuseumPiece extends StructurePiece {
                     }
                     if (c == FlashMuseumData.C_CHEST) {
                         placeChest(level, box, random, x, y, z);
-                    } else if (c == FlashMuseumData.C_STAND_GOLD || c == FlashMuseumData.C_STAND_SUIT) {
-                        spawnStand(level, box, x, y, z, 0xB01424, true);
-                    } else if (c == FlashMuseumData.C_STAND_OLD) {
-                        int[] colors = {0x6B1E1E, 0x8A7A2A, 0x4A1414, 0x7A6A20};
-                        spawnStand(level, box, x, y, z, colors[random.nextInt(colors.length)], false);
+                    } else if (c == FlashMuseumData.C_STAND_GOLD) {
+                        spawnStand(level, box, x, y, z, com.flash.item.FlashSuitMaterial.POSITIVE);
+                    } else if (c == FlashMuseumData.C_STAND_SUIT || c == FlashMuseumData.C_STAND_OLD) {
+                        // the gallery shows every suit of the mod, the same one always at the same case
+                        com.flash.item.FlashSuitMaterial[] suits = com.flash.item.FlashSuitMaterial.values();
+                        spawnStand(level, box, x, y, z, suits[Math.floorMod(x * 31 + z * 17, suits.length)]);
                     } else {
                         this.placeBlock(level, resolve(FlashMuseumData.key(c), random), x, y, z, box);
                     }
@@ -264,21 +267,30 @@ public class FlashMuseumPiece extends StructurePiece {
         this.createChest(level, box, random, chestPos, SUIT_LOOT, chest);
     }
 
-    private void spawnStand(WorldGenLevel level, BoundingBox box, int x, int y, int z, int color, boolean suit) {
+    /**
+     * A museum exhibit: the mod's own stand wearing one of the mod's suits. It is
+     * locked ({@link com.flash.entity.FlashSuitStand#MUSEUM_TAG}): nobody can take the
+     * suit off or break the stand in survival.
+     */
+    private void spawnStand(WorldGenLevel level, BoundingBox box, int x, int y, int z,
+                            com.flash.item.FlashSuitMaterial suit) {
         BlockPos pos = new BlockPos(this.getWorldX(x, z), this.getWorldY(y), this.getWorldZ(x, z));
         if (!box.isInside(pos)) {
             return;
         }
-        ArmorStand stand = new ArmorStand(level.getLevel(), pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+        com.flash.entity.FlashSuitStand stand =
+                com.flash.registry.ModEntities.FLASH_SUIT_STAND.get().create(level.getLevel());
+        if (stand == null) {
+            return;
+        }
         Direction toEntrance = this.getOrientation() == null ? Direction.SOUTH : this.getOrientation().getOpposite();
         stand.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, toEntrance.toYRot(), 0.0F);
         stand.setShowArms(true);
         stand.setNoBasePlate(true);
-        stand.setItemSlot(EquipmentSlot.HEAD, dyed(Items.LEATHER_HELMET, color));
-        stand.setItemSlot(EquipmentSlot.CHEST, dyed(Items.LEATHER_CHESTPLATE, color));
-        stand.setItemSlot(EquipmentSlot.LEGS, dyed(Items.LEATHER_LEGGINGS, color));
-        stand.setItemSlot(EquipmentSlot.FEET, suit ? new ItemStack(Items.GOLDEN_BOOTS)
-                : dyed(Items.LEATHER_BOOTS, color));
+        for (EquipmentSlot slot : com.flash.item.FlashSuitUtil.SLOTS) {
+            stand.setItemSlot(slot, com.flash.item.FlashSuitUtil.piece(slot, suit));
+        }
+        stand.lockAsExhibit();
         level.addFreshEntity(stand);
     }
 

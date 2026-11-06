@@ -49,6 +49,7 @@ public class FlashSuitItem extends ArmorItem {
                 && com.flash.config.FlashClientConfig.MASK_OPEN_MOUTH.get()) {
             return "flash:textures/models/armor/"
                     + (this.suit == FlashSuitMaterial.ZOOM ? "zoom_suit"
+                    : this.suit == FlashSuitMaterial.PHANTOM ? "phantom_suit"
                     : this.negative ? "negative_suit" : "flash_suit") + "_open_layer_1.png";
         }
         return null;

@@ -32,8 +32,8 @@ public class AccelerationPortalBlockEntity extends BlockEntity {
     private static final String SEED = "Seed";
     private static final String NEGATIVE = "Negative";
 
-    /** Ticks the portal stays open (15 seconds); the renderer closes it during the last 15 ticks. */
-    public static final long LIFETIME_TICKS = 300L;
+    /** Ticks the portal stays open (10 seconds); the renderer closes it during the last 15 ticks. */
+    public static final long LIFETIME_TICKS = 200L;
 
     private static final DustParticleOptions GOLD_DUST =
             new DustParticleOptions(new Vector3f(1.0F, 0.80F, 0.10F), 0.9F);

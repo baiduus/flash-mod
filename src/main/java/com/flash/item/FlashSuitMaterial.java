@@ -15,7 +15,9 @@ public enum FlashSuitMaterial implements ArmorMaterial {
     POSITIVE("flash:flash_suit"),
     NEGATIVE("flash:negative_suit"),
     /** Black suit of Zoom (Hunter Zolomon). */
-    ZOOM("flash:zoom_suit");
+    ZOOM("flash:zoom_suit"),
+    /** Suit of the ghost of the Acceleration Force (crafted from its fragments). */
+    PHANTOM("flash:phantom_suit");
 
     private final String name;
 

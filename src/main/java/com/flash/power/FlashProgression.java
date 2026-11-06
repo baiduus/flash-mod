@@ -21,6 +21,8 @@ public final class FlashProgression {
 
     private static final double MIN_STEP = 0.002D;
     private static final double MAX_STEP = 8.0D;
+    /** Blocks per tick covered on land per point of the movement-speed attribute (0.1 = walking 4.3 m/s). */
+    private static final double LAND_BLOCKS_PER_SPEED = 2.158D;
 
     private static final Map<UUID, Track> TRACKS = new ConcurrentHashMap<>();
 
@@ -52,7 +54,14 @@ public final class FlashProgression {
                 && !FlashV9.isBorrowedPowers(player)
                 && FlashPowers.getSelectedLevel(player) >= 1
                 && !FlashPowers.isMaxLevel(player)) {
-            int unlocked = FlashPowers.addDistance(player, step);
+            double credited = step;
+            if (player.isInWater() && step >= 0.05D) {
+                // water drag slows the body down; credit what the same run would cover on land
+                double land = player.getAttributeValue(
+                        net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * LAND_BLOCKS_PER_SPEED;
+                credited = Math.min(MAX_STEP, Math.max(step, land));
+            }
+            int unlocked = FlashPowers.addDistance(player, credited);
             if (unlocked > 0) {
                 onLevelUnlocked(player);
             }

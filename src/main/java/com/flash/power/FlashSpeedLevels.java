@@ -33,8 +33,13 @@ public final class FlashSpeedLevels {
             20.625D, // level 10 - 2.5x the previous 8.25x value
             // levels 11..20 are only reachable with the Tachyon Amplifier (same +1.875 step)
             22.500D, 24.375D, 26.250D, 28.125D, 30.000D,
-            31.875D, 33.750D, 35.625D, 37.500D, 39.375D
+            31.875D, 33.750D, 35.625D, 37.500D, 39.375D,
+            // levels 21..25 only exist with the amplifier AND the V-9 (+5) together
+            41.250D, 43.125D, 45.000D, 46.875D, 48.750D
     };
+
+    /** Highest level of the Tachyon Amplifier (before the V-9 bonus). */
+    public static final int AMP_MAX_LEVEL = 20;
 
     /** Highest level reachable by training alone (without the Tachyon Amplifier). */
     public static final int BASE_MAX_LEVEL = 10;

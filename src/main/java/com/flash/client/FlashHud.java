@@ -36,7 +36,9 @@ public class FlashHud implements IGuiOverlay {
                 && com.flash.item.FlashSuitItem.countWorn(minecraft.player) == 0;
 
         String line1 = Component.translatable(
-                FlashClientVisualLevels.isLocalNegative() ? "hud.flash.level_negative" : "hud.flash.level", level).getString();
+                FlashClientVisualLevels.isLocalV9() ? "hud.flash.level_v9"
+                        : FlashClientVisualLevels.isLocalNegative() ? "hud.flash.level_negative" : "hud.flash.level",
+                level).getString();
         String line2;
         if (FlashClientData.getMaxLevel() >= FlashSpeedLevels.BASE_MAX_LEVEL) {
             line2 = Component.translatable("hud.flash.max_level").getString();

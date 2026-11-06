@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "FFF",
+    "F F"
+  ],
+  "key": {
+    "F": {
+      "item": "flash:phantom_fragment"
+    }
+  },
+  "result": {
+    "item": "flash:phantom_suit_helmet"
+  }
+}

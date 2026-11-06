@@ -28,6 +28,9 @@ public final class FlashAbilityEffectsRenderer {
 
     private static final double MAX_DISTANCE_SQR = 48.0D * 48.0D;
 
+    /** True while drawing a player under the V-9 (render thread only). */
+    private static boolean v9;
+
     // Wind palette: pale cyan-white (positive) / hot white-red (negative).
     private static final float[] WIND_GLOW = {0.45F, 0.80F, 1.0F, 0.16F};
     private static final float[] WIND_MID = {0.75F, 0.93F, 1.0F, 0.38F};
@@ -78,11 +81,19 @@ public final class FlashAbilityEffectsRenderer {
             int mask = FlashClientVisualLevels.activeMask(player);
             boolean negative = FlashClientVisualLevels.isNegative(player);
             float time = player.tickCount + partialTick;
-            if ((mask & wind) != 0) {
-                renderWind(consumer, matrix, cameraPos, player, partialTick, time, negative);
-            }
-            if ((mask & barrage) != 0) {
-                renderBarrage(consumer, matrix, cameraPos, player, partialTick, time, negative);
+            // V-9: every effect of this player turns blue, like the lightning
+            v9 = FlashClientVisualLevels.isV9(player);
+            FlashLightningRibbon.blue = v9;
+            try {
+                if ((mask & wind) != 0) {
+                    renderWind(consumer, matrix, cameraPos, player, partialTick, time, negative);
+                }
+                if ((mask & barrage) != 0) {
+                    renderBarrage(consumer, matrix, cameraPos, player, partialTick, time, negative);
+                }
+            } finally {
+                FlashLightningRibbon.blue = false;
+                v9 = false;
             }
         }
         poseStack.popPose();
@@ -113,9 +124,9 @@ public final class FlashAbilityEffectsRenderer {
         Vec3 look = player.getViewVector(partialTick).normalize();
         Vec3 right = rightOf(look);
         Vec3 up = right.cross(look).normalize();
-        float[] glow = negative ? FlashLightningRibbon.RED_GLOW_COLOR : WIND_GLOW;
-        float[] mid = negative ? FlashLightningRibbon.RED_MID_COLOR : WIND_MID;
-        float[] core = negative ? FlashLightningRibbon.RED_CORE_COLOR : WIND_CORE;
+        float[] glow = v9 ? FlashLightningRibbon.BLUE_GLOW_COLOR : negative ? FlashLightningRibbon.RED_GLOW_COLOR : WIND_GLOW;
+        float[] mid = v9 ? FlashLightningRibbon.BLUE_MID_COLOR : negative ? FlashLightningRibbon.RED_MID_COLOR : WIND_MID;
+        float[] core = v9 ? FlashLightningRibbon.BLUE_CORE_COLOR : negative ? FlashLightningRibbon.RED_CORE_COLOR : WIND_CORE;
         float fade = 0.55F + 0.45F * Mth.sin(time * 0.6F) * 0.5F + 0.2F;
 
         for (int side = -1; side <= 1; side += 2) {
@@ -219,9 +230,9 @@ public final class FlashAbilityEffectsRenderer {
             ring.add(centre.add(right.scale(Math.cos(angle) * ringRadius))
                     .add(up.scale(Math.sin(angle) * ringRadius)));
         }
-        float[] glow = negative ? FlashLightningRibbon.RED_GLOW_COLOR : FlashLightningRibbon.GLOW_COLOR;
-        float[] mid = negative ? FlashLightningRibbon.RED_MID_COLOR : FlashLightningRibbon.MID_COLOR;
-        float[] core = negative ? FlashLightningRibbon.RED_CORE_COLOR : FlashLightningRibbon.CORE_COLOR;
+        float[] glow = v9 ? FlashLightningRibbon.BLUE_GLOW_COLOR : negative ? FlashLightningRibbon.RED_GLOW_COLOR : FlashLightningRibbon.GLOW_COLOR;
+        float[] mid = v9 ? FlashLightningRibbon.BLUE_MID_COLOR : negative ? FlashLightningRibbon.RED_MID_COLOR : FlashLightningRibbon.MID_COLOR;
+        float[] core = v9 ? FlashLightningRibbon.BLUE_CORE_COLOR : negative ? FlashLightningRibbon.RED_CORE_COLOR : FlashLightningRibbon.CORE_COLOR;
         FlashLightningRibbon.drawArc(consumer, matrix, cameraPos, ring,
                 0.05F, 0.022F, 0.008F, glow, mid, core, 1.0F - ringPhase);
     }

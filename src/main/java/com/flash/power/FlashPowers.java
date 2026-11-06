@@ -108,7 +108,7 @@ public final class FlashPowers {
         if (flash.getBoolean(HAS_POWERS)) {
             int stored = getStoredMax(player);
             int limit = stored >= FlashSpeedLevels.BASE_MAX_LEVEL && FlashAmplifier.isEquipped(player)
-                    ? FlashSpeedLevels.MAX_LEVEL
+                    ? FlashSpeedLevels.AMP_MAX_LEVEL
                     : stored;
             // the V-9 adds five levels for as long as it lasts
             return FlashSpeedLevels.clamp(limit + FlashV9.bonus(player));

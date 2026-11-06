@@ -21,12 +21,28 @@ import net.minecraft.world.phys.Vec3;
  */
 public class FlashSuitStand extends ArmorStand {
 
+    /** Entity tag of the museum exhibits: locked, the suit cannot be taken. */
+    public static final String MUSEUM_TAG = "flash_museum_exhibit";
+
     public FlashSuitStand(EntityType<? extends ArmorStand> type, Level level) {
         super(type, level);
     }
 
+    /** Museum exhibit: invulnerable (except to creative players) and nothing can be taken or swapped. */
+    public void lockAsExhibit() {
+        this.addTag(MUSEUM_TAG);
+        this.setInvulnerable(true);
+    }
+
+    public boolean isExhibit() {
+        return this.getTags().contains(MUSEUM_TAG);
+    }
+
     @Override
     public InteractionResult interactAt(Player player, Vec3 hit, InteractionHand hand) {
+        if (this.isExhibit() && !player.getAbilities().instabuild) {
+            return InteractionResult.FAIL;
+        }
         if (player.isShiftKeyDown() && !this.isMarker()) {
             if (this.level().isClientSide) {
                 return InteractionResult.SUCCESS;

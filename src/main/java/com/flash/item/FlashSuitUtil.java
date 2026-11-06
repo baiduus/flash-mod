@@ -32,6 +32,31 @@ public final class FlashSuitUtil {
         return isSuit(stack) && stack.hasTag() && stack.getTag().getBoolean(RING_TAG);
     }
 
+    /** Zoom suit piece (the ring gives it while the V-9 is running). */
+    public static ItemStack zoomPiece(EquipmentSlot slot) {
+        return new ItemStack(switch (slot) {
+            case HEAD -> ModItems.ZOOM_SUIT_HELMET.get();
+            case CHEST -> ModItems.ZOOM_SUIT_CHESTPLATE.get();
+            case LEGS -> ModItems.ZOOM_SUIT_LEGGINGS.get();
+            default -> ModItems.ZOOM_SUIT_BOOTS.get();
+        });
+    }
+
+    /** Piece of any of the mod's suits. */
+    public static ItemStack piece(EquipmentSlot slot, FlashSuitMaterial suit) {
+        return switch (suit) {
+            case NEGATIVE -> piece(slot, true);
+            case ZOOM -> zoomPiece(slot);
+            case PHANTOM -> new ItemStack(switch (slot) {
+                case HEAD -> ModItems.PHANTOM_SUIT_HELMET.get();
+                case CHEST -> ModItems.PHANTOM_SUIT_CHESTPLATE.get();
+                case LEGS -> ModItems.PHANTOM_SUIT_LEGGINGS.get();
+                default -> ModItems.PHANTOM_SUIT_BOOTS.get();
+            });
+            default -> piece(slot, false);
+        };
+    }
+
     public static ItemStack piece(EquipmentSlot slot, boolean negative) {
         return new ItemStack(switch (slot) {
             case HEAD -> negative ? ModItems.NEGATIVE_SUIT_HELMET.get() : ModItems.FLASH_SUIT_HELMET.get();
@@ -51,6 +76,7 @@ public final class FlashSuitUtil {
     /** Ring: puts the whole suit on the player, keeping the clothes it replaces inside the ring. */
     public static void deployFromRing(Player player, ItemStack ring) {
         boolean negative = com.flash.power.FlashPowers.isNegative(player);
+        boolean zoom = com.flash.power.FlashV9.isActive(player); // V-9 running: Zoom's black suit
         CompoundTag stored = ring.getOrCreateTag();
         for (EquipmentSlot slot : SLOTS) {
             ItemStack current = player.getItemBySlot(slot);
@@ -60,7 +86,7 @@ public final class FlashSuitUtil {
                 }
                 stored.put(STORED + slot.getName(), current.save(new CompoundTag()));
             }
-            ItemStack suit = piece(slot, negative);
+            ItemStack suit = zoom ? zoomPiece(slot) : piece(slot, negative);
             suit.getOrCreateTag().putBoolean(RING_TAG, true);
             if (isSuit(current)) {
                 continue; // already wearing a suit piece in this slot

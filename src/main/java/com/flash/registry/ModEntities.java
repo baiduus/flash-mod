@@ -21,6 +21,15 @@ public final class ModEntities {
                             .updateInterval(20)
                             .build("flash_suit_stand"));
 
+    public static final RegistryObject<EntityType<com.flash.entity.AccelerationPhantom>> ACCELERATION_PHANTOM =
+            ENTITY_TYPES.register("acceleration_phantom",
+                    () -> EntityType.Builder.<com.flash.entity.AccelerationPhantom>of(
+                                    com.flash.entity.AccelerationPhantom::new, MobCategory.MONSTER)
+                            .sized(0.6F, 1.95F)
+                            .fireImmune()
+                            .clientTrackingRange(10)
+                            .build("acceleration_phantom"));
+
     private ModEntities() {
     }
 }

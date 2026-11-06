@@ -33,19 +33,34 @@ public class FlashProgressScreen extends Screen {
     private static final int TAB_H = 24;
     private static final int CONTENT_Y = 104;
 
+    /** Levels on the grid: 0..10, up to 20 with the amplifier, and whatever the V-9 adds on top. */
+    private static int maxShownLevel() {
+        int base = FlashClientRing.isLocalAmplifier() ? FlashSpeedLevels.AMP_MAX_LEVEL : FlashSpeedLevels.BASE_MAX_LEVEL;
+        return Math.min(FlashSpeedLevels.MAX_LEVEL, Math.max(base, FlashClientData.getMaxLevel()));
+    }
+
+    private static boolean compactGrid() {
+        return maxShownLevel() > FlashSpeedLevels.BASE_MAX_LEVEL + 1;
+    }
+
     private static int cardColumns() {
-        return FlashClientRing.isLocalAmplifier() ? 7 : 4;
+        return compactGrid() ? 7 : 4;
     }
 
     private static int cardW() {
-        return FlashClientRing.isLocalAmplifier() ? 80 : 90;
+        return compactGrid() ? 80 : 90;
     }
 
-    private static int maxShownLevel() {
-        return FlashClientRing.isLocalAmplifier() ? FlashSpeedLevels.MAX_LEVEL : FlashSpeedLevels.BASE_MAX_LEVEL;
+    private static int gridRows() {
+        return (maxShownLevel() + cardColumns()) / cardColumns();
     }
 
-    private static final int CARD_H = 40;
+    /** 3 rows fit the normal height; a 4th row (levels 21..25) makes the cards shorter. */
+    private static int cardH() {
+        return gridRows() > 3 ? 30 : CARD_H_DEFAULT;
+    }
+
+    private static final int CARD_H_DEFAULT = 40;
     private static final int CARD_GAP = 6;
     private static final int GRID_X = PAD;
     private static final int GRID_Y = 176;
@@ -306,10 +321,10 @@ public class FlashProgressScreen extends Screen {
 
         for (int level = FlashSpeedLevels.MIN_LEVEL; level <= maxShownLevel(); level++) {
             int cx = GRID_X + (level % cardColumns()) * (cardW() + CARD_GAP);
-            int cy = GRID_Y + (level / cardColumns()) * (CARD_H + CARD_GAP);
+            int cy = GRID_Y + (level / cardColumns()) * (cardH() + CARD_GAP);
             boolean unlocked = has && level <= max;
             boolean inUse = has && level == selected;
-            boolean hovered = mx >= cx && mx < cx + cardW() && my >= cy && my < cy + CARD_H;
+            boolean hovered = mx >= cx && mx < cx + cardW() && my >= cy && my < cy + cardH();
 
             int border = inUse ? accent() : unlocked ? 0xFF2F8F55 : COLOR_BOX_BORDER;
             int fill = inUse ? accentSoft() : unlocked ? 0xFF101A13 : 0xFF0E1013;
@@ -317,8 +332,8 @@ public class FlashProgressScreen extends Screen {
                 border = 0xFF9BE8B4;
                 fill = 0xFF17231B;
             }
-            g.fill(cx, cy, cx + cardW(), cy + CARD_H, border);
-            g.fill(cx + 1, cy + 1, cx + cardW() - 1, cy + CARD_H - 1, fill);
+            g.fill(cx, cy, cx + cardW(), cy + cardH(), border);
+            g.fill(cx + 1, cy + 1, cx + cardW() - 1, cy + cardH() - 1, fill);
             if (inUse) {
                 g.fill(cx + 1, cy + 1, cx + cardW() - 1, cy + 3, accent());
             }
@@ -332,7 +347,7 @@ public class FlashProgressScreen extends Screen {
                     ? Component.translatable("gui.flash.progress.unlocked")
                     : Component.translatable("gui.flash.progress.locked");
             int statusColor = inUse ? accent() : unlocked ? COLOR_GREEN : COLOR_DIM;
-            if (!FlashClientRing.isLocalAmplifier()) {
+            if (!compactGrid()) {
                 g.drawString(this.font, this.font.plainSubstrByWidth(status.getString(), 44),
                         cx + 40, cy + 16, statusColor, false);
             } else if (level >= 10) {
@@ -819,11 +834,11 @@ public class FlashProgressScreen extends Screen {
             return -1;
         }
         int column = gx / (cardW() + CARD_GAP);
-        int row = gy / (CARD_H + CARD_GAP);
-        if (column >= cardColumns() || row > 2) {
+        int row = gy / (cardH() + CARD_GAP);
+        if (column >= cardColumns() || row >= gridRows()) {
             return -1;
         }
-        if (gx % (cardW() + CARD_GAP) >= cardW() || gy % (CARD_H + CARD_GAP) >= CARD_H) {
+        if (gx % (cardW() + CARD_GAP) >= cardW() || gy % (cardH() + CARD_GAP) >= cardH()) {
             return -1;
         }
         int level = row * cardColumns() + column;
