@@ -112,4 +112,10 @@ public final class ModItems {
 
     private ModItems() {
     }
+
+    public static final RegistryObject<Item> FLASH_RING = ITEMS.register(
+            "flash_ring", com.flash.item.FlashRingItem::new);
+
+    public static final RegistryObject<Item> FLASH_SUIT_STAND = ITEMS.register(
+            "flash_suit_stand", com.flash.item.FlashSuitStandItem::new);
 }

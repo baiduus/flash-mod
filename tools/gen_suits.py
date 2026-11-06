@@ -34,7 +34,14 @@ def layers(base):
     base = base.crop((0, 0, 64, 32)).copy()
     # layer 1: helmet (head), chestplate (body+arms), boots (low legs)
     l1 = base.copy()
-    clear(l1, (8, 13, 16, 16))        # leave the chin/face uncovered
+    # close the mouth/chin area with the suit colour (it used to be left open)
+    from collections import Counter
+    lp = l1.load()
+    main = Counter(lp[x, y] for x in list(range(0, 8)) + list(range(16, 32))
+                   for y in range(8, 13) if lp[x, y][3] > 0).most_common(1)[0][0]
+    for y in range(13, 16):
+        for x in range(8, 16):
+            lp[x, y] = main
     clear(l1, (0, 16, 16, 27))        # legs: keep only boots (bottom rows)
     clear(l1, (0, 16, 16, 20))
     # layer 2: leggings (waist + legs)

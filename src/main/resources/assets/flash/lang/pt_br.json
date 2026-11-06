@@ -234,5 +234,12 @@
   "gui.flash.config.on": "LIGADO",
   "gui.flash.config.off": "DESLIG.",
   "gui.flash.footer.keys": "K abre | V aumenta, Ctrl+V diminui | J liga/desliga velocidade",
-  "gui.flash.footer.scroll": "K abre | Ctrl + scroll muda o nível | J liga/desliga velocidade"
+  "gui.flash.footer.scroll": "K abre | Ctrl + scroll muda o nível | J liga/desliga velocidade",
+  "item.flash.flash_ring": "Anel do Flash",
+  "item.flash.flash_suit_stand": "Suporte do Traje do Flash",
+  "entity.flash.flash_suit_stand": "Suporte do Traje do Flash",
+  "tooltip.flash.ring.1": "Guarda o traje do Flash comprimido.",
+  "tooltip.flash.ring.2": "Botão direito: veste o traje, ou o guarda de volta.",
+  "tooltip.flash.stand.1": "Suporte de armadura para o traje do Flash.",
+  "tooltip.flash.stand.2": "Agachar + botão direito: guarda ou veste o traje completo."
 }

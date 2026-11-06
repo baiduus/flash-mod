@@ -234,5 +234,12 @@
   "gui.flash.config.on": "ON",
   "gui.flash.config.off": "OFF",
   "gui.flash.footer.keys": "K opens | V raises, Ctrl+V lowers | J speed on/off",
-  "gui.flash.footer.scroll": "K opens | Ctrl + scroll changes level | J speed on/off"
+  "gui.flash.footer.scroll": "K opens | Ctrl + scroll changes level | J speed on/off",
+  "item.flash.flash_ring": "Flash Ring",
+  "item.flash.flash_suit_stand": "Flash Suit Stand",
+  "entity.flash.flash_suit_stand": "Flash Suit Stand",
+  "tooltip.flash.ring.1": "Holds the compressed Flash suit.",
+  "tooltip.flash.ring.2": "Right click: puts the suit on, or takes it off.",
+  "tooltip.flash.stand.1": "Armor stand for the Flash suit.",
+  "tooltip.flash.stand.2": "Crouch + right click: stores or equips the whole suit."
 }
