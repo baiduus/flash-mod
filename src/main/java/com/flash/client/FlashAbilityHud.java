@@ -126,9 +126,9 @@ public final class FlashAbilityHud implements IGuiOverlay {
                 continue;
             }
             int cd = com.flash.hulk.HulkState.cooldown(a, now);
-            boolean active = a == com.flash.hulk.HulkAbility.FURY && furious;
+            boolean lit = a == com.flash.hulk.HulkAbility.FURY && furious;
             drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(),
-                    keyLabel(FlashAbilityKeys.mapping(a.keySlot())), cd, Math.max(1, a.cooldown()), active);
+                    keyLabel(FlashAbilityKeys.mapping(a.keySlot())), cd, Math.max(1, a.cooldown()), lit);
             y += ROW_HEIGHT + ROW_GAP;
         }
     }
