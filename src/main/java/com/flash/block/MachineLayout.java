@@ -8,7 +8,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Physical layout of the transformation chamber. The model is about 4.3 x 5.2 x 4.4
+ * Physical layout of the transformation chamber. The model is about 4 x 5.4 x 4
  * blocks, so the controller block is accompanied by invisible "part" blocks that
  * carry the collision of every cell the machine touches.
  *
@@ -28,29 +28,26 @@ final class MachineLayout {
 
     /** Solid volumes: minX, minY, minZ, maxX, maxY, maxZ (blocks, model space). */
     private static final double[][] SOLID = {
-            // stepped base and side stubs
-            {0.25, 0.0, -2.75, 3.75, 0.4, 1.55},
-            {0.0, 0.0, -2.45, 0.3, 0.2, 1.25},
-            {3.7, 0.0, -2.45, 4.0, 0.2, 1.25},
-            // cabin floor
-            {1.1, 0.0, -0.9, 2.9, 0.5, 1.3},
-            // rear body, casings and rear columns
-            {0.15, 0.0, -2.4, 3.85, 3.8, -0.9},
-            {0.3, 0.4, -2.62, 0.95, 3.8, -2.4},
-            {3.05, 0.4, -2.62, 3.7, 3.8, -2.4},
-            // left and right columns
-            {0.15, 0.0, -0.9, 1.1, 3.8, 0.7},
-            {0.5, 0.0, 0.7, 1.1, 3.8, 1.3},
-            {2.9, 0.0, -0.9, 3.85, 3.8, 0.7},
-            {2.9, 0.0, 0.7, 3.5, 3.8, 1.3},
-            // lintel, header, upper tiers
-            {0.15, 3.8, -2.5, 3.85, 4.55, 1.2},
-            {0.45, 3.8, 1.2, 3.55, 4.2, 1.35},
-            {0.5, 4.55, -2.0, 3.5, 4.95, 1.0},
-            {1.39, 4.95, -0.66, 2.61, 5.2, 0.86},
-            // right technical module and left connector
-            {3.85, 0.4, -2.25, 4.34, 2.83, -1.1},
-            {0.0, 0.4, 0.05, 0.15, 3.0, 1.1},
+            // round stepped dais (two crossed boxes), cabin floor and the entrance step
+            {0.05, 0.0, -1.35, 3.95, 0.34, 1.45},
+            {0.6, 0.0, -1.9, 3.4, 0.34, 2.0},
+            {0.75, 0.34, -1.2, 3.25, 0.5, 1.3},
+            {1.35, 0.0, 1.75, 2.65, 0.25, 2.0},
+            // curved back wall (back and both sides) and the two front pillars
+            {0.4, 0.5, -1.57, 3.6, 4.2, -1.05},
+            {0.38, 0.5, -1.1, 0.72, 4.2, 0.6},
+            {3.28, 0.5, -1.1, 3.62, 4.2, 0.6},
+            {0.36, 0.5, 0.25, 0.86, 4.2, 0.75},
+            {3.14, 0.5, 0.25, 3.64, 4.2, 0.75},
+            // crown, upper tier and the tesla coil
+            {0.7, 4.2, -1.65, 3.3, 4.45, 1.75},
+            {0.3, 4.2, -1.25, 3.7, 4.45, 1.35},
+            {1.0, 4.45, -0.9, 3.0, 4.65, 1.0},
+            {1.6, 4.65, -0.35, 2.4, 5.4, 0.45},
+            // capacitors at the back corners and the side connector
+            {0.04, 0.0, -1.96, 0.72, 3.42, -1.28},
+            {3.28, 0.0, -1.96, 3.96, 3.42, -1.28},
+            {0.0, 0.0, -0.22, 0.3, 1.96, 0.67},
     };
 
     private static final double EPS = 1.0E-4D;

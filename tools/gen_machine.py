@@ -565,6 +565,39 @@ def k_g_potion(w, h, r, c):
     return clamp(a)
 
 
+def k_glass_dark(w, h, r, c):
+    a = solid(w, h, (22, 30, 40))
+    a = noisy(a, r, 3)
+    if w > 2:
+        a[:, 0, :3] = (40, 56, 72)
+    return clamp(a)
+
+
+def k_g_liquid(w, h, r, c):
+    """Glowing potion mix rising in the tube (only when the container is filled)."""
+    a = np.zeros((h, w, 4), float)
+    if not c["active"]:
+        return a
+    f = c["frame"] / float(FRAMES)
+    cols = [np.array(v[0], float) for v in POTION_COLORS.values()]
+    for y in range(h):
+        t = ((h - 1 - y) / max(1, h - 1) + f) % 1.0
+        k = t * len(cols)
+        i0 = int(k) % len(cols)
+        i1 = (i0 + 1) % len(cols)
+        mix = cols[i0] * (1 - (k - int(k))) + cols[i1] * (k - int(k))
+        a[y, :, :3] = mix
+        a[y, :, 3] = 255
+    # rising bubbles
+    rng = np.random.default_rng(5)
+    for b in range(max(1, w * h // 40)):
+        bx = rng.integers(0, w)
+        by = int((rng.integers(0, h) - f * h)) % h
+        a[by, bx, :3] = (255, 240, 255)
+    a[..., :3] *= pulse(c, 0.0, 0.12)
+    return clamp(a)
+
+
 KINDS = {
     "graphite": k_graphite, "dark": k_dark, "dark_alt": k_dark_alt,
     "steel": k_steel, "gold": k_gold, "gold_dull": k_gold_dull, "bronze": k_bronze,
@@ -575,6 +608,7 @@ KINDS = {
     "potion_panel": k_potion_panel,
     "g:bar": k_g_bar, "g:red": k_g_red, "g:grid": k_g_grid,
     "g:floor": k_g_floor, "g:bolt": k_g_bolt, "g:potion": k_g_potion,
+    "glass_dark": k_glass_dark, "g:liquid": k_g_liquid,
 }
 KIND_DENS = {"g:bolt": 2, "potion_panel": 2, "g:potion": 2}
 
@@ -633,202 +667,175 @@ def blit(img, arr, x, y):
 # ----------------------------------------------------------------------
 # Descricao da maquina
 # ----------------------------------------------------------------------
+def disc(m, name, cx, cz, r_in, r_out, y, step=0.1, gap=None, skip=(), occlude=True, **mats):
+    """Annulus (or disc when r_in = 0) rasterised into boxes on a grid of `step`
+    blocks; `gap` = (from, to) degrees left out (0 = front, positive to the right)."""
+    n = int(math.ceil(r_out / step))
+    k = 0
+    for row in range(-n, n):
+        z0 = cz + row * step
+        z1 = z0 + step
+        zc = (z0 + z1) / 2.0
+        run = None
+        for col in range(-n, n + 1):
+            x0 = cx + col * step
+            xc = x0 + step / 2.0
+            d = math.hypot(xc - cx, zc - cz)
+            ok = r_in <= d <= r_out
+            if ok and gap is not None:
+                ang = math.degrees(math.atan2(xc - cx, -(zc - cz)))
+                ok = not (gap[0] <= ang <= gap[1])
+            if ok and col < n:
+                run = (run[0], x0 + step) if run else (x0, x0 + step)
+                continue
+            if run:
+                m.box("%s_%d" % (name, k), (round(run[0], 4), round(run[1], 4)), y,
+                      (round(z0, 4), round(z1, 4)), skip=skip, occlude=occlude, **mats)
+                k += 1
+                run = None
+    return k
+
+
+def polar(cx, cz, r, deg):
+    """Point at `deg` degrees from the front (positive = right) on a circle."""
+    a = math.radians(deg)
+    return cx + r * math.sin(a), cz - r * math.cos(a)
+
+
 def build_machine():
+    """Transformation chamber v8: a round S.T.A.R. Labs style pod.
+
+    Cabin centre (2.0, 0.95), floor at 0.5 (the Java side relies on both)."""
     m = Model("transformation_chamber", 8.0)
-    B, S = m.box, m.sym
-    ZB = 3.4          # plano traseiro do corpo
-    ZW = 1.9          # parede do fundo da cabine
-    YO = 3.8          # topo da abertura
-    # ----- Base escalonada -----
-    B("b1_c", (0.3, 3.7), (0, 0.2), (-0.55, 3.75), all="dark", top="graphite")
-    S("b1_s", (0, 0.3), (0, 0.2), (-0.25, 3.45), all="dark", top="graphite")
-    B("b2_c", (0.25, 3.75), (0.2, 0.4), (-0.35, 3.55), all="graphite", top="dark_alt")
-    S("b2_s", (0.05, 0.25), (0.2, 0.4), (-0.15, 3.35), all="graphite", top="dark_alt")
-    B("tread", (0.9, 3.1), (0.2, 0.3), (-0.5, -0.35), all="steel", top="floor_plate")
-    S("b_gold_f", (0.05, 0.5), (0.4, 0.47), (-0.15, 0.3), all="gold")
-    S("b_gold_r", (0.05, 0.5), (0.4, 0.47), (3.05, 3.35), all="gold")
-    S("b_led_f", (0.35, 1.0), (0.05, 0.16), (-0.58, -0.55), all="g:bar")
-    S("b_led_r", (0.35, 1.0), (0.05, 0.16), (3.75, 3.78), all="g:bar")
-    B("b_led_rs1", (4.0, 4.03), (0.05, 0.16), (0.05, 1.05), all="g:bar")
-    B("b_led_rs2", (4.0, 4.03), (0.05, 0.16), (2.2, 3.2), all="g:bar")
-    B("b_led_ls2", (-0.03, 0.0), (0.05, 0.16), (2.2, 3.2), all="g:bar")
-    B("b_led_ls1", (-0.03, 0.0), (0.05, 0.16), (1.2, 1.95), all="g:bar")
+    B = m.box
+    CX, CZ = 2.0, 0.95
+    FL = 0.5          # cabin floor
+    TOP = 4.2         # bottom of the crown
 
-    # ----- Plataforma de entrada -----
-    B("floor_front", (1.1, 2.9), (0.4, 0.5), (-0.3, 0.2),
-      all="graphite", top="floor_plate", front="steel")
-    B("floor_back", (1.1, 2.9), (0.4, 0.5), (1.7, ZW), all="graphite", top="floor_plate")
-    B("floor_l", (1.1, 1.3), (0.4, 0.5), (0.2, 1.7), all="graphite", top="floor_plate")
-    B("floor_r", (2.7, 2.9), (0.4, 0.5), (0.2, 1.7), all="graphite", top="floor_plate")
-    B("floor_glow", (1.3, 2.7), (0.4, 0.47), (0.2, 1.7), top="g:floor",
-      skip=("front", "back", "left", "right", "bottom"))
+    # ----- stepped round dais -----
+    disc(m, "dais1", CX, CZ, 0.0, 1.95, (0.0, 0.18), all="dark", top="graphite")
+    disc(m, "dais_glow", CX, CZ, 1.78, 1.88, (0.18, 0.2), top="g:bar",
+         skip=("front", "back", "left", "right", "bottom"), occlude=False)
+    disc(m, "dais2", CX, CZ, 0.0, 1.72, (0.18, 0.34), all="graphite", top="dark_alt")
+    disc(m, "dais_gold", CX, CZ, 1.5, 1.6, (0.34, 0.37), all="gold",
+         skip=("bottom",), occlude=False)
+    disc(m, "dais3", CX, CZ, 0.0, 1.45, (0.34, FL), all="steel", top="floor_plate")
+    disc(m, "floor_glow", CX, CZ, 0.0, 0.82, (FL, FL + 0.02), top="g:floor",
+         skip=("front", "back", "left", "right", "bottom"), occlude=False)
+    # entrance step in front
+    B("step", (1.35, 2.65), (0.0, 0.25), (-1.0, -0.75), all="graphite", top="floor_plate",
+      front="steel")
+    B("step_led", (1.45, 2.55), (0.06, 0.14), (-1.03, -1.0), all="g:bar")
 
-    # ----- Carcacas e corpo traseiro -----
-    S("casing", (0.15, 0.5), (0.4, 4.2), (0.3, ZB), all="graphite",
-      front="dark", top="header_top")
-    B("rear_body", (0.5, 3.5), (0.4, YO, ), (ZW, ZB),
-      all="dark", front="wall_inner", back="dark")
-
-    # ----- Colunas frontais (projetam-se alem da carcaca) -----
-    S("col", (0.5, 1.1), (0.4, YO), (-0.3, ZW), all="graphite",
-      front="steel", right="bronze", left="steel")
-    S("mod_f", (0.3, 1.1), (0.4, 0.85), (-0.35, 0.3), all="steel", top="graphite")
-    S("mod_f2", (0.4, 1.05), (0.85, 1.0), (-0.27, 0.3), all="graphite", front="dark_alt")
-    S("mod_f_gold", (0.3, 1.1), (0.85, 0.9), (-0.38, -0.35), all="gold")
-    S("col_ring_lo", (0.45, 1.15), (1.0, 1.06), (-0.34, 0.3), all="gold")
-    S("col_cap", (0.45, 1.15), (3.45, YO), (-0.35, 0.3), all="steel", front="graphite")
-    S("col_ring_hi", (0.45, 1.15), (3.39, 3.45), (-0.34, 0.3), all="gold")
-    # barras amarelas e faixas vermelhas (frente das colunas)
-    B("bar_front_L", (0.74, 0.92), (1.2, 3.25), (-0.35, -0.3), all="g:bar")
-    B("bar_front_R", (3.08, 3.26), (1.2, 3.25), (-0.35, -0.3), all="g:bar")
-    B("red_front_L", (0.56, 0.66), (1.15, 3.3), (-0.33, -0.3), all="g:red")
-    B("red_front_R", (3.34, 3.44), (1.15, 3.3), (-0.33, -0.3), all="g:red")
-    # barras e faixas nas laterais das colunas (visiveis nas vistas laterais)
-    B("bar_side_L", (0.46, 0.5), (1.2, 3.25), (-0.12, 0.08), all="g:bar")
-    B("bar_side_R", (3.5, 3.54), (1.2, 3.25), (-0.12, 0.08), all="g:bar")
-    B("red_side_L", (0.47, 0.5), (1.15, 3.3), (-0.26, -0.18), all="g:red")
-    B("red_side_R", (3.5, 3.53), (1.15, 3.3), (-0.26, -0.18), all="g:red")
-    # barras na parede interna
-    B("bar_in_L", (1.1, 1.14), (1.1, 3.3), (0.05, 0.22), all="g:bar")
-    B("bar_in_R", (2.86, 2.9), (1.1, 3.3), (0.05, 0.22), all="g:bar")
-    for i, z0 in enumerate((0.5, 0.98, 1.46)):
-        B("slat_L%d" % i, (1.1, 1.13), (1.05, 3.3), (z0, z0 + 0.16), all="bronze_hi",
-          skip=("back", "front", "top", "bottom", "left"))
-        B("slat_R%d" % i, (2.87, 2.9), (1.05, 3.3), (z0, z0 + 0.16), all="bronze_hi",
-          skip=("back", "front", "top", "bottom", "right"))
-
-    # ----- Travessa superior -----
-    B("lintel", (0.45, 3.55), (YO, 4.2), (-0.35, ZB), all="gold_dull",
-      bottom="header_under", top="header_top", back="graphite")
-    B("lintel_under_L", (0.45, 1.1), (YO - 0.06, YO), (-0.3, ZW), all="steel",
-      skip=("front",))
-    B("lintel_under_R", (2.9, 3.55), (YO - 0.06, YO), (-0.3, ZW), all="steel",
-      skip=("front",))
-    B("hdr", (0.15, 3.85), (4.2, 4.55), (-0.2, ZB + 0.1), all="graphite",
-      top="header_top", front="dark_alt")
-    S("hdr_gold", (0.2, 1.35), (4.26, 4.5), (-0.3, -0.2), all="gold")
-    S("hdr_gold_edge", (0.15, 0.3), (4.2, 4.7), (-0.3, 0.2), all="gold")
-    S("hdr_side_gold1", (0.1, 0.15), (4.28, 4.46), (0.3, 1.1), all="gold")
-    S("hdr_side_gold2", (0.1, 0.15), (4.28, 4.46), (1.5, 2.3), all="gold")
-    B("frame_c", (1.15, 2.85), (4.3, 4.78), (-0.5, -0.2), all="dark", front="dark_alt")
-    B("bar_c", (1.3, 2.7), (4.44, 4.62), (-0.54, -0.5), all="g:bar")
-    B("frame_c_top", (1.05, 2.95), (4.78, 4.86), (-0.46, 0.4), all="graphite",
-      top="header_top")
-    B("tier2", (0.5, 3.5), (4.55, 4.78), (0.0, 3.0), all="dark_alt",
-      front="graphite", top="header_top")
-    B("top_mod", (1.45, 2.55), (4.86, 5.14), (0.2, 1.6), all="steel",
-      front="graphite", top="gold")
-    B("top_rim", (1.39, 2.61), (5.14, 5.2), (0.14, 1.66), all="gold")
-    B("top_frame", (1.5, 2.5), (4.94, 5.1), (0.16, 0.2), all="dark")
-    B("top_bar", (1.57, 2.43), (4.98, 5.06), (0.12, 0.16), all="g:bar")
-    # orelhas escuras nos cantos superiores
-    S("ear_f", (0.15, 0.85), (4.55, 4.95), (0.1, 1.2), all="dark",
-      front="graphite", top="header_top")
-    S("ear_f_cap", (0.25, 0.75), (4.95, 5.03), (0.2, 1.05), all="steel")
-    S("ear_r", (0.15, 0.85), (4.55, 4.95), (2.2, ZB), all="dark", top="header_top")
-    S("ear_r_cap", (0.25, 0.75), (4.95, 5.03), (2.3, 3.2), all="steel")
-    S("ear_gold", (0.1, 0.2), (4.6, 4.9), (0.1, 0.7), all="gold")
-    # luz do teto
-    B("ceil_frame", (1.15, 2.85), (YO - 0.04, YO), (0.1, 1.8), all="dark",
-      skip=("top",))
-    B("ceil_grid", (1.25, 2.75), (YO - 0.08, YO - 0.04), (0.2, 1.7), bottom="g:grid",
-      skip=("front", "back", "left", "right", "top"))
-
-    # ----- Fundo da cabine -----
-    B("plaque", (1.45, 2.55), (1.25, 3.15), (ZW - 0.06, ZW), all="dark",
-      front="wall_inner")
-    B("plaque_top", (1.4, 2.6), (3.13, 3.21), (ZW - 0.1, ZW), all="gold")
-    B("plaque_bot", (1.4, 2.6), (1.19, 1.27), (ZW - 0.1, ZW), all="gold")
-    B("plaque_l", (1.4, 1.48), (1.27, 3.13), (ZW - 0.1, ZW), all="gold")
-    B("plaque_r", (2.52, 2.6), (1.27, 3.13), (ZW - 0.1, ZW), all="gold")
-    B("bolt", (1.58, 2.42), (1.45, 2.95), (ZW - 0.14, ZW - 0.1), front="g:bolt",
+    # ----- curved back wall (open front) -----
+    disc(m, "wall", CX, CZ, 1.3, 1.62, (FL, TOP), step=0.12, gap=(-70, 70),
+         all="dark", top="header_top")
+    # vertical energy slits on the inside of the wall
+    for i, deg in enumerate((-125, -100, 100, 125, 155, -155)):
+        x, z = polar(CX, CZ, 1.27, deg)
+        B("slit_%d" % i, (round(x - 0.05, 4), round(x + 0.05, 4)), (1.0, 3.6),
+          (round(z - 0.05, 4), round(z + 0.05, 4)), all="g:bar")
+    # emblem on the back wall, facing the cabin
+    zb = CZ + 1.26
+    B("plaque", (1.45, 2.55), (1.6, 3.3), (zb - 0.05, zb), all="dark", front="wall_inner")
+    B("plaque_rim_t", (1.4, 2.6), (3.28, 3.36), (zb - 0.09, zb), all="gold")
+    B("plaque_rim_b", (1.4, 2.6), (1.54, 1.62), (zb - 0.09, zb), all="gold")
+    B("plaque_rim_l", (1.4, 1.48), (1.62, 3.28), (zb - 0.09, zb), all="gold")
+    B("plaque_rim_r", (2.52, 2.6), (1.62, 3.28), (zb - 0.09, zb), all="gold")
+    B("bolt", (1.58, 2.42), (1.78, 3.12), (zb - 0.12, zb - 0.09), front="g:bolt",
       skip=("back", "left", "right", "top", "bottom"), occlude=False)
-    B("wall_bar_frame", (1.2, 2.8), (0.55, 0.78), (ZW - 0.04, ZW), all="dark")
-    B("wall_bar", (1.3, 2.7), (0.6, 0.72), (ZW - 0.08, ZW - 0.04), all="g:bar")
 
-    # ----- Traseira -----
-    B("back_frame", (1.0, 3.0), (0.75, 3.7), (ZB, ZB + 0.04), all="dark")
-    B("back_panel", (1.12, 2.88), (0.87, 3.58), (ZB + 0.04, ZB + 0.1), all="plate_big")
-    B("back_vent_frame", (1.44, 2.56), (2.92, 3.5), (ZB + 0.1, ZB + 0.12), all="dark")
-    B("back_vent", (1.5, 2.5), (2.98, 3.44), (ZB + 0.12, ZB + 0.15), all="dark",
-      back="vent")
-    S("bcol", (0.35, 0.9), (0.7, 3.7), (ZB, ZB + 0.14), all="steel", back="steel")
-    S("bcol_base", (0.3, 0.95), (0.4, 0.7), (ZB, ZB + 0.22), all="steel",
-      top="graphite", back="graphite")
-    S("bcol_cap", (0.3, 0.95), (3.6, 3.8), (ZB, ZB + 0.2), all="graphite")
-    B("bar_back_L", (0.56, 0.7), (1.0, 3.45), (ZB + 0.14, ZB + 0.18), all="g:bar")
-    B("bar_back_R", (3.3, 3.44), (1.0, 3.45), (ZB + 0.14, ZB + 0.18), all="g:bar")
-    B("red_back_L", (0.4, 0.48), (0.95, 3.5), (ZB + 0.14, ZB + 0.17), all="g:red")
-    B("red_back_R", (3.52, 3.6), (0.95, 3.5), (ZB + 0.14, ZB + 0.17), all="g:red")
+    # ----- two front pillars framing the entrance -----
+    for side, deg in (("L", -72), ("R", 72)):
+        x, z = polar(CX, CZ, 1.46, deg)
+        xa, xb = round(x - 0.2, 4), round(x + 0.2, 4)
+        za, zb2 = round(z - 0.2, 4), round(z + 0.2, 4)
+        B("pil_%s" % side, (xa, xb), (FL, TOP), (za, zb2), all="graphite", front="steel")
+        B("pil_base_%s" % side, (xa - 0.05, xb + 0.05), (FL, FL + 0.3), (za - 0.05, zb2 + 0.05),
+          all="steel", top="graphite")
+        B("pil_cap_%s" % side, (xa - 0.05, xb + 0.05), (TOP - 0.3, TOP), (za - 0.05, zb2 + 0.05),
+          all="steel")
+        for j, yy in enumerate((1.4, 2.8)):
+            B("pil_ring_%s%d" % (side, j), (xa - 0.03, xb + 0.03), (yy, yy + 0.08),
+              (za - 0.03, zb2 + 0.03), all="gold")
+        B("pil_bar_%s" % side, (round(x - 0.06, 4), round(x + 0.06, 4)), (FL + 0.45, TOP - 0.45),
+          (za - 0.03, za), all="g:bar")
 
-    # ----- Laterais -----
-    # direita: nervuras, painel e modulo tecnico traseiro
-    B("rib_R0", (3.85, 3.93), (0.5, 4.1), (0.3, 0.42), all="dark")
-    B("side_panel_R1", (3.85, 3.89), (0.6, 3.95), (0.55, 1.95), all="steel",
-      right="graphite")
-    B("rib_R1", (3.85, 3.93), (0.5, 4.1), (1.95, 2.07), all="dark")
-    B("rib_R2", (3.85, 3.93), (0.5, 4.1), (3.2, ZB), all="dark")
-    B("mod_R", (3.85, 4.3), (0.9, 2.75), (2.1, 3.25), all="dark", right="panel_box",
-      front="graphite", back="graphite", top="steel")
-    B("mod_R_gold", (3.85, 4.32), (0.9, 1.0), (2.1, 3.25), all="gold")
-    B("mod_R_lip", (3.85, 4.34), (2.75, 2.83), (2.06, 3.29), all="steel")
-    B("mod_R_leg", (3.85, 4.1), (0.4, 0.9), (2.1, 3.25), all="graphite")
-    B("side_gold_R", (3.85, 3.91), (0.4, 0.5), (0.3, 2.1), all="gold")
-    B("side_gold_R2", (3.85, 3.91), (0.4, 0.5), (3.25, ZB), all="gold")
-    # esquerda: conector do painel de pocoes + nervuras
-    B("mount", (0.0, 0.15), (0.4, 3.0), (-0.1, 0.95), all="graphite",
-      front="dark_alt", skip=("left",))
-    B("mount_gold", (0.0, 0.15), (0.4, 0.46), (-0.1, 0.95), all="gold", skip=("left",))
-    B("rib_L0", (0.07, 0.15), (0.5, 4.1), (0.3, 0.42), all="dark")
-    B("side_panel_L1", (0.11, 0.15), (0.6, 3.95), (0.95, 1.95), all="steel",
-      left="graphite")
-    B("rib_L1", (0.07, 0.15), (0.5, 4.1), (1.95, 2.07), all="dark")
-    B("side_panel_L2", (0.11, 0.15), (0.6, 3.95), (2.07, 3.2), all="graphite",
-      left="steel")
-    B("rib_L2", (0.07, 0.15), (0.5, 4.1), (3.2, ZB), all="dark")
-    B("side_gold_L", (0.09, 0.15), (0.4, 0.5), (0.95, ZB), all="gold")
+    # ----- floating energy rings around the cabin -----
+    for j, yy in enumerate((1.35, 2.75)):
+        disc(m, "halo%d" % j, CX, CZ, 1.08, 1.18, (yy, yy + 0.08), step=0.08, gap=(-38, 38),
+             all="g:bar", occlude=False)
+
+    # ----- crown -----
+    disc(m, "crown1", CX, CZ, 0.0, 1.7, (TOP, TOP + 0.25), step=0.12, all="graphite",
+         top="header_top", bottom="header_under")
+    disc(m, "crown_gold", CX, CZ, 1.6, 1.74, (TOP + 0.08, TOP + 0.17), step=0.12, all="gold",
+         occlude=False)
+    disc(m, "crown2", CX, CZ, 0.0, 1.25, (TOP + 0.25, TOP + 0.45), step=0.12, all="dark_alt",
+         top="header_top")
+    disc(m, "emitter", CX, CZ, 0.0, 0.9, (TOP - 0.03, TOP), bottom="g:grid",
+         skip=("front", "back", "left", "right", "top"), occlude=False)
+    # tesla coil on top
+    disc(m, "coil", CX, CZ, 0.0, 0.3, (TOP + 0.45, TOP + 1.05), step=0.06, all="steel")
+    for j, yy in enumerate((TOP + 0.55, TOP + 0.72, TOP + 0.89)):
+        disc(m, "coil_ring%d" % j, CX, CZ, 0.3, 0.42, (yy, yy + 0.07), step=0.06, all="gold",
+             occlude=False)
+    disc(m, "coil_top", CX, CZ, 0.0, 0.22, (TOP + 1.05, TOP + 1.2), step=0.06, all="gold")
+    # lightning plate on the front of the crown
+    zf = CZ - 1.7
+    B("crown_plate", (1.55, 2.45), (TOP + 0.02, TOP + 0.43), (zf - 0.02, zf + 0.25), all="dark",
+      front="dark_alt")
+    B("crown_bar", (1.62, 2.38), (TOP + 0.16, TOP + 0.28), (zf - 0.05, zf - 0.02), all="g:bar")
+
+    # ----- capacitors at the back corners -----
+    for side, x in (("L", 0.38), ("R", 3.62)):
+        zc = 2.62
+        disc(m, "cap_%s" % side, x, zc, 0.0, 0.26, (0.0, 3.3), step=0.06, all="graphite",
+             top="steel")
+        for j in range(5):
+            yy = 0.6 + j * 0.5
+            disc(m, "cap_ring_%s%d" % (side, j), x, zc, 0.26, 0.34, (yy, yy + 0.12), step=0.06,
+                 all="g:red", occlude=False)
+        disc(m, "cap_top_%s" % side, x, zc, 0.0, 0.32, (3.3, 3.42), step=0.06, all="gold")
+    # cables from the capacitors into the back wall
+    for side, x0, x1 in (("L", 0.55, 0.95), ("R", 3.05, 3.45)):
+        B("cable_%s" % side, (x0, x1), (2.9, 3.05), (2.4, 2.55), all="dark")
+
+    # ----- side connector for the potion container (left, by the controller) -----
+    B("mount", (0.0, 0.28), (0.0, 1.9), (0.35, 1.2), all="graphite", front="dark_alt",
+      left="panel_box", top="steel")
+    B("mount_gold", (0.0, 0.3), (1.9, 1.96), (0.33, 1.22), all="gold")
+    B("mount_led", (-0.02, 0.0), (0.4, 1.6), (0.7, 0.85), all="g:bar")
     return m
 
 
 def build_container():
+    """Potion container v8: a glass tube of glowing liquid between four posts."""
     m = Model("potion_container", 2.0)
-
-    # O recipiente e encaixado exatamente na sua celula (0..1 em x e z): o
-    # desenho original tinha -0.35..1.0 em x e 1.56 de profundidade.
-    def fx(v):
-        return tuple(round((a + 0.35) / 1.35, 4) for a in v)
-
-    def fz(v):
-        return tuple(round(1.0 - (1.0 - a) / 1.56, 4) for a in v)
-
-    def B(name, x, y, z, **kw):
-        return m.box(name, fx(x), y, fz(z), **kw)
-    B("p1", (-0.35, 1), (0, 0.2), (-0.3, 1.0), all="dark", top="graphite")
-    B("p1_led", (-0.2, 0.8), (0.05, 0.16), (-0.33, -0.3), all="g:bar")
-    B("p2", (-0.3, 1), (0.2, 0.4), (-0.1, 1.0), all="graphite", top="dark_alt")
-    B("p2_gold", (-0.3, 0.2), (0.4, 0.46), (-0.05, 0.3), all="gold")
-    B("pedestal", (0.0, 1.0), (0.4, 1.5), (0.1, 1.0), all="graphite",
-      front="dark_alt", right="dark")
-    B("ped_gold", (0.0, 1.0), (0.4, 0.46), (0.06, 0.1), all="gold")
-    B("ped_step", (0.1, 0.9), (0.9, 1.5), (-0.1, 0.1), all="graphite", front="steel",
-      top="graphite")
-    B("ped_step_gold", (0.1, 0.9), (0.9, 0.96), (-0.14, -0.1), all="gold")
-    B("side_box", (-0.35, 0.0), (0.4, 3.0), (0.2, 1.0), all="dark_alt",
-      front="graphite", left="graphite")
-    B("side_box_gold", (-0.35, 0.0), (0.9, 0.96), (0.16, 0.2), all="gold")
-    B("housing", (-0.3, 1.0), (1.5, 3.2), (0.2, 1.0), all="dark", front="graphite",
-      top="header_top")
-    B("housing_top", (-0.3, 1.0), (3.0, 3.2), (-0.5, 1.0), all="graphite",
-      top="header_top", front="dark_alt")
-    B("housing_gold", (-0.3, 1.0), (3.0, 3.06), (-0.56, -0.5), all="gold")
-    B("pf_top", (-0.3, 1.0), (2.88, 3.0), (-0.45, 0.0), all="gold")
-    B("pf_bot", (-0.3, 1.0), (1.5, 1.62), (-0.45, 0.0), all="gold")
-    B("pf_l", (-0.3, -0.22), (1.62, 2.88), (-0.45, 0.0), all="gold")
-    B("pf_r", (0.92, 1.0), (1.62, 2.88), (-0.45, 0.0), all="gold")
-    B("pf_back", (-0.22, 0.92), (1.62, 2.88), (0.0, 0.1), all="dark",
-      front="potion_panel", dens={"front": 2})
-    B("pf_liquid", (-0.22, 0.92), (1.62, 2.88), (-0.02, 0.0), front="g:potion",
-      dens={"front": 2}, skip=("back", "left", "right", "top", "bottom"), occlude=False)
+    B = m.box
+    C = 0.5
+    # base
+    B("base1", (0.02, 0.98), (0.0, 0.16), (0.02, 0.98), all="dark", top="graphite")
+    B("base2", (0.08, 0.92), (0.16, 0.3), (0.08, 0.92), all="graphite", top="dark_alt",
+      front="steel")
+    B("base_led", (0.25, 0.75), (0.19, 0.26), (0.05, 0.08), all="g:bar")
+    # four corner posts with gold rings
+    for i, (x, z) in enumerate(((0.1, 0.1), (0.76, 0.1), (0.1, 0.76), (0.76, 0.76))):
+        B("post%d" % i, (x, x + 0.14), (0.3, 2.9), (z, z + 0.14), all="steel", top="graphite")
+        for j, yy in enumerate((0.9, 1.9)):
+            B("post_ring%d_%d" % (i, j), (x - 0.02, x + 0.16), (yy, yy + 0.06), (z - 0.02, z + 0.16),
+              all="gold")
+    # tube: dark glass core and the glowing liquid around it (lit when filled)
+    disc(m, "tube_core", C, C, 0.0, 0.26, (0.42, 2.78), step=0.04, all="glass_dark")
+    disc(m, "liquid", C, C, 0.0, 0.28, (0.44, 2.76), step=0.04, all="g:liquid", occlude=False,
+         skip=("top", "bottom"))
+    disc(m, "collar_lo", C, C, 0.0, 0.36, (0.3, 0.44), step=0.04, all="gold")
+    disc(m, "collar_hi", C, C, 0.0, 0.36, (2.76, 2.9), step=0.04, all="gold")
+    # cap with a small coil
+    B("cap", (0.06, 0.94), (2.9, 3.04), (0.06, 0.94), all="graphite", top="header_top",
+      bottom="header_under")
+    disc(m, "cap_coil", C, C, 0.0, 0.14, (3.04, 3.2), step=0.04, all="steel")
+    disc(m, "cap_coil_ring", C, C, 0.14, 0.19, (3.08, 3.12), step=0.04, all="gold", occlude=False)
     return m
 
 
@@ -941,8 +948,8 @@ def main():
         with open(os.path.join(mdir, name + ".json"), "w") as fh:
             json.dump(data, fh, indent=1)
 
-    for m, credit in ((machine, "Flash mod - transformation chamber v7"),
-                      (container, "Flash mod - potion panel v7")):
+    for m, credit in ((machine, "Flash mod - transformation chamber v8"),
+                      (container, "Flash mod - potion container v8")):
         els = [e for e in (element(b, m.scale, uvs, None, None, jobs, m.name)
                            for b in m.boxes) if e]
         data = {
