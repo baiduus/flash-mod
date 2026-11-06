@@ -40,7 +40,8 @@ public class FlashSuitStand extends ArmorStand {
 
     @Override
     public InteractionResult interactAt(Player player, Vec3 hit, InteractionHand hand) {
-        if (this.isExhibit() && !player.getAbilities().instabuild) {
+        if (!player.getAbilities().instabuild
+                && (this.isExhibit() || (!this.level().isClientSide && FlashMuseumGuard.isExhibit(this)))) {
             return InteractionResult.FAIL;
         }
         if (player.isShiftKeyDown() && !this.isMarker()) {

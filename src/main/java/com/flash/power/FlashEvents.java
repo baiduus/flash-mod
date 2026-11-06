@@ -169,6 +169,7 @@ public final class FlashEvents {
         }
 
         FlashV9.tick(player);
+        com.flash.entity.AccelerationPhantom.tickHunt(player);
         FlashProgression.tick(player);
         FlashCombustion.tick(player);
         FlashStatusEffects.tick(player);

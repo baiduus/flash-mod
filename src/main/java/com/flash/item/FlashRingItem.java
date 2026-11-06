@@ -40,6 +40,8 @@ public class FlashRingItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level,
                                 List<Component> tooltip, TooltipFlag flag) {
+        tooltip.add(Component.translatable(FlashSuitUtil.ringHasSuit(stack)
+                ? "tooltip.flash.ring.full" : "tooltip.flash.ring.empty").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.flash.ring.1").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.flash.ring.2").withStyle(ChatFormatting.DARK_GRAY));
     }

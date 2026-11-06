@@ -38,6 +38,13 @@ public record FlashBeamPacket(Vec3 start, Vec3 end, int color, int durationTicks
         context.setPacketHandled(true);
     }
 
+    /** Beam fired by any entity (seen by everyone tracking it). */
+    public static void sendFrom(net.minecraft.world.entity.Entity source, Vec3 start, Vec3 end,
+                                int color, int durationTicks, float width, boolean negative) {
+        FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> source),
+                new FlashBeamPacket(start, end, color, durationTicks, width, negative, false));
+    }
+
     public static void send(ServerPlayer source, Vec3 start, Vec3 end,
                             int color, int durationTicks, float width) {
         FlashNetwork.CHANNEL.send(

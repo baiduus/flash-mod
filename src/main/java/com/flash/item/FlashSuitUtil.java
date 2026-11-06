@@ -73,46 +73,86 @@ public final class FlashSuitUtil {
         }
     }
 
-    /** Ring: puts the whole suit on the player, keeping the clothes it replaces inside the ring. */
-    public static void deployFromRing(Player player, ItemStack ring) {
-        boolean negative = com.flash.power.FlashPowers.isNegative(player);
-        boolean zoom = com.flash.power.FlashV9.isActive(player); // V-9 running: Zoom's black suit
-        CompoundTag stored = ring.getOrCreateTag();
+    /** Ring NBT key prefix of the suit pieces kept inside the ring. */
+    private static final String SUIT = "flash_suit_";
+
+    /** True when the ring holds at least one suit piece. */
+    public static boolean ringHasSuit(ItemStack ring) {
+        CompoundTag tag = ring.getTag();
+        if (tag == null) {
+            return false;
+        }
         for (EquipmentSlot slot : SLOTS) {
-            ItemStack current = player.getItemBySlot(slot);
-            if (!current.isEmpty() && !isSuit(current)) {
-                if (stored.contains(STORED + slot.getName())) {
-                    giveOrDrop(player, ItemStack.of(stored.getCompound(STORED + slot.getName())));
-                }
-                stored.put(STORED + slot.getName(), current.save(new CompoundTag()));
+            if (tag.contains(SUIT + slot.getName())) {
+                return true;
             }
-            ItemStack suit = zoom ? zoomPiece(slot) : piece(slot, negative);
-            suit.getOrCreateTag().putBoolean(RING_TAG, true);
-            if (isSuit(current)) {
-                continue; // already wearing a suit piece in this slot
+        }
+        return false;
+    }
+
+    /**
+     * Ring: puts on the suit kept inside it (the clothes it replaces go into the
+     * ring). An empty ring does not make a suit: if the player wears suit pieces,
+     * they are stored in the ring instead.
+     */
+    public static void deployFromRing(Player player, ItemStack ring) {
+        if (!ringHasSuit(ring)) {
+            if (FlashSuitItem.countWorn(player) > 0) {
+                stowToRing(player, ring);
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.translatable("message.flash.ring_stored"), true);
+            } else {
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.translatable("message.flash.ring_empty"), true);
+            }
+            return;
+        }
+        CompoundTag tag = ring.getOrCreateTag();
+        for (EquipmentSlot slot : SLOTS) {
+            String key = SUIT + slot.getName();
+            if (!tag.contains(key)) {
+                continue;
+            }
+            ItemStack suit = ItemStack.of(tag.getCompound(key));
+            tag.remove(key);
+            ItemStack current = player.getItemBySlot(slot);
+            if (!current.isEmpty()) {
+                if (isSuit(current)) {
+                    giveOrDrop(player, current);
+                } else {
+                    String clothes = STORED + slot.getName();
+                    if (tag.contains(clothes)) {
+                        giveOrDrop(player, ItemStack.of(tag.getCompound(clothes)));
+                    }
+                    tag.put(clothes, current.save(new CompoundTag()));
+                }
             }
             player.setItemSlot(slot, suit);
         }
         effects(player);
     }
 
-    /** Ring: removes the suit and returns the clothes that were stored. */
+    /** Ring: the worn suit goes into the ring and the clothes kept there come back. */
     public static void stowToRing(Player player, ItemStack ring) {
-        CompoundTag stored = ring.getTag();
+        CompoundTag tag = ring.getOrCreateTag();
         for (EquipmentSlot slot : SLOTS) {
             ItemStack worn = player.getItemBySlot(slot);
             if (!isSuit(worn)) {
                 continue;
             }
-            boolean fromRing = isRingPiece(worn);
             player.setItemSlot(slot, ItemStack.EMPTY);
-            if (!fromRing) {
-                giveOrDrop(player, worn); // a crafted piece is never destroyed
+            String key = SUIT + slot.getName();
+            if (isRingPiece(worn)) {
+                // pieces made by older versions of the ring only existed while worn
+            } else if (tag.contains(key)) {
+                giveOrDrop(player, worn);
+            } else {
+                tag.put(key, worn.save(new CompoundTag()));
             }
-            String key = STORED + slot.getName();
-            if (stored != null && stored.contains(key)) {
-                ItemStack back = ItemStack.of(stored.getCompound(key));
-                stored.remove(key);
+            String clothes = STORED + slot.getName();
+            if (tag.contains(clothes)) {
+                ItemStack back = ItemStack.of(tag.getCompound(clothes));
+                tag.remove(clothes);
                 if (player.getItemBySlot(slot).isEmpty()) {
                     player.setItemSlot(slot, back);
                 } else {

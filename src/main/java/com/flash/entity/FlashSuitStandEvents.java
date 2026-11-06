@@ -40,14 +40,11 @@ public final class FlashSuitStandEvents {
 
     private static void handle(PlayerInteractEvent event, Player player, FlashSuitStand stand,
                                InteractionHand hand) {
-        if (stand.isExhibit() && !player.getAbilities().instabuild) {
-            // museum exhibit: look, don't touch
+        if (!player.getAbilities().instabuild
+                && (stand.isExhibit() || (!player.level().isClientSide && FlashMuseumGuard.isExhibit(stand)))) {
+            // museum exhibit: look, don't touch (FlashMuseumGuard shows the message)
             event.setCanceled(true);
             setResult(event, InteractionResult.FAIL);
-            if (!player.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
-                player.displayClientMessage(
-                        net.minecraft.network.chat.Component.translatable("message.flash.museum_locked"), true);
-            }
             return;
         }
         if (!player.isShiftKeyDown() || stand.isMarker() || player.isSpectator()) {

@@ -28,6 +28,7 @@ public final class ModEntities {
                             .sized(0.6F, 1.95F)
                             .fireImmune()
                             .clientTrackingRange(10)
+                            .updateInterval(1) // it is very fast: send its position every tick
                             .build("acceleration_phantom"));
 
     private ModEntities() {
