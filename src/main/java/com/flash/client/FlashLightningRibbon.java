@@ -44,13 +44,13 @@ public final class FlashLightningRibbon {
     public static final float BRANCH_CORE_WIDTH = 0.005F;
 
     /** Orange (base of a bolt) to yellow (tip) used by the body and trail lightning. */
-    private static final float[] BOLT_ORANGE = {1.0F, 0.42F, 0.04F};
-    private static final float[] BOLT_YELLOW = {1.0F, 0.88F, 0.16F};
-    private static final float[] BOLT_WHITE = {1.0F, 0.97F, 0.70F};
+    private static final float[] BOLT_ORANGE = {1.0F, 0.58F, 0.10F};
+    private static final float[] BOLT_YELLOW = {1.0F, 0.96F, 0.32F};
+    private static final float[] BOLT_WHITE = {1.0F, 1.0F, 0.90F};
     /** Negative Acceleration Force: dark red at the base, bright red at the tip. */
-    private static final float[] BOLT_RED_DARK = {0.62F, 0.02F, 0.03F};
-    private static final float[] BOLT_RED_BRIGHT = {1.0F, 0.14F, 0.10F};
-    private static final float[] BOLT_RED_WHITE = {1.0F, 0.66F, 0.60F};
+    private static final float[] BOLT_RED_DARK = {0.90F, 0.05F, 0.06F};
+    private static final float[] BOLT_RED_BRIGHT = {1.0F, 0.26F, 0.18F};
+    private static final float[] BOLT_RED_WHITE = {1.0F, 0.84F, 0.80F};
 
     private FlashLightningRibbon() {
     }
@@ -70,9 +70,12 @@ public final class FlashLightningRibbon {
         if (alpha <= 0.001F || points.size() < 2) {
             return;
         }
-        drawGradientPass(consumer, matrix, cameraPos, points, width * 2.4F, 0.0F, 0.22F * alpha, negative);
-        drawGradientPass(consumer, matrix, cameraPos, points, width, 0.0F, 0.60F * alpha, negative);
-        drawGradientPass(consumer, matrix, cameraPos, points, width * 0.38F, 0.65F, 0.95F * alpha, negative);
+        // wide soft halo, a bright body, then a white-hot core drawn twice for extra glow
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 3.6F, 0.10F, 0.24F * alpha, negative);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 2.2F, 0.20F, 0.50F * alpha, negative);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 1.15F, 0.40F, 0.90F * alpha, negative);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 0.55F, 0.88F, 1.00F * alpha, negative);
+        drawGradientPass(consumer, matrix, cameraPos, points, width * 0.30F, 1.00F, 1.00F * alpha, negative);
     }
 
     private static void drawGradientPass(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,
