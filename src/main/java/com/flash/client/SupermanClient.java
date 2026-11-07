@@ -106,6 +106,81 @@ public final class SupermanClient {
     }
 
     // ------------------------------------------------------------------
+    // Aimed flight with three stages
+    // ------------------------------------------------------------------
+
+    /** Flight speeds in blocks per tick: hover, walking, sprint, double sprint (scaled by the level). */
+    private static final double[] STAGE_SPEED = {0.0D, 0.45D, 1.1D, 2.4D};
+    private static int flightStage;
+    private static boolean sprintWasDown;
+    private static long lastSprintPress = -100L;
+    private static boolean boostArmed;
+
+    /** Current stage of the local flight (0 hover, 1 slow, 2 fast, 3 fastest). */
+    public static int flightStage() {
+        return flightStage;
+    }
+
+    /**
+     * The local player flies where he looks: forward follows the full 3D look (up, down, any angle), the
+     * side keys strafe, jump / sneak rise and sink. Walking = stage 1, holding sprint = stage 2, sprint
+     * pressed twice and held = stage 3. Set before the movement of the tick (the client moves the player).
+     */
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (event.phase != TickEvent.Phase.START || event.player != mc.player || mc.level == null) {
+            return;
+        }
+        net.minecraft.client.player.LocalPlayer p = mc.player;
+        boolean sprint = mc.options.keySprint.isDown();
+        long now = mc.level.getGameTime();
+        if (sprint && !sprintWasDown) {
+            boostArmed = now - lastSprintPress <= 7L;
+            lastSprintPress = now;
+        }
+        if (!sprint) {
+            boostArmed = false;
+        }
+        sprintWasDown = sprint;
+        if (!SupermanState.isSuperman(p) || !p.getAbilities().flying || p.isPassenger()
+                || !SupermanState.flag(p, SupermanPowers.F_FLIGHT)) {
+            flightStage = 0;
+            return;
+        }
+        float forward = p.input.forwardImpulse;
+        float strafe = p.input.leftImpulse;
+        int stage = forward > 0.0F ? (sprint ? (boostArmed ? 3 : 2) : 1) : 0;
+        if (stage == 3 && flightStage < 3) {
+            p.playSound(ModSounds.PUNCH_SONIC.get(), 0.7F, 1.3F);
+        }
+        flightStage = stage;
+        double scale = 0.75D + 0.025D * Math.max(1, SupermanState.level());
+        Vec3 look = p.getLookAngle();
+        Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
+        flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
+        Vec3 target = Vec3.ZERO;
+        if (forward > 0.0F) {
+            target = look.scale(STAGE_SPEED[stage] * scale);
+        } else if (forward < 0.0F) {
+            target = look.scale(-0.3D * scale);
+        }
+        // leftImpulse > 0 = left
+        target = target.add(flatRight.scale(-strafe * 0.35D * scale));
+        if (p.input.jumping) {
+            target = target.add(0.0D, 0.45D * scale, 0.0D);
+        }
+        if (p.input.shiftKeyDown) {
+            target = target.add(0.0D, -0.45D * scale, 0.0D);
+        }
+        Vec3 cur = p.getDeltaMovement();
+        // speeds up a little slower than it brakes
+        double k = target.lengthSqr() > cur.lengthSqr() ? 0.16D : 0.3D;
+        p.setDeltaMovement(cur.add(target.subtract(cur).scale(k)));
+        p.fallDistance = 0.0F;
+    }
+
+    // ------------------------------------------------------------------
     // Keys and sounds
     // ------------------------------------------------------------------
 
@@ -286,7 +361,9 @@ public final class SupermanClient {
             boolean firstPerson = p == mc.player && mc.options.getCameraType().isFirstPerson();
             Vec3 side = look.cross(new Vec3(0.0D, 1.0D, 0.0D));
             side = side.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
-            Vec3 start = firstPerson ? eye.add(look.scale(0.35D)).subtract(0.0D, 0.12D, 0.0D)
+            // first person: the beams start low and to the sides of the view so both stay visible
+            Vec3 camUp = side.cross(look).normalize();
+            Vec3 start = firstPerson ? eye.add(look.scale(0.5D)).subtract(camUp.scale(0.2D))
                     : eye.add(look.scale(0.22D)).add(0.0D, 0.02D, 0.0D);
             Vec3 end = eye.add(look.scale(64.0D));
             BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER,
@@ -295,13 +372,18 @@ public final class SupermanClient {
             AABB box = p.getBoundingBox().expandTowards(stop.subtract(eye)).inflate(1.0D);
             EntityHitResult hit = ProjectileUtil.getEntityHitResult(p, eye, stop, box,
                     e -> !e.isSpectator() && e.isPickable(), eye.distanceToSqr(stop));
+            Vec3 normal = null;
             if (hit != null) {
                 stop = hit.getLocation();
+            } else if (block.getType() == HitResult.Type.BLOCK) {
+                normal = Vec3.atLowerCornerOf(block.getDirection().getNormal());
+                // burnt trail on the surface it sweeps
+                SupermanFx.scorch(p.getUUID(), stop, normal, SupermanState.flag(p, SupermanPowers.F_LASER));
             }
             BEAM_ENDS.put(p.getUUID(), stop);
             boolean laser = SupermanState.flag(p, SupermanPowers.F_LASER);
             float thick = laser ? 1.8F : 1.0F;
-            double spread = firstPerson ? 0.09D : 0.065D;
+            double spread = firstPerson ? 0.15D : 0.065D;
             BEAMS.add(new Beam(p, start.add(side.scale(-spread)), start.add(side.scale(spread)), stop, laser,
                     firstPerson));
             if (SupermanShaders.ready()) {

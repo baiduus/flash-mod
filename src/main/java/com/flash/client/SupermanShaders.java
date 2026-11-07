@@ -276,11 +276,12 @@ public final class SupermanShaders {
                 continue;
             }
             any = true;
-            float width = beam.laser() ? 0.16F : 0.1F;
+            float width = beam.laser() ? 0.22F : 0.14F;
             Vec3 stop = beam.stop().subtract(cam);
             for (int e = 0; e < 2; e++) {
                 Vec3 from = (e == 0 ? beam.rightEye() : beam.leftEye()).subtract(cam);
-                ribbon(b, from, stop, width, 1.0F, 0.0F, 1.0F, 1.0F);
+                // first-person ribbon marker of the shader: (1, .25, 0), laser (1, .25, .25 + eye x .1)
+                ribbon(b, from, stop, width, 1.0F, 0.25F, beam.laser() ? 0.25F + e * 0.1F : 0.0F, 1.0F);
             }
         }
         if (any) {

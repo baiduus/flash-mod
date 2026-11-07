@@ -72,11 +72,11 @@ public final class HulkEvents {
         if (player.isShiftKeyDown()) {
             // aimed leap: follows the full 3D look (up = tall leap, ahead = long leap)
             Vec3 look = player.getLookAngle().normalize();
-            double power = 1.6D + 6.0D * t;
+            double power = 1.4D + 4.6D * t; // a little shorter
             double up = look.y * power + 0.4D; // small lift so a flat aim still clears the ground
             player.setDeltaMovement(look.x * power, Math.max(0.5D, up), look.z * power);
         } else {
-            player.setDeltaMovement(motion.x, motion.y * (1.35D + 1.25D * t), motion.z);
+            player.setDeltaMovement(motion.x, motion.y * (1.3D + 1.0D * t), motion.z);
         }
         player.hasImpulse = true;
     }

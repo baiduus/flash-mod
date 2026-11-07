@@ -150,8 +150,16 @@ public final class SupermanPowers {
         return 1.0D + bonusDamage(level);
     }
 
-    /** Flying speed (creative flight is 0.05). */
+    /**
+     * Vanilla flying speed: 0, the client drives the aimed flight itself (see SupermanClient), so the
+     * creative flight input adds nothing on top.
+     */
     public static float flySpeed(int level) {
+        return 0.0F;
+    }
+
+    /** Old creative-style speed (unused). */
+    public static float oldFlySpeed(int level) {
         return 0.06F + 0.012F * Math.max(1, level);
     }
 

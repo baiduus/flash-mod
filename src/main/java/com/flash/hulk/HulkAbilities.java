@@ -255,12 +255,18 @@ public final class HulkAbilities {
                 && !(e instanceof net.minecraft.world.entity.player.Player p && (p.isSpectator() || p.isCreative())));
     }
 
-    /** Multiplier of every ability hit (lowered: the abilities were killing everything at once). */
-    private static final float ABILITY_DAMAGE = 0.8F;
+    /** Abilities are multiples of the Hulk's own punch (level, fury and Extra Life included). */
+    private static final float ABILITY_DAMAGE = 1.0F;
+
+    /** Damage of one punch of this Hulk right now: every ability is a multiple of it. */
+    private static float punch(ServerPlayer player) {
+        double p = HulkPowers.punchDamage(Math.max(1, HulkPowers.activeLevel(player)), HulkPowers.isFurious(player));
+        return (float) (p * (HulkPowers.extraTicks(player) > 0 ? 1.5D : 1.0D));
+    }
 
     /** Hit that ignores every kind of armour (the charge): attributed to the Hulk, armour does nothing. */
     private static void hitPiercing(ServerPlayer player, LivingEntity target, float damage, Vec3 push) {
-        target.invulnerableTime = 0;
+        // normal invulnerability frames: the charge hits about twice a second while touching
         net.minecraft.world.damagesource.DamageSource source = new net.minecraft.world.damagesource.DamageSource(
                 player.level().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
                         .getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.INDIRECT_MAGIC), player, player);
@@ -336,7 +342,7 @@ public final class HulkAbilities {
         Vec3 dir = flatLook(player);
         double ahead = player.getBbWidth() * 0.5D + 1.5D;
         BlockPos g = ground(level, player.getX() + dir.x * ahead, player.getY(), player.getZ() + dir.z * ahead);
-        float damage = 8.0F + 2.0F * power(player);
+        float damage = 3.0F * punch(player); // the ground punch: 3 punches
         player.swing(InteractionHand.MAIN_HAND, true);
         player.swing(InteractionHand.OFF_HAND, true);
         for (int d = 1; d <= 6; d++) {
@@ -360,7 +366,7 @@ public final class HulkAbilities {
     private static void chargeTick(ServerPlayer player, ServerLevel level, Vec3 dir, int t) {
         player.setDeltaMovement(dir.x * 1.5D, Math.min(0.0D, player.getDeltaMovement().y), dir.z * 1.5D);
         player.hurtMarked = true;
-        float damage = 6.0F + 1.5F * power(player);
+        float damage = 1.5F * punch(player);
         for (LivingEntity e : around(player, player.getBoundingBox().inflate(1.0D))) {
             hitPiercing(player, e, damage, dir.scale(1.8D).add(0.0D, 0.5D, 0.0D)); // ignores armour
         }
@@ -438,7 +444,7 @@ public final class HulkAbilities {
     private static int thunderclap(ServerPlayer player, ServerLevel level) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle().normalize();
-        float damage = 20.0F + 3.0F * power(player);
+        float damage = 2.5F * punch(player);
         double range = clapRange(HulkPowers.activeLevel(player));
         for (LivingEntity e : around(player, player.getBoundingBox().inflate(range + 2.0D))) {
             Vec3 d = e.getBoundingBox().getCenter().subtract(eye);
@@ -535,7 +541,7 @@ public final class HulkAbilities {
         boulder.setItem(rock.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : rock);
         float size = com.flash.entity.HulkBoulder.sizeFor(HulkPowers.activeLevel(player));
         boulder.setSize(size);
-        boulder.setDamage((10.0F + 2.0F * power(player)) * (0.6F + 0.4F * size) * ABILITY_DAMAGE
+        boulder.setDamage(punch(player) * (2.0F + 2.0F * Math.min(1.0F, size / 3.0F)) * ABILITY_DAMAGE
                 * (0.4F + 0.6F * charge));
         boulder.setCharge(charge);
         boulder.setPos(player.getX(), player.getY() + player.getBbHeight() * 0.95D, player.getZ());
@@ -648,7 +654,7 @@ public final class HulkAbilities {
         target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
         target.hurtMarked = true;
         THROWN.put(target.getId(), new Thrown(player.getUUID(),
-                (10.0F + 2.5F * power(player)) * ABILITY_DAMAGE * (0.5F + 0.7F * charge), player.tickCount));
+                punch(player) * 2.0F * ABILITY_DAMAGE * (0.5F + 0.7F * charge), player.tickCount));
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 1.2F, 0.9F);
@@ -724,7 +730,7 @@ public final class HulkAbilities {
                     move(target, impact.x, impact.y, impact.z);
                     target.fallDistance = 0.0F;
                     target.invulnerableTime = 0;
-                    target.hurt(player.damageSources().playerAttack(player), 40.0F * ABILITY_DAMAGE);
+                    target.hurt(player.damageSources().playerAttack(player), 4.0F * punch(player));
                 }
                 // the impact blows up like 6 TNTs (even if the creature is gone)
                 blast(player, level, impact.x, impact.y + 0.5D, impact.z, SUPER_BLAST);
@@ -811,7 +817,7 @@ public final class HulkAbilities {
     /** Level 8: a burst of gamma radiation all around. */
     private static void gammaWave(ServerPlayer player, ServerLevel level) {
         double radius = 10.0D;
-        float damage = 25.0F + 2.0F * power(player);
+        float damage = 3.0F * punch(player);
         for (LivingEntity e : around(player, player.getBoundingBox().inflate(radius))) {
             Vec3 away = e.position().subtract(player.position());
             double d = away.length();
@@ -850,7 +856,7 @@ public final class HulkAbilities {
             return;
         }
         double r = 3.0D + stomp * 2.2D;
-        float damage = 18.0F + 2.0F * power(player);
+        float damage = 1.5F * punch(player);
         for (LivingEntity e : around(player, new AABB(origin, origin).inflate(r + 1.5D, 4.0D, r + 1.5D))) {
             double d = Math.hypot(e.getX() - origin.x, e.getZ() - origin.z);
             if (Math.abs(d - r) > 1.8D) {

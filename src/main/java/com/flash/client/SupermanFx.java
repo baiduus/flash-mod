@@ -97,6 +97,100 @@ public final class SupermanFx {
     }
 
     // ------------------------------------------------------------------
+    // Burnt trail of the heat vision
+    // ------------------------------------------------------------------
+
+    private record Scorch(Vec3 pos, Vec3 normal, float size, long start, float spin) {
+    }
+
+    private static final List<Scorch> SCORCH = new ArrayList<>();
+    private static final Map<UUID, Long> LAST_SCORCH = new HashMap<>();
+    private static final Map<UUID, Vec3> LAST_SCORCH_POS = new HashMap<>();
+    private static final int SCORCH_LIFE = 320;
+
+    /** Leaves a burnt mark where a heat beam touches a block (at most one per tick and player). */
+    public static void scorch(UUID player, Vec3 pos, Vec3 normal, boolean laser) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return;
+        }
+        long now = mc.level.getGameTime();
+        Long last = LAST_SCORCH.get(player);
+        Vec3 lastPos = LAST_SCORCH_POS.get(player);
+        if (last != null && last == now) {
+            return;
+        }
+        if (lastPos != null && lastPos.distanceToSqr(pos) < 0.04D && last != null && now - last < 6L) {
+            return;
+        }
+        LAST_SCORCH.put(player, now);
+        LAST_SCORCH_POS.put(player, pos);
+        SCORCH.add(new Scorch(pos.add(normal.scale(0.012D + SCORCH.size() % 7 * 0.0006D)), normal,
+                (laser ? 0.75F : 0.5F) * (0.85F + mc.level.random.nextFloat() * 0.3F), now,
+                mc.level.random.nextFloat() * 6.28F));
+        if (SCORCH.size() > 700) {
+            SCORCH.remove(0);
+        }
+    }
+
+    private static void renderScorch(MultiBufferSource buffers, Matrix4f m, long gameTime, float partial) {
+        if (SCORCH.isEmpty()) {
+            return;
+        }
+        VertexConsumer dark = buffers.getBuffer(RenderType.entityTranslucent(GLOW));
+        VertexConsumer hot = buffers.getBuffer(RenderType.eyes(GLOW));
+        float time = gameTime + partial;
+        for (Scorch sc : SCORCH) {
+            float age = time - sc.start();
+            if (age < 0.0F || age > SCORCH_LIFE) {
+                continue;
+            }
+            float fade = age > SCORCH_LIFE - 100 ? (SCORCH_LIFE - age) / 100.0F : 1.0F;
+            decal(dark, m, sc, sc.size(), 0.05F, 0.03F, 0.02F, 0.85F * fade, false);
+            // the glowing edge cools down over three seconds
+            float glow = Math.max(0.0F, 1.0F - age / 60.0F);
+            if (glow > 0.0F) {
+                decal(hot, m, sc, sc.size() * 0.8F, 1.0F, 0.32F, 0.05F, glow * 0.9F, true);
+            }
+        }
+    }
+
+    private static void decal(VertexConsumer c, Matrix4f m, Scorch sc, float size, float r, float g, float b,
+                              float a, boolean additive) {
+        Vec3 n = sc.normal();
+        Vec3 ref = Math.abs(n.y) > 0.9D ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 s = n.cross(ref).normalize();
+        Vec3 t = n.cross(s).normalize();
+        double cs = Math.cos(sc.spin());
+        double sn = Math.sin(sc.spin());
+        Vec3 u = s.scale(cs).add(t.scale(sn)).scale(size * 0.5D);
+        Vec3 v = t.scale(cs).subtract(s.scale(sn)).scale(size * 0.5D);
+        Vec3 p = sc.pos();
+        Vec3[] q = {p.subtract(u).subtract(v), p.add(u).subtract(v), p.add(u).add(v), p.subtract(u).add(v)};
+        float[][] uv = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+        for (int i = 0; i < 4; i++) {
+            Vector4f w = m.transform(new Vector4f((float) q[i].x, (float) q[i].y, (float) q[i].z, 1.0F));
+            if (additive) {
+                c.vertex(w.x(), w.y(), w.z(), r * a, g * a, b * a, 1.0F, uv[i][0], uv[i][1],
+                        OverlayTexture.NO_OVERLAY, 0xF000F0, (float) n.x, (float) n.y, (float) n.z);
+            } else {
+                c.vertex(w.x(), w.y(), w.z(), r, g, b, a, uv[i][0], uv[i][1], OverlayTexture.NO_OVERLAY,
+                        0xF000F0, (float) n.x, (float) n.y, (float) n.z);
+            }
+        }
+        for (int i = 3; i >= 0; i--) {
+            Vector4f w = m.transform(new Vector4f((float) q[i].x, (float) q[i].y, (float) q[i].z, 1.0F));
+            if (additive) {
+                c.vertex(w.x(), w.y(), w.z(), r * a, g * a, b * a, 1.0F, uv[i][0], uv[i][1],
+                        OverlayTexture.NO_OVERLAY, 0xF000F0, (float) n.x, (float) n.y, (float) n.z);
+            } else {
+                c.vertex(w.x(), w.y(), w.z(), r, g, b, a, uv[i][0], uv[i][1], OverlayTexture.NO_OVERLAY,
+                        0xF000F0, (float) n.x, (float) n.y, (float) n.z);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Per-player state (trail history, boost and ultimate start)
     // ------------------------------------------------------------------
 
@@ -116,6 +210,7 @@ public final class SupermanFx {
         }
         long now = mc.level.getGameTime();
         EFFECTS.removeIf(f -> now - f.start > f.life());
+        SCORCH.removeIf(sc -> now - sc.start() > SCORCH_LIFE);
         for (Player p : mc.level.players()) {
             if (!SupermanState.isSuperman(p)) {
                 TRACKS.remove(p.getUUID());
@@ -178,6 +273,9 @@ public final class SupermanFx {
         Vector3f left = new Vector3f(camera.getLeftVector());
         Vector3f up = new Vector3f(camera.getUpVector());
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+
+        renderScorch(buffers, m, level.getGameTime(), partial);
+        buffers.endBatch(RenderType.entityTranslucent(GLOW));
 
         // one-shot effects
         for (Fx f : EFFECTS) {

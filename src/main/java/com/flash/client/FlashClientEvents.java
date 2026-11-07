@@ -74,7 +74,6 @@ public final class FlashClientEvents {
             if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player) {
                 // the speedster pose goes first, so every following layer sees the posed body
                 FlashSpeedsterPose.install(player);
-                SupermanPose.install(player);
                 player.addLayer(new FlashGeoSuitLayer<>(player));
                 player.addLayer(new FlashRingLayer(player));
                 player.addLayer(new FlashAmplifierLayer(player));
