@@ -700,20 +700,27 @@ public class FlashProgressScreen extends Screen {
         configRow(g, 1, "gui.flash.config.hud", "gui.flash.superman.cfg.hud.desc", mx, my);
         drawSwitch(g, "ssw1", switchX(), cfgY(1) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
         configRow(g, 2, "gui.flash.superman.cfg.energy", "gui.flash.superman.cfg.energy.desc", mx, my);
-        configRow(g, 3, "gui.flash.superman.cfg.commands", "gui.flash.superman.cfg.commands.desc", mx, my);
-        configRow(g, 4, "gui.flash.superman.cfg.suit", "gui.flash.superman.cfg.suit.desc", mx, my);
-        drawSuitPicker(g, cfgY(4) + 7, mx, my);
+        configRow(g, 3, "gui.flash.superman.cfg.suit", "gui.flash.superman.cfg.suit.desc", mx, my);
+        int suit = com.flash.superman.SupermanSuits.clamp(com.flash.superman.SupermanState.suit(this.minecraft.player));
+        drawPicker(g, cfgY(3) + 7, mx, my, com.flash.superman.SupermanSuits.name(suit).getString(), suit,
+                com.flash.superman.SupermanSuits.IDS.length);
+        configRow(g, 4, "gui.flash.superman.cfg.combo", "gui.flash.superman.cfg.combo." + com.flash.superman.SupermanCombos
+                .id(com.flash.superman.SupermanState.combo()), mx, my);
+        int combo = com.flash.superman.SupermanState.combo();
+        drawPicker(g, cfgY(4) + 7, mx, my, com.flash.superman.SupermanCombos.name(combo).getString(), combo,
+                com.flash.superman.SupermanCombos.COUNT);
+        configRow(g, 5, "gui.flash.superman.cfg.cut", "gui.flash.superman.cfg.cut.desc", mx, my);
+        drawSwitch(g, "ssw5", switchX(), cfgY(5) + 8, com.flash.superman.SupermanState.laserCut());
     }
 
     private static int suitPickerX() {
         return PW - PAD - 12 - 2 * SEG_W;
     }
 
-    /** Suit selector: arrows on the sides, suit name and number in the middle. */
-    private void drawSuitPicker(GuiGraphics g, int y, int mx, int my) {
+    /** Selector: arrows on the sides, the name and the number in the middle. */
+    private void drawPicker(GuiGraphics g, int y, int mx, int my, String label, int idx, int count) {
         int x = suitPickerX();
         int w = 2 * SEG_W;
-        int idx = com.flash.superman.SupermanSuits.clamp(com.flash.superman.SupermanState.suit(this.minecraft.player));
         g.fill(x, y, x + w, y + SEG_H, COLOR_BORDER);
         g.fill(x + 1, y + 1, x + w - 1, y + SEG_H - 1, COLOR_TRACK);
         boolean hl = inside(mx, my, x, y, 20, SEG_H);
@@ -722,10 +729,18 @@ public class FlashProgressScreen extends Screen {
         g.fill(x + w - 20, y + 1, x + w - 1, y + SEG_H - 1, hr ? accentDark() : withAlpha(accent(), 0.18F));
         g.drawCenteredString(this.font, "<", x + 10, y + 6, hl ? 0xFFFFFFFF : accent());
         g.drawCenteredString(this.font, ">", x + w - 10, y + 6, hr ? 0xFFFFFFFF : accent());
-        String name = this.font.plainSubstrByWidth(com.flash.superman.SupermanSuits.name(idx).getString(), w - 70);
-        String num = (idx + 1) + "/" + com.flash.superman.SupermanSuits.IDS.length;
+        String name = this.font.plainSubstrByWidth(label, w - 70);
+        String num = (idx + 1) + "/" + count;
         g.drawCenteredString(this.font, name, x + w / 2 - 8, y + 6, COLOR_TEXT);
         g.drawString(this.font, num, x + w - 24 - this.font.width(num), y + 6, COLOR_MUTED, false);
+    }
+
+    /** -1 / +1 when an arrow of the selector on that row is clicked, else 0. */
+    private static int pickerStep(int mx, int my, int row) {
+        int x = suitPickerX();
+        int y = cfgY(row) + 7;
+        int w = 2 * SEG_W;
+        return inside(mx, my, x, y, w / 2, SEG_H) ? -1 : inside(mx, my, x + w / 2, y, w / 2, SEG_H) ? 1 : 0;
     }
 
     private boolean clickSupermanConfig(int mx, int my) {
@@ -741,11 +756,8 @@ public class FlashProgressScreen extends Screen {
             click();
             return true;
         }
-        if (inRow(mx, my, 4)) {
-            int x = suitPickerX();
-            int y = cfgY(4) + 7;
-            int w = 2 * SEG_W;
-            int step = inside(mx, my, x, y, w / 2, SEG_H) ? -1 : inside(mx, my, x + w / 2, y, w / 2, SEG_H) ? 1 : 0;
+        if (inRow(mx, my, 3)) {
+            int step = pickerStep(mx, my, 3);
             if (step != 0 && this.minecraft.player != null) {
                 int n = com.flash.superman.SupermanSuits.IDS.length;
                 int idx = Math.floorMod(com.flash.superman.SupermanState.suit(this.minecraft.player) + step, n);
@@ -755,7 +767,27 @@ public class FlashProgressScreen extends Screen {
             }
             return true;
         }
-        return inRow(mx, my, 2) || inRow(mx, my, 3);
+        if (inRow(mx, my, 4)) {
+            int step = pickerStep(mx, my, 4);
+            if (step != 0) {
+                int idx = Math.floorMod(com.flash.superman.SupermanState.combo() + step,
+                        com.flash.superman.SupermanCombos.COUNT);
+                com.flash.superman.SupermanState.setOptions(idx, com.flash.superman.SupermanState.laserCut());
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanSettingsPacket(
+                        com.flash.network.SupermanSettingsPacket.COMBO, idx));
+                click();
+            }
+            return true;
+        }
+        if (inRow(mx, my, 5)) {
+            boolean cut = !com.flash.superman.SupermanState.laserCut();
+            com.flash.superman.SupermanState.setOptions(com.flash.superman.SupermanState.combo(), cut);
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanSettingsPacket(
+                    com.flash.network.SupermanSettingsPacket.LASER_CUT, cut ? 1 : 0));
+            click();
+            return true;
+        }
+        return inRow(mx, my, 2);
     }
 
     /** Pixel shield (about 26 x 26): the diamond with an S. */

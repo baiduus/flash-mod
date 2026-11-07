@@ -134,6 +134,23 @@ public final class SupermanState {
         return tempTicks <= 0 ? 0 : (int) Math.max(0L, tempTicks - (now - tempSyncedAt));
     }
 
+    private static volatile int combo;
+    private static volatile boolean laserCut;
+
+    public static void setOptions(int c, boolean cut) {
+        combo = c;
+        laserCut = cut;
+    }
+
+    /** Local player's combo move (see {@link SupermanCombos}). */
+    public static int combo() {
+        return combo;
+    }
+
+    public static boolean laserCut() {
+        return laserCut;
+    }
+
     public static void resetClient() {
         SUITS.clear();
         tempTicks = 0;

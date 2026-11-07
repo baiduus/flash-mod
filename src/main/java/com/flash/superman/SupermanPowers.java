@@ -38,6 +38,8 @@ public final class SupermanPowers {
     private static final String NO_COOLDOWNS = "noCooldowns";
     private static final String INFINITE = "infiniteEnergy";
     private static final String SUIT = "suit";
+    private static final String COMBO = "combo";
+    private static final String LASER_CUT = "laserCut";
     /** Game time when a temporary power (the Kryptonian baby) ends, 0 = permanent. */
     private static final String TEMP_UNTIL = "tempUntil";
 
@@ -393,6 +395,36 @@ public final class SupermanPowers {
         sync(player);
     }
 
+    /** Move of the combo key: 0 Super Combo, 1 Uplift, 2 Uplift Combo, 3 Chokehold, 4 Eye Pierce. */
+    public static int combo(Player player) {
+        return Math.floorMod(tag(player).getInt(COMBO), SupermanCombos.COUNT);
+    }
+
+    public static void setCombo(ServerPlayer player, int combo) {
+        if (!has(player)) {
+            return;
+        }
+        CompoundTag tag = tag(player).copy();
+        tag.putInt(COMBO, Math.floorMod(combo, SupermanCombos.COUNT));
+        save(player, tag);
+        syncSelf(player);
+    }
+
+    /** Heat vision and laser cut off limbs. */
+    public static boolean laserCut(Player player) {
+        return tag(player).getBoolean(LASER_CUT);
+    }
+
+    public static void setLaserCut(ServerPlayer player, boolean cut) {
+        if (!has(player)) {
+            return;
+        }
+        CompoundTag tag = tag(player).copy();
+        tag.putBoolean(LASER_CUT, cut);
+        save(player, tag);
+        syncSelf(player);
+    }
+
     public static void setDestroy(ServerPlayer player, boolean destroy) {
         if (!has(player)) {
             return;
@@ -526,9 +558,11 @@ public final class SupermanPowers {
             setFlag(player, F_FLYING, airborne);
         }
         if (superman) {
-            if (flag(player, F_FLIGHT)) {
-                keepFlight(player);
+            // Superman can always fly: flight key or double jump
+            if (!flag(player, F_FLIGHT)) {
+                setFlag(player, F_FLIGHT, true);
             }
+            keepFlight(player);
             if (player.isInWater()) {
                 player.setAirSupply(player.getMaxAirSupply());
             }
@@ -668,7 +702,8 @@ public final class SupermanPowers {
         }
         return new SupermanSyncPacket(player.getUUID(), has(player), isSuperman(player), level(player), xp(player),
                 energy(player), flags(player), destroyBlocks(player), cds, noCooldowns(player),
-                infiniteEnergy(player), inSunlight(player), suit(player), temporaryTicks(player));
+                infiniteEnergy(player), inSunlight(player), suit(player), temporaryTicks(player),
+                combo(player) | (laserCut(player) ? 16 : 0));
     }
 
     public static void sync(ServerPlayer player) {

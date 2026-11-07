@@ -299,9 +299,7 @@ public final class SupermanPose {
         double speed = Math.sqrt(hs * hs + vy * vy);
         double lastSpeed = st.lastSpeed;
         st.lastSpeed = speed;
-        if (flying && !st.wasFlying && st.shot == null) {
-            shot(player, st, hs > 0.25D ? "takeoff8" : "flight_launch", 0);
-        }
+        // (no takeoff one-shot: the pack's takeoff lies flat before the flight pose, it looked wrong)
         if (!flying && st.wasFlying && player.onGround() && st.shot == null) {
             shot(player, st, hs > 0.25D ? "landing8" : "landing", 0);
         }

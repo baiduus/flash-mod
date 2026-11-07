@@ -141,8 +141,9 @@ public final class SupermanClient {
             return;
         }
         var input = event.getInput();
+        // crouch + hold jump coils the charged takeoff; a plain jump is instant (double jump to fly)
         boolean usable = SupermanState.isSuperman(p) && !p.getAbilities().flying && p.onGround() && !p.isInWater()
-                && !p.isPassenger() && mc.screen == null;
+                && !p.isPassenger() && mc.screen == null && (input.shiftKeyDown || jumpHeld >= 0);
         if (replayJump) {
             replayJump = false;
             input.jumping = true;
@@ -175,7 +176,7 @@ public final class SupermanClient {
             }
         } else if (jumpHeld >= 0) {
             if (jumpHeld < TAP_TICKS) {
-                replayJump = true;
+                replayJump = !input.shiftKeyDown;
             } else {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
             }
@@ -415,6 +416,7 @@ public final class SupermanClient {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         SupermanState.resetClient();
         SupermanPose.reset();
+        SupermanLimbs.reset();
         LOOPS.clear();
         xray = false;
         chargeStart = -1L;

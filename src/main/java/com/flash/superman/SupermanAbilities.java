@@ -123,6 +123,8 @@ public final class SupermanAbilities {
         int grabbed = -1;
         int comboTarget = -1;
         int comboTicks = -1;
+        int comboMove;
+        int comboMark = -1;
         int ultTicks = -1;
         long clapAt = -1L;
         long launchAt = -1L;
@@ -218,7 +220,8 @@ public final class SupermanAbilities {
     private static void toggle(ServerPlayer player, Session s, SupermanAbility ability) {
         switch (ability) {
             case FLIGHT -> {
-                boolean on = !SupermanPowers.flag(player, SupermanPowers.F_FLIGHT);
+                // the key flies / lands; double jump still flies whenever (flight stays available)
+                boolean on = !player.getAbilities().flying;
                 if (on) {
                     SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
                     SupermanPowers.startFlight(player);
@@ -228,7 +231,8 @@ public final class SupermanAbilities {
                         groundPuff(level, player.position(), 1.5D, 16);
                     }
                 } else {
-                    SupermanPowers.stopFlight(player);
+                    player.getAbilities().flying = false;
+                    player.onUpdateAbilities();
                     SupermanPowers.sync(player);
                 }
                 player.displayClientMessage(Component.translatable(on ? "message.flash.superman_flight_on"
@@ -346,7 +350,7 @@ public final class SupermanAbilities {
         }
         ServerLevel level = player.serverLevel();
         int flags = SupermanPowers.flags(player);
-        if ((flags & SupermanPowers.F_HEAT) != 0) {
+        if ((flags & SupermanPowers.F_HEAT) != 0 && (flags & SupermanPowers.F_COMBO) == 0) {
             boolean laser = (flags & SupermanPowers.F_LASER) != 0;
             if (SupermanPowers.spend(player, SupermanAbility.HEAT_VISION.energy() * (laser ? 1.6F : 1.0F))) {
                 heatVision(player, level, session(player), laser);
@@ -451,6 +455,9 @@ public final class SupermanAbilities {
                 target.hurt(level.damageSources().playerAttack(player), 3.6F * power * (laser ? 2.2F : 1.0F));
                 target.setSecondsOnFire(laser ? 8 : 4);
                 SupermanPowers.addXp(player, 0.1F);
+                if (target instanceof LivingEntity living) {
+                    SupermanCut.onLaserHit(player, living, eh.getLocation(), laser);
+                }
             }
             Vec3 p = eh.getLocation();
             level.sendParticles(ModParticles.SM_HEAT_GLOW.get(), p.x, p.y, p.z, laser ? 2 : 1, 0.05D, 0.05D, 0.05D, 0.0D);
@@ -645,7 +652,7 @@ public final class SupermanAbilities {
             return;
         }
         // the wind-up was held while charging: the strike starts right at the hit
-        anim(player, "super_punch@4");
+        anim(player, "super_punch");
         float power = SupermanPowers.power(player);
         Vec3 look = player.getLookAngle();
         Entity target = null;
@@ -1016,7 +1023,8 @@ public final class SupermanAbilities {
         if (s.comboTicks >= 0) {
             return;
         }
-        HitResult hit = trace(player, 24.0D);
+        int move = SupermanPowers.combo(player);
+        HitResult hit = trace(player, SupermanCombos.finisher(move) ? 6.0D : 24.0D);
         if (!(hit instanceof EntityHitResult eh) || !(eh.getEntity() instanceof LivingEntity)) {
             player.displayClientMessage(Component.translatable("message.flash.superman_combo_none"), true);
             return;
@@ -1026,6 +1034,8 @@ public final class SupermanAbilities {
         }
         s.comboTarget = eh.getEntity().getId();
         s.comboTicks = 0;
+        s.comboMove = move;
+        s.comboMark = -1;
         player.setNoGravity(true);
         SupermanPowers.setFlag(player, SupermanPowers.F_COMBO, true);
         SupermanPowers.setCooldown(player, SupermanAbility.SUPER_COMBO);
@@ -1036,6 +1046,243 @@ public final class SupermanAbilities {
      * air while Superman flies around it, punches at 40 and 69, then the slam from above at 117 and the crash.
      */
     private static void comboTick(ServerPlayer player, ServerLevel level, Session s) {
+        switch (s.comboMove) {
+            case SupermanCombos.UPLIFT -> upliftTick(player, level, s, false);
+            case SupermanCombos.UPLIFT_COMBO -> upliftTick(player, level, s, true);
+            case SupermanCombos.CHOKEHOLD -> finisherTick(player, level, s, false);
+            case SupermanCombos.EYE_PIERCE -> finisherTick(player, level, s, true);
+            default -> superComboTick(player, level, s);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Uplift / Uplift Combo
+    // ------------------------------------------------------------------
+
+    /** Dash to the target and look at it; true on the tick of arrival. */
+    private static boolean dashTo(ServerPlayer player, LivingEntity target, int t, int arrive) {
+        Vec3 tp = target.position();
+        double reach = 1.3D + target.getBbWidth() * 0.5D;
+        Vec3 flat = new Vec3(tp.x - player.getX(), 0.0D, tp.z - player.getZ());
+        flat = flat.lengthSqr() < 1.0E-4D ? player.getLookAngle().multiply(1, 0, 1) : flat.normalize();
+        Vec3 at = tp.subtract(flat.scale(reach));
+        Vec3 from = player.position();
+        face(player, from.add(at.subtract(from).scale(t >= arrive - 1 ? 1.0D : 0.4D)),
+                tp.add(0.0D, target.getBbHeight() * 0.6D, 0.0D));
+        return t == arrive;
+    }
+
+    private static void laserOn(ServerPlayer player, boolean on) {
+        SupermanPowers.setFlag(player, SupermanPowers.F_HEAT | SupermanPowers.F_LASER, on);
+    }
+
+    /**
+     * Uplift: dash, uppercut that throws the target up, then a Laser Blast on it (15 + 30 in the original).
+     * Uplift Combo: uppercut high, fly up past it, smash it down with both fists, then hover over the crater and burn
+     * it with the Laser Blast until it blows up (50 in the original).
+     */
+    private static void upliftTick(ServerPlayer player, ServerLevel level, Session s, boolean full) {
+        Entity e = level.getEntity(s.comboTarget);
+        int t = s.comboTicks++;
+        if (!(e instanceof LivingEntity target) || t > 200 || (!target.isAlive() && s.comboMark < 0)) {
+            laserOn(player, false);
+            endCombo(player, s);
+            return;
+        }
+        float power = SupermanPowers.power(player);
+        if (t == 0) {
+            sound(player, ModSounds.TAKEOFF.get(), 1.0F, 1.4F);
+        }
+        if (t <= 6) {
+            if (dashTo(player, target, t, 6)) {
+                anim(player, "super_punch");
+            }
+            return;
+        }
+        if (t == 8) {
+            hitCombo(player, level, target, (full ? 7.0F : 6.0F) * power);
+            target.setDeltaMovement(0.0D, full ? 2.1D : 1.25D, 0.0D);
+            target.hurtMarked = true;
+            sound(player, ModSounds.PUNCH_SONIC.get(), 1.0F, 1.2F);
+            return;
+        }
+        if (!full) {
+            // Uplift: hover in place and blast the rising target
+            if (t >= 12 && t < 42) {
+                if (t == 12) {
+                    laserOn(player, true);
+                    sound(player, ModSounds.HEAT_START.get(), 1.0F, 0.8F);
+                }
+                face(player, player.position(), target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D));
+                if (t > 20) {
+                    target.setDeltaMovement(target.getDeltaMovement().multiply(0.5D, 0.0D, 0.5D));
+                    target.hurtMarked = true;
+                    target.fallDistance = 0.0F;
+                }
+                if (t % 2 == 0) {
+                    laserHit(player, level, target, 1.5F * power);
+                }
+            } else if (t >= 42) {
+                laserOn(player, false);
+                SupermanPowers.addXp(player, 1.5F);
+                endCombo(player, s);
+            }
+            return;
+        }
+        // Uplift Combo
+        if (t > 8 && t <= 30) {
+            Vec3 above = target.position().add(0.6D, target.getBbHeight() + 2.0D, 0.6D);
+            Vec3 from = player.position();
+            face(player, from.add(above.subtract(from).scale(0.35D)),
+                    target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D));
+            if (t > 20) {
+                target.setDeltaMovement(target.getDeltaMovement().multiply(0.5D, 0.0D, 0.5D));
+                target.hurtMarked = true;
+                target.fallDistance = 0.0F;
+            }
+            return;
+        }
+        if (t == 31) {
+            anim(player, "super_combo@112");
+            return;
+        }
+        if (t == 36) {
+            hitCombo(player, level, target, 10.0F * power);
+            target.setDeltaMovement(0.0D, -3.4D, 0.0D);
+            target.hurtMarked = true;
+            sound(player, ModSounds.DIVE.get(), 1.0F, 1.2F);
+            return;
+        }
+        if (t > 36 && s.comboMark < 0) {
+            if (target.onGround() || target.isInWater() || t >= 70) {
+                s.comboMark = t;
+                crash(player, level, target, 12.0F * power);
+                Vec3 hover = target.position().add(0.0D, 5.0D, 0.0D);
+                face(player, hover, target.position());
+                laserOn(player, true);
+                sound(player, ModSounds.HEAT_START.get(), 1.0F, 0.8F);
+            }
+            return;
+        }
+        if (s.comboMark >= 0) {
+            int k = t - s.comboMark;
+            Vec3 tp = target.position();
+            face(player, tp.add(0.0D, 5.0D, 0.0D), tp.add(0.0D, target.getBbHeight() * 0.4D, 0.0D));
+            if (k % 2 == 0 && target.isAlive()) {
+                laserHit(player, level, target, 1.4F * power);
+            }
+            if (k >= 30 || !target.isAlive()) {
+                // it blows up
+                level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, tp.x, tp.y + 0.5D, tp.z, 1, 0, 0, 0, 0);
+                level.sendParticles(ParticleTypes.FLAME, tp.x, tp.y + 0.5D, tp.z, 60, 0.6D, 0.6D, 0.6D, 0.2D);
+                level.playSound(null, tp.x, tp.y, tp.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 1.1F);
+                if (target.isAlive()) {
+                    target.invulnerableTime = 0;
+                    target.hurt(level.damageSources().playerAttack(player), 8.0F * power);
+                }
+                laserOn(player, false);
+                SupermanPowers.addXp(player, 2.5F);
+                endCombo(player, s);
+            }
+        }
+    }
+
+    private static void laserHit(ServerPlayer player, ServerLevel level, LivingEntity target, float damage) {
+        target.invulnerableTime = 0;
+        target.hurt(level.damageSources().playerAttack(player), damage);
+        target.setSecondsOnFire(6);
+        Vec3 hit = target.position().add(0.0D, target.getBbHeight() * 0.55D, 0.0D);
+        level.sendParticles(ModParticles.SM_HEAT_GLOW.get(), hit.x, hit.y, hit.z, 2, 0.1D, 0.1D, 0.1D, 0.0D);
+        sparks(level, hit, 4);
+        SupermanCut.onLaserHit(player, target, hit, true);
+    }
+
+    /** The target slammed into the ground: crater, shockwave, cracks. */
+    private static void crash(ServerPlayer player, ServerLevel level, LivingEntity target, float damage) {
+        Vec3 tp = target.position();
+        target.invulnerableTime = 0;
+        target.hurt(level.damageSources().playerAttack(player), damage);
+        level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, tp.x, tp.y, tp.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        groundPuff(level, tp, 2.5D, 24);
+        fxAt(level, SupermanFxPacket.SHOCKWAVE, tp.add(0.0D, 0.15D, 0.0D), new Vec3(0, 1, 0), 6.0F);
+        cracks(level, tp, 4.0F);
+        level.playSound(null, tp.x, tp.y, tp.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.0F, 0.8F);
+        if (SupermanPowers.destroyBlocks(player)) {
+            level.explode(player, tp.x, tp.y, tp.z, 2.5F, Level.ExplosionInteraction.TNT);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Finishers: Chokehold and Eye Pierce
+    // ------------------------------------------------------------------
+
+    /**
+     * Superman lifts the target by the neck; Chokehold squeezes and snaps, Eye Pierce burns through the eyes from
+     * point blank. A common creature dies, a boss takes 40 and a player 12 (as in the original).
+     */
+    private static void finisherTick(ServerPlayer player, ServerLevel level, Session s, boolean eyes) {
+        Entity e = level.getEntity(s.comboTarget);
+        int t = s.comboTicks++;
+        if (!(e instanceof LivingEntity target) || !target.isAlive() || t > 80) {
+            laserOn(player, false);
+            SupermanPowers.setFlag(player, SupermanPowers.F_HOLDING, false);
+            endCombo(player, s);
+            return;
+        }
+        if (t == 0) {
+            anim(player, "grab_reach");
+            SupermanPowers.setFlag(player, SupermanPowers.F_HOLDING, true);
+            sound(player, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F, 0.7F);
+        }
+        // held up in front of Superman, the neck at his hand
+        Vec3 look = player.getLookAngle().multiply(1.0D, 0.0D, 1.0D);
+        look = look.lengthSqr() < 1.0E-4D ? new Vec3(0, 0, 1) : look.normalize();
+        Vec3 hold = player.position().add(look.scale(0.9D + target.getBbWidth() * 0.5D))
+                .add(0.0D, player.getEyeHeight() + 0.35D - target.getBbHeight() * 0.85D, 0.0D);
+        target.teleportTo(hold.x, hold.y, hold.z);
+        target.setDeltaMovement(Vec3.ZERO);
+        target.hurtMarked = true;
+        target.fallDistance = 0.0F;
+        Vec3 head = hold.add(0.0D, target.getEyeHeight(), 0.0D);
+        face(player, player.position(), head);
+        int end = eyes ? 46 : 40;
+        if (!eyes) {
+            if (t % 8 == 4) {
+                level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, head.x, head.y, head.z, 3, 0.2D, 0.2D, 0.2D, 0.1D);
+                level.playSound(null, head.x, head.y, head.z, SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 0.5F, 0.6F);
+            }
+        } else if (t >= 14 && t < end) {
+            if (t == 14) {
+                laserOn(player, true);
+                sound(player, ModSounds.HEAT_START.get(), 1.0F, 1.0F);
+            }
+            level.sendParticles(ModParticles.SM_HEAT_GLOW.get(), head.x, head.y, head.z, 2, 0.05D, 0.05D, 0.05D, 0.0D);
+            level.sendParticles(ParticleTypes.SMOKE, head.x, head.y, head.z, 2, 0.1D, 0.1D, 0.1D, 0.01D);
+            target.setSecondsOnFire(4);
+        }
+        if (t == end) {
+            laserOn(player, false);
+            boolean boss = target.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES);
+            float damage = boss ? 40.0F : target instanceof net.minecraft.world.entity.player.Player ? 12.0F
+                    : Float.MAX_VALUE;
+            target.invulnerableTime = 0;
+            target.hurt(level.damageSources().playerAttack(player), damage);
+            if (eyes) {
+                level.sendParticles(ParticleTypes.FLAME, head.x, head.y, head.z, 30, 0.2D, 0.2D, 0.2D, 0.1D);
+                level.playSound(null, head.x, head.y, head.z, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0F, 1.4F);
+            } else {
+                level.sendParticles(ParticleTypes.CRIT, head.x, head.y, head.z, 20, 0.2D, 0.2D, 0.2D, 0.3D);
+                level.playSound(null, head.x, head.y, head.z, SoundEvents.SKELETON_HURT, SoundSource.PLAYERS, 1.2F, 0.5F);
+                level.playSound(null, head.x, head.y, head.z, SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.2F, 0.6F);
+            }
+            SupermanPowers.setFlag(player, SupermanPowers.F_HOLDING, false);
+            anim(player, "grab_throw");
+            SupermanPowers.addXp(player, 2.0F);
+            endCombo(player, s);
+        }
+    }
+
+    private static void superComboTick(ServerPlayer player, ServerLevel level, Session s) {
         Entity e = level.getEntity(s.comboTarget);
         int t = s.comboTicks++;
         if (!(e instanceof LivingEntity target) || !target.isAlive() || t > 160) {
@@ -1142,6 +1389,12 @@ public final class SupermanAbilities {
         player.setNoGravity(false);
         player.fallDistance = 0.0F;
         SupermanPowers.setFlag(player, SupermanPowers.F_COMBO, false);
+        if (s.comboMove != SupermanCombos.SUPER_COMBO) {
+            SupermanPowers.setFlag(player, SupermanPowers.F_HEAT | SupermanPowers.F_LASER, false);
+            if (s.grabbed < 0) {
+                SupermanPowers.setFlag(player, SupermanPowers.F_HOLDING, false);
+            }
+        }
     }
 
     // ------------------------------------------------------------------
