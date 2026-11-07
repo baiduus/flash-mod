@@ -230,7 +230,9 @@ public final class SupermanPowers {
      * creative flight input adds nothing on top.
      */
     public static float flySpeed(int level) {
-        return 0.0F;
+        // the Minecraft flight with the Green Lantern mod's speeds (0.1 to 0.4): 0.1 at level 1, 0.37 at level 10
+        // (sprinting doubles it, still under the server's speed check)
+        return 0.1F + 0.03F * (Math.max(1, level) - 1);
     }
 
     /** Old creative-style speed (unused). */

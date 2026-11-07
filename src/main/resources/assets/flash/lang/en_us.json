@@ -532,7 +532,7 @@
   "hud.flash.superman_punch_full": "SONIC BOOM!",
   "hud.flash.superman_transform": "Superman / Clark",
   "ability.flash.superman.flight": "Flight",
-  "ability.flash.superman.flight.description": "Turns flight on and off. Sprinting while flying doubles the speed. Crouching on the ground: charged takeoff (coil down and blast into the sky).",
+  "ability.flash.superman.flight.description": "Takes off and lands. Minecraft flight: W moves, jump rises, sneak sinks; sprinting doubles the speed, which grows with the level. Sneak + hold jump on the ground: charged takeoff.",
   "ability.flash.superman.super_speed": "Super speed",
   "ability.flash.superman.super_speed.description": "Toggle: run 4 times faster.",
   "ability.flash.superman.heat_vision": "Heat vision",

@@ -532,7 +532,7 @@
   "hud.flash.superman_punch_full": "SONIC BOOM!",
   "hud.flash.superman_transform": "Superman / Clark",
   "ability.flash.superman.flight": "Voo",
-  "ability.flash.superman.flight.description": "Liga e desliga o voo. Correr enquanto voa dobra a velocidade. Agachado no chão: decolagem carregada (agacha, junta força e explode para o céu).",
+  "ability.flash.superman.flight.description": "Levanta voo e pousa. Voo do Minecraft: W anda, espaço sobe, shift desce; correr dobra a velocidade, que cresce com o nível. Shift + segurar espaço no chão: decolagem carregada.",
   "ability.flash.superman.super_speed": "Supercorrida",
   "ability.flash.superman.super_speed.description": "Liga e desliga: corre 4 vezes mais rápido.",
   "ability.flash.superman.heat_vision": "Visão de calor",

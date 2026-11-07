@@ -234,35 +234,9 @@ public final class SupermanClient {
             return;
         }
         float forward = p.input.forwardImpulse;
-        float strafe = p.input.leftImpulse;
-        int stage = forward > 0.0F ? (sprint ? (boostArmed ? 3 : 2) : 1) : 0;
-        if (stage == 3 && flightStage < 3) {
-            p.playSound(ModSounds.PUNCH_SONIC.get(), 0.7F, 1.3F);
-        }
-        flightStage = stage;
-        // four times the old speeds, growing with the level: about 40 % at level 1, all of it at level 10
-        double scale = 4.0D * (0.34D + 0.066D * Math.max(1, SupermanState.level()));
-        Vec3 look = p.getLookAngle();
-        Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
-        flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
-        Vec3 target = Vec3.ZERO;
-        if (forward > 0.0F) {
-            target = look.scale(Math.min(MAX_SPEED, STAGE_SPEED[stage] * scale));
-        } else if (forward < 0.0F) {
-            target = look.scale(-0.3D * scale);
-        }
-        // leftImpulse > 0 = left
-        target = target.add(flatRight.scale(-strafe * 0.35D * Math.min(scale, 2.0D)));
-        if (p.input.jumping) {
-            target = target.add(0.0D, 0.45D * Math.min(scale, 2.0D), 0.0D);
-        }
-        if (p.input.shiftKeyDown) {
-            target = target.add(0.0D, -0.45D * Math.min(scale, 2.0D), 0.0D);
-        }
-        Vec3 cur = p.getDeltaMovement();
-        // speeds up a little slower than it brakes
-        double k = target.lengthSqr() > cur.lengthSqr() ? 0.16D : 0.3D;
-        p.setDeltaMovement(cur.add(target.subtract(cur).scale(k)));
+        flightStage = forward > 0.0F ? (sprint ? 2 : 1) : 0;
+        // the movement itself is the Minecraft flight (as in the Green Lantern mod): W/A/S/D on the horizontal,
+        // jump rises, sneak sinks, with the game's inertia; the speed comes from the level (SupermanPowers.flySpeed)
         p.fallDistance = 0.0F;
     }
 
@@ -274,24 +248,78 @@ public final class SupermanClient {
     private static final java.util.Set<String> TILT_POSES = java.util.Set.of("cruise", "boost", "prone_flight12",
             "bank_left", "bank_right");
 
-    /** In a forward flight pose the whole body leans with the look: looking up the head points up, and so on. */
+    /** Smoothed flight motion of a player (as the Green Lantern mod's EstadoVoo). */
+    private static final class Lean {
+        Vec3 lastPos;
+        long lastNanos;
+        float lastYaw;
+        Vec3 vel = Vec3.ZERO;
+        float yawVel;
+        float pitch;
+        float roll;
+    }
+
+    private static final java.util.Map<java.util.UUID, Lean> LEANS = new java.util.HashMap<>();
+
+    /**
+     * While flying, the body follows the motion like in the Green Lantern mod: in the forward poses it tips toward
+     * where it goes (up or down), and it banks into the turns (side speed and turning rate); slow, it bobs a little.
+     */
     @SubscribeEvent
     public static void onRenderPlayerPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         String base = SupermanPose.base(p.getUUID());
-        // (Set.of(...).contains(null) throws: no base animation = nothing to tilt)
-        if (base == null || !SupermanState.isSuperman(p) || !TILT_POSES.contains(base)) {
+        if (base == null || !SupermanState.isSuperman(p)) {
+            LEANS.remove(p.getUUID());
             return;
         }
         float partial = event.getPartialTick();
-        float pitch = p.getViewXRot(partial);
+        long now = System.nanoTime();
+        Vec3 pos = new Vec3(net.minecraft.util.Mth.lerp(partial, p.xo, p.getX()),
+                net.minecraft.util.Mth.lerp(partial, p.yo, p.getY()), net.minecraft.util.Mth.lerp(partial, p.zo, p.getZ()));
         float bodyYaw = net.minecraft.util.Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
+        Lean l = LEANS.computeIfAbsent(p.getUUID(), k -> new Lean());
+        if (l.lastPos == null) {
+            l.lastPos = pos;
+            l.lastNanos = now;
+            l.lastYaw = bodyYaw;
+        }
+        double dt = Math.min(0.1D, (now - l.lastNanos) / 1.0E9D);
+        if (dt > 1.0E-4D) {
+            // velocity in blocks per tick, smoothed
+            Vec3 inst = pos.subtract(l.lastPos).scale(1.0D / dt / 20.0D);
+            l.vel = l.vel.add(inst.subtract(l.vel).scale(1.0D - Math.exp(-7.0D * dt)));
+            float dyaw = net.minecraft.util.Mth.wrapDegrees(bodyYaw - l.lastYaw);
+            l.yawVel += (float) ((dyaw / dt - l.yawVel) * (1.0D - Math.exp(-7.0D * dt)));
+            l.lastPos = pos;
+            l.lastNanos = now;
+            l.lastYaw = bodyYaw;
+        }
+        double yr = Math.toRadians(bodyYaw);
+        double forward = -Math.sin(yr) * l.vel.x + Math.cos(yr) * l.vel.z;
+        double side = -Math.cos(yr) * l.vel.x - Math.sin(yr) * l.vel.z;
+        double speed = l.vel.length();
+        float moving = (float) net.minecraft.util.Mth.clamp(speed / 0.22D, 0.0D, 1.0D);
+        float pitchTarget = 0.0F;
+        if (TILT_POSES.contains(base) && forward > 0.02D) {
+            // the prone pose tips toward the motion: nose down diving, up climbing
+            pitchTarget = (float) net.minecraft.util.Mth.clamp(Math.toDegrees(Math.atan2(-l.vel.y, forward)), -60.0D,
+                    60.0D) * moving;
+        }
+        float rollTarget = (float) net.minecraft.util.Mth.clamp(side * 140.0D, -32.0D, 32.0D) * moving
+                + net.minecraft.util.Mth.clamp(l.yawVel * 0.06F, -22.0F, 22.0F) * moving;
+        float k = (float) (1.0D - Math.exp(-6.0D * Math.max(dt, 1.0E-3D)));
+        l.pitch += (pitchTarget - l.pitch) * k;
+        l.roll += (rollTarget - l.roll) * k;
+        float bob = (float) (1.0D - net.minecraft.util.Mth.clamp(speed / 0.15D, 0.0D, 1.0D))
+                * (float) Math.sin(now / 1.0E9D * 2.2D) * 0.035F;
         float cy = p.getBbHeight() * 0.5F;
         PoseStack ps = event.getPoseStack();
         ps.pushPose();
-        ps.translate(0.0F, cy, 0.0F);
+        ps.translate(0.0F, cy + bob, 0.0F);
         ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-bodyYaw));
-        ps.mulPose(com.mojang.math.Axis.XP.rotationDegrees(pitch));
+        ps.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-l.roll));
+        ps.mulPose(com.mojang.math.Axis.XP.rotationDegrees(l.pitch));
         ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(bodyYaw));
         ps.translate(0.0F, -cy, 0.0F);
         TILTED.add(p.getId());
