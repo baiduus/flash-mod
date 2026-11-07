@@ -79,6 +79,8 @@ public final class SupermanAbilities {
         long clapAt = -1L;
         long launchAt = -1L;
         long throwAt = -1L;
+        Vec3 dwellAt;
+        int dwellTicks;
         final Map<UUID, Held> slowed = new HashMap<>();
         boolean slowing;
     }
@@ -456,12 +458,19 @@ public final class SupermanAbilities {
                 s.heatOnBlock = 0;
             }
         }
-        if (player.tickCount % 10 == 0) {
+        // held about two seconds on one spot it catches fire, like flint and steel (a sweep never lights anything)
+        Vec3 spot = bh.getLocation();
+        if (s.dwellAt == null || s.dwellAt.distanceToSqr(spot) > 0.36D) {
+            s.dwellAt = spot;
+            s.dwellTicks = 0;
+        } else if (++s.dwellTicks >= 40) {
+            s.dwellTicks = 0;
             BlockPos fire = pos.relative(bh.getDirection());
             if (level.getBlockState(fire).isAir() && BaseFireBlock.canBePlacedAt(level, fire, bh.getDirection())) {
                 level.setBlockAndUpdate(fire, BaseFireBlock.getState(level, fire));
             }
         }
+
     }
 
     // ------------------------------------------------------------------

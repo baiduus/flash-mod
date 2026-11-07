@@ -100,6 +100,11 @@ public final class FlashTrailTracker {
                 state.expire(gameTime);
                 continue;
             }
+            // walking at normal speed leaves no lightning: only running (sprint) does
+            if (!player.isSprinting()) {
+                state.expire(gameTime);
+                continue;
+            }
 
             Vec3 motion = current.subtract(previous);
             Vec3 horizontal = new Vec3(motion.x, 0.0D, motion.z);

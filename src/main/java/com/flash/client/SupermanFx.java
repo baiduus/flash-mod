@@ -97,6 +97,109 @@ public final class SupermanFx {
     }
 
     // ------------------------------------------------------------------
+    // Frost left by the freeze breath and ice on frozen creatures
+    // ------------------------------------------------------------------
+
+    private static final ResourceLocation[] FROST_TEX = {ptex("frost_0"), ptex("frost_1"), ptex("frost_2"),
+            ptex("frost_3")};
+    private static final ResourceLocation ICE_TEX = ptex("ice_crystal");
+    private static final ResourceLocation SNOW_TEX = ptex("snowflake");
+
+    private static ResourceLocation ptex(String name) {
+        return new ResourceLocation(FlashMod.MODID, "textures/particle/superman/" + name + ".png");
+    }
+
+    private record Frost(Vec3 pos, Vec3 normal, float size, long start, float spin, int tex) {
+    }
+
+    private static final List<Frost> FROST = new ArrayList<>();
+    private static final int FROST_LIFE = 500;
+
+    /** Throws a few rays inside the breath cone and frosts the faces they reach. */
+    private static void frostTick(ClientLevel level, Player p) {
+        Vec3 eye = p.getEyePosition();
+        Vec3 look = p.getLookAngle();
+        for (int i = 0; i < 3; i++) {
+            Vec3 d = look.add((level.random.nextDouble() - 0.5D) * 0.5D, (level.random.nextDouble() - 0.5D) * 0.5D,
+                    (level.random.nextDouble() - 0.5D) * 0.5D).normalize();
+            net.minecraft.world.phys.BlockHitResult hit = level.clip(new net.minecraft.world.level.ClipContext(eye,
+                    eye.add(d.scale(12.0D)), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                    net.minecraft.world.level.ClipContext.Fluid.ANY, p));
+            if (hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                continue;
+            }
+            Vec3 n = Vec3.atLowerCornerOf(hit.getDirection().getNormal());
+            FROST.add(new Frost(hit.getLocation().add(n.scale(0.008D + FROST.size() % 9 * 0.0005D)), n,
+                    0.5F + level.random.nextFloat() * 0.7F, level.getGameTime(), level.random.nextFloat() * 6.28F,
+                    level.random.nextInt(5)));
+        }
+        while (FROST.size() > 900) {
+            FROST.remove(0);
+        }
+    }
+
+    private static void renderFrost(MultiBufferSource buffers, Matrix4f m, Vec3 cam, float time) {
+        for (Frost f : FROST) {
+            float age = time - f.start();
+            if (age < 0.0F || age > FROST_LIFE || cam.distanceToSqr(f.pos()) > 64.0D * 64.0D) {
+                continue;
+            }
+            float grow = Math.min(1.0F, age / 12.0F);
+            float melt = age > FROST_LIFE - 120 ? (FROST_LIFE - age) / 120.0F : 1.0F;
+            ResourceLocation tex = f.tex() < 4 ? FROST_TEX[f.tex()] : SNOW_TEX;
+            VertexConsumer c = buffers.getBuffer(RenderType.entityTranslucent(tex));
+            Vec3 n = f.normal();
+            Vec3 ref = Math.abs(n.y) > 0.9D ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+            Vec3 s = n.cross(ref).normalize();
+            Vec3 t = n.cross(s).normalize();
+            double cs = Math.cos(f.spin());
+            double sn = Math.sin(f.spin());
+            float size = f.size() * (0.4F + 0.6F * grow);
+            Vec3 u = s.scale(cs).add(t.scale(sn)).scale(size * 0.5D);
+            Vec3 v = t.scale(cs).subtract(s.scale(sn)).scale(size * 0.5D);
+            Vec3 p = f.pos();
+            Vec3[] q = {p.subtract(u).subtract(v), p.add(u).subtract(v), p.add(u).add(v), p.subtract(u).add(v)};
+            float[][] uv = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+            float a = 0.85F * melt * grow;
+            for (int k = 0; k < 4; k++) {
+                Vector4f w = m.transform(new Vector4f((float) q[k].x, (float) q[k].y, (float) q[k].z, 1.0F));
+                c.vertex(w.x(), w.y(), w.z(), 0.86F, 0.95F, 1.0F, a, uv[k][0], uv[k][1], OverlayTexture.NO_OVERLAY,
+                        0xF000F0, (float) n.x, (float) n.y, (float) n.z);
+            }
+        }
+    }
+
+    /** Ice crystals stuck on every creature that is freezing (more the colder it is). */
+    private static void renderFrozen(MultiBufferSource buffers, Matrix4f m, ClientLevel level, Vec3 cam,
+                                     Vector3f left, Vector3f up, float partial) {
+        VertexConsumer c = null;
+        for (net.minecraft.world.entity.Entity e : level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity living) || living.getTicksFrozen() <= 0
+                    || e.distanceToSqr(cam) > 48.0D * 48.0D || e.isInvisible()) {
+                continue;
+            }
+            if (e == Minecraft.getInstance().player && Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+                continue;
+            }
+            float cold = Math.min(1.0F, living.getTicksFrozen() / (float) Math.max(1, living.getTicksRequiredToFreeze()));
+            if (c == null) {
+                c = buffers.getBuffer(RenderType.eyes(ICE_TEX));
+            }
+            Vec3 at = e.getPosition(partial);
+            java.util.Random rnd = new java.util.Random(e.getId() * 31L);
+            int shards = 3 + Math.round(9 * cold);
+            for (int i = 0; i < shards; i++) {
+                double ang = rnd.nextDouble() * Math.PI * 2.0D;
+                double hgt = rnd.nextDouble();
+                double rad = e.getBbWidth() * (0.45D + rnd.nextDouble() * 0.15D);
+                Vec3 p = at.add(Math.cos(ang) * rad, hgt * e.getBbHeight(), Math.sin(ang) * rad);
+                float size = (0.18F + rnd.nextFloat() * 0.22F) * (0.5F + 0.5F * cold) * Math.max(0.6F, e.getBbHeight() / 1.8F);
+                billboard(c, m, p, left, up, size, 0.55F, 0.8F, 1.0F, 0.75F * cold + 0.15F, 0.0F, 0.0F, 1.0F, 1.0F);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Burnt trail of the heat vision
     // ------------------------------------------------------------------
 
@@ -211,6 +314,14 @@ public final class SupermanFx {
         long now = mc.level.getGameTime();
         EFFECTS.removeIf(f -> now - f.start > f.life());
         SCORCH.removeIf(sc -> now - sc.start() > SCORCH_LIFE);
+        FROST.removeIf(f -> now - f.start() > FROST_LIFE);
+        if (now % 2L == 0L) {
+            for (Player p : mc.level.players()) {
+                if (SupermanState.isSuperman(p) && SupermanState.flag(p, SupermanPowers.F_FREEZE)) {
+                    frostTick(mc.level, p);
+                }
+            }
+        }
         for (Player p : mc.level.players()) {
             if (!SupermanState.isSuperman(p)) {
                 TRACKS.remove(p.getUUID());
@@ -274,8 +385,14 @@ public final class SupermanFx {
         Vector3f up = new Vector3f(camera.getUpVector());
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
 
-        renderScorch(buffers, m, level.getGameTime(), partial);
-        buffers.endBatch(RenderType.entityTranslucent(GLOW));
+
+        renderFrost(buffers, m, cam, time);
+        for (ResourceLocation tex : FROST_TEX) {
+            buffers.endBatch(RenderType.entityTranslucent(tex));
+        }
+        buffers.endBatch(RenderType.entityTranslucent(SNOW_TEX));
+        renderFrozen(buffers, m, level, cam, left, up, partial);
+        buffers.endBatch(RenderType.eyes(ICE_TEX));
 
         // one-shot effects
         for (Fx f : EFFECTS) {

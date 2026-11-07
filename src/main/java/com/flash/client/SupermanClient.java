@@ -378,7 +378,7 @@ public final class SupermanClient {
             } else if (block.getType() == HitResult.Type.BLOCK) {
                 normal = Vec3.atLowerCornerOf(block.getDirection().getNormal());
                 // burnt trail on the surface it sweeps
-                SupermanFx.scorch(p.getUUID(), stop, normal, SupermanState.flag(p, SupermanPowers.F_LASER));
+                SupermanScorch.paint(p.getUUID(), stop, normal, SupermanState.flag(p, SupermanPowers.F_LASER));
             }
             BEAM_ENDS.put(p.getUUID(), stop);
             boolean laser = SupermanState.flag(p, SupermanPowers.F_LASER);
