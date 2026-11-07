@@ -210,8 +210,8 @@ public final class SupermanPowers {
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
     public static float damageFactor(Player player) {
-        // tougher every level: 50 % less damage at level 1, 92 % at level 10
-        return Math.max(0.08F, 0.546F - 0.046F * level(player));
+        // tougher every level: 56 % less damage at level 1, 93 % at level 10
+        return Math.max(0.07F, 0.48F - 0.041F * level(player));
     }
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
@@ -530,6 +530,15 @@ public final class SupermanPowers {
         return level.canSeeSky(BlockPos.containing(player.getX(), player.getEyeY(), player.getZ()));
     }
 
+    /** Night under the open sky (the moon recharges Superman high up, slower than the sun). */
+    public static boolean moonlight(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if (!level.dimensionType().hasSkyLight() || level.isDay() || level.isRainingAt(player.blockPosition())) {
+            return false;
+        }
+        return level.canSeeSky(BlockPos.containing(player.getX(), player.getEyeY(), player.getZ()));
+    }
+
     public static void tick(ServerPlayer player) {
         if (!has(player)) {
             return;
@@ -544,8 +553,10 @@ public final class SupermanPowers {
         boolean superman = isSuperman(player);
         boolean sun = inSunlight(player);
         boolean high = player.getY() > HIGH_ALTITUDE;
-        // solar energy: full in about 40 s under the sun, three times faster high up
-        float gain = sun ? (high ? 0.36F : 0.12F) : 0.015F;
+        // solar energy: full in about 40 s under the sun, three times faster high up; at night, up at the same
+        // height, the moonlight recharges too (a third of the day rate)
+        boolean moon = !sun && high && moonlight(player);
+        float gain = sun ? (high ? 0.36F : 0.12F) : moon ? 0.12F : 0.015F;
         float e = tag(player).getFloat(ENERGY);
         if (e < MAX_ENERGY) {
             setEnergy(player, e + gain);
@@ -567,6 +578,11 @@ public final class SupermanPowers {
                 player.setAirSupply(player.getMaxAirSupply());
             }
             applyRun(player, flag(player, F_SPEED));
+            // Kryptonian healing: Regeneration IV
+            if (player.tickCount % 20 == 0) {
+                player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.REGENERATION, 60, 3, true, false, true));
+            }
             SupermanMeteor.tick(player);
         } else {
             SupermanMeteor.clear(player);

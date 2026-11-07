@@ -515,7 +515,7 @@
   "gui.flash.superman.cfg.destroy.desc": "Visão de calor, soco sônico, Thunderclap, combo e Ultimate destroem o terreno.",
   "gui.flash.superman.cfg.hud.desc": "Mostra a lista de habilidades no canto da tela.",
   "gui.flash.superman.cfg.energy": "Energia solar",
-  "gui.flash.superman.cfg.energy.desc": "Recarrega de dia sob o céu aberto, 3x mais rápido acima de y=200.",
+  "gui.flash.superman.cfg.energy.desc": "De dia sob o céu aberto (3x mais rápido acima de y=200); de noite, acima de y=200, pela lua.",
   "gui.flash.superman.cfg.commands": "Comandos",
   "gui.flash.superman.cfg.commands.desc": "/superman give | remove | level | energy | cooldown",
   "gui.flash.footer.superman": "K abre | %s vira Superman / Clark Kent | voo: espaço duas vezes ou G",
