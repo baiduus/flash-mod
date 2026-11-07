@@ -546,7 +546,7 @@
   "ability.flash.superman.freeze_breath": "Freeze breath",
   "ability.flash.superman.freeze_breath.description": "Hold: applies Frozen, water turns to ice and lava to obsidian. Uses energy.",
   "ability.flash.superman.grab": "Grab and throw",
-  "ability.flash.superman.grab.description": "Grabs the creature or player in front. Press again to throw it where you aim.",
+  "ability.flash.superman.grab.description": "Hold J on a target within 6 blocks: grabs it and fills the throw bar. Release to throw with that force; at 100% it explodes on impact.",
   "ability.flash.superman.thunderclap": "Thunderclap",
   "ability.flash.superman.thunderclap.description": "Clap: a 30-block cone that throws targets and light blocks.",
   "ability.flash.superman.time_slow": "Slow time",
@@ -628,5 +628,7 @@
   "combo.flash.uplift": "Uplift",
   "combo.flash.uplift_combo": "Uplift Combo",
   "combo.flash.chokehold": "Chokehold",
-  "combo.flash.eye_pierce": "Eye Pierce"
+  "combo.flash.eye_pierce": "Eye Pierce",
+  "hud.flash.superman_throw": "Throw %s%%",
+  "hud.flash.superman_throw_full": "EXPLOSIVE THROW!"
 }

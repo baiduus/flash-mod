@@ -74,6 +74,18 @@ public final class SupermanClient {
         return xray;
     }
 
+    private static long throwStart = -1L;
+
+    /** Force of the throw (0..1) while J is held with someone in hand, or -1. */
+    public static float throwCharge() {
+        Minecraft mc = Minecraft.getInstance();
+        if (throwStart < 0L || mc.level == null || mc.player == null
+                || !SupermanState.flag(mc.player, SupermanPowers.F_HOLDING)) {
+            return -1.0F;
+        }
+        return Math.min(1.0F, (mc.level.getGameTime() - throwStart) / (float) SupermanAbilities.THROW_CHARGE_TICKS);
+    }
+
     /** Charge of the punch (0..1) while V is held, or -1. */
     public static float punchCharge() {
         Minecraft mc = Minecraft.getInstance();
@@ -435,7 +447,11 @@ public final class SupermanClient {
                 chargeStart = down && unlocked && SupermanState.cooldown(a, mc.level.getGameTime()) <= 0
                         ? mc.level.getGameTime() : -1L;
             }
-            boolean sendRelease = a.kind() == SupermanAbility.Kind.HOLD || a.kind() == SupermanAbility.Kind.CHARGE;
+            if (a == SupermanAbility.GRAB) {
+                throwStart = down && unlocked ? mc.level.getGameTime() : -1L;
+            }
+            boolean sendRelease = a.kind() == SupermanAbility.Kind.HOLD || a.kind() == SupermanAbility.Kind.CHARGE
+                    || a == SupermanAbility.GRAB;
             if (down || sendRelease) {
                 FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(i, down));
             }

@@ -546,7 +546,7 @@
   "ability.flash.superman.freeze_breath": "Sopro congelante",
   "ability.flash.superman.freeze_breath.description": "Segure: aplica Congelado, transforma água em gelo e lava em obsidiana. Gasta energia.",
   "ability.flash.superman.grab": "Agarrar e arremessar",
-  "ability.flash.superman.grab.description": "Agarra a criatura ou jogador na sua frente. Aperte de novo para arremessar na direção da mira.",
+  "ability.flash.superman.grab.description": "Segure J num alvo a até 6 blocos: agarra e carrega a barra de arremesso. Solte para arremessar com essa força; com 100% o alvo explode ao bater no chão.",
   "ability.flash.superman.thunderclap": "Thunderclap",
   "ability.flash.superman.thunderclap.description": "Bate as mãos: um cone de 30 blocos que arremessa alvos e blocos leves.",
   "ability.flash.superman.time_slow": "Desacelerar o tempo",
@@ -628,5 +628,7 @@
   "combo.flash.uplift": "Uplift",
   "combo.flash.uplift_combo": "Uplift Combo",
   "combo.flash.chokehold": "Chokehold",
-  "combo.flash.eye_pierce": "Eye Pierce"
+  "combo.flash.eye_pierce": "Eye Pierce",
+  "hud.flash.superman_throw": "Arremesso %s%%",
+  "hud.flash.superman_throw_full": "ARREMESSO EXPLOSIVO!"
 }

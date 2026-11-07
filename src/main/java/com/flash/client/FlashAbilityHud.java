@@ -34,8 +34,12 @@ public final class FlashAbilityHud implements IGuiOverlay {
                     renderSuperman(graphics, minecraft, width, height);
                 }
                 float charge = SupermanClient.punchCharge();
+                float toss = SupermanClient.throwCharge();
                 if (charge >= 0.0F) {
                     drawChargeBar(graphics, minecraft.font, width, height, charge);
+                } else if (toss >= 0.0F) {
+                    drawChargeBar(graphics, minecraft.font, width, height, toss, "hud.flash.superman_throw",
+                            "hud.flash.superman_throw_full");
                 }
             }
             return;
@@ -117,6 +121,11 @@ public final class FlashAbilityHud implements IGuiOverlay {
 
     /** Charged punch: green, then yellow, then red when full. */
     private static void drawChargeBar(GuiGraphics g, Font font, int width, int height, float f) {
+        drawChargeBar(g, font, width, height, f, "hud.flash.superman_punch", "hud.flash.superman_punch_full");
+    }
+
+    private static void drawChargeBar(GuiGraphics g, Font font, int width, int height, float f, String key,
+                                      String fullKey) {
         int w = 120;
         int x = (width - w) / 2;
         int y = height - 62;
@@ -126,8 +135,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (filled > 0) {
             g.fill(x, y, x + filled, y + 5, color);
         }
-        String label = Component.translatable(f >= 0.95F ? "hud.flash.superman_punch_full" : "hud.flash.superman_punch",
-                Math.round(f * 100.0F)).getString();
+        String label = Component.translatable(f >= 0.999F ? fullKey : key, Math.round(f * 100.0F)).getString();
         g.drawString(font, label, (width - font.width(label)) / 2, y - 12, color, true);
     }
 

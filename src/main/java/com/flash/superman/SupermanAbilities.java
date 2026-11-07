@@ -134,6 +134,8 @@ public final class SupermanAbilities {
         long clapAt = -1L;
         long launchAt = -1L;
         long throwAt = -1L;
+        long grabFrom = -1L;
+        float throwCharge;
         Vec3 dwellAt;
         int dwellTicks;
         final Map<UUID, Held> slowed = new HashMap<>();
@@ -143,7 +145,7 @@ public final class SupermanAbilities {
     private record Held(Entity entity, Vec3 velocity, boolean noGravity) {
     }
 
-    private record Thrown(UUID thrower, ServerLevel level, float damage, int[] ticks) {
+    private record Thrown(UUID thrower, ServerLevel level, float damage, int[] ticks, boolean explode) {
     }
 
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
@@ -174,6 +176,10 @@ public final class SupermanAbilities {
             return;
         }
         Session s = session(player);
+        if (ability == SupermanAbility.GRAB) {
+            grabKey(player, s, pressed);
+            return;
+        }
         switch (ability.kind()) {
             case TOGGLE -> {
                 if (pressed) {
@@ -803,6 +809,35 @@ public final class SupermanAbilities {
                 && e.getBbWidth() <= 3.5F && e.getBbHeight() <= 5.0F;
     }
 
+    /** Time to fill the throw bar while the grab key is held. */
+    public static final int THROW_CHARGE_TICKS = 50;
+
+    /**
+     * Grab like the Hulk: press and hold J on a creature to grab it; while J stays down the throw bar fills, and the
+     * release throws it with that force. Thrown at 100 % it blows up when it hits the ground.
+     */
+    private static void grabKey(ServerPlayer player, Session s, boolean pressed) {
+        long now = player.level().getGameTime();
+        if (pressed) {
+            if (s.grabbed >= 0 || s.throwAt >= 0L) {
+                return;
+            }
+            if (cooling(player, SupermanAbility.GRAB)) {
+                return;
+            }
+            grab(player, s);
+            s.grabFrom = s.grabbed >= 0 ? now : -1L;
+            return;
+        }
+        if (s.grabbed >= 0 && s.grabFrom >= 0L && s.throwAt < 0L) {
+            s.throwCharge = Math.min(1.0F, (now - s.grabFrom) / (float) THROW_CHARGE_TICKS);
+            s.grabFrom = -1L;
+            // the throw lands on the swing of the animation (tick 6)
+            s.throwAt = now + 5L;
+            anim(player, "grab_throw");
+        }
+    }
+
     private static void grab(ServerPlayer player, Session s) {
         Entity target = null;
         HitResult hit = trace(player, 6.0D);
@@ -861,17 +896,19 @@ public final class SupermanAbilities {
             return;
         }
         float power = SupermanPowers.power(player);
+        float charge = s.throwCharge;
+        boolean full = charge >= 0.999F;
         Vec3 look = player.getLookAngle();
-        double speed = 2.6D + 0.15D * SupermanPowers.level(player);
-        e.setDeltaMovement(look.scale(speed));
-        e.hurtMarked = true;
+        // the bar sets the force: a soft toss at 0 %, the full throw at 100 %
+        double speed = (0.8D + 1.8D * charge) * (1.0D + 0.06D * SupermanPowers.level(player));
         if (e instanceof LivingEntity living) {
             living.invulnerableTime = 0;
         }
-        e.hurt(level.damageSources().playerAttack(player), 8.0F * power);
-        e.setDeltaMovement(look.scale(speed));
+        e.hurt(level.damageSources().playerAttack(player), (3.0F + 5.0F * charge) * power);
+        e.setDeltaMovement(look.scale(speed).add(0.0D, 0.2D, 0.0D));
         e.hurtMarked = true;
-        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, 10.0F * power, new int[1]));
+        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (4.0F + 6.0F * charge) * power, new int[1], full));
+        s.throwCharge = 0.0F;
         sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2F, 0.6F);
         SupermanPowers.setCooldown(player, SupermanAbility.GRAB);
         SupermanPowers.addXp(player, 0.8F);
@@ -922,6 +959,14 @@ public final class SupermanAbilities {
                 }
                 t.level().sendParticles(ParticleTypes.EXPLOSION, e.getX(), e.getY() + 0.5D, e.getZ(), 1,
                         0.0D, 0.0D, 0.0D, 0.0D);
+                if (t.explode()) {
+                    // thrown with the bar full: it blows up on impact (about a creeper, not more)
+                    boolean destroy = thrower != null && SupermanPowers.destroyBlocks(thrower);
+                    t.level().explode(thrower, e.getX(), e.getY() + 0.3D, e.getZ(), 2.5F,
+                            destroy ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE);
+                    fxAt(t.level(), SupermanFxPacket.SHOCKWAVE, e.position().add(0.0D, 0.1D, 0.0D), new Vec3(0, 1, 0),
+                            4.0F);
+                }
                 groundPuff(t.level(), e.position(), 1.2D, 10);
                 t.level().playSound(null, e.getX(), e.getY(), e.getZ(), SoundEvents.GENERIC_EXPLODE,
                         SoundSource.PLAYERS, 0.9F, 1.3F);
