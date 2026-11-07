@@ -91,6 +91,23 @@ public final class SupermanPose {
         }
     }
 
+    /** Keyframe player that stops on the last keyframe and holds it (Man of Tomorrow's ClipSampler clamps there). */
+    private static final class Clamped extends KeyframeAnimationPlayer {
+        private final int end;
+
+        Clamped(KeyframeAnimation animation) {
+            super(animation, 0);
+            this.end = animation.endTick;
+        }
+
+        @Override
+        public void tick() {
+            if (this.getTick() < this.end) {
+                super.tick();
+            }
+        }
+    }
+
     /** Keyframe player that stays on its start tick (a pose held while a key is down). */
     private static final class Frozen extends KeyframeAnimationPlayer {
         Frozen(KeyframeAnimation animation, int tick) {
@@ -150,7 +167,8 @@ public final class SupermanPose {
         State st = STATES.computeIfAbsent(playerId, id -> new State());
         if ("none".equals(animation)) {
             st.shot = null;
-            set(player, SHOT, null, 0, 4, false);
+            // (the coil fades out over 7 ticks, as in Man of Tomorrow)
+            set(player, SHOT, null, 0, 7, false);
             return;
         }
         shot(player, st, animation, offset);
@@ -208,6 +226,16 @@ public final class SupermanPose {
             return;
         }
         st.shot = name;
+        if ("charge_takeoff9".equals(name)) {
+            // the coil of the charged takeoff, as Man of Tomorrow plays it: 4 ticks of fade in, then the crouch runs
+            // to its last keyframe and holds there until the launch (or the release)
+            st.shotUntil = player.tickCount + 400;
+            ModifierLayer<IAnimation> layer = layer(player, SHOT);
+            if (layer != null) {
+                layer.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(4, Ease.INOUTSINE), new Clamped(a));
+            }
+            return;
+        }
         // looping files (e.g. the solar release) still play once as a one-shot
         st.shotUntil = player.tickCount + Math.max(1, a.stopTick - offset);
         set(player, SHOT, name, offset, offset > 0 ? 0 : 2, false);
