@@ -60,6 +60,54 @@ public final class SupermanAbilities {
 
     public static final int CHARGE_TICKS = 40;
     public static final int ULTIMATE_TICKS = 100;
+    /** Blast radius: half of the pack's 50-block sphere. */
+    public static final double ULTIMATE_RADIUS = 25.0D;
+
+    /** Sphere carved shell by shell (about two blocks of radius per tick). */
+    private record Crater(ServerLevel level, BlockPos center, int radius, int[] shell) {
+    }
+
+    private static final List<Crater> CRATERS = new ArrayList<>();
+
+    private static void craterTick() {
+        Iterator<Crater> it = CRATERS.iterator();
+        while (it.hasNext()) {
+            Crater c = it.next();
+            int r0 = c.shell()[0];
+            int r1 = Math.min(c.radius(), r0 + 2);
+            c.shell()[0] = r1;
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            double in2 = (double) r0 * r0;
+            double out2 = (double) r1 * r1 + 0.5D;
+            for (int dx = -r1; dx <= r1; dx++) {
+                for (int dy = -r1; dy <= r1; dy++) {
+                    for (int dz = -r1; dz <= r1; dz++) {
+                        double d2 = dx * dx + dy * dy + dz * dz;
+                        if (d2 > out2 || (r0 > 0 && d2 <= in2)) {
+                            continue;
+                        }
+                        pos.set(c.center().getX() + dx, c.center().getY() + dy, c.center().getZ() + dz);
+                        BlockState st = c.level().getBlockState(pos);
+                        if (st.isAir() || st.getDestroySpeed(c.level(), pos) < 0.0F) {
+                            continue;
+                        }
+                        // the rim is ragged and scorched
+                        double edge = Math.sqrt(d2) / c.radius();
+                        if (edge > 0.85D && c.level().random.nextFloat() < 0.35F) {
+                            if (c.level().random.nextFloat() < 0.3F) {
+                                c.level().setBlock(pos, Blocks.MAGMA_BLOCK.defaultBlockState(), 2);
+                            }
+                            continue;
+                        }
+                        c.level().setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                    }
+                }
+            }
+            if (r1 >= c.radius()) {
+                it.remove();
+            }
+        }
+    }
     private static final double HEAT_RANGE = 64.0D;
     private static final double SLOW_RADIUS = 32.0D;
     private static final double SLOW_FACTOR = 0.05D;
@@ -171,15 +219,6 @@ public final class SupermanAbilities {
         switch (ability) {
             case FLIGHT -> {
                 boolean on = !SupermanPowers.flag(player, SupermanPowers.F_FLIGHT);
-                if (on && player.isShiftKeyDown() && player.onGround()) {
-                    // charged takeoff: coil down, then explode into the sky
-                    if (s.launchAt < 0L) {
-                        s.launchAt = player.level().getGameTime() + 22L;
-                        anim(player, "charge_takeoff9");
-                        sound(player, ModSounds.CHARGE.get(), 1.0F, 0.8F);
-                    }
-                    return;
-                }
                 if (on) {
                     SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
                     SupermanPowers.startFlight(player);
@@ -337,10 +376,7 @@ public final class SupermanAbilities {
         if (s == null) {
             return;
         }
-        if (s.launchAt >= 0L && level.getGameTime() >= s.launchAt) {
-            s.launchAt = -1L;
-            chargedLaunch(player, level);
-        }
+
         if ((flags & SupermanPowers.F_SLOW) != 0) {
             if (SupermanPowers.spend(player, SupermanAbility.TIME_SLOW.energy())) {
                 slowTick(player, level, s);
@@ -412,7 +448,7 @@ public final class SupermanAbilities {
                 if (target instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
                 }
-                target.hurt(level.damageSources().playerAttack(player), 2.8F * power * (laser ? 1.8F : 1.0F));
+                target.hurt(level.damageSources().playerAttack(player), 3.6F * power * (laser ? 2.2F : 1.0F));
                 target.setSecondsOnFire(laser ? 8 : 4);
                 SupermanPowers.addXp(player, 0.1F);
             }
@@ -503,7 +539,9 @@ public final class SupermanAbilities {
             e.clearFire();
             if (e instanceof LivingEntity living) {
                 living.setTicksFrozen(Math.min(living.getTicksFrozen() + 6, 400));
-                living.addEffect(new MobEffectInstance(ModEffects.FROZEN.get(), 60, 2, false, true, true));
+                // cold enough: frozen solid in a block of ice (can't move)
+                int amp = living.getTicksFrozen() >= 100 ? 4 : 2;
+                living.addEffect(new MobEffectInstance(ModEffects.FROZEN.get(), 60, amp, false, true, true));
                 if (player.tickCount % 6 == 0) {
                     level.sendParticles(ModParticles.SM_FROST.get(), living.getX(), living.getY() + living.getBbHeight() * 0.5D,
                             living.getZ(), 1, living.getBbWidth() * 0.4D, living.getBbHeight() * 0.3D,
@@ -837,7 +875,13 @@ public final class SupermanAbilities {
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || THROWN.isEmpty()) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (!CRATERS.isEmpty()) {
+            craterTick();
+        }
+        if (THROWN.isEmpty()) {
             return;
         }
         Iterator<Map.Entry<Integer, Thrown>> it = THROWN.entrySet().iterator();
@@ -987,46 +1031,67 @@ public final class SupermanAbilities {
         SupermanPowers.setCooldown(player, SupermanAbility.SUPER_COMBO);
     }
 
+    /**
+     * Super Combo, timed on the pack's combo animation (135 ticks): dash in, uppercut at 12, the target hangs in the
+     * air while Superman flies around it, punches at 40 and 69, then the slam from above at 117 and the crash.
+     */
     private static void comboTick(ServerPlayer player, ServerLevel level, Session s) {
         Entity e = level.getEntity(s.comboTarget);
         int t = s.comboTicks++;
-        if (!(e instanceof LivingEntity target) || !target.isAlive() || t > 60) {
+        if (!(e instanceof LivingEntity target) || !target.isAlive() || t > 160) {
             endCombo(player, s);
             return;
         }
         float power = SupermanPowers.power(player);
         Vec3 tp = target.position();
+        double reach = 1.4D + target.getBbWidth() * 0.5D;
         if (t == 0) {
+            anim(player, "super_combo");
+            sound(player, ModSounds.TAKEOFF.get(), 1.0F, 1.3F);
+        }
+        if (t <= 11) {
+            // closing in, ending right in front of the target
             Vec3 flat = new Vec3(tp.x - player.getX(), 0.0D, tp.z - player.getZ());
             flat = flat.lengthSqr() < 1.0E-4D ? new Vec3(0, 0, 1) : flat.normalize();
-            Vec3 at = tp.subtract(flat.scale(1.4D + target.getBbWidth() * 0.5D));
-            face(player, at, tp.add(0.0D, target.getBbHeight() * 0.6D, 0.0D));
+            Vec3 at = tp.subtract(flat.scale(reach));
+            Vec3 from = player.position();
+            Vec3 step = from.add(at.subtract(from).scale(t >= 10 ? 1.0D : 0.35D));
+            face(player, step, tp.add(0.0D, target.getBbHeight() * 0.6D, 0.0D));
+        } else if (t == 12) {
             hitCombo(player, level, target, 6.0F * power);
-            target.setDeltaMovement(0.0D, 1.5D, 0.0D);
+            target.setDeltaMovement(0.0D, 1.25D, 0.0D);
             target.hurtMarked = true;
-            sound(player, ModSounds.TAKEOFF.get(), 1.0F, 1.3F);
-        } else if (t == 8 || t == 12 || t == 16) {
-            double a = t * 1.3D;
-            Vec3 at = tp.add(Math.cos(a) * (1.6D + target.getBbWidth() * 0.5D), 0.2D,
-                    Math.sin(a) * (1.6D + target.getBbWidth() * 0.5D));
-            face(player, at, tp.add(0.0D, target.getBbHeight() * 0.6D, 0.0D));
-            hitCombo(player, level, target, 5.0F * power);
-            target.setDeltaMovement(0.0D, 0.35D, 0.0D);
-            target.hurtMarked = true;
-        } else if (t == 22) {
-            Vec3 at = tp.add(0.4D, target.getBbHeight() + 1.6D, 0.4D);
-            face(player, at, tp.add(0.0D, target.getBbHeight() * 0.5D, 0.0D));
+        } else if (t > 12 && t < 117) {
+            // the target hangs in the air; Superman stays at its side
+            if (t > 24) {
+                target.setDeltaMovement(target.getDeltaMovement().multiply(0.6D, 0.0D, 0.6D).add(0.0D, 0.04D, 0.0D));
+                target.hurtMarked = true;
+                target.fallDistance = 0.0F;
+            }
+            if (t % 2 == 0) {
+                double a = t * 0.11D;
+                Vec3 at = target.position().add(Math.cos(a) * reach, 0.1D, Math.sin(a) * reach);
+                if (t >= 100) {
+                    at = target.position().add(0.3D, target.getBbHeight() + 1.4D, 0.3D);
+                }
+                face(player, at, target.position().add(0.0D, target.getBbHeight() * 0.55D, 0.0D));
+            }
+            if (t == 40 || t == 69) {
+                hitCombo(player, level, target, 5.0F * power);
+            }
+        } else if (t == 117) {
             hitCombo(player, level, target, 8.0F * power);
             target.setDeltaMovement(0.0D, -3.2D, 0.0D);
             target.hurtMarked = true;
             sound(player, ModSounds.DIVE.get(), 1.0F, 1.2F);
-        } else if (t > 23 && (target.onGround() || target.isInWater() || t >= 45)) {
+        } else if (t > 117 && (target.onGround() || target.isInWater() || t >= 140)) {
             target.invulnerableTime = 0;
             target.hurt(level.damageSources().playerAttack(player), 12.0F * power);
             target.addEffect(new MobEffectInstance(ModEffects.BLEEDING.get(), 100, 1));
             level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, tp.x, tp.y, tp.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             groundPuff(level, tp, 2.5D, 24);
             fxAt(level, SupermanFxPacket.SHOCKWAVE, tp.add(0.0D, 0.15D, 0.0D), new Vec3(0, 1, 0), 6.0F);
+            cracks(level, tp, 4.0F);
             BlockState ground = level.getBlockState(target.blockPosition().below());
             if (!ground.isAir()) {
                 level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), tp.x, tp.y + 0.1D, tp.z,
@@ -1053,7 +1118,6 @@ public final class SupermanAbilities {
     }
 
     private static void hitCombo(ServerPlayer player, ServerLevel level, LivingEntity target, float damage) {
-        anim(player, "super_punch@4");
         target.invulnerableTime = 0;
         target.hurt(level.damageSources().playerAttack(player), damage);
         Vec3 p = target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D);
@@ -1124,7 +1188,7 @@ public final class SupermanAbilities {
         sound(player, ModSounds.SOLAR_BEAM.get(), 3.0F, 1.0F);
         level.playSound(null, c.x, c.y, c.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 6.0F, 0.5F);
         float power = SupermanPowers.power(player);
-        double radius = 36.0D;
+        double radius = ULTIMATE_RADIUS;
         for (Entity e : level.getEntities(player, player.getBoundingBox().inflate(radius), x -> x.isAlive())) {
             double d = e.position().distanceTo(c);
             if (d > radius) {
@@ -1133,7 +1197,9 @@ public final class SupermanAbilities {
             double f = Math.pow(1.0D - d / radius, 1.3D);
             if (e instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
-                living.hurt(level.damageSources().playerAttack(player), (float) (120.0F * power * f) + 4.0F);
+                // the pack: 100 on creatures, 25 on players (here a little more near the centre)
+                float base = living instanceof net.minecraft.world.entity.player.Player ? 25.0F : 100.0F;
+                living.hurt(level.damageSources().playerAttack(player), (float) (base * power * (0.6D + 0.4D * f)));
                 living.setSecondsOnFire(8);
             }
             Vec3 away = e.position().subtract(c);
@@ -1153,13 +1219,8 @@ public final class SupermanAbilities {
         level.sendParticles(ModParticles.SM_EMBER.get(), c.x, c.y, c.z, 200, 3.0D, 2.0D, 3.0D, 0.8D);
         fxAt(level, SupermanFxPacket.SOLAR_BLAST, c, new Vec3(0, 1, 0), (float) radius);
         if (SupermanPowers.destroyBlocks(player)) {
-            // crater: a big blast under him and a ring around it
-            level.explode(player, c.x, c.y - 3.0D, c.z, 16.0F, true, Level.ExplosionInteraction.TNT);
-            for (int i = 0; i < 6; i++) {
-                double a = i * Math.PI / 3.0D;
-                level.explode(player, c.x + Math.cos(a) * 9.0D, c.y - 4.0D, c.z + Math.sin(a) * 9.0D, 9.0F,
-                        Level.ExplosionInteraction.TNT);
-            }
+            // crater: a sphere of the blast radius carved shell by shell over the next ticks
+            CRATERS.add(new Crater(level, BlockPos.containing(c), (int) radius, new int[] {0}));
         }
         if (!SupermanPowers.infiniteEnergy(player)) {
             SupermanPowers.setEnergy(player, 0.0F);
@@ -1196,6 +1257,7 @@ public final class SupermanAbilities {
                     player.getZ(), 120, radius / 2.0D, 0.2D, radius / 2.0D, 0.25D);
         }
         groundPuff(level, player.position(), radius * 0.6D, 30);
+        cracks(level, player.position(), (float) radius);
         fxAt(level, SupermanFxPacket.SHOCKWAVE, player.position().add(0.0D, 0.1D, 0.0D), new Vec3(0, 1, 0),
                 (float) radius);
     }
@@ -1204,15 +1266,44 @@ public final class SupermanAbilities {
     // Charged takeoff
     // ------------------------------------------------------------------
 
+    /**
+     * Charged takeoff (jump held on the ground): phase 0 = the crouch starts, 1 = launch (~10 blocks straight up,
+     * the ground cracks; the client switches to flight at the top), 2 = cancelled.
+     */
+    public static void launch(ServerPlayer player, int phase) {
+        if (!SupermanPowers.isSuperman(player) || player.isSpectator()) {
+            return;
+        }
+        Session s = session(player);
+        long now = player.level().getGameTime();
+        if (phase == 0) {
+            if (now - s.launchAt < 20L) {
+                return;
+            }
+            anim(player, "charge_takeoff9");
+            sound(player, ModSounds.CHARGE.get(), 1.0F, 0.8F);
+        } else if (phase == 1) {
+            if (now - s.launchAt < 20L) {
+                return;
+            }
+            s.launchAt = now;
+            chargedLaunch(player, player.serverLevel());
+        } else {
+            anim(player, "none");
+        }
+    }
+
     private static void chargedLaunch(ServerPlayer player, ServerLevel level) {
         if (!SupermanPowers.isSuperman(player)) {
             return;
         }
+        // flight switched on (mayfly) but not flying yet: the jump carries him up, the client hovers at the top
         SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
-        SupermanPowers.startFlight(player);
-        Vec3 look = player.getLookAngle();
-        player.setDeltaMovement(look.x * 1.2D, 2.4D + 0.1D * SupermanPowers.level(player), look.z * 1.2D);
+        player.getAbilities().mayfly = true;
+        player.onUpdateAbilities();
+        player.setDeltaMovement(player.getDeltaMovement().x, 1.45D, player.getDeltaMovement().z);
         player.hurtMarked = true;
+        cracks(level, player.position(), 3.5F);
         anim(player, "charged_launch9");
         sound(player, ModSounds.TAKEOFF.get(), 1.4F, 0.9F);
         sound(player, ModSounds.PUNCH_SONIC.get(), 1.4F, 1.2F);
@@ -1242,6 +1333,11 @@ public final class SupermanAbilities {
                     at.x + Math.cos(a) * 0.5D, at.y + 0.15D, at.z + Math.sin(a) * 0.5D, 0,
                     Math.cos(a), 0.05D, Math.sin(a), sp);
         }
+    }
+
+    /** Cracks spreading on the ground (drawn by the clients). */
+    private static void cracks(ServerLevel level, Vec3 at, float radius) {
+        fxAt(level, SupermanFxPacket.CRACKS, at, new Vec3(0, 1, 0), radius);
     }
 
     private static void sparks(ServerLevel level, Vec3 p, int count) {

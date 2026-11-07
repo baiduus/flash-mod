@@ -90,6 +90,10 @@ public final class SupermanFx {
         }
         Vec3 dir = new Vec3(dx, dy, dz);
         dir = dir.lengthSqr() < 1.0E-6D ? new Vec3(0, 1, 0) : dir.normalize();
+        if (kind == SupermanFxPacket.CRACKS) {
+            SupermanCracks.add(new Vec3(x, y, z), scale);
+            return;
+        }
         EFFECTS.add(new Fx(kind, new Vec3(x, y, z), dir, scale, mc.level.getGameTime()));
         if (EFFECTS.size() > 200) {
             EFFECTS.remove(0);
@@ -169,32 +173,114 @@ public final class SupermanFx {
         }
     }
 
-    /** Ice crystals stuck on every creature that is freezing (more the colder it is). */
+    private static final ResourceLocation ICE_BLOCK = new ResourceLocation("minecraft", "textures/block/ice.png");
+
+    /**
+     * Freezing creatures: ice spikes grow out of the body while it gets colder; once frozen solid (like the pack)
+     * the creature is locked in a block of ice bristling with spikes.
+     */
     private static void renderFrozen(MultiBufferSource buffers, Matrix4f m, ClientLevel level, Vec3 cam,
                                      Vector3f left, Vector3f up, float partial) {
         VertexConsumer c = null;
         for (net.minecraft.world.entity.Entity e : level.entitiesForRendering()) {
-            if (!(e instanceof net.minecraft.world.entity.LivingEntity living) || living.getTicksFrozen() <= 0
-                    || e.distanceToSqr(cam) > 48.0D * 48.0D || e.isInvisible()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity living) || living.getTicksFrozen() <= 20
+                    || e.distanceToSqr(cam) > 48.0D * 48.0D || e.isInvisible() || !e.isAlive()) {
                 continue;
             }
             if (e == Minecraft.getInstance().player && Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
                 continue;
             }
-            float cold = Math.min(1.0F, living.getTicksFrozen() / (float) Math.max(1, living.getTicksRequiredToFreeze()));
             if (c == null) {
-                c = buffers.getBuffer(RenderType.eyes(ICE_TEX));
+                c = buffers.getBuffer(RenderType.entityTranslucent(ICE_BLOCK));
             }
+            int light = net.minecraft.client.renderer.LevelRenderer.getLightColor(level, e.blockPosition());
+            float cold = Math.min(1.0F, living.getTicksFrozen() / 100.0F);
+            float solid = Math.max(0.0F, Math.min(1.0F, (living.getTicksFrozen() - 100) / 25.0F));
             Vec3 at = e.getPosition(partial);
-            java.util.Random rnd = new java.util.Random(e.getId() * 31L);
-            int shards = 3 + Math.round(9 * cold);
+            net.minecraft.world.phys.AABB box = e.getBoundingBox().move(at.subtract(e.position())).inflate(0.12D);
+            if (solid > 0.0F) {
+                // the block of ice grows from the feet up
+                double top = box.minY + (box.maxY - box.minY) * solid;
+                iceBox(c, m, box.minX, box.minY, box.minZ, box.maxX, top, box.maxZ, 0.92F, light);
+            }
+            java.util.Random rnd = new java.util.Random(e.getId() * 341873128712L);
+            float w = e.getBbWidth();
+            float h = e.getBbHeight();
+            float size = Math.min(1.5F, 0.55F + 0.45F * Math.max(w, h * 0.6F));
+            int shards = 10 + rnd.nextInt(7);
             for (int i = 0; i < shards; i++) {
                 double ang = rnd.nextDouble() * Math.PI * 2.0D;
-                double hgt = rnd.nextDouble();
-                double rad = e.getBbWidth() * (0.45D + rnd.nextDouble() * 0.15D);
-                Vec3 p = at.add(Math.cos(ang) * rad, hgt * e.getBbHeight(), Math.sin(ang) * rad);
-                float size = (0.18F + rnd.nextFloat() * 0.22F) * (0.5F + 0.5F * cold) * Math.max(0.6F, e.getBbHeight() / 1.8F);
-                billboard(c, m, p, left, up, size, 0.55F, 0.8F, 1.0F, 0.75F * cold + 0.15F, 0.0F, 0.0F, 1.0F, 1.0F);
+                double hgt = 0.1D + rnd.nextDouble() * 0.85D;
+                Vec3 out = new Vec3(Math.cos(ang), (rnd.nextDouble() - 0.35D) * 1.1D, Math.sin(ang)).normalize();
+                Vec3 base = new Vec3(at.x + Math.cos(ang) * w * 0.5D, at.y + hgt * h, at.z + Math.sin(ang) * w * 0.5D);
+                float len = (0.35F + 0.45F * rnd.nextFloat()) * size * (0.25F + 0.75F * cold);
+                float rad = (0.08F + 0.07F * rnd.nextFloat()) * size * (0.4F + 0.6F * cold);
+                spike(c, m, base.subtract(out.scale(len * 0.15D)), out, len, rad, rnd.nextFloat() * 6.28F, light,
+                        0.6F + 0.3F * cold);
+            }
+        }
+    }
+
+    private static void iceBox(VertexConsumer c, Matrix4f m, double x0, double y0, double z0, double x1, double y1,
+                               double z1, float a, int light) {
+        float w = (float) (x1 - x0);
+        float h = (float) (y1 - y0);
+        float d = (float) (z1 - z0);
+        // each face with its own normal; uv repeats the ice texture once per block
+        iceQuad(c, m, x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, w, h, 0, 0, -1, a, light);
+        iceQuad(c, m, x1, y0, z1, x0, y0, z1, x0, y1, z1, x1, y1, z1, w, h, 0, 0, 1, a, light);
+        iceQuad(c, m, x0, y0, z1, x0, y0, z0, x0, y1, z0, x0, y1, z1, d, h, -1, 0, 0, a, light);
+        iceQuad(c, m, x1, y0, z0, x1, y0, z1, x1, y1, z1, x1, y1, z0, d, h, 1, 0, 0, a, light);
+        iceQuad(c, m, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, w, d, 0, 1, 0, a, light);
+        iceQuad(c, m, x0, y0, z1, x1, y0, z1, x1, y0, z0, x0, y0, z0, w, d, 0, -1, 0, a, light);
+    }
+
+    private static void iceQuad(VertexConsumer c, Matrix4f m, double ax, double ay, double az, double bx, double by,
+                                double bz, double cx, double cy, double cz, double dx, double dy, double dz, float us,
+                                float vs, float nx, float ny, float nz, float a, int light) {
+        double[][] q = {{ax, ay, az, 0, vs}, {bx, by, bz, us, vs}, {cx, cy, cz, us, 0}, {dx, dy, dz, 0, 0}};
+        for (int pass = 0; pass < 2; pass++) {
+            for (int k = 0; k < 4; k++) {
+                double[] v = q[pass == 0 ? k : 3 - k];
+                Vector4f w = m.transform(new Vector4f((float) v[0], (float) v[1], (float) v[2], 1.0F));
+                c.vertex(w.x(), w.y(), w.z(), 0.86F, 0.94F, 1.0F, a * 0.8F, (float) v[3], (float) v[4],
+                        OverlayTexture.NO_OVERLAY, light, nx, ny, nz);
+            }
+        }
+    }
+
+    /** Four-sided ice spike from {@code base} along {@code dir}, lit from above like the pack's shards. */
+    private static void spike(VertexConsumer c, Matrix4f m, Vec3 base, Vec3 dir, float len, float rad, float spin,
+                              int light, float alpha) {
+        Vec3 ref = Math.abs(dir.y) > 0.9D ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 s = dir.cross(ref).normalize();
+        Vec3 t = dir.cross(s).normalize();
+        Vec3 tip = base.add(dir.scale(len));
+        Vec3[] ring = new Vec3[4];
+        for (int i = 0; i < 4; i++) {
+            double a = spin + i * Math.PI / 2.0D;
+            ring[i] = base.add(s.scale(Math.cos(a) * rad)).add(t.scale(Math.sin(a) * rad));
+        }
+        for (int i = 0; i < 4; i++) {
+            Vec3 c0 = ring[i];
+            Vec3 c1 = ring[(i + 1) % 4];
+            Vec3 mid = c0.add(c1).scale(0.5D).subtract(base).normalize();
+            Vec3 n = mid.scale(0.8D).add(dir.scale(0.35D)).normalize();
+            float lam = (float) Math.max(0.0D, n.x * 0.3176D + n.y * 0.9075D + n.z * 0.2269D);
+            float shade = 0.72F + 0.28F * lam;
+            float r = 0.66F * shade + (lam > 0.6F ? (lam - 0.6F) * 0.6F : 0.0F);
+            float g = 0.86F * shade + (lam > 0.6F ? (lam - 0.6F) * 0.4F : 0.0F);
+            float b = shade;
+            Vec3[] q = {c0, c1, tip, tip};
+            float[][] uv = {{0.0F, 1.0F}, {0.5F, 1.0F}, {0.25F, 0.0F}, {0.25F, 0.0F}};
+            for (int pass = 0; pass < 2; pass++) {
+                for (int k = 0; k < 4; k++) {
+                    int idx = pass == 0 ? k : 3 - k;
+                    Vector4f w = m.transform(new Vector4f((float) q[idx].x, (float) q[idx].y, (float) q[idx].z, 1.0F));
+                    c.vertex(w.x(), w.y(), w.z(), Math.min(1.0F, r), Math.min(1.0F, g), Math.min(1.0F, b), alpha,
+                            uv[idx][0], uv[idx][1], OverlayTexture.NO_OVERLAY, light, (float) n.x, (float) n.y,
+                            (float) n.z);
+                }
             }
         }
     }
@@ -392,7 +478,7 @@ public final class SupermanFx {
         }
         buffers.endBatch(RenderType.entityTranslucent(SNOW_TEX));
         renderFrozen(buffers, m, level, cam, left, up, partial);
-        buffers.endBatch(RenderType.eyes(ICE_TEX));
+        buffers.endBatch(RenderType.entityTranslucent(ICE_BLOCK));
 
         // one-shot effects
         for (Fx f : EFFECTS) {
@@ -427,8 +513,7 @@ public final class SupermanFx {
                 Vec3 c = at.add(0.0D, 1.0D, 0.0D);
                 sphere(buffers.getBuffer(RenderType.eyes(SUN)), m, c, 0.6F + 1.8F * k, time * 0.004F,
                         1.0F, 0.62F, 0.18F, 0.35F + 0.35F * k);
-                billboard(buffers.getBuffer(RenderType.eyes(GLOW)), m, c, left, up, 2.5F + 4.0F * k,
-                        1.0F, 0.75F, 0.3F, 0.5F + 0.4F * k, 0.0F, 0.0F, 1.0F, 1.0F);
+                // only the ball: no square glow around it
                 VertexConsumer beam = buffers.getBuffer(RenderType.eyes(SOLAR));
                 for (int i = 0; i < 4; i++) {
                     double a = i * Math.PI / 2.0D + time * 0.02D;

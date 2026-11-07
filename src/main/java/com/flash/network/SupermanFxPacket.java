@@ -11,6 +11,7 @@ public record SupermanFxPacket(int kind, double x, double y, double z, float dx,
     public static final int RING = 0;
     public static final int SHOCKWAVE = 1;
     public static final int SOLAR_BLAST = 2;
+    public static final int CRACKS = 3;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeVarInt(this.kind);

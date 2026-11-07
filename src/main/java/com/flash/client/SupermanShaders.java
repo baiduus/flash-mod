@@ -301,7 +301,8 @@ public final class SupermanShaders {
     /** Ultimate: the golden luminous rim around the body and the solar core flare. */
     private static void drawSolar(ClientLevel level, Vec3 cam, Vector3f left, Vector3f upv, float partial,
                                   float seconds, long now) {
-        if (ULT_START.isEmpty()) {
+        if (ULT_START.isEmpty() || ULT_START != null) {
+            // the Ultimate keeps only the sun ball (drawn in SupermanFx): no flare quads
             return;
         }
         BufferBuilder b = begin();

@@ -123,6 +123,12 @@ public final class SupermanPose {
         STATES.clear();
     }
 
+    /** Base flight animation playing on a player (null when none). */
+    public static String base(UUID player) {
+        State st = STATES.get(player);
+        return st != null ? st.base : null;
+    }
+
     /** One-shot animation from the server; "name@tick" starts it at that tick (to meet the hit). */
     public static void play(UUID playerId, String animation) {
         Minecraft mc = Minecraft.getInstance();
@@ -139,12 +145,19 @@ public final class SupermanPose {
             }
             animation = animation.substring(0, at);
         }
-        shot(player, STATES.computeIfAbsent(playerId, id -> new State()), animation, offset);
+        State st = STATES.computeIfAbsent(playerId, id -> new State());
+        if ("none".equals(animation)) {
+            st.shot = null;
+            set(player, SHOT, null, 0, 4, false);
+            return;
+        }
+        shot(player, st, animation, offset);
     }
 
     /** Only the flight animations of the pack are played; everything else keeps the normal Minecraft motion. */
     private static final java.util.Set<String> FLIGHT_SHOTS = java.util.Set.of("takeoff", "takeoff8", "flight_launch",
-            "landing", "landing8", "hero_landing9", "brake", "brake_boost", "charge_takeoff9", "charged_launch9");
+            "landing", "landing8", "hero_landing9", "brake", "brake_boost", "charge_takeoff9", "charged_launch9",
+            "super_combo", "grab_reach", "grab_throw");
 
     private static void shot(AbstractClientPlayer player, State st, String name, int offset) {
         if (!FLIGHT_SHOTS.contains(name)) {
@@ -274,6 +287,10 @@ public final class SupermanPose {
         if (diving) {
             return "dive9";
         }
+        if (vy > 0.8D && vy > hs * 1.5D) {
+            // straight up toward the sun, fists overhead
+            return "solar_vertical";
+        }
         if (vy > 0.45D && vy > hs) {
             return "upright_flight9";
         }
@@ -281,7 +298,8 @@ public final class SupermanPose {
             return "descend";
         }
         if (hs < 0.08D) {
-            return "hover";
+            // high up in the sunlight: basking, arms open to the sun
+            return basking(player) ? "solar_bask" : "hover";
         }
         if (forward < -0.05D && -forward > Math.abs(left)) {
             return "reverse_flight";
@@ -304,9 +322,22 @@ public final class SupermanPose {
         return "cruise";
     }
 
+    /** Hovering high in daylight (the solar recharge spot). */
+    public static boolean basking(AbstractClientPlayer player) {
+        if (player.getY() <= SupermanPowers.HIGH_ALTITUDE || player.level().isRaining()) {
+            return false;
+        }
+        long day = player.level().getDayTime() % 24000L;
+        return (day < 12300L || day > 23850L)
+                && player.level().canSeeSky(net.minecraft.core.BlockPos.containing(player.getEyePosition()));
+    }
+
     private static String chooseHold(AbstractClientPlayer player) {
+        if (SupermanState.flag(player, SupermanPowers.F_HOLDING)) {
+            return "grab_hold";
+        }
         if (player != null) {
-            // powers keep the normal Minecraft arms (only the flight is animated)
+            // the other powers keep the normal Minecraft arms
             return null;
         }
         if (SupermanState.flag(player, SupermanPowers.F_HEAT)) {

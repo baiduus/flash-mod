@@ -1,0 +1,59 @@
+{
+ "version": 3,
+ "name": "solar_vertical",
+ "author": "Superman Rise (converted)",
+ "description": "Flying straight up to the sun, fists overhead",
+ "emote": {
+  "beginTick": 0,
+  "endTick": 20,
+  "stopTick": 26,
+  "isLoop": true,
+  "returnTick": 0,
+  "degrees": false,
+  "easeBeforeKeyframe": true,
+  "moves": [
+   {
+    "tick": 0,
+    "easing": "linear",
+    "head": {
+     "pitch": -0.48
+    },
+    "rightArm": {
+     "pitch": -2.8,
+     "roll": 0.1
+    },
+    "leftArm": {
+     "pitch": -2.55,
+     "roll": -0.1
+    },
+    "rightLeg": {
+     "pitch": -0.08
+    },
+    "leftLeg": {
+     "pitch": -0.08
+    }
+   },
+   {
+    "tick": 20,
+    "easing": "linear",
+    "head": {
+     "pitch": -0.48
+    },
+    "rightArm": {
+     "pitch": -2.8,
+     "roll": 0.1
+    },
+    "leftArm": {
+     "pitch": -2.55,
+     "roll": -0.1
+    },
+    "rightLeg": {
+     "pitch": -0.08
+    },
+    "leftLeg": {
+     "pitch": -0.08
+    }
+   }
+  ]
+ }
+}

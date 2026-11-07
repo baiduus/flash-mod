@@ -133,17 +133,18 @@ public final class SupermanPowers {
 
     /** Strength of the abilities: 0.6 at level 1 up to 1.05 at level 10. */
     public static float power(Player player) {
-        return 0.55F + 0.05F * Math.max(1, level(player));
+        return 0.5F + 0.07F * Math.max(1, level(player));
     }
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
     public static float damageFactor(Player player) {
-        return Math.max(0.15F, 0.45F - 0.03F * level(player));
+        // tougher every level: 50 % less damage at level 1, 92 % at level 10
+        return Math.max(0.08F, 0.546F - 0.046F * level(player));
     }
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
     public static double bonusDamage(int level) {
-        return 4.0D + 2.0D * level;
+        return 4.0D + 2.6D * level;
     }
 
     public static double punchDamage(int level) {
@@ -442,11 +443,6 @@ public final class SupermanPowers {
         }
         if (sun) {
             addXp(player, high ? 0.075F : 0.025F);
-            if (superman && player.tickCount % 6 == 0 && player.level() instanceof ServerLevel level) {
-                // golden light sinking into the body
-                level.sendParticles(com.flash.registry.ModParticles.SM_SPARKLE.get(), player.getX(),
-                        player.getY() + 1.0D, player.getZ(), high ? 3 : 1, 0.4D, 0.8D, 0.4D, 0.0D);
-            }
         }
         boolean airborne = superman && player.getAbilities().flying;
         if (airborne != flag(player, F_FLYING)) {
@@ -536,7 +532,7 @@ public final class SupermanPowers {
         int level = level(player);
         set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, bonusDamage(level), AttributeModifier.Operation.ADDITION);
         set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.15D + 0.03D * level, AttributeModifier.Operation.MULTIPLY_BASE);
-        set(player, Attributes.MAX_HEALTH, HEALTH_ID, 4.0D + 1.6D * level, AttributeModifier.Operation.ADDITION);
+        set(player, Attributes.MAX_HEALTH, HEALTH_ID, 4.0D + 3.0D * level, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.5D + 0.05D * level, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.ATTACK_KNOCKBACK, PUNCH_ID, 1.0D + 0.2D * level, AttributeModifier.Operation.ADDITION);
         set(player, net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(), REACH_ID, 1.0D, AttributeModifier.Operation.ADDITION);

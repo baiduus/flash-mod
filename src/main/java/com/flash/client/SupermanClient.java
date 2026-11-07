@@ -111,10 +111,82 @@ public final class SupermanClient {
 
     /** Flight speeds in blocks per tick: hover, walking, sprint, double sprint (scaled by the level). */
     private static final double[] STAGE_SPEED = {0.0D, 0.45D, 1.1D, 2.4D};
+    /** The server rejects moves above ~10 blocks per tick: the fastest stage stays under it. */
+    private static final double MAX_SPEED = 9.0D;
     private static int flightStage;
     private static boolean sprintWasDown;
     private static long lastSprintPress = -100L;
     private static boolean boostArmed;
+
+    // ------------------------------------------------------------------
+    // Charged takeoff: hold jump on the ground
+    // ------------------------------------------------------------------
+
+    private static final int TAP_TICKS = 5;
+    private static final int LAUNCH_AT = TAP_TICKS + 20;
+    private static int jumpHeld = -1;
+    private static boolean waitRelease;
+    private static boolean replayJump;
+    private static int launchedFor = -1;
+
+    /**
+     * A quick tap still jumps; holding jump on the ground coils into the crouch and, after about a second, the ground
+     * cracks and Superman shoots ~10 blocks up, switching to flight at the top.
+     */
+    @SubscribeEvent
+    public static void onMovementInput(net.minecraftforge.client.event.MovementInputUpdateEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.client.player.LocalPlayer p = mc.player;
+        if (p == null || event.getEntity() != p) {
+            return;
+        }
+        var input = event.getInput();
+        boolean usable = SupermanState.isSuperman(p) && !p.getAbilities().flying && p.onGround() && !p.isInWater()
+                && !p.isPassenger() && mc.screen == null;
+        if (replayJump) {
+            replayJump = false;
+            input.jumping = true;
+            return;
+        }
+        if (waitRelease) {
+            if (input.jumping) {
+                input.jumping = false;
+                return;
+            }
+            waitRelease = false;
+        }
+        if (!usable) {
+            if (jumpHeld >= TAP_TICKS) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
+            }
+            jumpHeld = -1;
+            return;
+        }
+        if (input.jumping) {
+            jumpHeld++;
+            input.jumping = false;
+            if (jumpHeld == TAP_TICKS) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
+            } else if (jumpHeld >= LAUNCH_AT) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
+                jumpHeld = -1;
+                waitRelease = true;
+                launchedFor = 0;
+            }
+        } else if (jumpHeld >= 0) {
+            if (jumpHeld < TAP_TICKS) {
+                replayJump = true;
+            } else {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
+            }
+            jumpHeld = -1;
+        }
+    }
+
+    /** True while the local player coils for the charged takeoff. */
+    public static boolean charging() {
+        return jumpHeld >= TAP_TICKS;
+    }
 
     /** Current stage of the local flight (0 hover, 1 slow, 2 fast, 3 fastest). */
     public static int flightStage() {
@@ -143,6 +215,18 @@ public final class SupermanClient {
             boostArmed = false;
         }
         sprintWasDown = sprint;
+        // after the charged takeoff: hover at the top of the jump
+        if (launchedFor >= 0) {
+            launchedFor++;
+            if (launchedFor > 3 && !p.onGround() && p.getDeltaMovement().y <= 0.05D && p.getAbilities().mayfly) {
+                p.getAbilities().flying = true;
+                p.onUpdateAbilities();
+                p.setDeltaMovement(p.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D));
+                launchedFor = -1;
+            } else if (launchedFor > 60 || (launchedFor > 10 && p.onGround())) {
+                launchedFor = -1;
+            }
+        }
         if (!SupermanState.isSuperman(p) || !p.getAbilities().flying || p.isPassenger()
                 || !SupermanState.flag(p, SupermanPowers.F_FLIGHT)) {
             flightStage = 0;
@@ -155,29 +239,66 @@ public final class SupermanClient {
             p.playSound(ModSounds.PUNCH_SONIC.get(), 0.7F, 1.3F);
         }
         flightStage = stage;
-        double scale = 0.75D + 0.025D * Math.max(1, SupermanState.level());
+        // four times the old speeds, growing with the level: about 40 % at level 1, all of it at level 10
+        double scale = 4.0D * (0.34D + 0.066D * Math.max(1, SupermanState.level()));
         Vec3 look = p.getLookAngle();
         Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
         Vec3 target = Vec3.ZERO;
         if (forward > 0.0F) {
-            target = look.scale(STAGE_SPEED[stage] * scale);
+            target = look.scale(Math.min(MAX_SPEED, STAGE_SPEED[stage] * scale));
         } else if (forward < 0.0F) {
             target = look.scale(-0.3D * scale);
         }
         // leftImpulse > 0 = left
-        target = target.add(flatRight.scale(-strafe * 0.35D * scale));
+        target = target.add(flatRight.scale(-strafe * 0.35D * Math.min(scale, 2.0D)));
         if (p.input.jumping) {
-            target = target.add(0.0D, 0.45D * scale, 0.0D);
+            target = target.add(0.0D, 0.45D * Math.min(scale, 2.0D), 0.0D);
         }
         if (p.input.shiftKeyDown) {
-            target = target.add(0.0D, -0.45D * scale, 0.0D);
+            target = target.add(0.0D, -0.45D * Math.min(scale, 2.0D), 0.0D);
         }
         Vec3 cur = p.getDeltaMovement();
         // speeds up a little slower than it brakes
         double k = target.lengthSqr() > cur.lengthSqr() ? 0.16D : 0.3D;
         p.setDeltaMovement(cur.add(target.subtract(cur).scale(k)));
         p.fallDistance = 0.0F;
+    }
+
+    // ------------------------------------------------------------------
+    // Body following the flight direction
+    // ------------------------------------------------------------------
+
+    private static final java.util.Set<Integer> TILTED = new java.util.HashSet<>();
+    private static final java.util.Set<String> TILT_POSES = java.util.Set.of("cruise", "boost", "prone_flight12",
+            "bank_left", "bank_right");
+
+    /** In a forward flight pose the whole body leans with the look: looking up the head points up, and so on. */
+    @SubscribeEvent
+    public static void onRenderPlayerPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        Player p = event.getEntity();
+        if (!SupermanState.isSuperman(p) || !TILT_POSES.contains(SupermanPose.base(p.getUUID()))) {
+            return;
+        }
+        float partial = event.getPartialTick();
+        float pitch = p.getViewXRot(partial);
+        float bodyYaw = net.minecraft.util.Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
+        float cy = p.getBbHeight() * 0.5F;
+        PoseStack ps = event.getPoseStack();
+        ps.pushPose();
+        ps.translate(0.0F, cy, 0.0F);
+        ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-bodyYaw));
+        ps.mulPose(com.mojang.math.Axis.XP.rotationDegrees(pitch));
+        ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(bodyYaw));
+        ps.translate(0.0F, -cy, 0.0F);
+        TILTED.add(p.getId());
+    }
+
+    @SubscribeEvent
+    public static void onRenderPlayerPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
+        if (TILTED.remove(event.getEntity().getId())) {
+            event.getPoseStack().popPose();
+        }
     }
 
     // ------------------------------------------------------------------
@@ -386,8 +507,8 @@ public final class SupermanClient {
             double spread = firstPerson ? 0.15D : 0.065D;
             BEAMS.add(new Beam(p, start.add(side.scale(-spread)), start.add(side.scale(spread)), stop, laser,
                     firstPerson));
-            if (SupermanShaders.ready()) {
-                // drawn by the pack shaders at the end of the level render
+            if (SupermanShaders.ready() && firstPerson) {
+                // first person: only the pack shader beam
                 continue;
             }
             for (int s = -1; s <= 1; s += 2) {
