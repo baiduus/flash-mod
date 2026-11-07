@@ -26,8 +26,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 /**
- * Superman animations played by playerAnimator (the files of the pack in
- * {@code assets/flash/player_animation}). Three layers on every player: the base
+ * Superman animations played by playerAnimator: every animation of the Man of Tomorrow pack (files in
+ * {@code assets/flash/player_animation}); walking, running and jumping stay the Minecraft ones ({@link LegMask}). Three layers on every player: the base
  * (flight states, solar charge, jumps), a held layer while a power is kept
  * (heat vision, laser, breaths, holding a creature, the wound-up punch) and
  * one-shots (punch, clap, grab, throw, landings, takeoffs, brakes...).
@@ -52,8 +52,10 @@ public final class SupermanPose {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
             PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(BASE, 1000, p -> new ModifierLayer<>());
-            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(HOLD, 1100, p -> new ModifierLayer<>());
-            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(SHOT, 1200, p -> new ModifierLayer<>());
+            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(HOLD, 1100,
+                    p -> new ModifierLayer<>(null, new LegMask(p, false)));
+            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(SHOT, 1200,
+                    p -> new ModifierLayer<>(null, new LegMask(p, true)));
         }
     }
 
@@ -154,15 +156,53 @@ public final class SupermanPose {
         shot(player, st, animation, offset);
     }
 
-    /** Only the flight animations of the pack are played; everything else keeps the normal Minecraft motion. */
-    private static final java.util.Set<String> FLIGHT_SHOTS = java.util.Set.of("takeoff", "takeoff8", "flight_launch",
+    /** Whole-body moves: they keep their own legs even on the move. */
+    private static final java.util.Set<String> WHOLE_BODY = java.util.Set.of("takeoff", "takeoff8", "flight_launch",
             "landing", "landing8", "hero_landing9", "brake", "brake_boost", "charge_takeoff9", "charged_launch9",
-            "super_combo", "grab_reach", "grab_throw");
+            "super_combo");
+
+    /**
+     * Walking, running and jumping stay the Minecraft ones: while Superman is on foot and moving or in a normal jump,
+     * the legs and the whole-body transform of the power animations are left to the game.
+     */
+    private static final class LegMask extends dev.kosmx.playerAnim.api.layered.modifier.AbstractModifier {
+        private final AbstractClientPlayer player;
+        private final boolean shots;
+
+        LegMask(AbstractClientPlayer player, boolean shots) {
+            this.player = player;
+            this.shots = shots;
+        }
+
+        private boolean masked() {
+            if (flying(this.player) || this.player.isPassenger()) {
+                return false;
+            }
+            if (this.shots) {
+                State st = STATES.get(this.player.getUUID());
+                if (st != null && st.shot != null && WHOLE_BODY.contains(st.shot)) {
+                    return false;
+                }
+            }
+            double vx = this.player.getX() - this.player.xo;
+            double vz = this.player.getZ() - this.player.zo;
+            return vx * vx + vz * vz > 2.5E-4D || !this.player.onGround();
+        }
+
+        @Override
+        public dev.kosmx.playerAnim.core.util.Vec3f get3DTransform(String modelName,
+                                                                    dev.kosmx.playerAnim.api.TransformType type,
+                                                                    float tickDelta,
+                                                                    dev.kosmx.playerAnim.core.util.Vec3f value) {
+            if (("rightLeg".equals(modelName) || "leftLeg".equals(modelName) || "body".equals(modelName))
+                    && this.masked()) {
+                return value;
+            }
+            return super.get3DTransform(modelName, type, tickDelta, value);
+        }
+    }
 
     private static void shot(AbstractClientPlayer player, State st, String name, int offset) {
-        if (!FLIGHT_SHOTS.contains(name)) {
-            return;
-        }
         KeyframeAnimation a = anim(name);
         if (a == null) {
             return;
@@ -333,12 +373,8 @@ public final class SupermanPose {
     }
 
     private static String chooseHold(AbstractClientPlayer player) {
-        if (SupermanState.flag(player, SupermanPowers.F_HOLDING)) {
-            return "grab_hold";
-        }
-        if (player != null) {
-            // the other powers keep the normal Minecraft arms
-            return null;
+        if (SupermanState.flag(player, SupermanPowers.F_ULTIMATE)) {
+            return "solar_charge";
         }
         if (SupermanState.flag(player, SupermanPowers.F_HEAT)) {
             return SupermanState.flag(player, SupermanPowers.F_LASER) ? "laser_blast" : "heat_vision";
