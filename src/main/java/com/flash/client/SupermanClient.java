@@ -122,8 +122,8 @@ public final class SupermanClient {
     // Charged takeoff: hold jump on the ground
     // ------------------------------------------------------------------
 
-    /** Jump held this long (and back on the ground) starts the coil of the charged takeoff. */
-    private static final int TAP_TICKS = 6;
+    /** Jump held this long starts the coil of the charged takeoff (the hop that just began is pulled back down). */
+    private static final int TAP_TICKS = 3;
     private static final int LAUNCH_AT = TAP_TICKS + 20;
     /** Ticks of the coil (-1 = not coiling). */
     private static int jumpHeld = -1;
@@ -179,16 +179,21 @@ public final class SupermanClient {
             return;
         }
         if (jumpHeld < 0) {
-            // held through the first hop and landed again: coil
-            if (down && !input.shiftKeyDown && holdTicks >= TAP_TICKS && p.onGround()) {
+            // still held a moment after the press: no hop, Superman crouches and coils right away
+            if (down && !input.shiftKeyDown && holdTicks == TAP_TICKS && (p.onGround() || p.getY() - p.yo > 0.0D)) {
                 jumpHeld = 0;
                 input.jumping = false;
+                Vec3 v = p.getDeltaMovement();
+                p.setDeltaMovement(v.x * 0.3D, Math.min(v.y, -0.6D), v.z * 0.3D);
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
             }
             return;
         }
         if (down) {
-            jumpHeld++;
+            // the coil counts once he is back on his feet
+            if (p.onGround()) {
+                jumpHeld++;
+            }
             input.jumping = false;
             if (jumpHeld >= LAUNCH_AT - TAP_TICKS) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
