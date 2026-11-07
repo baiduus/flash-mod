@@ -456,5 +456,6 @@
   "hud.flash.hulk_extra": "Vida Extra %s",
   "hud.flash.hulk_super": "Superarremesso em %s",
   "hud.flash.hulk_super_ready": "Superarremesso pronto! Solte V",
-  "message.flash.hulk_grab_escaped": "Ele se soltou!"
+  "message.flash.hulk_grab_escaped": "Ele se soltou!",
+  "gui.flash.theme.red_hulk.subtitle": "O Gigante Rubi"
 }

@@ -456,5 +456,6 @@
   "hud.flash.hulk_extra": "Extra life %s",
   "hud.flash.hulk_super": "Super throw in %s",
   "hud.flash.hulk_super_ready": "Super throw ready! Release V",
-  "message.flash.hulk_grab_escaped": "It broke free!"
+  "message.flash.hulk_grab_escaped": "It broke free!",
+  "gui.flash.theme.red_hulk.subtitle": "The Ruby Giant"
 }

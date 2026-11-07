@@ -39,7 +39,7 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
     /** The Red Hulk: crimson. */
     public static final PowerTheme RED_HULK = new PowerTheme("red_hulk",
             0xFFFF4A3A, 0xFF3F0E0B, 0xFF200807,
-            "gui.flash.theme.red_hulk.title", "gui.flash.theme.hulk.subtitle", Icon.FIST, true);
+            "gui.flash.theme.red_hulk.title", "gui.flash.theme.red_hulk.subtitle", Icon.FIST, true);
 
     /** True when the local player is the Red Hulk (red HUD). */
     public static boolean localRedHulk() {
