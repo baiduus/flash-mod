@@ -211,9 +211,10 @@ public final class SupermanPowers {
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
     public static float damageFactor(Player player) {
-        // tougher every level: 48 % less damage at level 1, 79 % at level 10 (15 % under the old 56 / 93 %)
+        // tougher every level: 41 % less damage at level 1, 67 % at level 10 (twice 15 % under the old 56 / 93 %)
         float old = Math.max(0.07F, 0.48F - 0.041F * level(player));
-        return 0.15F + 0.85F * old;
+        float once = 0.15F + 0.85F * old;
+        return 0.15F + 0.85F * once;
     }
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
@@ -589,8 +590,8 @@ public final class SupermanPowers {
                 player.setAirSupply(player.getMaxAirSupply());
             }
             applyRun(player, flag(player, F_SPEED));
-            // Kryptonian healing: 15 % under Regeneration IV (1 heart point every 7 ticks instead of 6)
-            if (player.tickCount % 7 == 0 && player.getHealth() < player.getMaxHealth()) {
+            // Kryptonian healing: as Regeneration II (1 health point every 25 ticks)
+            if (player.tickCount % 25 == 0 && player.getHealth() < player.getMaxHealth()) {
                 player.heal(1.0F);
             }
             SupermanMeteor.tick(player);
