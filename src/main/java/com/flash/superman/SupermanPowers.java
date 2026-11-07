@@ -211,8 +211,9 @@ public final class SupermanPowers {
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
     public static float damageFactor(Player player) {
-        // tougher every level: 56 % less damage at level 1, 93 % at level 10
-        return Math.max(0.07F, 0.48F - 0.041F * level(player));
+        // tougher every level: 48 % less damage at level 1, 79 % at level 10 (15 % under the old 56 / 93 %)
+        float old = Math.max(0.07F, 0.48F - 0.041F * level(player));
+        return 0.15F + 0.85F * old;
     }
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
@@ -588,10 +589,9 @@ public final class SupermanPowers {
                 player.setAirSupply(player.getMaxAirSupply());
             }
             applyRun(player, flag(player, F_SPEED));
-            // Kryptonian healing: Regeneration IV
-            if (player.tickCount % 20 == 0) {
-                player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        net.minecraft.world.effect.MobEffects.REGENERATION, 60, 3, true, false, true));
+            // Kryptonian healing: 15 % under Regeneration IV (1 heart point every 7 ticks instead of 6)
+            if (player.tickCount % 7 == 0 && player.getHealth() < player.getMaxHealth()) {
+                player.heal(1.0F);
             }
             SupermanMeteor.tick(player);
         } else {
