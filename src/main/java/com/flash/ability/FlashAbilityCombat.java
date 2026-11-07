@@ -74,6 +74,14 @@ public final class FlashAbilityCombat {
         return player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
     }
 
+    /**
+     * Ability damage of the Flash, buffed x2.5 but kept a little under the Hulk's (at most 24
+     * per hit; hits that were already stronger, like the infinite mass punch, stay as they are).
+     */
+    static float buffed(float damage) {
+        return Math.min(damage * 2.5F, Math.max(damage, 24.0F));
+    }
+
     public static boolean hit(ServerPlayer player, LivingEntity target, float damage) {
         if (target == null || !target.isAlive()) {
             return false;
@@ -81,7 +89,7 @@ public final class FlashAbilityCombat {
         // Rapid abilities must produce individual hits instead of being
         // swallowed by the vanilla invulnerability window.
         target.invulnerableTime = 0;
-        boolean hurt = target.hurt(player.damageSources().playerAttack(player), damage);
+        boolean hurt = target.hurt(player.damageSources().playerAttack(player), buffed(damage));
         if (hurt) {
             target.setLastHurtByPlayer(player);
         }
@@ -180,7 +188,7 @@ public final class FlashAbilityCombat {
         if (target instanceof LivingEntity living) {
             return hit(player, living, damage);
         }
-        return target.hurt(player.damageSources().playerAttack(player), damage);
+        return target.hurt(player.damageSources().playerAttack(player), buffed(damage));
     }
 
     public static void spawnElectricBurst(ServerLevel level, Vec3 position, int count) {
