@@ -1,0 +1,16 @@
+{
+  "jars": [
+    {
+      "identifier": {
+        "group": "io.github.kosmx.bendy-lib",
+        "artifact": "bendy-lib-forge"
+      },
+      "version": {
+        "range": "[4.0.0,4.1)",
+        "artifactVersion": "4.0.0"
+      },
+      "path": "META-INF/jarjar/bendy-lib-forge-4.0.0.jar",
+      "isObfuscated": false
+    }
+  ]
+}
