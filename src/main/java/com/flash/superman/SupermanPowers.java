@@ -598,6 +598,10 @@ public final class SupermanPowers {
             SupermanMeteor.clear(player);
         }
         SupermanAbilities.tick(player);
+        // the stats (damage, health, speed, knockback...) are recalculated every 2 seconds
+        if (superman && player.tickCount % 40 == 0) {
+            applyAttributes(player);
+        }
         if (player.tickCount % 10 == 0) {
             syncSelf(player);
         }
