@@ -177,7 +177,7 @@ public class FlashHud implements IGuiOverlay {
             g.fill(x, ty, x + tw, ty + 14, FlashHudStyle.PANEL);
             FlashHudStyle.barVertical(g, x, ty, 3, 14);
             FlashHudStyle.gradientText(g, font, t, x + 8, ty + 3);
-            float f = 1.0F - left / (float) HulkClient.SUPER_TICKS;
+            float f = 1.0F - left / (float) HulkClient.superTicks();
             int filled = Math.round((tw - 3) * f);
             if (filled > 0) {
                 FlashHudStyle.barHorizontal(g, x + 3, ty + 12, filled, 2);

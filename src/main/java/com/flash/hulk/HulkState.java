@@ -85,6 +85,17 @@ public final class HulkState {
         return level;
     }
 
+    private static volatile boolean noCooldowns;
+
+    public static void setNoCooldowns(boolean value) {
+        noCooldowns = value;
+    }
+
+    /** Local player: cooldowns turned off by the command (test mode). */
+    public static boolean noCooldowns() {
+        return noCooldowns;
+    }
+
     private static volatile int extraTicks;
     private static volatile long extraAt;
 

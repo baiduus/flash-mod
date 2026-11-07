@@ -52,9 +52,14 @@ public final class HulkClient {
         return charging && chargingGrab;
     }
 
+    /** Charge for the super throw: a minute, or just the full bar with the cooldowns off. */
+    public static int superTicks() {
+        return HulkState.noCooldowns() ? CHARGE_TICKS : SUPER_TICKS;
+    }
+
     /** Ticks left until the super throw is ready (0 = ready). */
     public static int superTicksLeft() {
-        return Math.max(0, SUPER_TICKS - chargeTicks);
+        return Math.max(0, superTicks() - chargeTicks);
     }
 
     public static float chargeFraction() {
@@ -135,11 +140,11 @@ public final class HulkClient {
                     chargeArmed = false;
                     chargeTicks = 0;
                 } else if (down && charging) {
-                    chargeTicks = Math.min(grab ? SUPER_TICKS : CHARGE_TICKS, chargeTicks + 1);
+                    chargeTicks = Math.min(grab ? superTicks() : CHARGE_TICKS, chargeTicks + 1);
                 } else if (!down && charging) {
                     charging = false;
                     FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkThrowPacket(chargeFraction(),
-                            grab && chargeTicks >= SUPER_TICKS));
+                            grab && chargeTicks >= superTicks()));
                 }
                 KEY_DOWN[i] = down;
                 continue;

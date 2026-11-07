@@ -406,7 +406,7 @@
   "ability.flash.hulk.jump": "Super Jump",
   "ability.flash.hulk.jump.description": "Crouch + jump: a huge leap; the landing sends a shockwave.",
   "ability.flash.hulk.skin": "Indestructible Skin",
-  "ability.flash.hulk.skin.description": "Explosions and projectiles do no damage.",
+  "ability.flash.hulk.skin.description": "Arrows and projectiles bounce off without hitting; explosions neither hurt nor push, and creatures cause no knockback.",
   "ability.flash.hulk.ground_smash": "Ground Smash",
   "ability.flash.hulk.ground_smash.description": "Punches the ground with the force of TNT: opens a crater and throws everything ahead.",
   "ability.flash.hulk.charge": "Charge",

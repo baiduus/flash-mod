@@ -710,7 +710,7 @@ public final class HulkPowers {
         return new HulkSyncPacket(player.getUUID(), has(player), isTransformed(player), scale(player),
                 level(player), rage(player), temporaryTicks(player), furyTicks(player),
                 destroyBlocks(player), growWithLevel(player), cds, activeLevel(player), chosenHeight(player),
-                isRed(player), extraTicks(player));
+                isRed(player), extraTicks(player), noCooldowns(player));
     }
 
     public static void sync(ServerPlayer player) {

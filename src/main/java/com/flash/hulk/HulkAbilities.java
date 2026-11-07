@@ -489,7 +489,8 @@ public final class HulkAbilities {
             finish(player, HulkAbility.BOULDER, ANIM_THROW_ROCK);
         } else {
             // the server checks the minute itself (since the grab)
-            boolean full = superThrow && player.tickCount - hold.since() >= SUPER_TICKS;
+            boolean full = superThrow && (HulkPowers.noCooldowns(player)
+                    || player.tickCount - hold.since() >= SUPER_TICKS);
             throwEntity(player, level, hold, charge, full);
             finish(player, HulkAbility.GRAB, ANIM_THROW_ENTITY);
         }
@@ -595,6 +596,10 @@ public final class HulkAbilities {
         }
         target.setDeltaMovement(Vec3.ZERO);
         target.fallDistance = 0.0F;
+        if (HulkPowers.isRed(player)) {
+            // the Red Hulk's hands burn whoever he holds
+            target.setSecondsOnFire(3);
+        }
         if (target instanceof ServerPlayer held) {
             held.connection.teleport(x, y, z, held.getYRot(), held.getXRot());
         } else {

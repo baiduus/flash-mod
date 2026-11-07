@@ -87,6 +87,9 @@ public final class HulkEvents {
         if (event.getExplosion().getIndirectSourceEntity() instanceof Player hulk && HulkState.isTransformed(hulk)) {
             event.getAffectedEntities().remove(hulk);
         }
+        // indestructible skin (level 9): explosions neither hurt nor push him
+        event.getAffectedEntities().removeIf(e -> e instanceof ServerPlayer p && HulkPowers.isTransformed(p)
+                && HulkPowers.level(p) >= 9);
     }
 
     /** No fall damage; a heavy landing sends a shockwave around. */
@@ -154,6 +157,29 @@ public final class HulkEvents {
         if (event.getEntity() instanceof ServerPlayer hulk && event.getSource().getEntity() != null) {
             HulkAbilities.breakFree(hulk, event.getSource().getEntity());
         }
+    }
+
+    /** Indestructible skin (level 9): arrows and other projectiles bounce off without hitting. */
+    @SubscribeEvent
+    public static void onAttacked(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (event.getEntity() instanceof ServerPlayer victim && HulkPowers.isTransformed(victim)
+                && HulkPowers.level(victim) >= 9 && event.getSource().is(DamageTypeTags.IS_PROJECTILE)) {
+            // cancelled here, the hit fails and the arrow bounces back
+            event.setCanceled(true);
+        }
+    }
+
+    /** Indestructible skin (level 9): no knockback from creatures or players. */
+    @SubscribeEvent
+    public static void onKnockback(net.minecraftforge.event.entity.living.LivingKnockBackEvent event) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player victim
+                && HulkState.isTransformed(victim) && levelOf(victim) >= 9) {
+            event.setCanceled(true);
+        }
+    }
+
+    private static int levelOf(net.minecraft.world.entity.player.Player player) {
+        return player.level().isClientSide ? HulkState.level() : HulkPowers.level(player);
     }
 
     /** Extra life: the first death of a Hulk is cancelled. */

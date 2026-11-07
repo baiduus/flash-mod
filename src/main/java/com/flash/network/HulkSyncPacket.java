@@ -12,7 +12,7 @@ import net.minecraftforge.network.NetworkEvent;
 /** Server -> client: Hulk state of a player (scale for everyone, the rest for the player himself). */
 public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, float scale, int level,
                              float rage, int tempTicks, int furyTicks, boolean destroy, boolean grow,
-                             int[] cooldowns, int activeLevel, float height, boolean red, int extraTicks) {
+                             int[] cooldowns, int activeLevel, float height, boolean red, int extraTicks, boolean noCooldowns) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUUID(this.playerId);
@@ -33,13 +33,14 @@ public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, fl
         buffer.writeFloat(this.height);
         buffer.writeBoolean(this.red);
         buffer.writeVarInt(this.extraTicks);
+        buffer.writeBoolean(this.noCooldowns);
     }
 
     public HulkSyncPacket(FriendlyByteBuf buffer) {
         this(buffer.readUUID(), buffer.readBoolean(), buffer.readBoolean(), buffer.readFloat(),
                 buffer.readVarInt(), buffer.readFloat(), buffer.readVarInt(), buffer.readVarInt(),
                 buffer.readBoolean(), buffer.readBoolean(), readInts(buffer), buffer.readVarInt(),
-                buffer.readFloat(), buffer.readBoolean(), buffer.readVarInt());
+                buffer.readFloat(), buffer.readBoolean(), buffer.readVarInt(), buffer.readBoolean());
     }
 
     private static int[] readInts(FriendlyByteBuf buffer) {
@@ -72,6 +73,7 @@ public record HulkSyncPacket(UUID playerId, boolean has, boolean transformed, fl
             HulkState.setRed(p.playerId, p.has && p.red);
             if (mc.player != null && mc.player.getUUID().equals(p.playerId)) {
                 HulkState.setExtra(p.extraTicks, now);
+                HulkState.setNoCooldowns(p.noCooldowns);
             }
             if (mc.level != null) {
                 Player player = mc.level.getPlayerByUUID(p.playerId);
