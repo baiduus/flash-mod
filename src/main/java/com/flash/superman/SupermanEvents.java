@@ -34,6 +34,30 @@ public final class SupermanEvents {
         }
     }
 
+    /**
+     * Jumps (both sides: the client moves the player): a normal jump reaches three
+     * blocks; crouch + jump is an aimed leap that grows with the level.
+     */
+    @SubscribeEvent
+    public static void onJump(net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.world.entity.player.Player player)
+                || !SupermanState.isSuperman(player) || player.getAbilities().flying) {
+            return;
+        }
+        int level = player.level().isClientSide ? SupermanState.level() : SupermanPowers.level(player);
+        net.minecraft.world.phys.Vec3 motion = player.getDeltaMovement();
+        if (player.isShiftKeyDown()) {
+            net.minecraft.world.phys.Vec3 look = player.getLookAngle().normalize();
+            double power = 1.4D + 0.12D * Math.max(1, level);
+            player.setDeltaMovement(look.x * power, Math.max(0.6D, look.y * power + 0.5D), look.z * power);
+            if (player.level().isClientSide) {
+                player.playSound(com.flash.registry.ModSounds.TAKEOFF.get(), 0.8F, 1.2F);
+            }
+        } else {
+            player.setDeltaMovement(motion.x, Math.max(motion.y, 0.68D), motion.z);
+        }
+    }
+
     /** Steel body: projectiles bounce off, no fire, falls, drowning, freezing or own blasts. */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onAttack(LivingAttackEvent event) {

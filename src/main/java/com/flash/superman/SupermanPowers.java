@@ -55,8 +55,11 @@ public final class SupermanPowers {
     public static final int F_ULTIMATE = 128;
     public static final int F_HOLDING = 256;
     public static final int F_COMBO = 512;
+    /** Heat vision in laser mode (crouch + key): stronger, melts faster, costs more. */
+    public static final int F_LASER = 1024;
     /** Flags that only live while a key is held (cleared on login, death, form change). */
-    public static final int TRANSIENT = F_HEAT | F_FREEZE | F_BREATH | F_CHARGE | F_ULTIMATE | F_HOLDING | F_COMBO;
+    public static final int TRANSIENT = F_HEAT | F_FREEZE | F_BREATH | F_CHARGE | F_ULTIMATE | F_HOLDING | F_COMBO
+            | F_LASER;
 
     private static final UUID DAMAGE_ID = UUID.fromString("7c1d2e63-8a24-4f55-a1b2-3c4d5e6f7a01");
     private static final UUID SPEED_ID = UUID.fromString("7c1d2e63-8a24-4f55-a1b2-3c4d5e6f7a02");
@@ -229,11 +232,16 @@ public final class SupermanPowers {
             applyAttributes(player);
             player.setHealth(player.getMaxHealth());
             if (player.level() instanceof ServerLevel level) {
-                level.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1.0D, player.getZ(),
-                        50, 0.5D, 1.0D, 0.5D, 0.15D);
+                level.sendParticles(com.flash.registry.ModParticles.SM_SPARKLE.get(), player.getX(),
+                        player.getY() + 1.0D, player.getZ(), 40, 0.5D, 1.0D, 0.5D, 0.1D);
+                level.sendParticles(com.flash.registry.ModParticles.SM_SOLAR_GLOW.get(), player.getX(),
+                        player.getY() + 1.0D, player.getZ(), 6, 0.3D, 0.6D, 0.3D, 0.02D);
                 level.sendParticles(ParticleTypes.FLASH, player.getX(), player.getY() + 1.0D, player.getZ(),
                         1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
+            // the shirt rips open, then the reveal
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    com.flash.registry.ModSounds.CLARK_RIP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     com.flash.registry.ModSounds.CLARK_REVEAL.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             player.displayClientMessage(Component.translatable("message.flash.superman_form"), true);
@@ -349,8 +357,8 @@ public final class SupermanPowers {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     net.minecraft.sounds.SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.2F);
             if (player.level() instanceof ServerLevel sl) {
-                sl.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1.0D, player.getZ(),
-                        60, 0.6D, 1.0D, 0.6D, 0.2D);
+                sl.sendParticles(com.flash.registry.ModParticles.SM_SPARKLE.get(), player.getX(),
+                        player.getY() + 1.0D, player.getZ(), 60, 0.6D, 1.0D, 0.6D, 0.2D);
             }
             if (isSuperman(player)) {
                 applyAttributes(player);
@@ -426,8 +434,8 @@ public final class SupermanPowers {
             addXp(player, high ? 0.075F : 0.025F);
             if (superman && player.tickCount % 6 == 0 && player.level() instanceof ServerLevel level) {
                 // golden light sinking into the body
-                level.sendParticles(ParticleTypes.WAX_ON, player.getX(), player.getY() + 1.0D, player.getZ(),
-                        high ? 3 : 1, 0.4D, 0.8D, 0.4D, 0.0D);
+                level.sendParticles(com.flash.registry.ModParticles.SM_SPARKLE.get(), player.getX(),
+                        player.getY() + 1.0D, player.getZ(), high ? 3 : 1, 0.4D, 0.8D, 0.4D, 0.0D);
             }
         }
         if (superman) {

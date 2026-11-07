@@ -160,7 +160,11 @@ public final class SupermanClient {
             if (!SupermanState.isSuperman(p)) {
                 continue;
             }
-            loop(mc, p, SupermanPowers.F_HEAT, ModSounds.HEAT_LOOP.get());
+            if (SupermanState.flag(p, SupermanPowers.F_LASER)) {
+                loop(mc, p, SupermanPowers.F_LASER, ModSounds.HEAT_BLAST_LOOP.get());
+            } else {
+                loop(mc, p, SupermanPowers.F_HEAT, ModSounds.HEAT_LOOP.get());
+            }
             loop(mc, p, SupermanPowers.F_FREEZE, ModSounds.COLD_BREATH_LOOP.get());
             loop(mc, p, SupermanPowers.F_BREATH, ModSounds.SUPER_BREATH_LOOP.get());
         }
@@ -198,7 +202,8 @@ public final class SupermanClient {
 
         @Override
         public void tick() {
-            if (this.player.isRemoved() || !SupermanState.flag(this.player, this.flag)) {
+            boolean replaced = this.flag == SupermanPowers.F_HEAT && SupermanState.flag(this.player, SupermanPowers.F_LASER);
+            if (this.player.isRemoved() || !SupermanState.flag(this.player, this.flag) || replaced) {
                 this.stop();
                 return;
             }
@@ -236,7 +241,15 @@ public final class SupermanClient {
         }
     }
 
+    private static final Map<java.util.UUID, Vec3> BEAM_ENDS = new HashMap<>();
+
+    /** Where the heat vision of a player hit this frame (null when not firing). */
+    public static Vec3 beamEnd(java.util.UUID player) {
+        return BEAM_ENDS.get(player);
+    }
+
     private static void renderBeams(RenderLevelStageEvent event, Minecraft mc, ClientLevel level) {
+        BEAM_ENDS.clear();
         List<Player> users = new ArrayList<>();
         for (Player p : level.players()) {
             if (SupermanState.flag(p, SupermanPowers.F_HEAT) && SupermanState.isSuperman(p)) {
@@ -273,6 +286,9 @@ public final class SupermanClient {
             if (hit != null) {
                 stop = hit.getLocation();
             }
+            BEAM_ENDS.put(p.getUUID(), stop);
+            boolean laser = SupermanState.flag(p, SupermanPowers.F_LASER);
+            float thick = laser ? 1.8F : 1.0F;
             double spread = firstPerson ? 0.09D : 0.065D;
             for (int s = -1; s <= 1; s += 2) {
                 List<Vec3> points = new ArrayList<>();
@@ -281,7 +297,8 @@ public final class SupermanClient {
                 for (int i = 0; i <= segments; i++) {
                     points.add(from.add(stop.subtract(from).scale(i / (double) segments)));
                 }
-                FlashLightningRibbon.drawArc(consumer, matrix, cam, points, 0.11F, 0.05F, 0.018F,
+                FlashLightningRibbon.drawArc(consumer, matrix, cam, points, 0.11F * thick, 0.05F * thick,
+                        0.018F * thick,
                         FlashLightningRibbon.RED_GLOW_COLOR, FlashLightningRibbon.RED_MID_COLOR,
                         FlashLightningRibbon.RED_CORE_COLOR, flicker);
             }

@@ -45,6 +45,7 @@ public final class FlashClientEvents {
     @SubscribeEvent
     public static void onRegisterParticles(net.minecraftforge.client.event.RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(com.flash.registry.ModParticles.GAMMA.get(), GammaParticle.Provider::new);
+        SupermanParticle.register(event);
     }
 
     @SubscribeEvent

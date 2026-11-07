@@ -45,7 +45,8 @@ import net.minecraftforge.fml.common.Mod;
 public final class SupermanPose {
 
     private static final String[] PARTS = {"body", "torso", "head", "rightArm", "leftArm", "rightLeg", "leftLeg"};
-    private static final String[] AXES = {"pitch", "yaw", "roll", "x", "y", "z"};
+    private static final String[] AXES = {"pitch", "yaw", "roll", "x", "y", "z", "bend"};
+    private static final String[] LIMBS = {"rightArm", "leftArm", "rightLeg", "leftLeg"};
     /** Pivot of the whole-body rotation in model space (0.7 blocks above the feet). */
     private static final float BODY_PIVOT = (24.0F - 11.2F) / 16.0F;
     private static final float FADE_TICKS = 4.0F;
@@ -158,11 +159,82 @@ public final class SupermanPose {
                 return 1.0F - (float) Math.pow(1.0F - x, 3);
             case "easeinoutcubic":
                 return x < 0.5F ? 4.0F * x * x * x : 1.0F - (float) Math.pow(-2.0F * x + 2.0F, 3) / 2.0F;
+            case "easeinquart":
+                return x * x * x * x;
+            case "easeoutquart":
+                return 1.0F - (float) Math.pow(1.0F - x, 4);
+            case "easeinoutquart":
+                return x < 0.5F ? 8.0F * x * x * x * x : 1.0F - (float) Math.pow(-2.0F * x + 2.0F, 4) / 2.0F;
+            case "easeinquint":
+                return x * x * x * x * x;
+            case "easeoutquint":
+                return 1.0F - (float) Math.pow(1.0F - x, 5);
+            case "easeinoutquint":
+                return x < 0.5F ? 16.0F * x * x * x * x * x : 1.0F - (float) Math.pow(-2.0F * x + 2.0F, 5) / 2.0F;
+            case "easeinexpo":
+                return x == 0.0F ? 0.0F : (float) Math.pow(2.0D, 10.0D * x - 10.0D);
+            case "easeoutexpo":
+                return x == 1.0F ? 1.0F : 1.0F - (float) Math.pow(2.0D, -10.0D * x);
+            case "easeinoutexpo":
+                return x == 0.0F || x == 1.0F ? x : x < 0.5F ? (float) Math.pow(2.0D, 20.0D * x - 10.0D) / 2.0F
+                        : (2.0F - (float) Math.pow(2.0D, -20.0D * x + 10.0D)) / 2.0F;
+            case "easeincirc":
+                return 1.0F - (float) Math.sqrt(1.0D - x * x);
+            case "easeoutcirc":
+                return (float) Math.sqrt(1.0D - (x - 1.0F) * (x - 1.0F));
+            case "easeinoutcirc":
+                return x < 0.5F ? (1.0F - (float) Math.sqrt(1.0D - 4.0D * x * x)) / 2.0F
+                        : ((float) Math.sqrt(1.0D - Math.pow(-2.0D * x + 2.0D, 2)) + 1.0F) / 2.0F;
+            case "easeinback":
+                return 2.70158F * x * x * x - 1.70158F * x * x;
+            case "easeoutback":
+                return 1.0F + 2.70158F * (float) Math.pow(x - 1.0F, 3) + 1.70158F * (float) Math.pow(x - 1.0F, 2);
+            case "easeinoutback": {
+                float c = 1.70158F * 1.525F;
+                return x < 0.5F ? (float) (Math.pow(2.0F * x, 2) * ((c + 1.0F) * 2.0F * x - c)) / 2.0F
+                        : (float) (Math.pow(2.0F * x - 2.0F, 2) * ((c + 1.0F) * (x * 2.0F - 2.0F) + c) + 2.0F) / 2.0F;
+            }
+            case "easeinelastic":
+                return x == 0.0F || x == 1.0F ? x
+                        : (float) (-Math.pow(2.0D, 10.0D * x - 10.0D) * Math.sin((x * 10.0D - 10.75D) * (2.0D * Math.PI / 3.0D)));
+            case "easeoutelastic":
+                return x == 0.0F || x == 1.0F ? x
+                        : (float) (Math.pow(2.0D, -10.0D * x) * Math.sin((x * 10.0D - 0.75D) * (2.0D * Math.PI / 3.0D)) + 1.0D);
+            case "easeinoutelastic": {
+                if (x == 0.0F || x == 1.0F) {
+                    return x;
+                }
+                double c = 2.0D * Math.PI / 4.5D;
+                return x < 0.5F ? (float) (-(Math.pow(2.0D, 20.0D * x - 10.0D) * Math.sin((20.0D * x - 11.125D) * c)) / 2.0D)
+                        : (float) (Math.pow(2.0D, -20.0D * x + 10.0D) * Math.sin((20.0D * x - 11.125D) * c) / 2.0D + 1.0D);
+            }
+            case "easeoutbounce":
+                return bounce(x);
+            case "easeinbounce":
+                return 1.0F - bounce(1.0F - x);
+            case "easeinoutbounce":
+                return x < 0.5F ? (1.0F - bounce(1.0F - 2.0F * x)) / 2.0F : (1.0F + bounce(2.0F * x - 1.0F)) / 2.0F;
             case "constant":
                 return 0.0F;
             default:
                 return x;
         }
+    }
+
+    private static float bounce(float x) {
+        float n = 7.5625F;
+        float d = 2.75F;
+        if (x < 1.0F / d) {
+            return n * x * x;
+        } else if (x < 2.0F / d) {
+            x -= 1.5F / d;
+            return n * x * x + 0.75F;
+        } else if (x < 2.5F / d) {
+            x -= 2.25F / d;
+            return n * x * x + 0.9375F;
+        }
+        x -= 2.625F / d;
+        return n * x * x + 0.984375F;
     }
 
     private static final Map<String, Emote> EMOTES = new HashMap<>();
@@ -204,7 +276,8 @@ public final class SupermanPose {
                             continue;
                         }
                         float v = p.get(axis).getAsFloat();
-                        if (!degrees && axis.length() > 1) {
+                        if (!degrees && (axis.equals("pitch") || axis.equals("yaw") || axis.equals("roll")
+                                || axis.equals("bend"))) {
                             v = (float) Math.toDegrees(v);
                         }
                         String key = part + "." + axis;
@@ -255,6 +328,8 @@ public final class SupermanPose {
         float shotStart;
         boolean wasFlying;
         boolean wasDiving;
+        double lastHs;
+        int lastTick = -1;
     }
 
     private static final Map<UUID, State> STATES = new ConcurrentHashMap<>();
@@ -287,19 +362,6 @@ public final class SupermanPose {
             return "solar_charge";
         }
         boolean flying = flying(player);
-        if (flying && !st.wasFlying && st.shot == null) {
-            st.shot = "flight_launch";
-            st.shotStart = time;
-        }
-        if (!flying && st.wasFlying && player.onGround() && st.shot == null) {
-            st.shot = "landing";
-            st.shotStart = time;
-        }
-        st.wasFlying = flying;
-        if (!flying || player.isPassenger() || player.isSwimming()) {
-            st.wasDiving = false;
-            return null;
-        }
         double vx = player.getX() - player.xo;
         double vy = player.getY() - player.yo;
         double vz = player.getZ() - player.zo;
@@ -307,6 +369,43 @@ public final class SupermanPose {
         double forward = -vx * Math.sin(yaw) + vz * Math.cos(yaw);
         double left = vx * Math.cos(yaw) + vz * Math.sin(yaw);
         double hs = Math.sqrt(vx * vx + vz * vz);
+        boolean newTick = player.tickCount != st.lastTick;
+        double lastHs = st.lastHs;
+        if (newTick) {
+            st.lastTick = player.tickCount;
+            st.lastHs = hs;
+        }
+        if (flying && !st.wasFlying && st.shot == null) {
+            st.shot = hs > 0.25D ? "takeoff8" : "flight_launch";
+            st.shotStart = time;
+        }
+        if (!flying && st.wasFlying && player.onGround() && st.shot == null) {
+            st.shot = hs > 0.25D ? "landing8" : "landing";
+            st.shotStart = time;
+        }
+        st.wasFlying = flying;
+        if (player.isPassenger() || player.isSwimming()) {
+            st.wasDiving = false;
+            return null;
+        }
+        if (!flying) {
+            st.wasDiving = false;
+            // three-block jump and the crouch leap
+            if (!player.onGround() && !player.isInWater()) {
+                if (vy > 0.3D) {
+                    return "super_jump_rise9";
+                }
+                if (vy < -0.35D) {
+                    return "super_jump_fall9";
+                }
+            }
+            return null;
+        }
+        // braking out of a fast flight
+        if (newTick && lastHs > 0.6D && hs < lastHs - 0.12D && hs < 0.45D && st.shot == null) {
+            st.shot = lastHs > 0.9D ? "brake_boost" : "brake";
+            st.shotStart = time;
+        }
         boolean diving = vy < -0.7D;
         if (diving && !st.wasDiving && player == Minecraft.getInstance().player) {
             player.playSound(com.flash.registry.ModSounds.DIVE.get(), 0.8F, 1.0F);
@@ -325,7 +424,14 @@ public final class SupermanPose {
             return "reverse_flight";
         }
         if (Math.abs(left) > Math.abs(forward)) {
+            // slow sideways drift stays upright; faster is a real strafe
+            if (hs < 0.35D) {
+                return left > 0.0D ? "upright_left9" : "upright_right9";
+            }
             return left > 0.0D ? "strafe_left" : "strafe_right";
+        }
+        if (hs > 1.6D) {
+            return "prone_flight12";
         }
         if (hs > 0.9D) {
             return "boost";
@@ -338,7 +444,7 @@ public final class SupermanPose {
 
     private static String chooseHold(AbstractClientPlayer player) {
         if (SupermanState.flag(player, SupermanPowers.F_HEAT)) {
-            return "heat_vision";
+            return SupermanState.flag(player, SupermanPowers.F_LASER) ? "laser_blast" : "heat_vision";
         }
         if (SupermanState.flag(player, SupermanPowers.F_FREEZE)) {
             return "ice_breath";
@@ -463,9 +569,10 @@ public final class SupermanPose {
                 ps[i].visible = savedVisible[i];
             }
             float[] body = new float[6];
-            apply(m, l.base(), l.baseTime(), l.baseWeight(), body);
-            apply(m, l.hold(), l.holdTime(), l.holdWeight(), body);
-            apply(m, l.shot(), l.shotTime(), l.shotWeight(), body);
+            float[] bend = new float[4];
+            apply(m, l.base(), l.baseTime(), l.baseWeight(), body, bend);
+            apply(m, l.hold(), l.holdTime(), l.holdWeight(), body, bend);
+            apply(m, l.shot(), l.shotTime(), l.shotWeight(), body, bend);
             m.hat.copyFrom(m.head);
             m.jacket.copyFrom(m.body);
             m.rightSleeve.copyFrom(m.rightArm);
@@ -478,14 +585,41 @@ public final class SupermanPose {
             pose.mulPose(new org.joml.Quaternionf().rotationZYX(rad(body[2]), rad(-body[1]), rad(-body[0])));
             pose.translate(0.0F, -BODY_PIVOT, 0.0F);
             int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
-            m.renderToBuffer(pose, buffers.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())),
-                    light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+            var consumer = buffers.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation()));
+            // bent limbs (elbows and knees) are drawn in two halves instead of the straight part
+            Limbs limbs = "slim".equals(player.getModelName()) ? slimLimbs() : wideLimbs();
+            ModelPart[] straight = {m.rightArm, m.leftArm, m.rightLeg, m.leftLeg};
+            ModelPart[] overlays = {m.rightSleeve, m.leftSleeve, m.rightPants, m.leftPants};
+            boolean[] bent = new boolean[4];
+            for (int i = 0; i < 4; i++) {
+                if (Math.abs(bend[i]) > 0.5F && straight[i].visible) {
+                    bent[i] = true;
+                    limbs.base[i].copyFrom(straight[i]);
+                    limbs.base[i].getChild("lower").xRot = rad(bend[i]);
+                    limbs.over[i].copyFrom(straight[i]);
+                    limbs.over[i].getChild("lower").xRot = rad(bend[i]);
+                    limbs.over[i].visible = overlays[i].visible;
+                    straight[i].visible = false;
+                    overlays[i].visible = false;
+                }
+            }
+            m.renderToBuffer(pose, consumer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F);
+            for (int i = 0; i < 4; i++) {
+                if (bent[i]) {
+                    limbs.base[i].render(pose, consumer, light, overlay);
+                    if (limbs.over[i].visible) {
+                        limbs.over[i].render(pose, consumer, light, overlay);
+                    }
+                    straight[i].visible = true;
+                    overlays[i].visible = limbs.over[i].visible;
+                }
+            }
             pose.popPose();
         }
     }
 
-    /** Applies one emote with a weight; the whole-body transform is blended into {@code body}. */
-    private static void apply(PlayerModel<?> m, Emote e, float t, float w, float[] body) {
+    /** Applies one emote with a weight; the whole-body transform and the limb bends are blended in. */
+    private static void apply(PlayerModel<?> m, Emote e, float t, float w, float[] body, float[] bend) {
         if (e == null || w <= 0.0F) {
             return;
         }
@@ -493,6 +627,12 @@ public final class SupermanPose {
             Float v = e.value("body", AXES[a], t);
             if (v != null) {
                 body[a] += (v - body[a]) * w;
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            Float v = e.value(LIMBS[i], "bend", t);
+            if (v != null) {
+                bend[i] += (v - bend[i]) * w;
             }
         }
         part(m.body, e, "torso", t, w, false);
@@ -519,15 +659,77 @@ public final class SupermanPose {
         Float x = e.value(name, "x", t);
         Float y = e.value(name, "y", t);
         Float z = e.value(name, "z", t);
+        // limb positions are absolute pivots in the emote format (e.g. legs at y = 12)
         if (x != null) {
-            p.x += x * w;
+            p.x += (x - p.x) * w;
         }
         if (y != null) {
-            p.y += y * w;
+            p.y += (y - p.y) * w;
         }
         if (z != null) {
-            p.z += z * w;
+            p.z += (z - p.z) * w;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Two-piece limbs for the bends
+    // ------------------------------------------------------------------
+
+    /** Upper half of each limb with the lower half as a child at the elbow / knee (skin + outer layer). */
+    private static final class Limbs {
+        final ModelPart[] base = new ModelPart[4];
+        final ModelPart[] over = new ModelPart[4];
+    }
+
+    private static Limbs wide;
+    private static Limbs slim;
+
+    private static Limbs wideLimbs() {
+        if (wide == null) {
+            wide = buildLimbs(false);
+        }
+        return wide;
+    }
+
+    private static Limbs slimLimbs() {
+        if (slim == null) {
+            slim = buildLimbs(true);
+        }
+        return slim;
+    }
+
+    private static Limbs buildLimbs(boolean slimArms) {
+        float aw = slimArms ? 3.0F : 4.0F;
+        // {u, v, overlay u, overlay v, box x, box top, width}
+        float[][] spec = {
+                {40, 16, 40, 32, slimArms ? -2.0F : -3.0F, -2.0F, aw},
+                {32, 48, 48, 48, -1.0F, -2.0F, aw},
+                {0, 16, 0, 32, -2.0F, 0.0F, 4.0F},
+                {16, 48, 0, 48, -2.0F, 0.0F, 4.0F}};
+        Limbs out = new Limbs();
+        for (int i = 0; i < 4; i++) {
+            float[] s = spec[i];
+            out.base[i] = segment((int) s[0], (int) s[1], s[4], s[5], s[6], 0.0F);
+            out.over[i] = segment((int) s[2], (int) s[3], s[4], s[5], s[6], 0.25F);
+        }
+        return out;
+    }
+
+    private static ModelPart segment(int u, int v, float x, float top, float width, float grow) {
+        net.minecraft.client.model.geom.builders.MeshDefinition mesh =
+                new net.minecraft.client.model.geom.builders.MeshDefinition();
+        net.minecraft.client.model.geom.builders.CubeDeformation d =
+                new net.minecraft.client.model.geom.builders.CubeDeformation(grow);
+        net.minecraft.client.model.geom.builders.PartDefinition upper = mesh.getRoot().addOrReplaceChild("upper",
+                net.minecraft.client.model.geom.builders.CubeListBuilder.create().texOffs(u, v)
+                        .addBox(x, top, -2.0F, width, 6.0F, 4.0F, d),
+                net.minecraft.client.model.geom.PartPose.ZERO);
+        upper.addOrReplaceChild("lower",
+                net.minecraft.client.model.geom.builders.CubeListBuilder.create().texOffs(u, v + 6)
+                        .addBox(x, 0.0F, -2.0F, width, 6.0F, 4.0F, d),
+                net.minecraft.client.model.geom.PartPose.offset(0.0F, top + 6.0F, 0.0F));
+        return net.minecraft.client.model.geom.builders.LayerDefinition.create(mesh, 64, 64).bakeRoot()
+                .getChild("upper");
     }
 
     private static float rad(float deg) {

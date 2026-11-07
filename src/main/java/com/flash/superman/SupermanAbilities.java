@@ -3,7 +3,10 @@ package com.flash.superman;
 import com.flash.FlashMod;
 import com.flash.network.FlashNetwork;
 import com.flash.network.SupermanAnimPacket;
+import com.flash.registry.ModEffects;
+import com.flash.registry.ModParticles;
 import com.flash.registry.ModSounds;
+import com.flash.network.SupermanFxPacket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -74,6 +77,7 @@ public final class SupermanAbilities {
         int comboTicks = -1;
         int ultTicks = -1;
         long clapAt = -1L;
+        long launchAt = -1L;
         final Map<UUID, Held> slowed = new HashMap<>();
         boolean slowing;
     }
@@ -164,14 +168,22 @@ public final class SupermanAbilities {
         switch (ability) {
             case FLIGHT -> {
                 boolean on = !SupermanPowers.flag(player, SupermanPowers.F_FLIGHT);
+                if (on && player.isShiftKeyDown() && player.onGround()) {
+                    // charged takeoff: coil down, then explode into the sky
+                    if (s.launchAt < 0L) {
+                        s.launchAt = player.level().getGameTime() + 22L;
+                        anim(player, "charge_takeoff9");
+                        sound(player, ModSounds.CHARGE.get(), 1.0F, 0.8F);
+                    }
+                    return;
+                }
                 if (on) {
                     SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
                     SupermanPowers.startFlight(player);
                     sound(player, ModSounds.TAKEOFF.get(), 1.0F, 1.0F);
                     anim(player, "takeoff");
                     if (player.level() instanceof ServerLevel level) {
-                        level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 0.1D, player.getZ(),
-                                20, 0.6D, 0.05D, 0.6D, 0.05D);
+                        groundPuff(level, player.position(), 1.5D, 16);
                     }
                 } else {
                     SupermanPowers.stopFlight(player);
@@ -222,12 +234,14 @@ public final class SupermanAbilities {
             if ((SupermanPowers.flags(player) & all & ~flag) != 0) {
                 return;
             }
-            SupermanPowers.setFlag(player, flag, true);
+            boolean laser = ability == SupermanAbility.HEAT_VISION && player.isShiftKeyDown();
+            SupermanPowers.setFlag(player, flag | (laser ? SupermanPowers.F_LASER : 0), true);
             if (ability == SupermanAbility.HEAT_VISION) {
-                sound(player, ModSounds.HEAT_START.get(), 1.0F, 1.0F);
+                sound(player, ModSounds.HEAT_START.get(), 1.0F, laser ? 0.8F : 1.0F);
             }
         } else {
-            SupermanPowers.setFlag(player, flag, false);
+            SupermanPowers.setFlag(player, flag | (ability == SupermanAbility.HEAT_VISION ? SupermanPowers.F_LASER : 0),
+                    false);
             session(player).heatPos = null;
         }
     }
@@ -287,10 +301,11 @@ public final class SupermanAbilities {
         ServerLevel level = player.serverLevel();
         int flags = SupermanPowers.flags(player);
         if ((flags & SupermanPowers.F_HEAT) != 0) {
-            if (SupermanPowers.spend(player, SupermanAbility.HEAT_VISION.energy())) {
-                heatVision(player, level, session(player));
+            boolean laser = (flags & SupermanPowers.F_LASER) != 0;
+            if (SupermanPowers.spend(player, SupermanAbility.HEAT_VISION.energy() * (laser ? 1.6F : 1.0F))) {
+                heatVision(player, level, session(player), laser);
             } else {
-                outOfEnergy(player, SupermanPowers.F_HEAT);
+                outOfEnergy(player, SupermanPowers.F_HEAT | SupermanPowers.F_LASER);
             }
         }
         if ((flags & SupermanPowers.F_FREEZE) != 0) {
@@ -309,11 +324,15 @@ public final class SupermanAbilities {
         }
         if ((flags & SupermanPowers.F_SPEED) != 0 && player.isSprinting() && player.onGround()
                 && player.tickCount % 2 == 0) {
-            level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 0.1D, player.getZ(),
+            level.sendParticles(ModParticles.SM_DUST.get(), player.getX(), player.getY() + 0.1D, player.getZ(),
                     1, 0.2D, 0.0D, 0.2D, 0.0D);
         }
         if (s == null) {
             return;
+        }
+        if (s.launchAt >= 0L && level.getGameTime() >= s.launchAt) {
+            s.launchAt = -1L;
+            chargedLaunch(player, level);
         }
         if ((flags & SupermanPowers.F_SLOW) != 0) {
             if (SupermanPowers.spend(player, SupermanAbility.TIME_SLOW.energy())) {
@@ -371,21 +390,22 @@ public final class SupermanAbilities {
     // Heat vision
     // ------------------------------------------------------------------
 
-    private static void heatVision(ServerPlayer player, ServerLevel level, Session s) {
+    private static void heatVision(ServerPlayer player, ServerLevel level, Session s, boolean laser) {
         HitResult hit = trace(player, HEAT_RANGE);
         float power = SupermanPowers.power(player);
         if (hit instanceof EntityHitResult eh) {
             Entity target = eh.getEntity();
-            if (player.tickCount % 4 == 0) {
+            if (player.tickCount % (laser ? 3 : 4) == 0) {
                 if (target instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
                 }
-                target.hurt(level.damageSources().playerAttack(player), 2.8F * power);
-                target.setSecondsOnFire(4);
+                target.hurt(level.damageSources().playerAttack(player), 2.8F * power * (laser ? 1.8F : 1.0F));
+                target.setSecondsOnFire(laser ? 8 : 4);
                 SupermanPowers.addXp(player, 0.1F);
             }
             Vec3 p = eh.getLocation();
-            level.sendParticles(ParticleTypes.FLAME, p.x, p.y, p.z, 3, 0.15D, 0.15D, 0.15D, 0.02D);
+            level.sendParticles(ModParticles.SM_HEAT_GLOW.get(), p.x, p.y, p.z, laser ? 2 : 1, 0.05D, 0.05D, 0.05D, 0.0D);
+            sparks(level, p, laser ? 5 : 3);
             level.sendParticles(ParticleTypes.SMOKE, p.x, p.y, p.z, 2, 0.15D, 0.15D, 0.15D, 0.01D);
             s.heatPos = null;
             return;
@@ -395,7 +415,8 @@ public final class SupermanAbilities {
             return;
         }
         Vec3 p = bh.getLocation();
-        level.sendParticles(ParticleTypes.SMALL_FLAME, p.x, p.y, p.z, 3, 0.1D, 0.1D, 0.1D, 0.01D);
+        level.sendParticles(ModParticles.SM_HEAT_GLOW.get(), p.x, p.y, p.z, laser ? 2 : 1, 0.05D, 0.05D, 0.05D, 0.0D);
+        sparks(level, p, laser ? 4 : 2);
         level.sendParticles(ParticleTypes.LARGE_SMOKE, p.x, p.y, p.z, 1, 0.1D, 0.1D, 0.1D, 0.01D);
         if (player.tickCount % 5 == 0) {
             level.sendParticles(ParticleTypes.LAVA, p.x, p.y, p.z, 1, 0.05D, 0.05D, 0.05D, 0.0D);
@@ -418,7 +439,7 @@ public final class SupermanAbilities {
         s.heatOnBlock++;
         float hardness = state.getDestroySpeed(level, pos);
         if (hardness >= 0.0F && !state.isAir()) {
-            int need = (int) Math.min(80.0F, 6.0F + hardness * 10.0F);
+            int need = (int) (Math.min(80.0F, 6.0F + hardness * 10.0F) / (laser ? 2.5F : 1.0F));
             if (s.heatOnBlock >= need) {
                 level.destroyBlock(pos, true, player);
                 s.heatOnBlock = 0;
@@ -452,16 +473,22 @@ public final class SupermanAbilities {
     }
 
     private static void freezeBreath(ServerPlayer player, ServerLevel level) {
-        spray(player, level, ParticleTypes.SNOWFLAKE, 8, 0.9D, 0.45D);
-        if (player.tickCount % 2 == 0) {
-            spray(player, level, ParticleTypes.CLOUD, 2, 0.5D, 0.35D);
+        spray(player, level, ModParticles.SM_FROST_CLOUD.get(), 5, 0.8D, 0.4D);
+        spray(player, level, ModParticles.SM_SNOW.get(), 4, 0.9D, 0.5D);
+        if (player.tickCount % 3 == 0) {
+            spray(player, level, ModParticles.SM_FROST.get(), 1, 0.7D, 0.3D);
         }
         float power = SupermanPowers.power(player);
         for (Entity e : cone(player, 12.0D, 0.88D)) {
             e.clearFire();
             if (e instanceof LivingEntity living) {
                 living.setTicksFrozen(Math.min(living.getTicksFrozen() + 6, 400));
-                living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 3, false, false, true));
+                living.addEffect(new MobEffectInstance(ModEffects.FROZEN.get(), 60, 2, false, true, true));
+                if (player.tickCount % 6 == 0) {
+                    level.sendParticles(ModParticles.SM_FROST.get(), living.getX(), living.getY() + living.getBbHeight() * 0.5D,
+                            living.getZ(), 1, living.getBbWidth() * 0.4D, living.getBbHeight() * 0.3D,
+                            living.getBbWidth() * 0.4D, 0.0D);
+                }
                 if (player.tickCount % 10 == 0) {
                     living.invulnerableTime = 0;
                     living.hurt(level.damageSources().playerAttack(player), 2.0F * power);
@@ -495,8 +522,10 @@ public final class SupermanAbilities {
     }
 
     private static void superBreath(ServerPlayer player, ServerLevel level) {
-        spray(player, level, ParticleTypes.CLOUD, 6, 1.1D, 0.4D);
-        spray(player, level, ParticleTypes.POOF, 2, 0.9D, 0.3D);
+        spray(player, level, ModParticles.SM_CLOUD.get(), 5, 1.1D, 0.4D);
+        if (player.tickCount % 2 == 0) {
+            spray(player, level, ModParticles.SM_VAPOR.get(), 1, 0.9D, 0.3D);
+        }
         Vec3 look = player.getLookAngle();
         float power = SupermanPowers.power(player);
         for (Entity e : cone(player, 16.0D, 0.88D)) {
@@ -580,12 +609,16 @@ public final class SupermanAbilities {
                 living.invulnerableTime = 0;
             }
             target.hurt(level.damageSources().playerAttack(player), (12.0F + 28.0F * charge) * power);
+            if (charge >= 0.95F && target instanceof LivingEntity living) {
+                living.addEffect(new MobEffectInstance(ModEffects.BLEEDING.get(), 60, 0));
+            }
             double push = 1.2D + 3.0D * charge;
             target.setDeltaMovement(look.x * push, 0.3D + 0.4D * charge + look.y * push * 0.5D, look.z * push);
             target.hurtMarked = true;
             Vec3 p = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
             level.sendParticles(ParticleTypes.EXPLOSION, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             level.sendParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 20, 0.3D, 0.3D, 0.3D, 0.4D);
+            level.sendParticles(ModParticles.SM_PUFF.get(), p.x, p.y, p.z, 3, 0.2D, 0.2D, 0.2D, 0.05D);
         }
         sound(player, SoundEvents.PLAYER_ATTACK_STRONG, 1.2F, 0.7F);
         if (charge >= 0.95F) {
@@ -595,8 +628,11 @@ public final class SupermanAbilities {
             level.sendParticles(ParticleTypes.SONIC_BOOM, fist.x, fist.y, fist.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             for (int i = 2; i <= 8; i += 2) {
                 Vec3 p = player.getEyePosition().add(look.scale(i));
-                level.sendParticles(ParticleTypes.CLOUD, p.x, p.y, p.z, 6, 0.3D * i / 4, 0.3D * i / 4, 0.3D * i / 4, 0.05D);
+                level.sendParticles(ModParticles.SM_VAPOR.get(), p.x, p.y, p.z, 3, 0.3D * i / 4, 0.3D * i / 4,
+                        0.3D * i / 4, 0.05D);
             }
+            fx(player, SupermanFxPacket.RING, fist, look, 1.6F);
+            fx(player, SupermanFxPacket.RING, player.getEyePosition().add(look.scale(3.5D)), look, 2.6F);
             for (Entity e : cone(player, 10.0D, 0.75D)) {
                 if (e == target) {
                     continue;
@@ -641,7 +677,13 @@ public final class SupermanAbilities {
                 level.sendParticles(ParticleTypes.SONIC_BOOM, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
             double r = d * 0.35D;
-            level.sendParticles(ParticleTypes.CLOUD, p.x, p.y, p.z, 8, r, r * 0.6D, r, 0.05D);
+            level.sendParticles(ModParticles.SM_VAPOR.get(), p.x, p.y, p.z, 4, r, r * 0.6D, r, 0.05D);
+            if (d % 4 == 0) {
+                level.sendParticles(ModParticles.SM_DUST.get(), p.x, p.y - 1.0D, p.z, 3, r, 0.3D, r, 0.03D);
+            }
+        }
+        for (int d = 3; d <= 15; d += 6) {
+            fx(player, SupermanFxPacket.RING, eye.add(look.scale(d)), look, 1.5F + d * 0.35F);
         }
         for (Entity e : cone(player, 30.0D, 0.82D)) {
             double d = e.distanceTo(player);
@@ -805,6 +847,7 @@ public final class SupermanAbilities {
                 }
                 t.level().sendParticles(ParticleTypes.EXPLOSION, e.getX(), e.getY() + 0.5D, e.getZ(), 1,
                         0.0D, 0.0D, 0.0D, 0.0D);
+                groundPuff(t.level(), e.position(), 1.2D, 10);
                 t.level().playSound(null, e.getX(), e.getY(), e.getZ(), SoundEvents.GENERIC_EXPLODE,
                         SoundSource.PLAYERS, 0.9F, 1.3F);
             }
@@ -961,7 +1004,10 @@ public final class SupermanAbilities {
         } else if (t > 23 && (target.onGround() || target.isInWater() || t >= 45)) {
             target.invulnerableTime = 0;
             target.hurt(level.damageSources().playerAttack(player), 12.0F * power);
+            target.addEffect(new MobEffectInstance(ModEffects.BLEEDING.get(), 100, 1));
             level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, tp.x, tp.y, tp.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            groundPuff(level, tp, 2.5D, 24);
+            fxAt(level, SupermanFxPacket.SHOCKWAVE, tp.add(0.0D, 0.15D, 0.0D), new Vec3(0, 1, 0), 6.0F);
             BlockState ground = level.getBlockState(target.blockPosition().below());
             if (!ground.isAir()) {
                 level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), tp.x, tp.y + 0.1D, tp.z,
@@ -1025,14 +1071,23 @@ public final class SupermanAbilities {
         Vec3 c = player.position().add(0.0D, 1.0D, 0.0D);
         if (t < ULTIMATE_TICKS) {
             // the sunlight gathers into the body
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 8; i++) {
                 Vec3 d = new Vec3(level.random.nextGaussian(), level.random.nextGaussian(), level.random.nextGaussian())
                         .normalize();
                 double r = 7.0D;
                 Vec3 p = c.add(d.scale(r));
-                level.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 0, -d.x, -d.y, -d.z, 0.35D);
+                level.sendParticles(ModParticles.SM_SPARKLE.get(), p.x, p.y, p.z, 0, -d.x, -d.y, -d.z, 0.35D);
             }
-            level.sendParticles(ParticleTypes.FLAME, c.x, c.y, c.z, 4, 0.5D, 0.8D, 0.5D, 0.02D);
+            // sunlight pours down from the sky
+            for (int i = 0; i < 3; i++) {
+                double a = level.random.nextDouble() * Math.PI * 2.0D;
+                double r = 1.5D + level.random.nextDouble() * 5.0D;
+                level.sendParticles(ModParticles.SM_SOLAR_RAY.get(), c.x + Math.cos(a) * r, c.y + 12.0D,
+                        c.z + Math.sin(a) * r, 0, (-Math.cos(a) * r) * 0.05D, -1.0D, (-Math.sin(a) * r) * 0.05D, 0.6D);
+            }
+            if (t % 3 == 0) {
+                level.sendParticles(ModParticles.SM_SOLAR_GLOW.get(), c.x, c.y, c.z, 1, 0.3D, 0.4D, 0.3D, 0.0D);
+            }
             if (t % 20 == 0) {
                 sound(player, SoundEvents.BEACON_AMBIENT, 2.0F, 0.6F + t / 100.0F);
             }
@@ -1075,8 +1130,10 @@ public final class SupermanAbilities {
                     1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
         level.sendParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 3, 1.0D, 1.0D, 1.0D, 0.0D);
-        level.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 600, 2.0D, 2.0D, 2.0D, 1.2D);
-        level.sendParticles(ParticleTypes.FLAME, c.x, c.y, c.z, 300, 3.0D, 2.0D, 3.0D, 0.6D);
+        level.sendParticles(ModParticles.SM_SPARKLE.get(), c.x, c.y, c.z, 400, 2.0D, 2.0D, 2.0D, 1.2D);
+        level.sendParticles(ModParticles.SM_SOLAR_GLOW.get(), c.x, c.y, c.z, 60, 4.0D, 3.0D, 4.0D, 0.4D);
+        level.sendParticles(ModParticles.SM_EMBER.get(), c.x, c.y, c.z, 200, 3.0D, 2.0D, 3.0D, 0.8D);
+        fxAt(level, SupermanFxPacket.SOLAR_BLAST, c, new Vec3(0, 1, 0), (float) radius);
         if (SupermanPowers.destroyBlocks(player)) {
             // crater: a big blast under him and a ring around it
             level.explode(player, c.x, c.y - 3.0D, c.z, 16.0F, true, Level.ExplosionInteraction.TNT);
@@ -1120,8 +1177,71 @@ public final class SupermanAbilities {
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), player.getX(), player.getY() + 0.1D,
                     player.getZ(), 120, radius / 2.0D, 0.2D, radius / 2.0D, 0.25D);
         }
-        level.sendParticles(ParticleTypes.EXPLOSION, player.getX(), player.getY() + 0.3D, player.getZ(), 5,
-                radius / 3.0D, 0.1D, radius / 3.0D, 0.0D);
+        groundPuff(level, player.position(), radius * 0.6D, 30);
+        fxAt(level, SupermanFxPacket.SHOCKWAVE, player.position().add(0.0D, 0.1D, 0.0D), new Vec3(0, 1, 0),
+                (float) radius);
+    }
+
+    // ------------------------------------------------------------------
+    // Charged takeoff
+    // ------------------------------------------------------------------
+
+    private static void chargedLaunch(ServerPlayer player, ServerLevel level) {
+        if (!SupermanPowers.isSuperman(player)) {
+            return;
+        }
+        SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
+        SupermanPowers.startFlight(player);
+        Vec3 look = player.getLookAngle();
+        player.setDeltaMovement(look.x * 1.2D, 2.4D + 0.1D * SupermanPowers.level(player), look.z * 1.2D);
+        player.hurtMarked = true;
+        anim(player, "charged_launch9");
+        sound(player, ModSounds.TAKEOFF.get(), 1.4F, 0.9F);
+        sound(player, ModSounds.PUNCH_SONIC.get(), 1.4F, 1.2F);
+        groundPuff(level, player.position(), 2.5D, 30);
+        fxAt(level, SupermanFxPacket.SHOCKWAVE, player.position().add(0.0D, 0.1D, 0.0D), new Vec3(0, 1, 0), 5.0F);
+        fxAt(level, SupermanFxPacket.RING, player.position().add(0.0D, 1.0D, 0.0D), new Vec3(0, 1, 0), 2.2F);
+        // the ground cracks under the feet
+        for (Entity e : level.getEntities(player, player.getBoundingBox().inflate(3.5D, 1.0D, 3.5D), x -> x.isAlive())) {
+            Vec3 away = e.position().subtract(player.position());
+            Vec3 push = new Vec3(away.x, 0.0D, away.z).normalize().scale(1.2D);
+            e.setDeltaMovement(push.x, 0.5D, push.z);
+            e.hurtMarked = true;
+        }
+        SupermanPowers.addXp(player, 0.5F);
+    }
+
+    // ------------------------------------------------------------------
+    // Effects
+    // ------------------------------------------------------------------
+
+    /** Dust and puffs blown out along the ground. */
+    private static void groundPuff(ServerLevel level, Vec3 at, double radius, int count) {
+        for (int i = 0; i < count; i++) {
+            double a = i * Math.PI * 2.0D / count;
+            double sp = 0.15D + radius * 0.06D;
+            level.sendParticles(i % 2 == 0 ? ModParticles.SM_DUST.get() : ModParticles.SM_PUFF.get(),
+                    at.x + Math.cos(a) * 0.5D, at.y + 0.15D, at.z + Math.sin(a) * 0.5D, 0,
+                    Math.cos(a), 0.05D, Math.sin(a), sp);
+        }
+    }
+
+    private static void sparks(ServerLevel level, Vec3 p, int count) {
+        for (int i = 0; i < count; i++) {
+            level.sendParticles(ModParticles.SM_EMBER.get(), p.x, p.y, p.z, 0,
+                    level.random.nextGaussian() * 0.6D, 0.3D + level.random.nextDouble() * 0.6D,
+                    level.random.nextGaussian() * 0.6D, 0.25D);
+        }
+    }
+
+    private static void fx(ServerPlayer player, int kind, Vec3 at, Vec3 dir, float scale) {
+        fxAt(player.serverLevel(), kind, at, dir, scale);
+    }
+
+    private static void fxAt(ServerLevel level, int kind, Vec3 at, Vec3 dir, float scale) {
+        FlashNetwork.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                        at.x, at.y, at.z, 128.0D, level.dimension())),
+                new SupermanFxPacket(kind, at.x, at.y, at.z, (float) dir.x, (float) dir.y, (float) dir.z, scale));
     }
 
     // ------------------------------------------------------------------
