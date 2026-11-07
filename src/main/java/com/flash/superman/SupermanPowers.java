@@ -450,6 +450,12 @@ public final class SupermanPowers {
     }
 
     /** Sunlight and fights fill the progress bar; a full bar is a new level. */
+    /** XP from a level to the next: 150 at level 1, 360 at 2, 630 at 3 ... 2970 at 9. */
+    public static float xpNeeded(int level) {
+        int l = Math.max(1, level);
+        return 150.0F * l + 30.0F * l * (l - 1);
+    }
+
     public static void addXp(ServerPlayer player, float amount) {
         if (!has(player) || amount <= 0.0F) {
             return;
@@ -459,7 +465,8 @@ public final class SupermanPowers {
         if (level >= MAX_LEVEL) {
             return;
         }
-        float xp = tag.getFloat(XP) + amount;
+        // each level takes longer: XP stored as % of the bar, the gain divided by what the level needs
+        float xp = tag.getFloat(XP) + amount * 100.0F / xpNeeded(level);
         if (xp >= MAX_XP) {
             xp = 0.0F;
             level++;
