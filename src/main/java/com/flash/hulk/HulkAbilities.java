@@ -255,8 +255,8 @@ public final class HulkAbilities {
                 && !(e instanceof net.minecraft.world.entity.player.Player p && (p.isSpectator() || p.isCreative())));
     }
 
-    /** All the Hulk's ability hits deal twice their base damage (he is far stronger than a player). */
-    private static final float ABILITY_DAMAGE = 2.0F;
+    /** Multiplier of every ability hit (lowered: the abilities were killing everything at once). */
+    private static final float ABILITY_DAMAGE = 0.6F;
 
     private static void hit(ServerPlayer player, LivingEntity target, float damage, Vec3 push) {
         target.invulnerableTime = 0;
@@ -336,8 +336,11 @@ public final class HulkAbilities {
         // TNT is power 4; a little stronger every level (6.25 at level 10)
         float tnt = 4.0F + 0.25F * (HulkPowers.activeLevel(player) - 1);
         blast(player, level, g.getX() + 0.5D, g.getY() + 0.5D, g.getZ() + 0.5D, tnt);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ANVIL_LAND,
-                SoundSource.PLAYERS, 1.0F, 0.5F);
+        // a deep blast instead of the anvil
+        level.playSound(null, g.getX(), g.getY(), g.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
+                3.0F, 0.45F);
+        level.playSound(null, g.getX(), g.getY(), g.getZ(), SoundEvents.DRAGON_FIREBALL_EXPLODE,
+                SoundSource.PLAYERS, 2.0F, 0.6F);
     }
 
     /** Level 3: runs forward, flattening whatever is in the way. */
@@ -601,7 +604,9 @@ public final class HulkAbilities {
             target.setSecondsOnFire(3);
         }
         if (target instanceof ServerPlayer held) {
-            held.connection.teleport(x, y, z, held.getYRot(), held.getXRot());
+            // relative rotation: the held player keeps looking wherever he wants
+            held.connection.teleport(x, y, z, 0.0F, 0.0F, java.util.EnumSet.of(
+                    net.minecraft.world.entity.RelativeMovement.X_ROT, net.minecraft.world.entity.RelativeMovement.Y_ROT));
         } else {
             target.teleportTo(x, y, z);
         }
@@ -727,7 +732,9 @@ public final class HulkAbilities {
 
     private static void move(LivingEntity target, double x, double y, double z) {
         if (target instanceof ServerPlayer held) {
-            held.connection.teleport(x, y, z, held.getYRot(), held.getXRot());
+            // relative rotation: the held player keeps looking wherever he wants
+            held.connection.teleport(x, y, z, 0.0F, 0.0F, java.util.EnumSet.of(
+                    net.minecraft.world.entity.RelativeMovement.X_ROT, net.minecraft.world.entity.RelativeMovement.Y_ROT));
         } else {
             target.teleportTo(x, y, z);
         }

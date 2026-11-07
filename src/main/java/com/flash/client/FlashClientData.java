@@ -44,6 +44,8 @@ public final class FlashClientData {
         FlashClientData.destroyBlocks = destroyBlocks;
         FlashClientData.temporary = temporary;
         FlashClientData.temporaryRemaining = Math.max(0, temporaryRemaining);
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        FlashClientData.temporaryAt = mc.level != null ? mc.level.getGameTime() : 0L;
         if (cooldowns != null) {
             setAbilityCooldowns(cooldowns);
         }
@@ -101,6 +103,15 @@ public final class FlashClientData {
 
     public static int getTemporaryRemaining() {
         return temporaryRemaining;
+    }
+
+    private static long temporaryAt;
+
+    /** Ticks left of the borrowed powers, counted down since the last sync. */
+    public static int getTemporaryRemainingNow() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        long now = mc.level != null ? mc.level.getGameTime() : temporaryAt;
+        return (int) Math.max(0L, temporaryRemaining - (now - temporaryAt));
     }
 
     public static boolean isDestroyBlocks() {

@@ -406,7 +406,7 @@
   "ability.flash.hulk.jump": "Super Jump",
   "ability.flash.hulk.jump.description": "Crouch + jump: a huge leap; the landing sends a shockwave.",
   "ability.flash.hulk.skin": "Indestructible Skin",
-  "ability.flash.hulk.skin.description": "Arrows and projectiles bounce off without hitting; explosions neither hurt nor push, and creatures cause no knockback.",
+  "ability.flash.hulk.skin.description": "Explosions neither hurt nor push and creatures cause no knockback. Projectiles still hurt.",
   "ability.flash.hulk.ground_smash": "Ground Smash",
   "ability.flash.hulk.ground_smash.description": "Punches the ground with the force of TNT: opens a crater and throws everything ahead.",
   "ability.flash.hulk.charge": "Charge",
@@ -457,5 +457,7 @@
   "hud.flash.hulk_super": "Super throw in %s",
   "hud.flash.hulk_super_ready": "Super throw ready! Release V",
   "message.flash.hulk_grab_escaped": "It broke free!",
-  "gui.flash.theme.red_hulk.subtitle": "The Ruby Giant"
+  "gui.flash.theme.red_hulk.subtitle": "The Ruby Giant",
+  "hud.flash.temp_timer": "Borrowed powers %s",
+  "hud.flash.hulk_rock_held": "Rock in hand · hold %s and release to throw"
 }

@@ -533,8 +533,9 @@ public final class HulkPowers {
 
     /** Damage taken by the Hulk is multiplied by this (tougher every level, more with fury). */
     public static float damageFactor(Player player) {
-        float cut = 0.35F + 0.045F * activeLevel(player) + (isFurious(player) ? 0.1F : 0.0F);
-        return 1.0F - Math.min(0.88F, cut);
+        // toned down: 17 % less damage at level 1, 40 % at level 10 (+10 % in fury)
+        float cut = 0.15F + 0.025F * activeLevel(player) + (isFurious(player) ? 0.1F : 0.0F);
+        return 1.0F - Math.min(0.6F, cut);
     }
 
     public static void tick(ServerPlayer player) {
@@ -554,6 +555,18 @@ public final class HulkPowers {
         player.clearFire();
         if (player.tickCount % 10 == 0) {
             applyRegeneration(player);
+        }
+        // no armour fits the Hulk: whatever is worn goes back to the inventory
+        for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[] {
+                net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
+                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) {
+            net.minecraft.world.item.ItemStack worn = player.getItemBySlot(slot);
+            if (!worn.isEmpty()) {
+                player.setItemSlot(slot, net.minecraft.world.item.ItemStack.EMPTY);
+                if (!player.getInventory().add(worn)) {
+                    player.drop(worn, false);
+                }
+            }
         }
         // the Red Hulk burns: flames and embers rising from the body
         if (isRed(player) && player.level() instanceof ServerLevel fire && player.tickCount % 2 == 0) {
@@ -636,7 +649,7 @@ public final class HulkPowers {
         set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID,
                 bonusDamage(level, fury > 1.0D) * (extraTicks(player) > 0 ? 1.5D : 1.0D), AttributeModifier.Operation.ADDITION);
         set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.45D + 0.06D * level, AttributeModifier.Operation.MULTIPLY_BASE);
-        set(player, Attributes.MAX_HEALTH, HEALTH_ID, 10.0D + 3.0D * level, AttributeModifier.Operation.ADDITION);
+        set(player, Attributes.MAX_HEALTH, HEALTH_ID, 6.0D + 2.0D * level, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0D, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.ATTACK_KNOCKBACK, PUNCH_ID, 1.0D + 0.3D * level, AttributeModifier.Operation.ADDITION);
         set(player, net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(), REACH_ID,

@@ -88,7 +88,8 @@ public final class FlashCombustion {
 
     public static void tick(ServerPlayer player) {
         State state = STATES.computeIfAbsent(player.getUUID(), id -> new State());
-        boolean moving = updateMovement(player, state);
+        // the friction only sets the Flash on fire while he runs (sprints), not walking
+        boolean moving = updateMovement(player, state) && player.isSprinting();
 
         if (!shouldCombust(player) || !moving) {
             stopOwnedFire(player, state);

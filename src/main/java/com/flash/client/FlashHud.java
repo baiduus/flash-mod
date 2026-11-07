@@ -82,6 +82,15 @@ public class FlashHud implements IGuiOverlay {
         if (line3 != null) {
             FlashHudStyle.gradientText(graphics, font, line3, x + 8, y + 26);
         }
+        // borrowed powers (Speed Manipulation): 5-minute countdown under the panel
+        if (FlashClientData.isTemporary()) {
+            int left = FlashClientData.getTemporaryRemainingNow();
+            if (left > 0) {
+                drawTimer(graphics, font, x, y + boxHeight + 3, "hud.flash.temp_timer", left, 6000,
+                        FlashHudStyle.from(), FlashHudStyle.to());
+                boxHeight += 17;
+            }
+        }
         // V-9 countdown right under the panel
         int v9 = FlashClientVisualLevels.localV9Ticks();
         if (v9 > 0) {
@@ -165,6 +174,17 @@ public class FlashHud implements IGuiOverlay {
             if (filled > 0) {
                 FlashHudStyle.barHorizontal(g, x + 3, y + boxHeight - 2, filled, 2);
             }
+        }
+        // what the Hulk is holding
+        boolean rockHeld = HulkAnimator.holdingRock(mc.player.getUUID());
+        if (rockHeld && !HulkClient.charging()) {
+            String t = Component.translatable("hud.flash.hulk_rock_held",
+                    HulkClient.key(com.flash.hulk.HulkAbility.BOULDER).getTranslatedKeyMessage()).getString();
+            int ty = y + boxHeight + 4;
+            int tw = font.width(t) + 14;
+            g.fill(x, ty, x + tw, ty + 14, FlashHudStyle.PANEL);
+            FlashHudStyle.barVertical(g, x, ty, 3, 14);
+            FlashHudStyle.gradientText(g, font, t, x + 8, ty + 3);
         }
         // super throw countdown (charging the grab), under the panel
         if (HulkClient.chargingGrab()) {

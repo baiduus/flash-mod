@@ -139,9 +139,8 @@ public final class HulkEvents {
                 event.setCanceled(true);
                 return;
             }
-            // level 9: indestructible skin, explosions and projectiles do nothing
-            if (HulkPowers.level(victim) >= 9 && (event.getSource().is(DamageTypeTags.IS_EXPLOSION)
-                    || event.getSource().is(DamageTypeTags.IS_PROJECTILE))) {
+            // level 9: indestructible skin, explosions do nothing (projectiles do hurt)
+            if (HulkPowers.level(victim) >= 9 && event.getSource().is(DamageTypeTags.IS_EXPLOSION)) {
                 event.setCanceled(true);
                 return;
             }
@@ -153,19 +152,14 @@ public final class HulkEvents {
         if (event.getSource().getEntity() instanceof ServerPlayer attacker && HulkPowers.isTransformed(attacker)) {
             HulkPowers.addRage(attacker, 5.0F);
         }
+        // the Hulk's blasts (abilities, rock, super throw) hurt others less than their size suggests
+        if (event.getSource().is(DamageTypeTags.IS_EXPLOSION) && event.getSource().getEntity() instanceof ServerPlayer
+                hulk && hulk != event.getEntity() && HulkPowers.isTransformed(hulk)) {
+            event.setAmount(event.getAmount() * 0.35F);
+        }
         // whoever is held and hits the Hulk breaks free and falls
         if (event.getEntity() instanceof ServerPlayer hulk && event.getSource().getEntity() != null) {
             HulkAbilities.breakFree(hulk, event.getSource().getEntity());
-        }
-    }
-
-    /** Indestructible skin (level 9): arrows and other projectiles bounce off without hitting. */
-    @SubscribeEvent
-    public static void onAttacked(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
-        if (event.getEntity() instanceof ServerPlayer victim && HulkPowers.isTransformed(victim)
-                && HulkPowers.level(victim) >= 9 && event.getSource().is(DamageTypeTags.IS_PROJECTILE)) {
-            // cancelled here, the hit fails and the arrow bounces back
-            event.setCanceled(true);
         }
     }
 

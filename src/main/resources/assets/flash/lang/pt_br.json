@@ -406,7 +406,7 @@
   "ability.flash.hulk.jump": "Super Salto",
   "ability.flash.hulk.jump.description": "Agachar + pular: salto enorme; a aterrissagem gera uma onda de choque.",
   "ability.flash.hulk.skin": "Pele Indestrutível",
-  "ability.flash.hulk.skin.description": "Flechas e projéteis batem e voltam sem acertar; explosões não causam dano nem empurram, e criaturas não dão knockback.",
+  "ability.flash.hulk.skin.description": "Explosões não causam dano nem empurram, e criaturas não dão knockback. Projéteis ainda ferem.",
   "ability.flash.hulk.ground_smash": "Soco no Chão",
   "ability.flash.hulk.ground_smash.description": "Soca o chão com a força de uma TNT: abre uma cratera e lança tudo à frente.",
   "ability.flash.hulk.charge": "Investida",
@@ -457,5 +457,7 @@
   "hud.flash.hulk_super": "Superarremesso em %s",
   "hud.flash.hulk_super_ready": "Superarremesso pronto! Solte V",
   "message.flash.hulk_grab_escaped": "Ele se soltou!",
-  "gui.flash.theme.red_hulk.subtitle": "O Gigante Rubi"
+  "gui.flash.theme.red_hulk.subtitle": "O Gigante Rubi",
+  "hud.flash.temp_timer": "Poderes emprestados %s",
+  "hud.flash.hulk_rock_held": "Rocha na mão · segure %s e solte para arremessar"
 }
