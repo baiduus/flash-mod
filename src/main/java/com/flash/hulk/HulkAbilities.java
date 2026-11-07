@@ -597,16 +597,25 @@ public final class HulkAbilities {
             z = player.getZ() + f.z * (0.4D + player.getBbWidth() * 0.3D);
             y = player.getY() + player.getBbHeight() * (0.45D + 0.6D * lift);
         }
-        target.setDeltaMovement(Vec3.ZERO);
+        if (!(target instanceof ServerPlayer)) {
+            target.setDeltaMovement(Vec3.ZERO);
+        }
         target.fallDistance = 0.0F;
         if (HulkPowers.isRed(player)) {
             // the Red Hulk's hands burn whoever he holds
             target.setSecondsOnFire(3);
         }
         if (target instanceof ServerPlayer held) {
-            // relative rotation: the held player keeps looking wherever he wants
-            held.connection.teleport(x, y, z, 0.0F, 0.0F, java.util.EnumSet.of(
-                    net.minecraft.world.entity.RelativeMovement.X_ROT, net.minecraft.world.entity.RelativeMovement.Y_ROT));
+            // pulled to the hand with motion (no teleport): the camera stays free to look around
+            Vec3 pull = new Vec3(x - held.getX(), y - held.getY(), z - held.getZ());
+            if (pull.lengthSqr() > 64.0D) {
+                held.connection.teleport(x, y, z, 0.0F, 0.0F, java.util.EnumSet.of(
+                        net.minecraft.world.entity.RelativeMovement.X_ROT,
+                        net.minecraft.world.entity.RelativeMovement.Y_ROT));
+            } else {
+                held.setDeltaMovement(pull.x, pull.y + 0.08D, pull.z);
+                held.hurtMarked = true;
+            }
         } else {
             target.teleportTo(x, y, z);
         }
@@ -732,9 +741,16 @@ public final class HulkAbilities {
 
     private static void move(LivingEntity target, double x, double y, double z) {
         if (target instanceof ServerPlayer held) {
-            // relative rotation: the held player keeps looking wherever he wants
-            held.connection.teleport(x, y, z, 0.0F, 0.0F, java.util.EnumSet.of(
-                    net.minecraft.world.entity.RelativeMovement.X_ROT, net.minecraft.world.entity.RelativeMovement.Y_ROT));
+            // pulled to the hand with motion (no teleport): the camera stays free to look around
+            Vec3 pull = new Vec3(x - held.getX(), y - held.getY(), z - held.getZ());
+            if (pull.lengthSqr() > 64.0D) {
+                held.connection.teleport(x, y, z, 0.0F, 0.0F, java.util.EnumSet.of(
+                        net.minecraft.world.entity.RelativeMovement.X_ROT,
+                        net.minecraft.world.entity.RelativeMovement.Y_ROT));
+            } else {
+                held.setDeltaMovement(pull.x, pull.y + 0.08D, pull.z);
+                held.hurtMarked = true;
+            }
         } else {
             target.teleportTo(x, y, z);
         }

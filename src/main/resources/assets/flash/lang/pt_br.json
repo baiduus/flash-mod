@@ -459,5 +459,12 @@
   "message.flash.hulk_grab_escaped": "Ele se soltou!",
   "gui.flash.theme.red_hulk.subtitle": "O Gigante Rubi",
   "hud.flash.temp_timer": "Poderes emprestados %s",
-  "hud.flash.hulk_rock_held": "Rocha na mão · segure %s e solte para arremessar"
+  "hud.flash.hulk_rock_held": "Rocha na mão · segure %s e solte para arremessar",
+  "message.flash.speed_offer": "⚡ %s quer te emprestar a velocidade do Flash por 5 minutos. Aceita?",
+  "message.flash.speed_offer_yes": "[Aceitar]",
+  "message.flash.speed_offer_no": "[Recusar]",
+  "message.flash.speed_offer_sent": "Oferta de velocidade enviada para %s...",
+  "message.flash.speed_offer_declined": "%s recusou a velocidade.",
+  "message.flash.speed_offer_you_declined": "Você recusou os poderes.",
+  "message.flash.speed_offer_none": "Não há nenhuma oferta de velocidade para responder."
 }

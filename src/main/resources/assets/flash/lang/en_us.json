@@ -459,5 +459,12 @@
   "message.flash.hulk_grab_escaped": "It broke free!",
   "gui.flash.theme.red_hulk.subtitle": "The Ruby Giant",
   "hud.flash.temp_timer": "Borrowed powers %s",
-  "hud.flash.hulk_rock_held": "Rock in hand · hold %s and release to throw"
+  "hud.flash.hulk_rock_held": "Rock in hand · hold %s and release to throw",
+  "message.flash.speed_offer": "⚡ %s wants to lend you the Flash's speed for 5 minutes. Accept?",
+  "message.flash.speed_offer_yes": "[Accept]",
+  "message.flash.speed_offer_no": "[Decline]",
+  "message.flash.speed_offer_sent": "Speed offer sent to %s...",
+  "message.flash.speed_offer_declined": "%s declined the speed.",
+  "message.flash.speed_offer_you_declined": "You declined the powers.",
+  "message.flash.speed_offer_none": "There is no speed offer to answer."
 }

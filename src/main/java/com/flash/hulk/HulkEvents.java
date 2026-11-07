@@ -73,10 +73,10 @@ public final class HulkEvents {
             Vec3 look = player.getLookAngle();
             Vec3 flat = new Vec3(look.x, 0.0D, look.z);
             flat = flat.lengthSqr() < 1.0E-4D ? Vec3.ZERO : flat.normalize();
-            double forward = 1.0D + 3.2D * t;
-            player.setDeltaMovement(flat.x * forward, 0.8D + 1.3D * t, flat.z * forward);
+            double forward = 1.4D + 6.0D * t;
+            player.setDeltaMovement(flat.x * forward, 0.95D + 1.75D * t, flat.z * forward);
         } else {
-            player.setDeltaMovement(motion.x, motion.y * (1.2D + 0.8D * t), motion.z);
+            player.setDeltaMovement(motion.x, motion.y * (1.35D + 1.25D * t), motion.z);
         }
         player.hasImpulse = true;
     }

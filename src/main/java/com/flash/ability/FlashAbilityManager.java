@@ -905,6 +905,76 @@ public final class FlashAbilityManager {
             return false;
         }
 
+        // the target turns to face the giver and is asked in the chat
+        requestSpeed(player, target);
+        return false;
+    }
+
+    // ------------------------------------------------------------------
+    // Speed Manipulation: the target must accept the borrowed powers
+    // ------------------------------------------------------------------
+
+    private record SpeedRequest(java.util.UUID giver, long expires) {
+    }
+
+    private static final Map<java.util.UUID, SpeedRequest> SPEED_REQUESTS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final int REQUEST_TICKS = 600;
+
+    private static void requestSpeed(ServerPlayer player, ServerPlayer target) {
+        // look at the giver
+        Vec3 d = player.getEyePosition().subtract(target.getEyePosition());
+        float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90.0D);
+        float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+        target.connection.teleport(target.getX(), target.getY(), target.getZ(), yaw, pitch);
+        SPEED_REQUESTS.put(target.getUUID(), new SpeedRequest(player.getUUID(),
+                player.level().getGameTime() + REQUEST_TICKS));
+        Component yes = Component.translatable("message.flash.speed_offer_yes").withStyle(style -> style
+                .withColor(net.minecraft.ChatFormatting.GREEN).withBold(true)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                        net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/flashspeed accept")));
+        Component no = Component.translatable("message.flash.speed_offer_no").withStyle(style -> style
+                .withColor(net.minecraft.ChatFormatting.RED).withBold(true)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                        net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/flashspeed decline")));
+        target.sendSystemMessage(Component.translatable("message.flash.speed_offer", player.getDisplayName())
+                .append(" ").append(yes).append(" ").append(no));
+        player.displayClientMessage(Component.translatable("message.flash.speed_offer_sent", target.getDisplayName()), true);
+        target.playNotifySound(SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 1.0F, 1.4F);
+    }
+
+    /** Answer of the target (/flashspeed accept | decline, the buttons in the chat). */
+    public static void answerSpeed(ServerPlayer target, boolean accept) {
+        SpeedRequest request = SPEED_REQUESTS.remove(target.getUUID());
+        if (request == null || target.level().getGameTime() > request.expires()) {
+            target.displayClientMessage(Component.translatable("message.flash.speed_offer_none"), true);
+            return;
+        }
+        ServerPlayer giver = target.server.getPlayerList().getPlayer(request.giver());
+        if (giver == null) {
+            target.displayClientMessage(Component.translatable("message.flash.speed_offer_none"), true);
+            return;
+        }
+        if (!accept) {
+            giver.displayClientMessage(Component.translatable("message.flash.speed_offer_declined",
+                    target.getDisplayName()), false);
+            target.displayClientMessage(Component.translatable("message.flash.speed_offer_you_declined"), true);
+            return;
+        }
+        if (FlashPowers.hasPermanentPowers(target) || FlashPowers.isTemporary(target)) {
+            giver.displayClientMessage(Component.translatable("message.flash.ability_target_has_powers"), true);
+            return;
+        }
+        if (applySpeedGrant(giver, target)) {
+            // the ability counts (cooldown) only when the powers are really given
+            if (!NO_COOLDOWN.contains(giver.getUUID())) {
+                cooldowns(giver).put(FlashAbility.SPEED_MANIPULATION,
+                        giver.level().getGameTime() + FlashAbility.SPEED_MANIPULATION.cooldownTicks());
+            }
+            sendSync(giver, FlashAbility.SPEED_MANIPULATION, true);
+        }
+    }
+
+    private static boolean applySpeedGrant(ServerPlayer player, ServerPlayer target) {
         // Clear an expired grant before applying the new one.
         if (FlashPowers.tickTemporary(target)) {
             FlashSpeed.remove(target);

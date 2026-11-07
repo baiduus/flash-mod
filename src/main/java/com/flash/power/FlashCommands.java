@@ -30,6 +30,16 @@ public final class FlashCommands {
 
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
+        // answer to Speed Manipulation (the [Accept] / [Decline] buttons in the chat), for everyone
+        event.getDispatcher().register(Commands.literal("flashspeed")
+                .then(Commands.literal("accept").executes(c -> {
+                    com.flash.ability.FlashAbilityManager.answerSpeed(c.getSource().getPlayerOrException(), true);
+                    return 1;
+                }))
+                .then(Commands.literal("decline").executes(c -> {
+                    com.flash.ability.FlashAbilityManager.answerSpeed(c.getSource().getPlayerOrException(), false);
+                    return 1;
+                })));
         event.getDispatcher().register(Commands.literal("flash")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("grant")
