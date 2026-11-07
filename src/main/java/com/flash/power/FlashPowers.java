@@ -213,6 +213,10 @@ public final class FlashPowers {
                 && com.flash.hulk.HulkPowers.has(server)) {
             com.flash.hulk.HulkPowers.revoke(server);
         }
+        if (player instanceof net.minecraft.server.level.ServerPlayer server
+                && com.flash.superman.SupermanPowers.has(server)) {
+            com.flash.superman.SupermanPowers.revoke(server);
+        }
         FlashV9.adoptPowers(player);
         if (hasPermanentPowers(player)) {
             int max = Math.max(1, getMaxLevel(player));

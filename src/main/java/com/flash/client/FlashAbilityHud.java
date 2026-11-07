@@ -27,6 +27,19 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && PowerTheme.localSuperman()) {
+            if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
+                    && !minecraft.options.renderDebug) {
+                if (com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
+                    renderSuperman(graphics, minecraft, width, height);
+                }
+                float charge = SupermanClient.punchCharge();
+                if (charge >= 0.0F) {
+                    drawChargeBar(graphics, minecraft.font, width, height, charge);
+                }
+            }
+            return;
+        }
         if (minecraft.player != null && PowerTheme.localHulk()) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug
@@ -100,6 +113,61 @@ public final class FlashAbilityHud implements IGuiOverlay {
         }
         String label = Component.translatable("hud.flash.hulk_throw", Math.round(f * 100.0F)).getString();
         FlashHudStyle.gradientText(g, font, label, (width - font.width(label)) / 2, y - 12);
+    }
+
+    /** Charged punch: green, then yellow, then red when full. */
+    private static void drawChargeBar(GuiGraphics g, Font font, int width, int height, float f) {
+        int w = 120;
+        int x = (width - w) / 2;
+        int y = height - 62;
+        g.fill(x - 2, y - 2, x + w + 2, y + 7, FlashHudStyle.PANEL);
+        int color = f < 0.5F ? 0xFF3DDC84 : f < 0.95F ? 0xFFFFD21F : 0xFFFF3A3A;
+        int filled = Math.round(w * f);
+        if (filled > 0) {
+            g.fill(x, y, x + filled, y + 5, color);
+        }
+        String label = Component.translatable(f >= 0.95F ? "hud.flash.superman_punch_full" : "hud.flash.superman_punch",
+                Math.round(f * 100.0F)).getString();
+        g.drawString(font, label, (width - font.width(label)) / 2, y - 12, color, true);
+    }
+
+    /** Superman panel: the suit key and the unlocked abilities (lit while running). */
+    private static void renderSuperman(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
+        Font font = minecraft.font;
+        long now = minecraft.level != null ? minecraft.level.getGameTime() : 0L;
+        int level = Math.max(1, com.flash.superman.SupermanState.level());
+        boolean form = com.flash.superman.SupermanState.isSuperman(minecraft.player);
+        String transform = Component.translatable("hud.flash.superman_transform").getString();
+        int rows = 1;
+        int panelWidth = Math.max(MIN_WIDTH, rowWidth(font, transform, keyLabel(FlashKeys.TOGGLE_SUIT)));
+        if (form) {
+            for (com.flash.superman.SupermanAbility a : com.flash.superman.SupermanAbility.values()) {
+                if (a.level() <= level) {
+                    rows++;
+                    panelWidth = Math.max(panelWidth, rowWidth(font, a.displayName().getString(),
+                            keyLabel(SupermanClient.key(a))));
+                }
+            }
+        }
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - rows * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        if (x < 4 || y < 4) {
+            return;
+        }
+        drawRow(graphics, font, x, y, panelWidth, transform, keyLabel(FlashKeys.TOGGLE_SUIT), 0, 1, form);
+        y += ROW_HEIGHT + ROW_GAP;
+        if (!form) {
+            return;
+        }
+        for (com.flash.superman.SupermanAbility a : com.flash.superman.SupermanAbility.values()) {
+            if (a.level() > level) {
+                continue;
+            }
+            int cd = com.flash.superman.SupermanState.cooldown(a, now);
+            drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(),
+                    keyLabel(SupermanClient.key(a)), cd, Math.max(1, a.cooldown()), SupermanClient.active(a));
+            y += ROW_HEIGHT + ROW_GAP;
+        }
     }
 
     /** Same panel for the Hulk: the transform key and the unlocked Hulk abilities. */
@@ -181,7 +249,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (cooling) {
             float remaining = Math.min(1.0F, cooldown / (float) cooldownTotal);
             int fill = Math.max(1, Math.round((w - 3) * remaining));
-            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, PowerTheme.localHulk() ? (PowerTheme.localRedHulk() ? 0x90300808 : 0x90201230)
+            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, PowerTheme.localSuperman() ? 0x90081A40 : PowerTheme.localHulk() ? (PowerTheme.localRedHulk() ? 0x90300808 : 0x90201230)
                     : FlashClientVisualLevels.isLocalNegative() ? 0x90300808 : 0x90301000);
         }
         if (active) {

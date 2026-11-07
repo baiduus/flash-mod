@@ -1,0 +1,227 @@
+{
+  "version": 3,
+  "name": "bank_right",
+  "author": "Superman Rise",
+  "description": "Forward-right W+D flight: mirrored banking silhouette, smooth eight-tick transitions.",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 72,
+    "stopTick": 86,
+    "isLoop": true,
+    "returnTick": 0,
+    "degrees": true,
+    "easeBeforeKeyframe": true,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -73.0,
+          "yaw": 5.0,
+          "roll": -27.0,
+          "x": 0,
+          "y": 0.145,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2.0,
+          "yaw": 2.5,
+          "roll": -3.5
+        },
+        "head": {
+          "pitch": -73.0,
+          "yaw": -3.0,
+          "roll": 4.0
+        },
+        "rightArm": {
+          "pitch": -173.0,
+          "yaw": -3.0,
+          "roll": 6.0
+        },
+        "leftArm": {
+          "pitch": -18.0,
+          "yaw": 9.0,
+          "roll": -18.0
+        },
+        "rightLeg": {
+          "pitch": -5.0,
+          "yaw": -2.0,
+          "roll": 4.0
+        },
+        "leftLeg": {
+          "pitch": 6.0,
+          "yaw": 3.0,
+          "roll": -5.0
+        }
+      },
+      {
+        "tick": 18,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -73.7,
+          "yaw": 5.0,
+          "roll": -27.65,
+          "x": 0,
+          "y": 0.152,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2.0,
+          "yaw": 2.5,
+          "roll": -3.5
+        },
+        "head": {
+          "pitch": -73.7,
+          "yaw": -3.0,
+          "roll": 4.0
+        },
+        "rightArm": {
+          "pitch": -172.3,
+          "yaw": -3.0,
+          "roll": 6.0
+        },
+        "leftArm": {
+          "pitch": -18.0,
+          "yaw": 9.0,
+          "roll": -18.0
+        },
+        "rightLeg": {
+          "pitch": -5.0,
+          "yaw": -2.0,
+          "roll": 4.0
+        },
+        "leftLeg": {
+          "pitch": 7.0,
+          "yaw": 3.0,
+          "roll": -5.0
+        }
+      },
+      {
+        "tick": 36,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -73.0,
+          "yaw": 5.0,
+          "roll": -27.0,
+          "x": 0,
+          "y": 0.145,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2.0,
+          "yaw": 2.5,
+          "roll": -3.5
+        },
+        "head": {
+          "pitch": -73.0,
+          "yaw": -3.0,
+          "roll": 4.0
+        },
+        "rightArm": {
+          "pitch": -173.0,
+          "yaw": -3.0,
+          "roll": 6.0
+        },
+        "leftArm": {
+          "pitch": -18.0,
+          "yaw": 9.0,
+          "roll": -18.0
+        },
+        "rightLeg": {
+          "pitch": -5.0,
+          "yaw": -2.0,
+          "roll": 4.0
+        },
+        "leftLeg": {
+          "pitch": 6.0,
+          "yaw": 3.0,
+          "roll": -5.0
+        }
+      },
+      {
+        "tick": 54,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -72.3,
+          "yaw": 5.0,
+          "roll": -26.35,
+          "x": 0,
+          "y": 0.13799999999999998,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2.0,
+          "yaw": 2.5,
+          "roll": -3.5
+        },
+        "head": {
+          "pitch": -72.3,
+          "yaw": -3.0,
+          "roll": 4.0
+        },
+        "rightArm": {
+          "pitch": -173.7,
+          "yaw": -3.0,
+          "roll": 6.0
+        },
+        "leftArm": {
+          "pitch": -18.0,
+          "yaw": 9.0,
+          "roll": -18.0
+        },
+        "rightLeg": {
+          "pitch": -5.0,
+          "yaw": -2.0,
+          "roll": 4.0
+        },
+        "leftLeg": {
+          "pitch": 5.0,
+          "yaw": 3.0,
+          "roll": -5.0
+        }
+      },
+      {
+        "tick": 72,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -73.0,
+          "yaw": 5.0,
+          "roll": -27.0,
+          "x": 0,
+          "y": 0.145,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2.0,
+          "yaw": 2.5,
+          "roll": -3.5
+        },
+        "head": {
+          "pitch": -73.0,
+          "yaw": -3.0,
+          "roll": 4.0
+        },
+        "rightArm": {
+          "pitch": -173.0,
+          "yaw": -3.0,
+          "roll": 6.0
+        },
+        "leftArm": {
+          "pitch": -18.0,
+          "yaw": 9.0,
+          "roll": -18.0
+        },
+        "rightLeg": {
+          "pitch": -5.0,
+          "yaw": -2.0,
+          "roll": 4.0
+        },
+        "leftLeg": {
+          "pitch": 6.0,
+          "yaw": 3.0,
+          "roll": -5.0
+        }
+      }
+    ]
+  }
+}

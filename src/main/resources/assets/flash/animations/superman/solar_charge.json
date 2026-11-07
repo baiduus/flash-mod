@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "name": "solar_charge",
+  "author": "Superman Rise",
+  "description": "Slow rise into open shoulders and a lifted chest, then a quiet suspended solar charge.",
+  "emote": {
+    "beginTick": 0, "endTick": 80, "stopTick": 90, "isLoop": true, "returnTick": 48,
+    "degrees": true, "easeBeforeKeyframe": true,
+    "moves": [
+      {"tick": 0, "easing": "easeInOutSine", "body": {"pitch":0,"yaw":0,"roll":0,"x":0,"y":0,"z":0}, "torso":{"pitch":-1.5,"yaw":0,"roll":0}, "head":{"pitch":-3,"yaw":0,"roll":0}, "rightArm":{"pitch":7,"yaw":0,"roll":8}, "leftArm":{"pitch":8,"yaw":0,"roll":-9}, "rightLeg":{"pitch":-2,"yaw":0,"roll":-2}, "leftLeg":{"pitch":3,"yaw":0,"roll":2}},
+      {"tick": 14, "easing": "easeInOutSine", "body":{"y":0.014}, "torso":{"pitch":-3}, "head":{"pitch":-8}, "rightArm":{"pitch":10,"yaw":-2,"roll":24}, "leftArm":{"pitch":11,"yaw":2,"roll":-26}, "rightLeg":{"pitch":0,"roll":-3}, "leftLeg":{"pitch":4,"roll":3}},
+      {"tick": 30, "easing": "easeInOutCubic", "body":{"y":0.026}, "torso":{"pitch":-5}, "head":{"pitch":-15}, "rightArm":{"pitch":12,"yaw":-4,"roll":49}, "leftArm":{"pitch":13,"yaw":4,"roll":-52}, "rightLeg":{"pitch":1,"roll":-4}, "leftLeg":{"pitch":5,"roll":4}},
+      {"tick": 48, "easing": "easeInOutSine", "body":{"y":0.032}, "torso":{"pitch":-5.5}, "head":{"pitch":-18}, "rightArm":{"pitch":11,"yaw":-4,"roll":64}, "leftArm":{"pitch":12,"yaw":4,"roll":-66}, "rightLeg":{"pitch":2,"roll":-4}, "leftLeg":{"pitch":5,"roll":4}},
+      {"tick": 64, "easing": "easeInOutSine", "body":{"y":0.037}, "torso":{"pitch":-5.9}, "head":{"pitch":-18}, "rightArm":{"pitch":11.4,"yaw":-4,"roll":65}, "leftArm":{"pitch":12.5,"yaw":4,"roll":-67}, "rightLeg":{"pitch":2.5,"roll":-4}, "leftLeg":{"pitch":5.5,"roll":4}},
+      {"tick": 80, "easing": "easeInOutSine", "body":{"y":0.032}, "torso":{"pitch":-5.5}, "head":{"pitch":-18}, "rightArm":{"pitch":11,"yaw":-4,"roll":64}, "leftArm":{"pitch":12,"yaw":4,"roll":-66}, "rightLeg":{"pitch":2,"roll":-4}, "leftLeg":{"pitch":5,"roll":4}}
+    ]
+  }
+}

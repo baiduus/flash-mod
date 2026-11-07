@@ -27,7 +27,13 @@ final class FlashHudStyle {
     static final int RED_HULK_LIGHT = 0xFFFF5A3C;
     static final int RED_HULK_DARK = 0xFF8E0C10;
 
+    static final int SUPER_BLUE = 0xFF2F7BFF;
+    static final int SUPER_RED = 0xFFFF3A3A;
+
     static int from() {
+        if (PowerTheme.localSuperman()) {
+            return SUPER_BLUE;
+        }
         if (PowerTheme.localHulk()) {
             return PowerTheme.localRedHulk() ? RED_HULK_LIGHT : HULK_GREEN;
         }
@@ -39,6 +45,9 @@ final class FlashHudStyle {
 
     /** End colour of the gradient: yellow, or bright red for the Negative force. */
     static int to() {
+        if (PowerTheme.localSuperman()) {
+            return SUPER_RED;
+        }
         if (PowerTheme.localHulk()) {
             return PowerTheme.localRedHulk() ? RED_HULK_DARK : HULK_PURPLE;
         }

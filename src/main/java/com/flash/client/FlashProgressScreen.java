@@ -139,7 +139,7 @@ public class FlashProgressScreen extends Screen {
 
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
-        if (PowerTheme.localHulk()) {
+        if (PowerTheme.localHulk() || PowerTheme.localSuperman()) {
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         return FlashClientData.hasPowers() ? new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG}
@@ -247,6 +247,8 @@ public class FlashProgressScreen extends Screen {
             drawProgressTab(graphics, mx, my);
         } else if (current == TAB_EQUIP) {
             drawEquipTab(graphics, mx, my);
+        } else if (PowerTheme.localSuperman()) {
+            drawSupermanConfig(graphics, mx, my);
         } else if (PowerTheme.localHulk()) {
             drawHulkConfig(graphics, mx, my);
         } else {
@@ -273,6 +275,8 @@ public class FlashProgressScreen extends Screen {
             drawBolt(g, 14, 8, accent());
         } else if (theme().icon() == PowerTheme.Icon.FIST) {
             drawFist(g, 12, 9, accent());
+        } else if (theme().icon() == PowerTheme.Icon.SHIELD) {
+            drawShield(g, 12, 9, accent());
         } else {
             drawNeutralIcon(g, 12, 9, accent());
         }
@@ -281,7 +285,11 @@ public class FlashProgressScreen extends Screen {
 
         boolean hulkPower = PowerTheme.localHulk();
         boolean hulkForm = hulkPower && com.flash.hulk.HulkState.isTransformed(Minecraft.getInstance().player);
-        Component badge = hulkPower
+        boolean superPower = PowerTheme.localSuperman();
+        boolean superForm = superPower && com.flash.superman.SupermanState.isSuperman(Minecraft.getInstance().player);
+        Component badge = superPower
+                ? Component.translatable(superForm ? "gui.flash.superman.badge_superman" : "gui.flash.superman.badge_clark")
+                : hulkPower
                 ? Component.translatable(hulkForm ? "gui.flash.hulk.badge_hulk" : "gui.flash.hulk.badge_banner")
                 : FlashClientData.hasPowers()
                 ? (FlashClientData.isTemporary()
@@ -294,7 +302,7 @@ public class FlashProgressScreen extends Screen {
         int bw = tw + 22;
         int bx = PW - PAD - bw;
         int by = 13;
-        int color = FlashClientData.hasPowers() || hulkPower ? accent() : COLOR_MUTED;
+        int color = FlashClientData.hasPowers() || hulkPower || superPower ? accent() : COLOR_MUTED;
         g.fill(bx, by, bx + bw, by + 20, withAlpha(color, 0.55F));
         g.fill(bx + 1, by + 1, bx + bw - 1, by + 19, accentSoft());
         // little live dot
@@ -345,7 +353,9 @@ public class FlashProgressScreen extends Screen {
     }
 
     private void drawFooter(GuiGraphics g) {
-        Component text = PowerTheme.localHulk()
+        Component text = PowerTheme.localSuperman()
+                ? Component.translatable("gui.flash.footer.superman", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage())
+                : PowerTheme.localHulk()
                 ? Component.translatable("gui.flash.footer.hulk", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage())
                 : !FlashClientData.hasPowers()
                 ? Component.translatable("gui.flash.footer.neutral")
@@ -363,6 +373,10 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
+        if (PowerTheme.localSuperman()) {
+            drawSupermanTab(g, mx, my);
+            return;
+        }
         if (PowerTheme.localHulk()) {
             drawHulkTab(g, mx, my);
             return;
@@ -532,6 +546,196 @@ public class FlashProgressScreen extends Screen {
         if (tooltip != null) {
             g.renderTooltip(this.font, tooltip, mx, my);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Superman page
+    // ------------------------------------------------------------------
+
+    private static final String[] SUPER_PASSIVES = {"super_strength", "steel_body", "solar"};
+
+    private void drawSupermanTab(GuiGraphics g, int mx, int my) {
+        Minecraft mc = Minecraft.getInstance();
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
+        boolean form = mc.player != null && com.flash.superman.SupermanState.isSuperman(mc.player);
+        int level = Math.max(1, com.flash.superman.SupermanState.level());
+        float xp = Math.max(0.0F, Math.min(1.0F, com.flash.superman.SupermanState.xp()
+                / com.flash.superman.SupermanPowers.MAX_XP));
+        boolean infinite = com.flash.superman.SupermanState.infiniteEnergy();
+        float energy = infinite ? 1.0F : Math.max(0.0F, Math.min(1.0F, com.flash.superman.SupermanState.energy()
+                / com.flash.superman.SupermanPowers.MAX_ENERGY));
+        int half = (LEFT_W - 8) / 2;
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.superman.level"),
+                Component.translatable("gui.flash.superman.level_value", level),
+                Component.literal(String.format(java.util.Locale.ROOT, "x%.2f",
+                        0.55F + 0.05F * level)));
+        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.superman.form"),
+                Component.translatable(form ? "gui.flash.superman.form_superman" : "gui.flash.superman.form_clark"),
+                Component.translatable("gui.flash.hulk.key_short", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage()));
+
+        sectionTitle(g, Component.translatable("gui.flash.hulk.levels"), PAD, GRID_Y - 13);
+        int cols = 5;
+        int cw = (LEFT_W - GRID_GAP * (cols - 1)) / cols;
+        int ch = 30;
+        float pulse = 0.5F + 0.5F * (float) Math.sin(seconds() * 3.2F);
+        for (int l = 1; l <= com.flash.superman.SupermanPowers.MAX_LEVEL; l++) {
+            int cx = PAD + ((l - 1) % cols) * (cw + GRID_GAP);
+            int cy = GRID_Y + ((l - 1) / cols) * (ch + GRID_GAP);
+            boolean reached = l <= level;
+            if (l == level) {
+                g.fill(cx - 2, cy - 2, cx + cw + 2, cy + ch + 2, withAlpha(accent(), 0.25F + 0.35F * pulse));
+                g.fill(cx - 1, cy - 1, cx + cw + 1, cy + ch + 1, accent());
+                g.fill(cx, cy, cx + cw, cy + ch, accentSoft());
+            } else {
+                card(g, cx, cy, cw, ch, 0.0F);
+                if (reached) {
+                    g.fill(cx + 1, cy + ch - 2, cx + cw - 1, cy + ch - 1, withAlpha(accent(), 0.6F));
+                }
+            }
+            Component n = Component.literal(Integer.toString(l));
+            int nw = Math.round(this.font.width(n) * 1.5F);
+            scaledText(g, n, cx + (cw - nw) / 2, cy + 9, 1.5F,
+                    l == level ? accent() : reached ? COLOR_TEXT : COLOR_DIM);
+            if (!reached) {
+                drawLock(g, cx + cw - 10, cy + 3, COLOR_DIM);
+            }
+        }
+
+        // strength and solar energy
+        double punch = com.flash.superman.SupermanPowers.punchDamage(level);
+        int sy = GRID_Y + 2 * (ch + GRID_GAP) + 6;
+        int sh = PROGRESS_Y - 6 - sy;
+        card(g, PAD, sy, LEFT_W, sh, 0.0F);
+        g.fill(PAD, sy + 6, PAD + 2, sy + sh - 6, accent());
+        g.drawString(this.font, Component.translatable("gui.flash.superman.strength"), PAD + 10, sy + 6, COLOR_MUTED, false);
+        scaledText(g, Component.literal(String.format(java.util.Locale.ROOT, "x%.1f", punch)), PAD + 10, sy + 17,
+                1.4F, accent());
+        int resist = Math.round((1.0F - Math.max(0.15F, 0.45F - 0.03F * level)) * 100.0F);
+        Component dmg = Component.translatable("gui.flash.superman.punch_damage",
+                String.format(java.util.Locale.ROOT, "%.1f", punch),
+                String.format(java.util.Locale.ROOT, "%.1f", punch / 2.0D));
+        g.drawString(this.font, dmg, PAD + LEFT_W - 10 - this.font.width(dmg), sy + 6, COLOR_TEXT, false);
+        Component res = Component.translatable("gui.flash.superman.resistance", resist);
+        g.drawString(this.font, res, PAD + LEFT_W - 10 - this.font.width(res), sy + 17, COLOR_MUTED, false);
+
+        // progress to the next level and the energy bar
+        int y = PROGRESS_Y;
+        card(g, PAD, y, LEFT_W, CONTENT_BOTTOM - y, 0.0F);
+        if (this.shownProgress < 0.0F) {
+            this.shownProgress = 0.0F;
+        }
+        this.shownProgress += (xp - this.shownProgress) * Math.min(1.0F, this.dt * 5.0F);
+        boolean maxed = level >= com.flash.superman.SupermanPowers.MAX_LEVEL;
+        Component energyText = Component.translatable(infinite ? "gui.flash.superman.energy_infinite"
+                : "gui.flash.superman.energy", Math.round(energy * 100.0F));
+        g.drawString(this.font, energyText, PAD + 10, y + 6, com.flash.superman.SupermanState.inSun()
+                ? 0xFFFFD84A : COLOR_TEXT, false);
+        drawBar(g, PAD + 10, y + 17, LEFT_W - 20, energy, energy < 0.15F ? 0xFFFF3A3A : 0xFFFFC21A);
+        Component next = Component.translatable(maxed ? "gui.flash.superman.maxed" : "gui.flash.superman.next",
+                level + 1, Math.round(xp * 100.0F));
+        g.drawString(this.font, next, PAD + 10, y + 27, COLOR_MUTED, false);
+        if (!maxed) {
+            drawBar(g, PAD + 10, y + 38, LEFT_W - 20, this.shownProgress, accent());
+        }
+
+        // passives and abilities, with level, key and cooldown
+        sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
+        int top = CONTENT_Y + 14;
+        com.flash.superman.SupermanAbility[] all = com.flash.superman.SupermanAbility.values();
+        int total = all.length + SUPER_PASSIVES.length;
+        int rowStep = Math.min(SKILL_ROW, (PH - 22 - top) / total);
+        int rh = rowStep - 1;
+        int textY = (rh - 8) / 2;
+        Component tooltip = null;
+        for (int k = 0; k < total; k++) {
+            int ry = top + k * rowStep;
+            Component name;
+            Component desc;
+            Component right;
+            int req = 1;
+            int cooldown = 0;
+            if (k < SUPER_PASSIVES.length) {
+                name = Component.translatable("ability.flash.superman." + SUPER_PASSIVES[k]);
+                desc = Component.translatable("ability.flash.superman." + SUPER_PASSIVES[k] + ".description");
+                right = Component.translatable("gui.flash.hulk.passive");
+            } else {
+                com.flash.superman.SupermanAbility a = all[k - SUPER_PASSIVES.length];
+                name = a.displayName();
+                desc = a.description();
+                req = a.level();
+                cooldown = com.flash.superman.SupermanState.cooldown(a, now);
+                net.minecraft.client.KeyMapping key = SupermanClient.key(a);
+                right = cooldown > 0 ? Component.literal(formatTime(cooldown))
+                        : key != null ? key.getTranslatedKeyMessage() : Component.empty();
+            }
+            boolean unlocked = level >= req;
+            if (!unlocked) {
+                right = Component.translatable("gui.flash.progress.level_short", req);
+            }
+            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            float hv = hover("ssk" + k, hovered);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            if (unlocked) {
+                drawCheck(g, RIGHT_X + 6, ry + Math.max(1, textY), accent());
+            } else {
+                drawLock(g, RIGHT_X + 6, ry + Math.max(0, textY - 1), COLOR_DIM);
+            }
+            int rw = this.font.width(right);
+            g.drawString(this.font, this.font.plainSubstrByWidth(name.getString(), RIGHT_W - 30 - rw),
+                    RIGHT_X + 18, ry + textY + 1, unlocked ? COLOR_TEXT : COLOR_DIM, false);
+            g.drawString(this.font, right, RIGHT_X + RIGHT_W - 6 - rw, ry + textY + 1,
+                    cooldown > 0 ? COLOR_ORANGE : unlocked ? accent() : COLOR_DIM, false);
+            if (hovered) {
+                tooltip = desc;
+            }
+        }
+        if (tooltip != null) {
+            g.renderTooltip(this.font, this.font.split(tooltip, 220), mx, my);
+        }
+    }
+
+    private void drawSupermanConfig(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.superman.cfg.destroy", "gui.flash.superman.cfg.destroy.desc", mx, my);
+        drawSwitch(g, "ssw0", switchX(), cfgY(0) + 8, com.flash.superman.SupermanState.destroyBlocks());
+        configRow(g, 1, "gui.flash.config.hud", "gui.flash.superman.cfg.hud.desc", mx, my);
+        drawSwitch(g, "ssw1", switchX(), cfgY(1) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+        configRow(g, 2, "gui.flash.superman.cfg.energy", "gui.flash.superman.cfg.energy.desc", mx, my);
+        configRow(g, 3, "gui.flash.superman.cfg.commands", "gui.flash.superman.cfg.commands.desc", mx, my);
+    }
+
+    private boolean clickSupermanConfig(int mx, int my) {
+        if (inRow(mx, my, 0)) {
+            boolean destroy = !com.flash.superman.SupermanState.destroyBlocks();
+            com.flash.superman.SupermanState.setDestroyOptimistic(destroy);
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanSettingsPacket(destroy));
+            click();
+            return true;
+        }
+        if (inRow(mx, my, 1)) {
+            FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
+            click();
+            return true;
+        }
+        return inRow(mx, my, 2) || inRow(mx, my, 3);
+    }
+
+    /** Pixel shield (about 26 x 26): the diamond with an S. */
+    private void drawShield(GuiGraphics g, int x, int y, int c) {
+        int gold = 0xFFFFC21A;
+        int red = 0xFFE8262E;
+        // pentagon: wide top, narrowing to the bottom point
+        for (int row = 0; row < 26; row++) {
+            int inset = row < 6 ? 6 - row : (row - 6) * 13 / 20;
+            if (13 - inset <= 0) {
+                break;
+            }
+            g.fill(x + inset, y + row, x + 26 - inset, y + row + 1, gold);
+            if (row > 1 && row < 24 && 26 - 2 * inset > 4) {
+                g.fill(x + inset + 2, y + row, x + 24 - inset, y + row + 1, red);
+            }
+        }
+        Component s = Component.literal("S");
+        scaledText(g, s, x + 13 - Math.round(this.font.width(s) * 1.3F / 2.0F), y + 6, 1.3F, gold);
     }
 
     // ------------------------------------------------------------------
@@ -1241,6 +1445,9 @@ public class FlashProgressScreen extends Screen {
 
         if (activeTab() == TAB_EQUIP) {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localSuperman()) {
+            return clickSupermanConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localHulk()) {
             return clickHulkConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);

@@ -9,7 +9,7 @@ package com.flash.client;
 public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
                          String titleKey, String subtitleKey, Icon icon, boolean hasPower) {
 
-    public enum Icon { NONE, BOLT, FIST }
+    public enum Icon { NONE, BOLT, FIST, SHIELD }
 
     /** No power at all: grey, nothing that names a specific power. */
     public static final PowerTheme NEUTRAL = new PowerTheme("neutral",
@@ -41,6 +41,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFFFF4A3A, 0xFF3F0E0B, 0xFF200807,
             "gui.flash.theme.red_hulk.title", "gui.flash.theme.red_hulk.subtitle", Icon.FIST, true);
 
+    /** Superman: Kryptonian blue (red and gold in the details). */
+    public static final PowerTheme SUPERMAN = new PowerTheme("superman",
+            0xFF3F8CFF, 0xFF0E2350, 0xFF0A1630,
+            "gui.flash.theme.superman.title", "gui.flash.theme.superman.subtitle", Icon.SHIELD, true);
+
+    /** True when the local player carries the Superman power. */
+    public static boolean localSuperman() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && com.flash.superman.SupermanState.has(player);
+    }
+
     /** True when the local player is the Red Hulk (red HUD). */
     public static boolean localRedHulk() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
@@ -54,6 +65,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
     }
 
     public static PowerTheme current() {
+        if (localSuperman()) {
+            return SUPERMAN;
+        }
         if (localHulk()) {
             return localRedHulk() ? RED_HULK : HULK;
         }

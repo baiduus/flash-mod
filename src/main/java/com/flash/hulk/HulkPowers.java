@@ -198,6 +198,9 @@ public final class HulkPowers {
             }
             return false;
         }
+        if (com.flash.superman.SupermanPowers.has(player)) {
+            com.flash.superman.SupermanPowers.revoke(player);
+        }
         boolean wasTemp = has(player);
         CompoundTag old = wasTemp ? tag(player) : new CompoundTag();
         clearAccelerationForce(player);
@@ -225,7 +228,8 @@ public final class HulkPowers {
             player.displayClientMessage(Component.translatable("message.flash.hulk_already"), true);
             return false;
         }
-        if (com.flash.power.FlashPowers.hasPowers(player) || com.flash.power.FlashPowers.hasPermanentPowers(player)) {
+        if (com.flash.power.FlashPowers.hasPowers(player) || com.flash.power.FlashPowers.hasPermanentPowers(player)
+                || com.flash.superman.SupermanPowers.has(player)) {
             player.displayClientMessage(Component.translatable("message.flash.hulk_speedster"), true);
             return false;
         }

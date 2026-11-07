@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "23";
+    private static final String PROTOCOL = "24";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -132,6 +132,36 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(HulkThrowPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(HulkThrowPacket::encode)
                 .decoder(HulkThrowPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(SupermanSyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(SupermanSyncPacket::encode)
+                .decoder(SupermanSyncPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(SupermanAbilityPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SupermanAbilityPacket::encode)
+                .decoder(SupermanAbilityPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(SupermanTransformPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SupermanTransformPacket::encode)
+                .decoder(SupermanTransformPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(SupermanSettingsPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SupermanSettingsPacket::encode)
+                .decoder(SupermanSettingsPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(SupermanAnimPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(SupermanAnimPacket::encode)
+                .decoder(SupermanAnimPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
     }

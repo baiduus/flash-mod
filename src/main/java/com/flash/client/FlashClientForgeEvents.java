@@ -48,7 +48,10 @@ public final class FlashClientForgeEvents {
             }
         }
         while (FlashKeys.TOGGLE_SUIT.consumeClick()) {
-            if (minecraft.screen == null) {
+            if (minecraft.screen == null && PowerTheme.localSuperman()) {
+                // Superman: the suit key turns Clark Kent into Superman and back
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanTransformPacket());
+            } else if (minecraft.screen == null) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.FlashRingPacket(
                         com.flash.network.FlashRingPacket.TOGGLE_SUIT));
             }
@@ -57,7 +60,7 @@ public final class FlashClientForgeEvents {
 
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
         boolean decrease = drain(FlashKeys.DECREASE_SPEED);
-        if (FlashClientConfig.SCROLL_MODE.get() || PowerTheme.localHulk()) {
+        if (FlashClientConfig.SCROLL_MODE.get() || PowerTheme.localHulk() || PowerTheme.localSuperman()) {
             // Alt + scroll mode is active (always for the Hulk, whose V key grabs): the V keys are disabled.
             increase = false;
             decrease = false;

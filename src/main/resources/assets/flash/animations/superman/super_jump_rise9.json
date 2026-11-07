@@ -1,0 +1,149 @@
+{
+  "version": 3,
+  "name": "super_jump_rise9",
+  "author": "Superman Rise",
+  "description": "Relaxed ascent for the ordinary three-height jump, not flight.",
+  "emote": {
+    "beginTick": 0,
+    "endTick": 14,
+    "stopTick": 28,
+    "returnTick": 0,
+    "isLoop": false,
+    "degrees": true,
+    "easeBeforeKeyframe": true,
+    "moves": [
+      {
+        "tick": 0,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -4,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0,
+          "y": 0.01,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -4,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": -4,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -26,
+          "yaw": -3,
+          "roll": 9
+        },
+        "leftArm": {
+          "pitch": -18,
+          "yaw": 3,
+          "roll": -9
+        },
+        "rightLeg": {
+          "pitch": -23,
+          "yaw": -1.5,
+          "roll": -2,
+          "y": 12
+        },
+        "leftLeg": {
+          "pitch": 17,
+          "yaw": 1.5,
+          "roll": 2,
+          "y": 12
+        }
+      },
+      {
+        "tick": 5,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0,
+          "y": 0.02,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -39,
+          "yaw": -3,
+          "roll": 9
+        },
+        "leftArm": {
+          "pitch": -21,
+          "yaw": 3,
+          "roll": -9
+        },
+        "rightLeg": {
+          "pitch": -28,
+          "yaw": -1.5,
+          "roll": -2,
+          "y": 12
+        },
+        "leftLeg": {
+          "pitch": 15,
+          "yaw": 1.5,
+          "roll": 2,
+          "y": 12
+        }
+      },
+      {
+        "tick": 14,
+        "easing": "easeInOutSine",
+        "body": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0,
+          "x": 0,
+          "y": 0.01,
+          "z": 0
+        },
+        "torso": {
+          "pitch": -2,
+          "yaw": 0,
+          "roll": 0
+        },
+        "head": {
+          "pitch": 0,
+          "yaw": 0,
+          "roll": 0
+        },
+        "rightArm": {
+          "pitch": -13,
+          "yaw": -3,
+          "roll": 9
+        },
+        "leftArm": {
+          "pitch": -12,
+          "yaw": 3,
+          "roll": -9
+        },
+        "rightLeg": {
+          "pitch": -10,
+          "yaw": -1.5,
+          "roll": -2,
+          "y": 12
+        },
+        "leftLeg": {
+          "pitch": 9,
+          "yaw": 1.5,
+          "roll": 2,
+          "y": 12
+        }
+      }
+    ]
+  }
+}

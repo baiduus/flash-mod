@@ -1,0 +1,98 @@
+{
+  "superman.heat_start": {
+    "subtitle": "subtitles.flash.superman.heat_start",
+    "sounds": [
+      "flash:superman/heat_start"
+    ]
+  },
+  "superman.heat_loop": {
+    "subtitle": "subtitles.flash.superman.heat_loop",
+    "sounds": [
+      "flash:superman/heat_loop"
+    ]
+  },
+  "superman.heat_blast_loop": {
+    "subtitle": "subtitles.flash.superman.heat_blast_loop",
+    "sounds": [
+      "flash:superman/heat_blast_loop"
+    ]
+  },
+  "superman.cold_breath_loop": {
+    "subtitle": "subtitles.flash.superman.cold_breath_loop",
+    "sounds": [
+      "flash:superman/cold_breath_loop"
+    ]
+  },
+  "superman.super_breath_loop": {
+    "subtitle": "subtitles.flash.superman.super_breath_loop",
+    "sounds": [
+      "flash:superman/super_breath_loop"
+    ]
+  },
+  "superman.takeoff": {
+    "subtitle": "subtitles.flash.superman.takeoff",
+    "sounds": [
+      "flash:superman/hero_takeoff20"
+    ]
+  },
+  "superman.landing": {
+    "subtitle": "subtitles.flash.superman.landing",
+    "sounds": [
+      "flash:superman/hero_landing20"
+    ]
+  },
+  "superman.dive": {
+    "subtitle": "subtitles.flash.superman.dive",
+    "sounds": [
+      "flash:superman/hero_dive23"
+    ]
+  },
+  "superman.charge": {
+    "subtitle": "subtitles.flash.superman.charge",
+    "sounds": [
+      "flash:superman/hero_charge21"
+    ]
+  },
+  "superman.punch_sonic": {
+    "subtitle": "subtitles.flash.superman.punch_sonic",
+    "sounds": [
+      "flash:superman/punch_sonic24"
+    ]
+  },
+  "superman.solar_charge": {
+    "subtitle": "subtitles.flash.superman.solar_charge",
+    "sounds": [
+      "flash:superman/solar_charge"
+    ]
+  },
+  "superman.solar_roar": {
+    "subtitle": "subtitles.flash.superman.solar_roar",
+    "sounds": [
+      "flash:superman/solar_roar"
+    ]
+  },
+  "superman.solar_beam": {
+    "subtitle": "subtitles.flash.superman.solar_beam",
+    "sounds": [
+      "flash:superman/solar_beam"
+    ]
+  },
+  "superman.clark_reveal": {
+    "subtitle": "subtitles.flash.superman.clark_reveal",
+    "sounds": [
+      "flash:superman/clark_reveal"
+    ]
+  },
+  "superman.clark_spin": {
+    "subtitle": "subtitles.flash.superman.clark_spin",
+    "sounds": [
+      "flash:superman/clark_spin"
+    ]
+  },
+  "superman.clark_rip": {
+    "subtitle": "subtitles.flash.superman.clark_rip",
+    "sounds": [
+      "flash:superman/clark_rip"
+    ]
+  }
+}

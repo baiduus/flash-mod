@@ -26,6 +26,10 @@ public class FlashHud implements IGuiOverlay {
                 || minecraft.options.renderDebug) {
             return;
         }
+        if (PowerTheme.localSuperman()) {
+            drawSuperman(graphics, minecraft);
+            return;
+        }
         if (PowerTheme.localHulk()) {
             drawHulk(graphics, minecraft);
             return;
@@ -202,6 +206,63 @@ public class FlashHud implements IGuiOverlay {
             if (filled > 0) {
                 FlashHudStyle.barHorizontal(g, x + 3, ty + 12, filled, 2);
             }
+        }
+    }
+
+    /** Superman HUD (top left): form, level, solar energy bar and progress to the next level. */
+    private static void drawSuperman(GuiGraphics g, Minecraft mc) {
+        var font = mc.font;
+        boolean form = com.flash.superman.SupermanState.isSuperman(mc.player);
+        int level = Math.max(1, com.flash.superman.SupermanState.level());
+        float energy = com.flash.superman.SupermanState.energy();
+        boolean infinite = com.flash.superman.SupermanState.infiniteEnergy();
+        boolean sun = com.flash.superman.SupermanState.inSun();
+        String line1 = form ? Component.translatable("hud.flash.superman_level", level).getString()
+                : Component.translatable("hud.flash.clark").getString();
+        String line2 = form
+                ? Component.translatable(infinite ? "hud.flash.superman_energy_infinite"
+                        : sun ? "hud.flash.superman_energy_sun" : "hud.flash.superman_energy",
+                        Math.round(energy)).getString()
+                : Component.translatable("hud.flash.clark_hint", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage()).getString();
+        String line3 = level >= com.flash.superman.SupermanPowers.MAX_LEVEL
+                ? Component.translatable("hud.flash.superman_max").getString()
+                : Component.translatable("hud.flash.superman_next", level + 1,
+                        Math.round(com.flash.superman.SupermanState.xp())).getString();
+        int textWidth = Math.max(font.width(line1), Math.max(font.width(line2), font.width(line3)));
+        int x = 6;
+        int y = 6;
+        int boxWidth = Math.max(120, textWidth + 14);
+        int boxHeight = 40;
+        g.fill(x, y, x + boxWidth, y + boxHeight, FlashHudStyle.PANEL);
+        FlashHudStyle.barVertical(g, x, y, 3, boxHeight);
+        FlashHudStyle.gradientText(g, font, line1, x + 8, y + 4);
+        g.drawString(font, line2, x + 8, y + 15, sun && form ? 0xFFFFD84A : FlashHudStyle.TEXT_MUTED, true);
+        g.drawString(font, line3, x + 8, y + 26, FlashHudStyle.TEXT_MUTED, true);
+        // solar energy along the bottom edge (blinks red when almost empty)
+        float f = infinite ? 1.0F : Math.max(0.0F, Math.min(1.0F, energy / com.flash.superman.SupermanPowers.MAX_ENERGY));
+        int filled = Math.round((boxWidth - 3) * f);
+        g.fill(x + 3, y + boxHeight - 3, x + boxWidth, y + boxHeight, 0xFF101010);
+        if (filled > 0) {
+            boolean low = f < 0.15F && (mc.player.tickCount / 5) % 2 == 0;
+            if (low) {
+                g.fill(x + 3, y + boxHeight - 3, x + 3 + filled, y + boxHeight, 0xFFFF3030);
+            } else {
+                for (int i = 0; i < filled; i++) {
+                    float t = i / (float) Math.max(1, boxWidth - 4);
+                    int r = (int) (0xFF * (0.85F + 0.15F * t));
+                    int gg = (int) (0xB0 + 0x30 * t);
+                    g.fill(x + 3 + i, y + boxHeight - 3, x + 4 + i, y + boxHeight, 0xFF000000 | (r << 16) | (gg << 8) | 0x20);
+                }
+            }
+        }
+        // ultimate charging: the solar countdown
+        if (com.flash.superman.SupermanState.flag(mc.player, com.flash.superman.SupermanPowers.F_ULTIMATE)) {
+            String t = Component.translatable("hud.flash.superman_ultimate").getString();
+            int ty = y + boxHeight + 4;
+            int tw = font.width(t) + 14;
+            g.fill(x, ty, x + tw, ty + 14, FlashHudStyle.PANEL);
+            FlashHudStyle.barVertical(g, x, ty, 3, 14);
+            FlashHudStyle.gradientText(g, font, t, x + 8, ty + 3);
         }
     }
 
