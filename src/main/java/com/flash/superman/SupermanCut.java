@@ -17,8 +17,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.PacketDistributor;
 
 /**
- * Laser cut (option of the K menu): the heat vision and the Laser Blast cut the limbs off humanoid creatures where
- * the beam hits (arm, leg or head). No arm = weaker, no legs = slow, no head = dead. Other creatures just bleed.
+ * Laser cut (option of the K menu): the heat vision and the Laser Blast cut off the part of any creature where the
+ * beam hits. Humanoids lose arm, leg or head (no arm = weaker, no legs = slow, no head = dead); on the other creatures
+ * the client cuts the model part nearest to the hit (legs, head, tail, wings...).
  */
 @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.flash.FlashMod.MODID)
 public final class SupermanCut {
@@ -28,8 +29,10 @@ public final class SupermanCut {
     public static final int RIGHT_LEG = 4;
     public static final int LEFT_LEG = 8;
     public static final int HEAD = 16;
-    /** Bleeding only (creatures without limbs that can be cut). */
+    /** Bleeding only. */
     public static final int BLEED = 0;
+    /** Any other creature: the client cuts off the model part nearest to the hit. */
+    public static final int GENERIC = 32;
 
     private static final String TAG = "flash_cut";
     private static final String PROGRESS = "flash_cut_progress";
@@ -55,7 +58,11 @@ public final class SupermanCut {
             return;
         }
         if (!humanoid(target)) {
-            send(target, 0, BLEED, hit);
+            send(target, 0, GENERIC, hit);
+            if (target.isAlive()) {
+                target.level().playSound(null, hit.x, hit.y, hit.z, SoundEvents.PLAYER_ATTACK_SWEEP,
+                        SoundSource.PLAYERS, 1.0F, 0.6F);
+            }
             return;
         }
         int mask = data.getInt(TAG);

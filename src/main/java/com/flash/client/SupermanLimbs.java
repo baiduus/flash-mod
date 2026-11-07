@@ -59,6 +59,8 @@ public final class SupermanLimbs {
         final ResourceLocation texture;
         final Vector3f color;
         float center;
+        /** Centre of a generic part in its own space (blocks), drawn at the origin. */
+        Vector3f offset;
         Vec3 pos;
         Vec3 prev;
         Vec3 vel;
@@ -93,6 +95,7 @@ public final class SupermanLimbs {
 
     public static void reset() {
         MASKS.clear();
+        GENERIC_CUT.clear();
         PIECES.clear();
     }
 
@@ -145,12 +148,18 @@ public final class SupermanLimbs {
         if (limb < 0) {
             // respawned: all limbs back
             MASKS.remove(entityId);
+            GENERIC_CUT.remove(entityId);
             return;
         }
         Entity e = level.getEntity(entityId);
         Vector3f color = e != null ? bloodColor(e) : new Vector3f(0.7F, 0.02F, 0.02F);
         if (limb == SupermanCut.BLEED || e == null) {
             blood(level, color, x, y, z, 14, 0.25D);
+            return;
+        }
+        if (limb == SupermanCut.GENERIC) {
+            blood(level, color, x, y, z, 30, 0.35D);
+            cutGeneric(e, color, new Vec3(x, y, z));
             return;
         }
         MASKS.put(entityId, mask);
@@ -211,6 +220,171 @@ public final class SupermanLimbs {
     }
 
     // ------------------------------------------------------------------
+    // Any creature: the model part nearest to the beam
+    // ------------------------------------------------------------------
+
+    /** entity id -> cut parts by path (shared model parts, hidden only while that entity is drawn). */
+    private static final Map<Integer, Map<String, ModelPart>> GENERIC_CUT = new HashMap<>();
+
+    private static final class Group {
+        ModelPart part;
+        final Vector3f sum = new Vector3f();
+        int cubes;
+        float volume;
+    }
+
+    /** Every model part with its cubes, keyed by path ("/body/head", or "field/child" on list models). */
+    private static Map<String, Group> parts(EntityModel<?> model) {
+        Map<String, Group> out = new java.util.LinkedHashMap<>();
+        if (model instanceof net.minecraft.client.model.HierarchicalModel<?> h) {
+            collect(out, "", h.root());
+        } else {
+            for (Class<?> c = model.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (f.getType() != ModelPart.class || java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    try {
+                        f.setAccessible(true);
+                        ModelPart part = (ModelPart) f.get(model);
+                        if (part != null && out.values().stream().noneMatch(g -> g.part == part)) {
+                            collect(out, f.getName(), part);
+                        }
+                    } catch (ReflectiveOperationException | RuntimeException ignored) {
+                        // not readable: skipped
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    private static void collect(Map<String, Group> out, String key, ModelPart part) {
+        PoseStack ps = new PoseStack();
+        part.visit(ps, (pose, path, index, cube) -> {
+            String k = key + path;
+            Group g = out.computeIfAbsent(k, n -> new Group());
+            if (g.part == null) {
+                g.part = resolve(part, path);
+            }
+            Vector3f c = new Vector3f((cube.minX + cube.maxX) / 32.0F, (cube.minY + cube.maxY) / 32.0F,
+                    (cube.minZ + cube.maxZ) / 32.0F);
+            pose.pose().transformPosition(c);
+            g.sum.add(c);
+            g.cubes++;
+            g.volume += Math.abs((cube.maxX - cube.minX) * (cube.maxY - cube.minY) * (cube.maxZ - cube.minZ));
+        });
+    }
+
+    private static ModelPart resolve(ModelPart root, String path) {
+        ModelPart p = root;
+        for (String name : path.split("/")) {
+            if (name.isEmpty()) {
+                continue;
+            }
+            try {
+                p = p.getChild(name);
+            } catch (RuntimeException e) {
+                return null;
+            }
+        }
+        return p;
+    }
+
+    private static void cutGeneric(Entity e, Vector3f color, Vec3 hit) {
+        EntityRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+        if (!(renderer instanceof LivingEntityRenderer<?, ?> lr) || !(e instanceof LivingEntity living)) {
+            return;
+        }
+        Map<String, Group> groups = parts(lr.getModel());
+        Map<String, ModelPart> cut = GENERIC_CUT.computeIfAbsent(e.getId(), k -> new HashMap<>());
+        // the torso (the biggest part) stays
+        String torso = null;
+        float best = -1.0F;
+        for (Map.Entry<String, Group> en : groups.entrySet()) {
+            if (en.getValue().volume > best) {
+                best = en.getValue().volume;
+                torso = en.getKey();
+            }
+        }
+        // the hit in model space (the renderer turns the model by 180 - body yaw, flips x and y, lifts by 1.501)
+        float bodyYaw = living.yBodyRot;
+        Vector3f local = new Vector3f((float) (hit.x - e.getX()), (float) (hit.y - e.getY()), (float) (hit.z - e.getZ()));
+        new org.joml.Quaternionf().rotationY((float) Math.toRadians(180.0F - bodyYaw)).conjugate().transform(local);
+        Vector3f target = new Vector3f(-local.x, 1.501F - local.y, local.z);
+        String pick = null;
+        double near = Double.MAX_VALUE;
+        for (Map.Entry<String, Group> en : groups.entrySet()) {
+            String k = en.getKey();
+            Group g = en.getValue();
+            if (k.equals(torso) || k.isEmpty() || g.part == null || g.cubes == 0) {
+                continue;
+            }
+            boolean gone = false;
+            for (String c : cut.keySet()) {
+                if (k.startsWith(c)) {
+                    gone = true;
+                    break;
+                }
+            }
+            if (gone) {
+                continue;
+            }
+            Vector3f center = new Vector3f(g.sum).div(g.cubes);
+            double d = center.distanceSquared(target);
+            if (d < near) {
+                near = d;
+                pick = k;
+            }
+        }
+        if (pick == null) {
+            return;
+        }
+        Group g = groups.get(pick);
+        cut.put(pick, g.part);
+        // centre of the part in its own space, for the falling piece
+        float px = g.part.x;
+        float py = g.part.y;
+        float pz = g.part.z;
+        float rx = g.part.xRot;
+        float ry = g.part.yRot;
+        float rz = g.part.zRot;
+        g.part.setPos(0.0F, 0.0F, 0.0F);
+        g.part.setRotation(0.0F, 0.0F, 0.0F);
+        Vector3f sum = new Vector3f();
+        int[] n = new int[1];
+        g.part.visit(new PoseStack(), (pose, path, index, cube) -> {
+            Vector3f c = new Vector3f((cube.minX + cube.maxX) / 32.0F, (cube.minY + cube.maxY) / 32.0F,
+                    (cube.minZ + cube.maxZ) / 32.0F);
+            pose.pose().transformPosition(c);
+            sum.add(c);
+            n[0]++;
+        });
+        g.part.setPos(px, py, pz);
+        g.part.setRotation(rx, ry, rz);
+        Vector3f offset = n[0] > 0 ? sum.div(n[0]) : new Vector3f();
+        // where the part is in the world
+        Vector3f c = new Vector3f(g.sum).div(g.cubes);
+        Vector3f w = new Vector3f(-c.x, 1.501F - c.y, c.z);
+        new org.joml.Quaternionf().rotationY((float) Math.toRadians(180.0F - bodyYaw)).transform(w);
+        Vec3 at = e.position().add(w.x, w.y, w.z);
+        RandomSource r = e.level().random;
+        Vec3 away = at.subtract(e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D)).multiply(1.0D, 0.0D, 1.0D);
+        away = away.lengthSqr() < 1.0E-4D ? Vec3.ZERO : away.normalize();
+        Vec3 vel = away.scale(0.12D).add((r.nextDouble() - 0.5D) * 0.1D, 0.18D + r.nextDouble() * 0.1D,
+                (r.nextDouble() - 0.5D) * 0.1D);
+        Piece p = new Piece(g.part, null, texture(e), color, at, vel, bodyYaw);
+        p.offset = offset;
+        p.sx = (r.nextFloat() - 0.5F) * 30.0F;
+        p.sy = (r.nextFloat() - 0.5F) * 20.0F;
+        p.sz = (r.nextFloat() - 0.5F) * 30.0F;
+        PIECES.add(p);
+        if (PIECES.size() > 64) {
+            PIECES.remove(0);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Hiding the cut parts
     // ------------------------------------------------------------------
 
@@ -218,6 +392,15 @@ public final class SupermanLimbs {
 
     @SubscribeEvent
     public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
+        Map<String, ModelPart> cut = GENERIC_CUT.get(event.getEntity().getId());
+        if (cut != null) {
+            for (ModelPart part : cut.values()) {
+                if (part.visible) {
+                    part.visible = false;
+                    HIDDEN.add(part);
+                }
+            }
+        }
         Integer mask = MASKS.get(event.getEntity().getId());
         if (mask == null || mask == 0) {
             return;
@@ -281,6 +464,7 @@ public final class SupermanLimbs {
         }
         if (level.getGameTime() % 40L == 0L) {
             MASKS.keySet().removeIf(id -> level.getEntity(id) == null);
+            GENERIC_CUT.keySet().removeIf(id -> level.getEntity(id) == null);
         }
         Iterator<Piece> it = PIECES.iterator();
         while (it.hasNext()) {
@@ -350,7 +534,11 @@ public final class SupermanLimbs {
             pose.mulPose(Axis.ZP.rotationDegrees(p.prz + (p.rz - p.prz) * pt));
             pose.scale(-1.0F, -1.0F, 1.0F);
             // centred on the limb (the part's pivot is the shoulder / hip / neck)
-            pose.translate(0.0F, -p.center, 0.0F);
+            if (p.offset != null) {
+                pose.translate(-p.offset.x, -p.offset.y, -p.offset.z);
+            } else {
+                pose.translate(0.0F, -p.center, 0.0F);
+            }
             int light = LevelRenderer.getLightColor(level, BlockPos.containing(x, y + 0.2D, z));
             var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(p.texture));
             draw(p.part, pose, vc, light);

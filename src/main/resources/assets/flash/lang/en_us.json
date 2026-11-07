@@ -623,7 +623,7 @@
   "gui.flash.superman.cfg.combo.chokehold": "Finisher: lift by the neck and choke (target within 6 blocks).",
   "gui.flash.superman.cfg.combo.eye_pierce": "Finisher: lift and fire the laser into the eyes (within 6 blocks).",
   "gui.flash.superman.cfg.cut": "Laser cuts limbs",
-  "gui.flash.superman.cfg.cut.desc": "Heat vision and Laser Blast cut off arms, legs and heads.",
+  "gui.flash.superman.cfg.cut.desc": "Heat vision and Laser Blast cut off the body part the beam hits, on any creature.",
   "combo.flash.super_combo": "Super Combo",
   "combo.flash.uplift": "Uplift",
   "combo.flash.uplift_combo": "Uplift Combo",

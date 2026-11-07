@@ -623,7 +623,7 @@
   "gui.flash.superman.cfg.combo.chokehold": "Finalização: ergue pelo pescoço e estrangula (alvo a até 6 blocos).",
   "gui.flash.superman.cfg.combo.eye_pierce": "Finalização: ergue e dispara o laser nos olhos (alvo a até 6 blocos).",
   "gui.flash.superman.cfg.cut": "Laser corta membros",
-  "gui.flash.superman.cfg.cut.desc": "Visão de calor e Laser Blast cortam braços, pernas e cabeça.",
+  "gui.flash.superman.cfg.cut.desc": "Visão de calor e Laser Blast cortam a parte do corpo onde o feixe acerta, em qualquer mob.",
   "combo.flash.super_combo": "Super Combo",
   "combo.flash.uplift": "Uplift",
   "combo.flash.uplift_combo": "Uplift Combo",
