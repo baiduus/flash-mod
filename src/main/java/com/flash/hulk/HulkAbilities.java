@@ -666,40 +666,63 @@ public final class HulkAbilities {
                 return false;
             }
             net.minecraft.world.entity.Entity e = level.getEntity(entry.getKey());
-            if (!(e instanceof LivingEntity target) || !target.isAlive()) {
-                return true;
-            }
-            double t = Math.min(1.0D, (player.tickCount - f.since()) / (double) SUPER_FLIGHT);
-            double x = f.from().x + f.dir().x * SUPER_DISTANCE * t;
-            double z = f.from().z + f.dir().z * SUPER_DISTANCE * t;
-            double y = f.from().y + 4.0D * f.peak() * t * (1.0D - t);
-            // it hits a mountain / wall on the way: it crashes there
-            BlockPos at = BlockPos.containing(x, y + target.getBbHeight() * 0.5D, z);
-            boolean crash = t > 0.05D && !level.getBlockState(at).getCollisionShape(level, at).isEmpty();
-            if (t >= 1.0D || crash) {
-                double gy = y;
-                if (!crash) {
-                    // landing: on the ground at the end of the arc
-                    gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
-                            (int) Math.floor(x), (int) Math.floor(z));
+            LivingEntity target = e instanceof LivingEntity living && living.isAlive() ? living : null;
+            int age = player.tickCount - f.since();
+            double t0 = Math.min(1.0D, (age - 1) / (double) SUPER_FLIGHT);
+            double t1 = Math.min(1.0D, age / (double) SUPER_FLIGHT);
+            Vec3 from = flightPoint(f, Math.max(0.0D, t0));
+            Vec3 to = flightPoint(f, t1);
+            // the whole path of this tick, every half block: the first solid block is the impact
+            Vec3 impact = null;
+            double length = to.distanceTo(from);
+            int steps = Math.max(1, (int) Math.ceil(length / 0.5D));
+            for (int i = 1; i <= steps && t1 > 0.03D; i++) {
+                Vec3 p = from.lerp(to, i / (double) steps);
+                BlockPos at = BlockPos.containing(p.x, p.y + 0.5D, p.z);
+                if (!level.getBlockState(at).getCollisionShape(level, at).isEmpty()) {
+                    impact = from.lerp(to, Math.max(0, i - 1) / (double) steps);
+                    break;
                 }
-                move(target, x, gy, z);
-                target.fallDistance = 0.0F;
-                target.invulnerableTime = 0;
-                target.hurt(player.damageSources().playerAttack(player), 40.0F * ABILITY_DAMAGE);
-                // the impact blows up like 6 TNTs
-                blast(player, level, x, gy + 0.5D, z, SUPER_BLAST);
+            }
+            if (impact == null && t1 >= 1.0D) {
+                // landing: on the ground at the end of the arc
+                int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                        (int) Math.floor(to.x), (int) Math.floor(to.z));
+                impact = new Vec3(to.x, gy, to.z);
+            }
+            if (impact != null) {
+                if (target != null) {
+                    move(target, impact.x, impact.y, impact.z);
+                    target.fallDistance = 0.0F;
+                    target.invulnerableTime = 0;
+                    target.hurt(player.damageSources().playerAttack(player), 40.0F * ABILITY_DAMAGE);
+                }
+                // the impact blows up like 6 TNTs (even if the creature is gone)
+                blast(player, level, impact.x, impact.y + 0.5D, impact.z, SUPER_BLAST);
                 return true;
             }
+            if (target == null) {
+                // the creature is gone (unloaded): the flight goes on to its impact
+                return false;
+            }
+            // keep the area loaded around the flying creature
+            level.getChunkSource().addRegionTicket(net.minecraft.server.level.TicketType.POST_TELEPORT,
+                    new net.minecraft.world.level.ChunkPos(BlockPos.containing(to)), 1, target.getId());
             target.fallDistance = 0.0F;
             target.setDeltaMovement(Vec3.ZERO);
-            move(target, x, y, z);
+            move(target, to.x, to.y, to.z);
             if (player.tickCount % 2 == 0) {
-                level.sendParticles(ParticleTypes.CLOUD, target.getX(), target.getY(), target.getZ(), 4,
-                        0.3D, 0.3D, 0.3D, 0.02D);
+                level.sendParticles(ParticleTypes.CLOUD, to.x, to.y, to.z, 4, 0.3D, 0.3D, 0.3D, 0.02D);
             }
             return false;
         });
+    }
+
+    /** Point of the super-throw arc at {@code t} (0..1). */
+    private static Vec3 flightPoint(Flight f, double t) {
+        return new Vec3(f.from().x + f.dir().x * SUPER_DISTANCE * t,
+                f.from().y + 4.0D * f.peak() * t * (1.0D - t),
+                f.from().z + f.dir().z * SUPER_DISTANCE * t);
     }
 
     private static void move(LivingEntity target, double x, double y, double z) {
