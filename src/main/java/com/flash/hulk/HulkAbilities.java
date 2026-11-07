@@ -633,6 +633,8 @@ public final class HulkAbilities {
 
     private static final double SUPER_DISTANCE = 2000.0D;
     private static final int SUPER_FLIGHT = 100;
+    /** Impact of the super throw: 6 TNTs (TNT = 4). */
+    private static final float SUPER_BLAST = 24.0F;
 
     /** A creature on its super-throw flight: moved along the arc every tick. */
     private record Flight(UUID thrower, Vec3 from, Vec3 dir, double peak, int since) {
@@ -671,16 +673,22 @@ public final class HulkAbilities {
             double x = f.from().x + f.dir().x * SUPER_DISTANCE * t;
             double z = f.from().z + f.dir().z * SUPER_DISTANCE * t;
             double y = f.from().y + 4.0D * f.peak() * t * (1.0D - t);
-            if (t >= 1.0D) {
-                // landing: on the ground at the end of the arc
-                int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
-                        (int) Math.floor(x), (int) Math.floor(z));
+            // it hits a mountain / wall on the way: it crashes there
+            BlockPos at = BlockPos.containing(x, y + target.getBbHeight() * 0.5D, z);
+            boolean crash = t > 0.05D && !level.getBlockState(at).getCollisionShape(level, at).isEmpty();
+            if (t >= 1.0D || crash) {
+                double gy = y;
+                if (!crash) {
+                    // landing: on the ground at the end of the arc
+                    gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                            (int) Math.floor(x), (int) Math.floor(z));
+                }
                 move(target, x, gy, z);
                 target.fallDistance = 0.0F;
                 target.invulnerableTime = 0;
                 target.hurt(player.damageSources().playerAttack(player), 40.0F * ABILITY_DAMAGE);
-                level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, gy, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-                level.playSound(null, x, gy, z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.0F, 0.6F);
+                // the impact blows up like 6 TNTs
+                blast(player, level, x, gy + 0.5D, z, SUPER_BLAST);
                 return true;
             }
             target.fallDistance = 0.0F;
