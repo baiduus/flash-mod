@@ -79,7 +79,7 @@ public final class SupermanClient {
     /** Force of the throw (0..1) while J is held with someone in hand, or -1. */
     public static float throwCharge() {
         Minecraft mc = Minecraft.getInstance();
-        if (throwStart < 0L || mc.level == null || mc.player == null
+        if (throwStart < 0L || mc.level == null || mc.player == null || mc.level.getGameTime() < throwStart
                 || !SupermanState.flag(mc.player, SupermanPowers.F_HOLDING)) {
             return -1.0F;
         }
@@ -448,7 +448,9 @@ public final class SupermanClient {
                         ? mc.level.getGameTime() : -1L;
             }
             if (a == SupermanAbility.GRAB) {
-                throwStart = down && unlocked ? mc.level.getGameTime() : -1L;
+                // the bar only shows when J is held with someone already in hand (past the tap that lets go)
+                throwStart = down && unlocked && SupermanState.flag(mc.player, SupermanPowers.F_HOLDING)
+                        ? mc.level.getGameTime() + SupermanAbilities.THROW_TAP_TICKS : -1L;
             }
             boolean sendRelease = a.kind() == SupermanAbility.Kind.HOLD || a.kind() == SupermanAbility.Kind.CHARGE
                     || a == SupermanAbility.GRAB;

@@ -811,27 +811,46 @@ public final class SupermanAbilities {
 
     /** Time to fill the throw bar while the grab key is held. */
     public static final int THROW_CHARGE_TICKS = 50;
+    /** A press shorter than this with someone in hand just lets go. */
+    public static final int THROW_TAP_TICKS = 5;
 
     /**
-     * Grab like the Hulk: press and hold J on a creature to grab it; while J stays down the throw bar fills, and the
-     * release throws it with that force. Thrown at 100 % it blows up when it hits the ground.
+     * J: a press grabs the creature / player in sight; with it in hand, a tap lets it go, while holding J fills the
+     * throw bar and the release throws it with that force. Thrown at 100 % it blows up when it hits the ground.
      */
     private static void grabKey(ServerPlayer player, Session s, boolean pressed) {
         long now = player.level().getGameTime();
         if (pressed) {
-            if (s.grabbed >= 0 || s.throwAt >= 0L) {
+            if (s.throwAt >= 0L) {
+                return;
+            }
+            if (s.grabbed >= 0) {
+                // second press: a tap lets go, holding charges the throw
+                s.grabFrom = now;
                 return;
             }
             if (cooling(player, SupermanAbility.GRAB)) {
                 return;
             }
+            // first press: grab (the release of this press does nothing)
             grab(player, s);
-            s.grabFrom = s.grabbed >= 0 ? now : -1L;
+            s.grabFrom = -1L;
             return;
         }
         if (s.grabbed >= 0 && s.grabFrom >= 0L && s.throwAt < 0L) {
-            s.throwCharge = Math.min(1.0F, (now - s.grabFrom) / (float) THROW_CHARGE_TICKS);
+            long held = now - s.grabFrom;
             s.grabFrom = -1L;
+            if (held < THROW_TAP_TICKS) {
+                // just drops it
+                Entity e = player.serverLevel().getEntity(s.grabbed);
+                release(player, s);
+                if (e != null) {
+                    e.setDeltaMovement(Vec3.ZERO);
+                    e.hurtMarked = true;
+                }
+                return;
+            }
+            s.throwCharge = Math.min(1.0F, (held - THROW_TAP_TICKS) / (float) THROW_CHARGE_TICKS);
             // the throw lands on the swing of the animation (tick 6)
             s.throwAt = now + 5L;
             anim(player, "grab_throw");
