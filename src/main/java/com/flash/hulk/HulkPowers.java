@@ -555,6 +555,21 @@ public final class HulkPowers {
         if (player.tickCount % 10 == 0) {
             applyRegeneration(player);
         }
+        // the Red Hulk burns: flames and embers rising from the body
+        if (isRed(player) && player.level() instanceof ServerLevel fire && player.tickCount % 2 == 0) {
+            double w = player.getBbWidth() * 0.45D;
+            double h = player.getBbHeight();
+            fire.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, player.getX(),
+                    player.getY() + h * 0.5D, player.getZ(), 3, w, h * 0.35D, w, 0.01D);
+            fire.sendParticles(net.minecraft.core.particles.ParticleTypes.SMALL_FLAME, player.getX(),
+                    player.getY() + h * 0.85D, player.getZ(), 2, w * 0.6D, h * 0.12D, w * 0.6D, 0.01D);
+            if (player.tickCount % 6 == 0) {
+                fire.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, player.getX(),
+                        player.getY() + h * 0.9D, player.getZ(), 1, w * 0.5D, h * 0.1D, w * 0.5D, 0.01D);
+                fire.sendParticles(net.minecraft.core.particles.ParticleTypes.LAVA, player.getX(),
+                        player.getY() + h * 0.4D, player.getZ(), 1, w, h * 0.3D, w, 0.0D);
+            }
+        }
         if (isFurious(player) && player.level() instanceof ServerLevel level && player.tickCount % 3 == 0) {
             level.sendParticles(FURY_DUST, player.getX(), player.getY() + player.getBbHeight() * 0.5D,
                     player.getZ(), 3, player.getBbWidth() * 0.5D, player.getBbHeight() * 0.4D,
