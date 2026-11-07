@@ -205,8 +205,8 @@ public final class SupermanPowers {
 
     /** Strength of the abilities: 0.6 at level 1 up to 1.05 at level 10. */
     public static float power(Player player) {
-        // as strong as the Hulk (outside his fury): abilities scale 0.92x at level 1 to 2x at level 10
-        return 0.8F + 0.12F * Math.max(1, level(player));
+        // the Hulk's strength minus 10 %: abilities scale 0.83x at level 1 to 1.8x at level 10
+        return (0.8F + 0.12F * Math.max(1, level(player))) * 0.9F;
     }
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
@@ -218,8 +218,8 @@ public final class SupermanPowers {
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
     public static double bonusDamage(int level) {
-        // the Hulk's punch: 12 at level 1 up to 48 at level 10
-        return 8.0D + 4.0D * Math.max(1, level);
+        // the Hulk's punch minus 10 %: 10.8 at level 1 up to 43.2 at level 10
+        return (8.0D + 4.0D * Math.max(1, level)) * 0.9D;
     }
 
     public static double punchDamage(int level) {
