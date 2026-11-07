@@ -68,9 +68,8 @@ public final class HulkAbilities {
                 // the throw comes with the force bar (HulkThrowPacket) when the key is released
                 return;
             } else if (hold.kind() == HOLD_ENTITY && ability == HulkAbility.GRAB) {
-                HOLDS.remove(player.getUUID());
-                throwEntity(player, level, hold);
-                finish(player, ability, ANIM_THROW_ENTITY);
+                // the throw comes with the force bar (HulkThrowPacket) when V is released
+                return;
             }
             return;
         }
@@ -206,6 +205,7 @@ public final class HulkAbilities {
         }
         tickHold(player, level, hulk);
         tickThrown(player, level);
+        tickFlights(player, level);
         Running run = RUNNING.get(player.getUUID());
         if (run == null) {
             return;
@@ -473,15 +473,44 @@ public final class HulkAbilities {
     }
 
     /** Level 6 (second press): throws the rock that is held. */
-    /** The rock key was released: throws the held rock with the charged force (0..1). */
-    public static void throwHeldRock(ServerPlayer player, float charge) {
+    /**
+     * The key was released: throws what is held with the charged force (0..1); after a minute
+     * of charge a held creature gets the super throw (about 2000 blocks).
+     */
+    public static void throwHeld(ServerPlayer player, float charge, boolean superThrow) {
         Hold hold = HOLDS.get(player.getUUID());
-        if (hold == null || hold.kind() != HOLD_ROCK || !HulkPowers.isTransformed(player)) {
+        if (hold == null || !HulkPowers.isTransformed(player)) {
             return;
         }
         HOLDS.remove(player.getUUID());
-        throwRock(player, (ServerLevel) player.level(), hold.rock(), charge);
-        finish(player, HulkAbility.BOULDER, ANIM_THROW_ROCK);
+        ServerLevel level = (ServerLevel) player.level();
+        if (hold.kind() == HOLD_ROCK) {
+            throwRock(player, level, hold.rock(), charge);
+            finish(player, HulkAbility.BOULDER, ANIM_THROW_ROCK);
+        } else {
+            // the server checks the minute itself (since the grab)
+            boolean full = superThrow && player.tickCount - hold.since() >= SUPER_TICKS;
+            throwEntity(player, level, hold, charge, full);
+            finish(player, HulkAbility.GRAB, ANIM_THROW_ENTITY);
+        }
+    }
+
+    /** Charge time of the super throw (1 minute). */
+    public static final int SUPER_TICKS = 1200;
+
+    /** A held creature that hits the Hulk breaks free and drops to the ground. */
+    public static void breakFree(ServerPlayer hulk, net.minecraft.world.entity.Entity attacker) {
+        Hold hold = HOLDS.get(hulk.getUUID());
+        if (hold == null || hold.kind() != HOLD_ENTITY || hold.entityId() != attacker.getId()) {
+            return;
+        }
+        HOLDS.remove(hulk.getUUID());
+        attacker.setDeltaMovement(0.0D, -0.3D, 0.0D);
+        attacker.hurtMarked = true;
+        sendAnim(hulk, ANIM_RELEASE);
+        HulkPowers.setCooldown(hulk, HulkAbility.GRAB);
+        HulkPowers.syncSelf(hulk);
+        hulk.displayClientMessage(Component.translatable("message.flash.hulk_grab_escaped"), true);
     }
 
     private static void throwRock(ServerPlayer player, ServerLevel level, ItemStack rock, float charge) {
@@ -573,20 +602,99 @@ public final class HulkAbilities {
         }
     }
 
-    private static void throwEntity(ServerPlayer player, ServerLevel level, Hold hold) {
+    private static void throwEntity(ServerPlayer player, ServerLevel level, Hold hold, float charge, boolean superThrow) {
         net.minecraft.world.entity.Entity e = level.getEntity(hold.entityId());
         if (!(e instanceof LivingEntity target) || !target.isAlive()) {
             return;
         }
         Vec3 look = player.getLookAngle().normalize();
-        double force = 1.8D + 0.18D * HulkPowers.activeLevel(player);
+        if (superThrow) {
+            superThrow(player, level, target, look);
+            return;
+        }
+        double force = (1.8D + 0.18D * HulkPowers.activeLevel(player)) * (0.35D + 0.9D * charge);
         target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
         target.hurtMarked = true;
-        THROWN.put(target.getId(), new Thrown(player.getUUID(), (10.0F + 2.5F * power(player)) * ABILITY_DAMAGE,
-                player.tickCount));
+        THROWN.put(target.getId(), new Thrown(player.getUUID(),
+                (10.0F + 2.5F * power(player)) * ABILITY_DAMAGE * (0.5F + 0.7F * charge), player.tickCount));
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 1.2F, 0.9F);
+    }
+
+    // ------------------------------------------------------------------
+    // Super throw: a minute of charge sends the creature about 2000 blocks away
+    // ------------------------------------------------------------------
+
+    private static final double SUPER_DISTANCE = 2000.0D;
+    private static final int SUPER_FLIGHT = 100;
+
+    /** A creature on its super-throw flight: moved along the arc every tick. */
+    private record Flight(UUID thrower, Vec3 from, Vec3 dir, double peak, int since) {
+    }
+
+    private static final Map<Integer, Flight> FLIGHTS = new ConcurrentHashMap<>();
+
+    private static void superThrow(ServerPlayer player, ServerLevel level, LivingEntity target, Vec3 look) {
+        Vec3 flat = new Vec3(look.x, 0.0D, look.z);
+        flat = flat.lengthSqr() < 1.0E-4D ? flatLook(player) : flat.normalize();
+        FLIGHTS.put(target.getId(), new Flight(player.getUUID(), target.position(), flat,
+                150.0D + Math.max(0.0D, look.y) * 150.0D, player.tickCount));
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
+                SoundSource.PLAYERS, 3.0F, 0.4F);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE,
+                SoundSource.PLAYERS, 2.0F, 0.6F);
+        level.sendParticles(ParticleTypes.SONIC_BOOM, target.getX(), target.getY() + 1.0D, target.getZ(), 1,
+                0.0D, 0.0D, 0.0D, 0.0D);
+        player.swing(InteractionHand.MAIN_HAND, true);
+    }
+
+    private static void tickFlights(ServerPlayer player, ServerLevel level) {
+        if (FLIGHTS.isEmpty()) {
+            return;
+        }
+        FLIGHTS.entrySet().removeIf(entry -> {
+            Flight f = entry.getValue();
+            if (!f.thrower().equals(player.getUUID())) {
+                return false;
+            }
+            net.minecraft.world.entity.Entity e = level.getEntity(entry.getKey());
+            if (!(e instanceof LivingEntity target) || !target.isAlive()) {
+                return true;
+            }
+            double t = Math.min(1.0D, (player.tickCount - f.since()) / (double) SUPER_FLIGHT);
+            double x = f.from().x + f.dir().x * SUPER_DISTANCE * t;
+            double z = f.from().z + f.dir().z * SUPER_DISTANCE * t;
+            double y = f.from().y + 4.0D * f.peak() * t * (1.0D - t);
+            if (t >= 1.0D) {
+                // landing: on the ground at the end of the arc
+                int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                        (int) Math.floor(x), (int) Math.floor(z));
+                move(target, x, gy, z);
+                target.fallDistance = 0.0F;
+                target.invulnerableTime = 0;
+                target.hurt(player.damageSources().playerAttack(player), 40.0F * ABILITY_DAMAGE);
+                level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, gy, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                level.playSound(null, x, gy, z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.0F, 0.6F);
+                return true;
+            }
+            target.fallDistance = 0.0F;
+            target.setDeltaMovement(Vec3.ZERO);
+            move(target, x, y, z);
+            if (player.tickCount % 2 == 0) {
+                level.sendParticles(ParticleTypes.CLOUD, target.getX(), target.getY(), target.getZ(), 4,
+                        0.3D, 0.3D, 0.3D, 0.02D);
+            }
+            return false;
+        });
+    }
+
+    private static void move(LivingEntity target, double x, double y, double z) {
+        if (target instanceof ServerPlayer held) {
+            held.connection.teleport(x, y, z, held.getYRot(), held.getXRot());
+        } else {
+            target.teleportTo(x, y, z);
+        }
     }
 
     /** Creatures thrown by this Hulk crash: damage when they hit a wall or the ground. */

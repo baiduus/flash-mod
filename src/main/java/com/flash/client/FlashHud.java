@@ -141,7 +141,9 @@ public class FlashHud implements IGuiOverlay {
                     ? Component.translatable("hud.flash.hulk_rage_max").getString()
                     : Component.translatable("hud.flash.hulk_rage", Math.round(rage * 100.0F)).getString())
                 : Component.translatable("hud.flash.banner_hint", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage()).getString();
+        int extra = com.flash.hulk.HulkState.extraTicks(now);
         String line3 = temp > 0 ? Component.translatable("hud.flash.hulk_temp", time(temp)).getString()
+                : extra > 0 ? Component.translatable("hud.flash.hulk_extra", time(extra)).getString()
                 : fury > 0 ? Component.translatable("hud.flash.hulk_fury", time(fury)).getString() : null;
         int textWidth = Math.max(font.width(line1), font.width(line2));
         if (line3 != null) {
@@ -162,6 +164,23 @@ public class FlashHud implements IGuiOverlay {
             int filled = Math.round((boxWidth - 3) * rage);
             if (filled > 0) {
                 FlashHudStyle.barHorizontal(g, x + 3, y + boxHeight - 2, filled, 2);
+            }
+        }
+        // super throw countdown (charging the grab), under the panel
+        if (HulkClient.chargingGrab()) {
+            int left = HulkClient.superTicksLeft();
+            String t = left > 0
+                    ? Component.translatable("hud.flash.hulk_super", time(left)).getString()
+                    : Component.translatable("hud.flash.hulk_super_ready").getString();
+            int ty = y + boxHeight + 4;
+            int tw = font.width(t) + 14;
+            g.fill(x, ty, x + tw, ty + 14, FlashHudStyle.PANEL);
+            FlashHudStyle.barVertical(g, x, ty, 3, 14);
+            FlashHudStyle.gradientText(g, font, t, x + 8, ty + 3);
+            float f = 1.0F - left / (float) HulkClient.SUPER_TICKS;
+            int filled = Math.round((tw - 3) * f);
+            if (filled > 0) {
+                FlashHudStyle.barHorizontal(g, x + 3, ty + 12, filled, 2);
             }
         }
     }

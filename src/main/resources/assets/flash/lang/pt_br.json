@@ -446,10 +446,15 @@
   "commands.flash.hulk.cooldown_on": "Recargas religadas para %s.",
   "commands.flash.hulk.none": "%s não tem o poder do Hulk.",
   "ability.flash.hulk.grab": "Agarrar",
-  "ability.flash.hulk.grab.description": "V agarra a criatura ou o jogador à frente e o levanta; V de novo arremessa (dano ao bater).",
+  "ability.flash.hulk.grab.description": "V agarra e levanta quem estiver à frente (pequenos numa mão, grandes com as duas); segure V para carregar a força e solte para arremessar. Segurando 1 minuto: superarremesso de ~2000 blocos. Quem estiver preso pode se soltar batendo no Hulk.",
   "message.flash.hulk_grab_none": "Não há nada ao alcance para agarrar.",
   "hud.flash.hulk_throw": "Força do arremesso: %s%%",
   "commands.flash.hulk.red_on": "%s agora é o Hulk Vermelho.",
   "commands.flash.hulk.red_off": "%s voltou a ser o Hulk verde.",
-  "gui.flash.theme.red_hulk.title": "Hulk Vermelho"
+  "gui.flash.theme.red_hulk.title": "Hulk Vermelho",
+  "message.flash.hulk_extra_life": "O Hulk não morre tão fácil! Vida Extra: força e regeneração por 2:30.",
+  "hud.flash.hulk_extra": "Vida Extra %s",
+  "hud.flash.hulk_super": "Superarremesso em %s",
+  "hud.flash.hulk_super_ready": "Superarremesso pronto! Solte V",
+  "message.flash.hulk_grab_escaped": "Ele se soltou!"
 }

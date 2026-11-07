@@ -200,6 +200,12 @@ public final class HulkAnimator {
         }
     }
 
+    /** True while that player holds a creature. */
+    public static boolean holdingCreature(UUID player) {
+        Hold hold = HOLDS.get(player);
+        return hold != null && !hold.rock();
+    }
+
     /** True while that player holds a rock over his head. */
     public static boolean holdingRock(UUID player) {
         Hold hold = HOLDS.get(player);

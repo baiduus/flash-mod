@@ -446,10 +446,15 @@
   "commands.flash.hulk.cooldown_on": "Cooldowns turned back on for %s.",
   "commands.flash.hulk.none": "%s does not have the Hulk's power.",
   "ability.flash.hulk.grab": "Grab",
-  "ability.flash.hulk.grab.description": "V grabs the creature or player in front and lifts it; V again throws it (damage on impact).",
+  "ability.flash.hulk.grab.description": "V grabs and lifts whoever is in front (small ones in one hand, big ones with both); hold V to charge the force and release to throw. Holding 1 minute: super throw of ~2000 blocks. Whoever is held can break free by hitting the Hulk.",
   "message.flash.hulk_grab_none": "Nothing in reach to grab.",
   "hud.flash.hulk_throw": "Throw force: %s%%",
   "commands.flash.hulk.red_on": "%s is now the Red Hulk.",
   "commands.flash.hulk.red_off": "%s is the green Hulk again.",
-  "gui.flash.theme.red_hulk.title": "Red Hulk"
+  "gui.flash.theme.red_hulk.title": "Red Hulk",
+  "message.flash.hulk_extra_life": "The Hulk does not die that easily! Extra life: strength and regeneration for 2:30.",
+  "hud.flash.hulk_extra": "Extra life %s",
+  "hud.flash.hulk_super": "Super throw in %s",
+  "hud.flash.hulk_super_ready": "Super throw ready! Release V",
+  "message.flash.hulk_grab_escaped": "It broke free!"
 }

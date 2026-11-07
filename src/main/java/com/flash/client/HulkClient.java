@@ -38,11 +38,23 @@ public final class HulkClient {
     /** Force bar of the rock throw: 2 seconds to fill. */
     private static final int CHARGE_TICKS = 40;
     private static boolean charging;
+    private static boolean chargingGrab;
+    /** A minute of charge for the super throw of a held creature. */
+    public static final int SUPER_TICKS = com.flash.hulk.HulkAbilities.SUPER_TICKS;
     private static boolean chargeArmed;
     private static int chargeTicks;
 
     public static boolean charging() {
         return charging;
+    }
+
+    public static boolean chargingGrab() {
+        return charging && chargingGrab;
+    }
+
+    /** Ticks left until the super throw is ready (0 = ready). */
+    public static int superTicksLeft() {
+        return Math.max(0, SUPER_TICKS - chargeTicks);
     }
 
     public static float chargeFraction() {
@@ -107,29 +119,38 @@ public final class HulkClient {
         com.flash.hulk.HulkAbility[] abilities = com.flash.hulk.HulkAbility.values();
         boolean active = mc.screen == null && HulkState.isTransformed(mc.player);
         boolean holdingRock = mc.player != null && HulkAnimator.holdingRock(mc.player.getUUID());
+        boolean holdingCreature = mc.player != null && HulkAnimator.holdingCreature(mc.player.getUUID());
         for (int i = 0; i < abilities.length; i++) {
             net.minecraft.client.KeyMapping key = key(abilities[i]);
             boolean down = active && key != null && key.isDown();
-            if (abilities[i] == com.flash.hulk.HulkAbility.BOULDER && holdingRock) {
-                // holding the rock: a new press charges the force bar, the release throws
+            boolean rock = abilities[i] == com.flash.hulk.HulkAbility.BOULDER;
+            boolean grab = abilities[i] == com.flash.hulk.HulkAbility.GRAB;
+            if ((rock && holdingRock) || (grab && holdingCreature)) {
+                // holding: a new press charges the force bar, the release throws
                 if (!down && !charging) {
                     chargeArmed = true;
                 } else if (down && chargeArmed) {
                     charging = true;
+                    chargingGrab = grab;
                     chargeArmed = false;
                     chargeTicks = 0;
                 } else if (down && charging) {
-                    chargeTicks = Math.min(CHARGE_TICKS, chargeTicks + 1);
+                    chargeTicks = Math.min(grab ? SUPER_TICKS : CHARGE_TICKS, chargeTicks + 1);
                 } else if (!down && charging) {
                     charging = false;
-                    FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkThrowPacket(chargeFraction()));
+                    FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkThrowPacket(chargeFraction(),
+                            grab && chargeTicks >= SUPER_TICKS));
                 }
                 KEY_DOWN[i] = down;
                 continue;
             }
-            if (abilities[i] == com.flash.hulk.HulkAbility.BOULDER) {
-                charging = false;
-                chargeArmed = false;
+            if ((rock && !holdingCreature) || (grab && !holdingRock)) {
+                if (charging && chargingGrab == grab) {
+                    charging = false;
+                }
+                if (!holdingRock && !holdingCreature) {
+                    chargeArmed = false;
+                }
             }
             if (down && !KEY_DOWN[i]) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkAbilityPacket(i));

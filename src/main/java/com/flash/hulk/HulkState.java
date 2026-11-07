@@ -85,6 +85,19 @@ public final class HulkState {
         return level;
     }
 
+    private static volatile int extraTicks;
+    private static volatile long extraAt;
+
+    public static void setExtra(int ticks, long now) {
+        extraTicks = ticks;
+        extraAt = now;
+    }
+
+    /** Local player: ticks left of the extra life bonus. */
+    public static int extraTicks(long now) {
+        return (int) Math.max(0L, extraTicks - (now - extraAt));
+    }
+
     /** Players drawn as the Red Hulk (client). */
     private static final java.util.Set<UUID> RED = ConcurrentHashMap.newKeySet();
 

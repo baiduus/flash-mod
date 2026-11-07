@@ -150,11 +150,30 @@ public final class HulkEvents {
         if (event.getSource().getEntity() instanceof ServerPlayer attacker && HulkPowers.isTransformed(attacker)) {
             HulkPowers.addRage(attacker, 5.0F);
         }
+        // whoever is held and hits the Hulk breaks free and falls
+        if (event.getEntity() instanceof ServerPlayer hulk && event.getSource().getEntity() != null) {
+            HulkAbilities.breakFree(hulk, event.getSource().getEntity());
+        }
+    }
+
+    /** Extra life: the first death of a Hulk is cancelled. */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !event.isCanceled()
+                && !event.getSource().is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD)
+                && !event.getSource().is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)
+                && HulkPowers.tryExtraLife(player)) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         HulkPowers.copy(event.getOriginal(), event.getEntity());
+        if (event.isWasDeath()) {
+            // a normal death and respawn: the extra life is ready again
+            HulkPowers.resetExtraLife(event.getEntity());
+        }
         if (event.getEntity() instanceof ServerPlayer player) {
             HulkPowers.removeAttributes(player);
             HulkPowers.sync(player);

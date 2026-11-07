@@ -41,6 +41,10 @@ public final class HulkPowers {
     private static final String COOLDOWNS = "cooldowns";
     private static final String SELECTED = "selected";
     private static final String RED = "red";
+    private static final String LIFE_USED = "lifeUsed";
+    private static final String EXTRA_UNTIL = "extraUntil";
+    /** Extra life bonus: 2 min 30 s. */
+    public static final int EXTRA_TICKS = 3000;
     private static final String HEIGHT = "height";
 
     /** Smallest height (blocks) the height bar allows. */
@@ -335,6 +339,70 @@ public final class HulkPowers {
         sync(player);
     }
 
+    // ------------------------------------------------------------------
+    // Extra life
+    // ------------------------------------------------------------------
+
+    /**
+     * First death of a Hulk: he comes back at once, with extra strength and regeneration for
+     * 2 min 30 s. A second death (the extra life is spent) is a normal death; the extra life
+     * comes back after a normal respawn.
+     * @return true when the death was cancelled
+     */
+    public static boolean tryExtraLife(ServerPlayer player) {
+        if (!has(player) || tag(player).getBoolean(LIFE_USED)) {
+            return false;
+        }
+        CompoundTag tag = tag(player).copy();
+        tag.putBoolean(LIFE_USED, true);
+        tag.putLong(EXTRA_UNTIL, player.level().getGameTime() + EXTRA_TICKS);
+        save(player, tag);
+        player.setHealth(player.getMaxHealth());
+        player.removeAllEffects();
+        player.clearFire();
+        player.fallDistance = 0.0F;
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, EXTRA_TICKS, 2, false, true, true));
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.REGENERATION, EXTRA_TICKS, 3, false, true, true));
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 100, 4, false, false, true));
+        if (player.level() instanceof ServerLevel level) {
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, player.getX(),
+                    player.getY() + player.getBbHeight() * 0.5D, player.getZ(), 120, player.getBbWidth(),
+                    player.getBbHeight() * 0.5D, player.getBbWidth(), 0.6D);
+            level.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), player.getX(), player.getY() + 1.0D,
+                    player.getZ(), 80, player.getBbWidth(), player.getBbHeight() * 0.5D, player.getBbWidth(), 0.05D);
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    net.minecraft.sounds.SoundEvents.TOTEM_USE, net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.8F);
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, net.minecraft.sounds.SoundSource.PLAYERS, 3.0F, 0.45F);
+        }
+        player.displayClientMessage(Component.translatable("message.flash.hulk_extra_life"), false);
+        applyAttributes(player);
+        sync(player);
+        return true;
+    }
+
+    /** Ticks left of the extra life bonus (0 = none). */
+    public static int extraTicks(Player player) {
+        if (!has(player)) {
+            return 0;
+        }
+        long left = tag(player).getLong(EXTRA_UNTIL) - player.level().getGameTime();
+        return left > 0 ? (int) Math.min(Integer.MAX_VALUE, left) : 0;
+    }
+
+    /** After a normal respawn the extra life is ready again. */
+    public static void resetExtraLife(Player player) {
+        if (has(player)) {
+            CompoundTag tag = tag(player).copy();
+            tag.remove(LIFE_USED);
+            tag.remove(EXTRA_UNTIL);
+            player.getPersistentData().put(KEY, tag);
+        }
+    }
+
     /** Red Hulk: the same powers with red skin and a red HUD (command only for now). */
     public static boolean isRed(Player player) {
         return has(player) && tag(player).getBoolean(RED);
@@ -550,7 +618,8 @@ public final class HulkPowers {
         int level = activeLevel(player);
         float scale = scale(player);
         double fury = isFurious(player) ? 1.5D : 1.0D;
-        set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, bonusDamage(level, fury > 1.0D), AttributeModifier.Operation.ADDITION);
+        set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID,
+                bonusDamage(level, fury > 1.0D) * (extraTicks(player) > 0 ? 1.5D : 1.0D), AttributeModifier.Operation.ADDITION);
         set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.45D + 0.06D * level, AttributeModifier.Operation.MULTIPLY_BASE);
         set(player, Attributes.MAX_HEALTH, HEALTH_ID, 10.0D + 3.0D * level, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0D, AttributeModifier.Operation.ADDITION);
@@ -626,7 +695,7 @@ public final class HulkPowers {
         return new HulkSyncPacket(player.getUUID(), has(player), isTransformed(player), scale(player),
                 level(player), rage(player), temporaryTicks(player), furyTicks(player),
                 destroyBlocks(player), growWithLevel(player), cds, activeLevel(player), chosenHeight(player),
-                isRed(player));
+                isRed(player), extraTicks(player));
     }
 
     public static void sync(ServerPlayer player) {
