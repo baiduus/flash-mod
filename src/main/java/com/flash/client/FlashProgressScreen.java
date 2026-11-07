@@ -593,7 +593,7 @@ public class FlashProgressScreen extends Screen {
         if (enabled) {
             for (int i = 0; i < knob - x + 3; i++) {
                 float f = i / (float) Math.max(1, w);
-                g.fill(x + i, y, x + i + 1, y + 4, lerpColor(FlashHudStyle.HULK_GREEN, FlashHudStyle.HULK_PURPLE, f));
+                g.fill(x + i, y, x + i + 1, y + 4, lerpColor(FlashHudStyle.from(), FlashHudStyle.to(), f));
             }
         }
         g.fill(knob, y - 4, knob + 6, y + 8, enabled ? 0xFFFFFFFF : COLOR_DIM);

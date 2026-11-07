@@ -85,6 +85,21 @@ public final class HulkState {
         return level;
     }
 
+    /** Players drawn as the Red Hulk (client). */
+    private static final java.util.Set<UUID> RED = ConcurrentHashMap.newKeySet();
+
+    public static void setRed(UUID id, boolean red) {
+        if (red) {
+            RED.add(id);
+        } else {
+            RED.remove(id);
+        }
+    }
+
+    public static boolean isRed(Player player) {
+        return player.level().isClientSide ? RED.contains(player.getUUID()) : HulkPowers.isRed(player);
+    }
+
     /** Local player's active level (level selector). */
     public static int activeLevel() {
         return activeLevel > 0 ? activeLevel : level;
@@ -141,6 +156,7 @@ public final class HulkState {
 
     public static void resetClient() {
         CLIENT.clear();
+        RED.clear();
         level = 0;
         activeLevel = 0;
         height = 0.0F;

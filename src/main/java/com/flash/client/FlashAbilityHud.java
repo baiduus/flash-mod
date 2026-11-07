@@ -181,7 +181,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (cooling) {
             float remaining = Math.min(1.0F, cooldown / (float) cooldownTotal);
             int fill = Math.max(1, Math.round((w - 3) * remaining));
-            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, PowerTheme.localHulk() ? 0x90201230
+            g.fill(x + 3, y, x + 3 + fill, y + ROW_HEIGHT, PowerTheme.localHulk() ? (PowerTheme.localRedHulk() ? 0x90300808 : 0x90201230)
                     : FlashClientVisualLevels.isLocalNegative() ? 0x90300808 : 0x90301000);
         }
         if (active) {

@@ -21,7 +21,7 @@ SUITS = {
     "flash_suit": None,
     "negative_suit": {"main": (0.135, 0.85, 1.00), "accent": (0.0, 0.92, 0.95)},
     "phantom_suit": {"main": (0.0, 0.0, 0.17), "accent": (0.0, 0.95, 0.95)},
-    "zoom_suit": {"main": (0.62, 0.12, 0.20), "accent": (0.58, 0.85, 1.00), "two_tone": True},
+    "zoom_suit": {"main": (0.62, 0.12, 0.20), "accent": (0.62, 0.10, 0.30), "two_tone": True},
 }
 
 
@@ -87,7 +87,7 @@ def cover_face(img):
 
 
 EYES = {"negative_suit": ((255, 235, 225), (220, 20, 20)), "phantom_suit": ((255, 60, 50), (200, 0, 0)),
-        "zoom_suit": ((235, 240, 245), (20, 22, 30))}
+        "zoom_suit": ((52, 55, 62), (18, 19, 24))}
 
 
 def eyes(img, name):
@@ -116,7 +116,7 @@ layer1 = Image.open(base + "layer_1_skinless.png").convert("RGBA")
 closed = cover_face(layer0)
 # colour patches for the rebuilt chest emblem (tools/fix_suit_emblem.py): disc at (100, 0), accent at (116, 0)
 EMBLEM = {"flash_suit": ((245, 245, 240), (255, 205, 40)), "negative_suit": ((20, 20, 22), (225, 30, 25)),
-          "phantom_suit": ((15, 15, 18), (230, 25, 20)), "zoom_suit": ((15, 18, 26), (60, 160, 255))}
+          "phantom_suit": ((15, 15, 18), (230, 25, 20)), "zoom_suit": ((14, 14, 17), (62, 64, 72))}
 
 
 def emblem(img, name):

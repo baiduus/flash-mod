@@ -36,6 +36,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFF5BD94A, 0xFF143A12, 0xFF0D1F0B,
             "gui.flash.theme.hulk.title", "gui.flash.theme.hulk.subtitle", Icon.FIST, true);
 
+    /** The Red Hulk: crimson. */
+    public static final PowerTheme RED_HULK = new PowerTheme("red_hulk",
+            0xFFFF4A3A, 0xFF3F0E0B, 0xFF200807,
+            "gui.flash.theme.red_hulk.title", "gui.flash.theme.hulk.subtitle", Icon.FIST, true);
+
+    /** True when the local player is the Red Hulk (red HUD). */
+    public static boolean localRedHulk() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && com.flash.hulk.HulkState.has(player) && com.flash.hulk.HulkState.isRed(player);
+    }
+
     /** True when the local player carries the Hulk. */
     public static boolean localHulk() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
@@ -44,7 +55,7 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
 
     public static PowerTheme current() {
         if (localHulk()) {
-            return HULK;
+            return localRedHulk() ? RED_HULK : HULK;
         }
         if (!FlashClientData.hasPowers()) {
             return NEUTRAL;

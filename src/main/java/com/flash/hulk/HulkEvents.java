@@ -217,6 +217,9 @@ public final class HulkEvents {
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .executes(c -> rage(EntityArgument.getPlayer(c, "player"),
                                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "percent"), c.getSource())))))
+                .then(Commands.literal("red")
+                        .then(redMode("on", true))
+                        .then(redMode("off", false)))
                 .then(Commands.literal("cooldown")
                         .then(cooldownMode("reset", null))
                         .then(cooldownMode("off", Boolean.TRUE))
@@ -225,6 +228,26 @@ public final class HulkEvents {
                         .executes(c -> remove(c.getSource().getPlayerOrException(), c.getSource()))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> remove(EntityArgument.getPlayer(c, "player"), c.getSource())))));
+    }
+
+    /** /hulk red on|off [player]: the Red Hulk (red skin and HUD). */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack>
+            redMode(String name, boolean red) {
+        return Commands.literal(name)
+                .executes(c -> red(c.getSource().getPlayerOrException(), red, c.getSource()))
+                .then(Commands.argument("player", EntityArgument.player())
+                        .executes(c -> red(EntityArgument.getPlayer(c, "player"), red, c.getSource())));
+    }
+
+    private static int red(ServerPlayer player, boolean red, net.minecraft.commands.CommandSourceStack source) {
+        if (!HulkPowers.has(player)) {
+            source.sendFailure(Component.translatable("commands.flash.hulk.none", player.getDisplayName()));
+            return 0;
+        }
+        HulkPowers.setRed(player, red);
+        source.sendSuccess(() -> Component.translatable(red ? "commands.flash.hulk.red_on" : "commands.flash.hulk.red_off",
+                player.getDisplayName()), true);
+        return 1;
     }
 
     /** /hulk cooldown reset|off|on [player]: clears the cooldowns, or turns them off / back on. */

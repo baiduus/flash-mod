@@ -30,6 +30,15 @@ import net.minecraft.world.entity.HumanoidArm;
 public final class HulkAnimator {
 
     public static final ResourceLocation TEXTURE = new ResourceLocation(FlashMod.MODID, "textures/entity/hulk/hulk.png");
+    public static final ResourceLocation RED_TEXTURE =
+            new ResourceLocation(FlashMod.MODID, "textures/entity/hulk/red_hulk.png");
+    public static final ResourceLocation RED_TRANSFORM_TEXTURE =
+            new ResourceLocation(FlashMod.MODID, "textures/entity/hulk/red_hulk_transform.png");
+
+    private static ResourceLocation texture(net.minecraft.world.entity.player.Player player) {
+        return player != null && HulkState.isRed(player) ? RED_TEXTURE : TEXTURE;
+    }
+
     public static final ResourceLocation TRANSFORM_TEXTURE =
             new ResourceLocation(FlashMod.MODID, "textures/entity/hulk/hulk_transform.png");
     private static final ResourceLocation GEO = new ResourceLocation(FlashMod.MODID, "geo/hulk.geo.json");
@@ -247,7 +256,7 @@ public final class HulkAnimator {
         pose.translate(0.0F, 1.5F, 0.0F);
         pose.scale(k, k, k);
         pose.translate(0.0F, -1.5F, 0.0F);
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture(player)));
         m.render(pose, vc, light, overlay, 0, 1.0F, 1.0F, 1.0F, 1.0F);
         Hold hold = HOLDS.get(player.getUUID());
         if (hold != null && hold.rock() && (now() + partialTick - hold.start()) / 20.0F >= 0.3F) {
@@ -392,7 +401,8 @@ public final class HulkAnimator {
         pose.translate(0.0F, 1.5F, 0.0F);
         pose.scale(f, f, f);
         pose.translate(0.0F, -1.5F, 0.0F);
-        m.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TRANSFORM_TEXTURE)), light, overlay, 0,
+        m.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(HulkState.isRed(player)
+                ? RED_TRANSFORM_TEXTURE : TRANSFORM_TEXTURE)), light, overlay, 0,
                 1.0F, 1.0F, 1.0F, 1.0F);
         // Bruce is drawn with the player's own skin
         m.render(pose, buffers.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())), light,
@@ -423,7 +433,8 @@ public final class HulkAnimator {
         pose.scale(k, k, k);
         // the Hulk's shoulder pivot lands on the vanilla shoulder
         pose.translate(-arm.pivotX() / 16.0F, -arm.pivotY() / 16.0F, -arm.pivotZ() / 16.0F);
-        m.renderBone(arm, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light,
+        m.renderBone(arm, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(
+                texture(Minecraft.getInstance().player))), light,
                 OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, false);
         pose.popPose();
     }

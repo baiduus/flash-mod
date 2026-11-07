@@ -448,5 +448,8 @@
   "ability.flash.hulk.grab": "Agarrar",
   "ability.flash.hulk.grab.description": "V agarra a criatura ou o jogador à frente e o levanta; V de novo arremessa (dano ao bater).",
   "message.flash.hulk_grab_none": "Não há nada ao alcance para agarrar.",
-  "hud.flash.hulk_throw": "Força do arremesso: %s%%"
+  "hud.flash.hulk_throw": "Força do arremesso: %s%%",
+  "commands.flash.hulk.red_on": "%s agora é o Hulk Vermelho.",
+  "commands.flash.hulk.red_off": "%s voltou a ser o Hulk verde.",
+  "gui.flash.theme.red_hulk.title": "Hulk Vermelho"
 }

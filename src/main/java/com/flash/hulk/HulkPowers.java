@@ -40,6 +40,7 @@ public final class HulkPowers {
     private static final String GROW = "grow";
     private static final String COOLDOWNS = "cooldowns";
     private static final String SELECTED = "selected";
+    private static final String RED = "red";
     private static final String HEIGHT = "height";
 
     /** Smallest height (blocks) the height bar allows. */
@@ -334,6 +335,18 @@ public final class HulkPowers {
         sync(player);
     }
 
+    /** Red Hulk: the same powers with red skin and a red HUD (command only for now). */
+    public static boolean isRed(Player player) {
+        return has(player) && tag(player).getBoolean(RED);
+    }
+
+    public static void setRed(ServerPlayer player, boolean red) {
+        CompoundTag tag = tag(player).copy();
+        tag.putBoolean(RED, red);
+        save(player, tag);
+        sync(player);
+    }
+
     /** Level selector (key / Ctrl + key / Ctrl + scroll): moves the active level by one. */
     public static void selectLevel(ServerPlayer player, int direction) {
         if (!has(player)) {
@@ -612,7 +625,8 @@ public final class HulkPowers {
         }
         return new HulkSyncPacket(player.getUUID(), has(player), isTransformed(player), scale(player),
                 level(player), rage(player), temporaryTicks(player), furyTicks(player),
-                destroyBlocks(player), growWithLevel(player), cds, activeLevel(player), chosenHeight(player));
+                destroyBlocks(player), growWithLevel(player), cds, activeLevel(player), chosenHeight(player),
+                isRed(player));
     }
 
     public static void sync(ServerPlayer player) {

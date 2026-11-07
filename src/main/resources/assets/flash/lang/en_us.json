@@ -448,5 +448,8 @@
   "ability.flash.hulk.grab": "Grab",
   "ability.flash.hulk.grab.description": "V grabs the creature or player in front and lifts it; V again throws it (damage on impact).",
   "message.flash.hulk_grab_none": "Nothing in reach to grab.",
-  "hud.flash.hulk_throw": "Throw force: %s%%"
+  "hud.flash.hulk_throw": "Throw force: %s%%",
+  "commands.flash.hulk.red_on": "%s is now the Red Hulk.",
+  "commands.flash.hulk.red_off": "%s is the green Hulk again.",
+  "gui.flash.theme.red_hulk.title": "Red Hulk"
 }
