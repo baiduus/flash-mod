@@ -57,6 +57,8 @@ public final class SupermanPowers {
     public static final int F_COMBO = 512;
     /** Heat vision in laser mode (crouch + key): stronger, melts faster, costs more. */
     public static final int F_LASER = 1024;
+    /** Really in the air with flight on (the client decides it; synced so others see the flight poses). */
+    public static final int F_FLYING = 2048;
     /** Flags that only live while a key is held (cleared on login, death, form change). */
     public static final int TRANSIENT = F_HEAT | F_FREEZE | F_BREATH | F_CHARGE | F_ULTIMATE | F_HOLDING | F_COMBO
             | F_LASER;
@@ -437,6 +439,10 @@ public final class SupermanPowers {
                 level.sendParticles(com.flash.registry.ModParticles.SM_SPARKLE.get(), player.getX(),
                         player.getY() + 1.0D, player.getZ(), high ? 3 : 1, 0.4D, 0.8D, 0.4D, 0.0D);
             }
+        }
+        boolean airborne = superman && player.getAbilities().flying;
+        if (airborne != flag(player, F_FLYING)) {
+            setFlag(player, F_FLYING, airborne);
         }
         if (superman) {
             if (flag(player, F_FLIGHT)) {

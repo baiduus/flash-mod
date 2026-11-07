@@ -117,6 +117,29 @@ public final class SupermanPose {
             return !loop && begin + elapsed >= stop;
         }
 
+        /** One-shot: plays once even when the file loops, then fades out between end and stop. */
+        boolean shotFinished(float elapsed) {
+            return begin + elapsed >= stop;
+        }
+
+        float shotTime(float elapsed) {
+            return Math.min(end, begin + elapsed);
+        }
+
+        float shotWeight(float elapsed) {
+            float in = Math.min(1.0F, elapsed / FADE_TICKS);
+            float t = begin + elapsed;
+            if (t <= end) {
+                return in;
+            }
+            return Math.max(0.0F, Math.min(in, 1.0F - (t - end) / Math.max(1.0F, stop - end)));
+        }
+
+        /** Base / held layer: loops, or stays on the last frame while the state lasts. */
+        float heldTime(float elapsed) {
+            return loop ? time(elapsed) : Math.min(end, begin + elapsed);
+        }
+
         /** Weight while ending (non-looping: fades back to the normal pose between end and stop). */
         float weight(float elapsed) {
             float in = Math.min(1.0F, elapsed / FADE_TICKS);
@@ -322,6 +345,13 @@ public final class SupermanPose {
     private static final class State {
         String base;
         float baseStart;
+        /** Base being faded out (cross-fade over {@link #BLEND_TICKS}). */
+        String prevBase;
+        float prevStart;
+        float switchAt = -100.0F;
+        /** Next base candidate: it must last a few ticks before the switch (no flicker at the thresholds). */
+        String candidate;
+        float candidateSince;
         String hold;
         float holdStart;
         String shot;
@@ -339,21 +369,35 @@ public final class SupermanPose {
         return (mc.level != null ? mc.level.getGameTime() : 0L) + partialTick;
     }
 
-    /** One-shot animation from the server. */
+    private static final float BLEND_TICKS = 5.0F;
+    private static final float SWITCH_DELAY = 3.0F;
+
+    /** One-shot animation from the server; "name@tick" starts it at that tick (to meet the hit). */
     public static void play(UUID player, String animation) {
+        float offset = 0.0F;
+        int at = animation.indexOf('@');
+        if (at > 0) {
+            try {
+                offset = Float.parseFloat(animation.substring(at + 1));
+            } catch (NumberFormatException ignored) {
+                offset = 0.0F;
+            }
+            animation = animation.substring(0, at);
+        }
         if (emote(animation) == null) {
             return;
         }
         State st = STATES.computeIfAbsent(player, id -> new State());
         st.shot = animation;
-        st.shotStart = now(0.0F);
+        // started part-way: skip the fade-in too
+        st.shotStart = now(0.0F) - offset;
     }
 
     private static boolean flying(AbstractClientPlayer player) {
         if (player == Minecraft.getInstance().player) {
             return player.getAbilities().flying;
         }
-        return SupermanState.flag(player, SupermanPowers.F_FLIGHT) && !player.onGround();
+        return SupermanState.flag(player, SupermanPowers.F_FLYING);
     }
 
     /** Base animation from the flight state and the motion. */
@@ -455,13 +499,17 @@ public final class SupermanPose {
         if (SupermanState.flag(player, SupermanPowers.F_HOLDING)) {
             return "grab_hold";
         }
+        if (SupermanState.flag(player, SupermanPowers.F_CHARGE)) {
+            // the punch wound up and held (tick 4 of the punch) until the key is released
+            return "super_punch#4";
+        }
         return null;
     }
 
-    private record Layers(Emote base, float baseTime, float baseWeight, Emote hold, float holdTime, float holdWeight,
-                          Emote shot, float shotTime, float shotWeight) {
+    private record Layers(Emote prev, float prevTime, Emote base, float baseTime, float baseWeight, Emote hold,
+                          float holdTime, float holdWeight, Emote shot, float shotTime, float shotWeight) {
         boolean any() {
-            return base != null || hold != null || shot != null;
+            return prev != null || base != null || hold != null || shot != null;
         }
     }
 
@@ -472,37 +520,72 @@ public final class SupermanPose {
         }
         float time = now(partialTick);
         State st = STATES.computeIfAbsent(player.getUUID(), id -> new State());
-        String base = chooseBase(player, st, time);
-        if (base == null ? st.base != null : !base.equals(st.base)) {
-            st.base = base;
-            st.baseStart = time;
+        String want = chooseBase(player, st, time);
+        if (same(want, st.base)) {
+            st.candidate = null;
+        } else {
+            if (!same(want, st.candidate)) {
+                st.candidate = want;
+                st.candidateSince = time;
+            }
+            // starting / stopping and big changes (dive, ultimate) switch at once; the rest waits a little
+            boolean instant = st.base == null || want == null || "dive9".equals(want)
+                    || "solar_charge".equals(want) || "solar_charge".equals(st.base);
+            if (instant || time - st.candidateSince >= SWITCH_DELAY) {
+                st.prevBase = st.base;
+                st.prevStart = st.baseStart;
+                st.switchAt = time;
+                st.base = want;
+                st.baseStart = time;
+                st.candidate = null;
+            }
         }
         String hold = chooseHold(player);
-        if (hold == null ? st.hold != null : !hold.equals(st.hold)) {
+        if (!same(hold, st.hold)) {
             st.hold = hold;
             st.holdStart = time;
         }
-        Emote b = base != null ? emote(base) : null;
-        Emote h = hold != null ? emote(hold) : null;
+        float blend = Math.min(1.0F, (time - st.switchAt) / BLEND_TICKS);
+        Emote b = st.base != null ? emote(st.base) : null;
+        Emote pv = blend < 1.0F && st.prevBase != null ? emote(st.prevBase) : null;
+        // a held pose can be frozen on one tick ("name#tick")
+        Emote h = null;
+        float hTime = 0.0F;
+        if (hold != null) {
+            int cut = hold.indexOf('#');
+            h = emote(cut > 0 ? hold.substring(0, cut) : hold);
+            if (h != null) {
+                hTime = cut > 0 ? Float.parseFloat(hold.substring(cut + 1)) : h.heldTime(time - st.holdStart);
+            }
+        }
         Emote s = null;
         float sTime = 0.0F;
         float sWeight = 0.0F;
         if (st.shot != null) {
             s = emote(st.shot);
             float el = time - st.shotStart;
-            if (s == null || s.finished(el)) {
+            if (s == null || s.shotFinished(el)) {
                 st.shot = null;
                 s = null;
             } else {
-                sTime = s.time(el);
-                sWeight = s.weight(el);
+                sTime = s.shotTime(el);
+                sWeight = s.shotWeight(el);
             }
         }
-        Layers l = new Layers(b, b != null ? b.time(time - st.baseStart) : 0.0F,
-                b != null ? b.weight(time - st.baseStart) : 0.0F,
-                h, h != null ? h.time(time - st.holdStart) : 0.0F, h != null ? h.weight(time - st.holdStart) : 0.0F,
-                s, sTime, sWeight);
+        // the base fades in over the previous base (or the normal pose when there was none)
+        float bWeight = b == null ? 0.0F : pv != null ? blend : Math.min(1.0F, (time - st.baseStart) / FADE_TICKS);
+        float hWeight = h == null ? 0.0F : Math.min(1.0F, (time - st.holdStart) / FADE_TICKS);
+        Layers l = new Layers(pv, pv != null ? pv.heldTime(time - st.prevStart) : 0.0F,
+                b, b != null ? b.heldTime(time - st.baseStart) : 0.0F, bWeight,
+                h, hTime, hWeight, s, sTime, sWeight);
+        if (pv == null && b == null) {
+            st.prevBase = null;
+        }
         return l.any() ? l : null;
+    }
+
+    private static boolean same(String a, String b) {
+        return a == null ? b == null : a.equals(b);
     }
 
     // ------------------------------------------------------------------
@@ -517,6 +600,35 @@ public final class SupermanPose {
     private static boolean[] savedVisible;
     private static UUID hiddenFor;
     private static Layers pending;
+    /** The model is shared by every player: the pose set here is undone after the render (Post). */
+    private static PlayerModel<?> touched;
+    private static net.minecraft.client.model.geom.PartPose[] savedPoses;
+    private static boolean[] savedVisibleAfter;
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
+        PlayerModel<?> m = touched;
+        if (m == null) {
+            if (hiddenFor != null && savedVisible != null
+                    && event.getRenderer().getModel() instanceof PlayerModel<?> model
+                    && event.getEntity().getUUID().equals(hiddenFor)) {
+                // the layer never ran (spectator, cancelled...): show the parts again
+                ModelPart[] ps = parts(model);
+                for (int i = 0; i < ps.length && i < savedVisible.length; i++) {
+                    ps[i].visible = savedVisible[i];
+                }
+                hiddenFor = null;
+                pending = null;
+            }
+            return;
+        }
+        touched = null;
+        ModelPart[] ps = parts(m);
+        for (int i = 0; i < ps.length; i++) {
+            ps[i].loadPose(savedPoses[i]);
+            ps[i].visible = savedVisibleAfter[i];
+        }
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
@@ -568,8 +680,17 @@ public final class SupermanPose {
             for (int i = 0; i < ps.length && savedVisible != null && i < savedVisible.length; i++) {
                 ps[i].visible = savedVisible[i];
             }
+            // remember the vanilla pose of this frame, restored after the whole render
+            touched = m;
+            savedPoses = new net.minecraft.client.model.geom.PartPose[ps.length];
+            savedVisibleAfter = new boolean[ps.length];
+            for (int i = 0; i < ps.length; i++) {
+                savedPoses[i] = ps[i].storePose();
+                savedVisibleAfter[i] = ps[i].visible;
+            }
             float[] body = new float[6];
             float[] bend = new float[4];
+            apply(m, l.prev(), l.prevTime(), 1.0F, body, bend);
             apply(m, l.base(), l.baseTime(), l.baseWeight(), body, bend);
             apply(m, l.hold(), l.holdTime(), l.holdWeight(), body, bend);
             apply(m, l.shot(), l.shotTime(), l.shotWeight(), body, bend);

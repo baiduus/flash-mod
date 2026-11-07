@@ -78,6 +78,7 @@ public final class SupermanAbilities {
         int ultTicks = -1;
         long clapAt = -1L;
         long launchAt = -1L;
+        long throwAt = -1L;
         final Map<UUID, Held> slowed = new HashMap<>();
         boolean slowing;
     }
@@ -181,7 +182,7 @@ public final class SupermanAbilities {
                     SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
                     SupermanPowers.startFlight(player);
                     sound(player, ModSounds.TAKEOFF.get(), 1.0F, 1.0F);
-                    anim(player, "takeoff");
+                    // the takeoff pose comes from the clients (they see the flight start)
                     if (player.level() instanceof ServerLevel level) {
                         groundPuff(level, player.position(), 1.5D, 16);
                     }
@@ -248,7 +249,11 @@ public final class SupermanAbilities {
 
     private static void press(ServerPlayer player, Session s, SupermanAbility ability) {
         if (ability == SupermanAbility.GRAB && s.grabbed >= 0) {
-            throwHeld(player, s);
+            // the throw lands on the swing of the animation (tick 6)
+            if (s.throwAt < 0L) {
+                s.throwAt = player.level().getGameTime() + 5L;
+                anim(player, "grab_throw");
+            }
             return;
         }
         if (cooling(player, ability)) {
@@ -349,6 +354,12 @@ public final class SupermanAbilities {
         }
         if (s.grabbed >= 0) {
             holdTick(player, level, s);
+        }
+        if (s.throwAt >= 0L && level.getGameTime() >= s.throwAt) {
+            s.throwAt = -1L;
+            if (s.grabbed >= 0) {
+                throwHeld(player, s);
+            }
         }
         if (s.comboTicks >= 0) {
             comboTick(player, level, s);
@@ -586,8 +597,8 @@ public final class SupermanAbilities {
         if (!pay(player, SupermanAbility.CHARGED_PUNCH.energy() + 7.0F * charge)) {
             return;
         }
-        anim(player, "super_punch");
-        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+        // the wind-up was held while charging: the strike starts right at the hit
+        anim(player, "super_punch@4");
         float power = SupermanPowers.power(player);
         Vec3 look = player.getLookAngle();
         Entity target = null;
@@ -802,7 +813,6 @@ public final class SupermanAbilities {
         e.setDeltaMovement(look.scale(speed));
         e.hurtMarked = true;
         THROWN.put(e.getId(), new Thrown(player.getUUID(), level, 10.0F * power, new int[1]));
-        anim(player, "grab_throw");
         sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2F, 0.6F);
         SupermanPowers.setCooldown(player, SupermanAbility.GRAB);
         SupermanPowers.addXp(player, 0.8F);
@@ -1034,8 +1044,7 @@ public final class SupermanAbilities {
     }
 
     private static void hitCombo(ServerPlayer player, ServerLevel level, LivingEntity target, float damage) {
-        anim(player, "super_punch");
-        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+        anim(player, "super_punch@4");
         target.invulnerableTime = 0;
         target.hurt(level.damageSources().playerAttack(player), damage);
         Vec3 p = target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D);
