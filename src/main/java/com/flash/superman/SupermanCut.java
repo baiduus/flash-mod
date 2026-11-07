@@ -20,6 +20,7 @@ import net.minecraftforge.network.PacketDistributor;
  * Laser cut (option of the K menu): the heat vision and the Laser Blast cut the limbs off humanoid creatures where
  * the beam hits (arm, leg or head). No arm = weaker, no legs = slow, no head = dead. Other creatures just bleed.
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.flash.FlashMod.MODID)
 public final class SupermanCut {
 
     public static final int RIGHT_ARM = 1;
@@ -111,6 +112,17 @@ public final class SupermanCut {
         if (limb == HEAD && target.isAlive()) {
             target.invulnerableTime = 0;
             target.hurt(target.level().damageSources().playerAttack(player), Float.MAX_VALUE);
+        }
+    }
+
+    /** A player back to life gets every limb back (everyone stops hiding them). */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onRespawn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            player.getPersistentData().remove(TAG);
+            player.getPersistentData().remove(PROGRESS);
+            FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player),
+                    new SupermanCutPacket(player.getId(), 0, -1, 0.0F, 0.0F, 0.0F));
         }
     }
 

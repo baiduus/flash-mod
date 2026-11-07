@@ -172,8 +172,9 @@ public final class SupermanClient {
             int lvl = Math.max(1, SupermanState.level());
             Vec3 look = p.getLookAngle().multiply(1.0D, 0.0D, 1.0D);
             look = look.lengthSqr() < 1.0E-4D ? Vec3.ZERO : look.normalize();
-            double forward = 0.45D + 0.03D * lvl;
-            p.setDeltaMovement(look.x * forward, 1.1D + 0.04D * lvl, look.z * forward);
+            double forward = 0.7D + 0.04D * lvl;
+            // about 13 blocks up at level 1, 22 at level 10
+            p.setDeltaMovement(look.x * forward, 1.5D + 0.05D * lvl, look.z * forward);
             p.hasImpulse = true;
             p.playSound(ModSounds.TAKEOFF.get(), 0.7F, 1.3F);
             return;

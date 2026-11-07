@@ -142,6 +142,11 @@ public final class SupermanLimbs {
         if (level == null) {
             return;
         }
+        if (limb < 0) {
+            // respawned: all limbs back
+            MASKS.remove(entityId);
+            return;
+        }
         Entity e = level.getEntity(entityId);
         Vector3f color = e != null ? bloodColor(e) : new Vector3f(0.7F, 0.02F, 0.02F);
         if (limb == SupermanCut.BLEED || e == null) {
