@@ -187,6 +187,8 @@ public final class FlashClientForgeEvents {
             // the nested event passes through untouched, so the vanilla hand is drawn
             if (hulk) {
                 // the Hulk's arm replaces the skin arm (drawn below)
+            } else if (suit) {
+                // the suit's arm replaces the skin arm (drawn below)
             } else if (right) {
                 player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),
                         event.getPackedLight(), event.getPlayer());

@@ -13,8 +13,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Kryptonian baby (a joke item, found in the crashed Kryptonian ship): eating it makes the player a temporary
- * Superman for {@link #TICKS} ticks.
+ * Kryptonian baby (a joke item, found in the crashed Kryptonian ship): eating it makes the player Superman for good,
+ * starting at level 1.
  */
 public class KryptonianBabyItem extends Item {
 
@@ -29,7 +29,7 @@ public class KryptonianBabyItem extends Item {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         ItemStack out = super.finishUsingItem(stack, level, entity);
         if (entity instanceof ServerPlayer player) {
-            SupermanPowers.grantTemporary(player, TICKS);
+            SupermanPowers.grantFromBaby(player);
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TOTEM_USE,
                     SoundSource.PLAYERS, 0.8F, 1.3F);
         }

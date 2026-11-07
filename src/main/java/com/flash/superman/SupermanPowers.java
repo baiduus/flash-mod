@@ -154,6 +154,25 @@ public final class SupermanPowers {
     }
 
     /** Temporary Superman (the Kryptonian baby): granted and transformed at once, gone when the time runs out. */
+    /** Kryptonian baby: Superman for good, starting at level 1 (an old temporary power becomes permanent). */
+    public static void grantFromBaby(ServerPlayer player) {
+        if (has(player)) {
+            if (tag(player).getLong(TEMP_UNTIL) > 0L) {
+                CompoundTag tag = tag(player).copy();
+                tag.remove(TEMP_UNTIL);
+                save(player, tag);
+            }
+            if (!isSuperman(player)) {
+                setForm(player, true);
+            } else {
+                sync(player);
+            }
+        } else {
+            grant(player, true);
+        }
+        player.displayClientMessage(Component.translatable("message.flash.superman_baby"), false);
+    }
+
     public static void grantTemporary(ServerPlayer player, int ticks) {
         boolean had = has(player);
         if (had && tag(player).getLong(TEMP_UNTIL) <= 0L) {
@@ -514,6 +533,9 @@ public final class SupermanPowers {
                 player.setAirSupply(player.getMaxAirSupply());
             }
             applyRun(player, flag(player, F_SPEED));
+            SupermanMeteor.tick(player);
+        } else {
+            SupermanMeteor.clear(player);
         }
         SupermanAbilities.tick(player);
         if (player.tickCount % 10 == 0) {

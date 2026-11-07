@@ -1325,7 +1325,7 @@ public final class SupermanAbilities {
     // ------------------------------------------------------------------
 
     /** Dust and puffs blown out along the ground. */
-    private static void groundPuff(ServerLevel level, Vec3 at, double radius, int count) {
+    static void groundPuff(ServerLevel level, Vec3 at, double radius, int count) {
         for (int i = 0; i < count; i++) {
             double a = i * Math.PI * 2.0D / count;
             double sp = 0.15D + radius * 0.06D;
@@ -1336,7 +1336,7 @@ public final class SupermanAbilities {
     }
 
     /** Cracks spreading on the ground (drawn by the clients). */
-    private static void cracks(ServerLevel level, Vec3 at, float radius) {
+    static void cracks(ServerLevel level, Vec3 at, float radius) {
         fxAt(level, SupermanFxPacket.CRACKS, at, new Vec3(0, 1, 0), radius);
     }
 
@@ -1352,7 +1352,7 @@ public final class SupermanAbilities {
         fxAt(player.serverLevel(), kind, at, dir, scale);
     }
 
-    private static void fxAt(ServerLevel level, int kind, Vec3 at, Vec3 dir, float scale) {
+    static void fxAt(ServerLevel level, int kind, Vec3 at, Vec3 dir, float scale) {
         FlashNetwork.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
                         at.x, at.y, at.z, 128.0D, level.dimension())),
                 new SupermanFxPacket(kind, at.x, at.y, at.z, (float) dir.x, (float) dir.y, (float) dir.z, scale));

@@ -582,7 +582,7 @@
   "item.flash.kryptonian_baby": "Kryptonian Baby",
   "item.flash.kryptonian_debris": "Kryptonian Debris",
   "tooltip.flash.kryptonian_baby": "Found in a crashed ship. Rumor says it tastes... powerful.",
-  "tooltip.flash.kryptonian_baby.2": "Eat it to become Superman for 10 minutes.",
+  "tooltip.flash.kryptonian_baby.2": "Eat it to become Superman (starts at level 1).",
   "tooltip.flash.kryptonian_debris": "A crystal shard from a Kryptonian ship.",
   "tooltip.flash.kryptonian_debris.2": "Still warm.",
   "message.flash.superman_temporary": "You became Superman for %s minutes!",
@@ -614,5 +614,6 @@
   "suit.flash.superman_antikryptonite": "Anti-Kryptonite",
   "suit.flash.superman_sal": "Superman (2025)",
   "suit.flash.superman_wonk": "Wonk",
-  "suit.flash.superman_clark_kent": "Clark Kent"
+  "suit.flash.superman_clark_kent": "Clark Kent",
+  "message.flash.superman_baby": "Krypton's power is yours now! You became Superman."
 }

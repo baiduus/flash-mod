@@ -6,7 +6,6 @@ import com.flash.superman.SupermanPowers;
 import com.flash.superman.SupermanState;
 import com.flash.superman.SupermanSuits;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.model.PlayerModel;
@@ -19,14 +18,15 @@ import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import org.joml.Quaternionf;
 
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = FlashMod.MODID,
+        value = net.minecraftforge.api.distmarker.Dist.CLIENT)
 /**
  * The Superman suit chosen in the K menu, drawn with the pack's 3D model (geo/superman/&lt;suit&gt;.geo.json) on the
  * body parts of the player while in the Superman form: layer_0 (top, arms, boots), layer_1 (trousers), glowing eyes
- * during the heat vision, helmet overlay and the cape.
+ * during the heat vision, helmet overlay and the cloth cape ({@link SupermanCape}). It replaces the skin.
  */
 public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
@@ -39,6 +39,27 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     public static void reset() {
         MODELS.clear();
+    }
+
+    /** The suit replaces the skin: the player's own model parts are hidden while it is worn. */
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onRenderPlayer(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        if (event.isCanceled() || !(event.getEntity() instanceof AbstractClientPlayer player) || worn(player) == null) {
+            return;
+        }
+        PlayerModel<AbstractClientPlayer> m = event.getRenderer().getModel();
+        m.head.visible = false;
+        m.hat.visible = false;
+        m.body.visible = false;
+        m.jacket.visible = false;
+        m.rightArm.visible = false;
+        m.rightSleeve.visible = false;
+        m.leftArm.visible = false;
+        m.leftSleeve.visible = false;
+        m.rightLeg.visible = false;
+        m.rightPants.visible = false;
+        m.leftLeg.visible = false;
+        m.leftPants.visible = false;
     }
 
     private static GeoModel model(String id) {
@@ -85,19 +106,11 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             return;
         }
         model.reset();
-        for (String b : BONES) {
-            GeoModel.Bone bone = model.bone(b);
-            if (bone != null) {
-                bone.sx *= 1.03F;
-                bone.sy *= 1.03F;
-                bone.sz *= 1.03F;
-            }
-        }
         PlayerModel<AbstractClientPlayer> parent = this.getParentModel();
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         RenderType top = RenderType.entityCutoutNoCull(tex(id, "layer_0"));
         RenderType bottom = RenderType.entityCutoutNoCull(tex(id, "layer_1"));
-        for (String b : new String[] {"body", "right_leg", "left_leg"}) {
+        for (String b : new String[] {"right_leg", "left_leg"}) {
             draw(model, parent, b, pose, buffers, bottom, light, overlay);
         }
         for (String b : BONES) {
@@ -112,7 +125,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
                     0xF000F0, overlay);
         }
         if (SupermanSuits.hasCape(id) && !player.isSpectator()) {
-            cape(pose, buffers, light, player, partialTick, tex(id, "cape"));
+            SupermanCape.render(pose, buffers, light, player, this.getParentModel(), partialTick, tex(id, "cape"));
         }
     }
 
@@ -123,9 +136,6 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             return;
         }
         ModelPart part = part(parent, boneName);
-        if (!part.visible) {
-            return;
-        }
         pose.pushPose();
         pose.translate(part.x / 16.0F, part.y / 16.0F, part.z / 16.0F);
         if (part.xRot != 0.0F || part.yRot != 0.0F || part.zRot != 0.0F) {
@@ -136,33 +146,6 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
         pose.translate(-bone.pivotX() / 16.0F, -bone.pivotY() / 16.0F, -bone.pivotZ() / 16.0F);
         model.renderBone(bone, pose, buffers.getBuffer(type), light, overlay, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
-        pose.popPose();
-    }
-
-    /** The vanilla cape math (CapeLayer) with the suit's cape texture. */
-    private void cape(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, float pt,
-                      ResourceLocation texture) {
-        pose.pushPose();
-        pose.translate(0.0F, 0.0F, 0.125F);
-        double d0 = Mth.lerp(pt, player.xCloakO, player.xCloak) - Mth.lerp(pt, player.xo, player.getX());
-        double d1 = Mth.lerp(pt, player.yCloakO, player.yCloak) - Mth.lerp(pt, player.yo, player.getY());
-        double d2 = Mth.lerp(pt, player.zCloakO, player.zCloak) - Mth.lerp(pt, player.zo, player.getZ());
-        float f = Mth.rotLerp(pt, player.yBodyRotO, player.yBodyRot);
-        double d3 = Mth.sin(f * Mth.DEG_TO_RAD);
-        double d4 = -Mth.cos(f * Mth.DEG_TO_RAD);
-        float f1 = Mth.clamp((float) d1 * 10.0F, -6.0F, 32.0F);
-        float f2 = Mth.clamp((float) (d0 * d3 + d2 * d4) * 100.0F, 0.0F, 150.0F);
-        float f3 = Mth.clamp((float) (d0 * d4 - d2 * d3) * 100.0F, -20.0F, 20.0F);
-        float bob = Mth.lerp(pt, player.oBob, player.bob);
-        f1 += Mth.sin(Mth.lerp(pt, player.walkDistO, player.walkDist) * 6.0F) * 32.0F * bob;
-        if (player.isCrouching()) {
-            f1 += 25.0F;
-        }
-        pose.mulPose(Axis.XP.rotationDegrees(6.0F + f2 / 2.0F + f1));
-        pose.mulPose(Axis.ZP.rotationDegrees(f3 / 2.0F));
-        pose.mulPose(Axis.YP.rotationDegrees(180.0F - f3 / 2.0F));
-        this.getParentModel().renderCloak(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(texture)), light,
-                OverlayTexture.NO_OVERLAY);
         pose.popPose();
     }
 
@@ -179,12 +162,13 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
         model.reset();
         String b = arm == HumanoidArm.RIGHT ? "right_arm" : "left_arm";
-        GeoModel.Bone bone = model.bone(b);
-        if (bone != null) {
-            bone.sx *= 1.03F;
-            bone.sy *= 1.03F;
-            bone.sz *= 1.03F;
-        }
+        // the arm as the hand render sets it up (renderHand), without the skin under it
+        parent.attackTime = 0.0F;
+        parent.crouching = false;
+        parent.swimAmount = 0.0F;
+        parent.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+        ModelPart part = part(parent, b);
+        part.xRot = 0.0F;
         draw(model, parent, b, pose, buffers, RenderType.entityCutoutNoCull(tex(id, "layer_0")), light,
                 OverlayTexture.NO_OVERLAY);
     }

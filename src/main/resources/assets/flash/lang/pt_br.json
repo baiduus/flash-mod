@@ -582,7 +582,7 @@
   "item.flash.kryptonian_baby": "Bebê Kryptoniano",
   "item.flash.kryptonian_debris": "Destroços Kryptonianos",
   "tooltip.flash.kryptonian_baby": "Encontrado numa nave caída. Dizem que tem um gosto... poderoso.",
-  "tooltip.flash.kryptonian_baby.2": "Coma para virar o Superman por 10 minutos.",
+  "tooltip.flash.kryptonian_baby.2": "Coma para virar o Superman (começa no nível 1).",
   "tooltip.flash.kryptonian_debris": "Fragmento de cristal de uma nave de Krypton.",
   "tooltip.flash.kryptonian_debris.2": "Ainda está quente.",
   "message.flash.superman_temporary": "Você virou o Superman por %s minutos!",
@@ -614,5 +614,6 @@
   "suit.flash.superman_antikryptonite": "Anti-Kryptonita",
   "suit.flash.superman_sal": "Superman (2025)",
   "suit.flash.superman_wonk": "Wonk",
-  "suit.flash.superman_clark_kent": "Clark Kent"
+  "suit.flash.superman_clark_kent": "Clark Kent",
+  "message.flash.superman_baby": "O poder de Krypton agora é seu! Você virou o Superman."
 }
