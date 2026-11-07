@@ -37,6 +37,9 @@ public final class SupermanPowers {
     private static final String COOLDOWNS = "cooldowns";
     private static final String NO_COOLDOWNS = "noCooldowns";
     private static final String INFINITE = "infiniteEnergy";
+    private static final String SUIT = "suit";
+    /** Game time when a temporary power (the Kryptonian baby) ends, 0 = permanent. */
+    private static final String TEMP_UNTIL = "tempUntil";
 
     public static final int MAX_LEVEL = 10;
     public static final float MAX_ENERGY = 100.0F;
@@ -125,6 +128,54 @@ public final class SupermanPowers {
 
     public static boolean noCooldowns(Player player) {
         return has(player) && tag(player).getBoolean(NO_COOLDOWNS);
+    }
+
+    public static int suit(Player player) {
+        return has(player) ? SupermanSuits.clamp(tag(player).getInt(SUIT)) : 0;
+    }
+
+    public static void setSuit(ServerPlayer player, int index) {
+        if (!has(player)) {
+            return;
+        }
+        CompoundTag tag = tag(player).copy();
+        tag.putInt(SUIT, SupermanSuits.clamp(index));
+        save(player, tag);
+        sync(player);
+    }
+
+    /** Ticks left of a temporary power, 0 when permanent (or none). */
+    public static int temporaryTicks(Player player) {
+        if (!has(player)) {
+            return 0;
+        }
+        long until = tag(player).getLong(TEMP_UNTIL);
+        return until <= 0L ? 0 : (int) Math.max(0L, until - player.level().getGameTime());
+    }
+
+    /** Temporary Superman (the Kryptonian baby): granted and transformed at once, gone when the time runs out. */
+    public static void grantTemporary(ServerPlayer player, int ticks) {
+        boolean had = has(player);
+        if (had && tag(player).getLong(TEMP_UNTIL) <= 0L) {
+            // already permanent: just transforms
+            if (!isSuperman(player)) {
+                setForm(player, true);
+            }
+            return;
+        }
+        if (!had) {
+            grant(player, false);
+        }
+        CompoundTag tag = tag(player).copy();
+        long base = Math.max(player.level().getGameTime(), tag.getLong(TEMP_UNTIL));
+        tag.putLong(TEMP_UNTIL, base + ticks);
+        save(player, tag);
+        if (!isSuperman(player)) {
+            setForm(player, true);
+        } else {
+            sync(player);
+        }
+        player.displayClientMessage(Component.translatable("message.flash.superman_temporary", ticks / 1200), false);
     }
 
     public static boolean infiniteEnergy(Player player) {
@@ -432,6 +483,13 @@ public final class SupermanPowers {
         if (!has(player)) {
             return;
         }
+        long tempUntil = tag(player).getLong(TEMP_UNTIL);
+        if (tempUntil > 0L && player.level().getGameTime() >= tempUntil) {
+            // the Kryptonian baby wore off
+            revoke(player);
+            player.displayClientMessage(Component.translatable("message.flash.superman_temporary_end"), false);
+            return;
+        }
         boolean superman = isSuperman(player);
         boolean sun = inSunlight(player);
         boolean high = player.getY() > HIGH_ALTITUDE;
@@ -588,7 +646,7 @@ public final class SupermanPowers {
         }
         return new SupermanSyncPacket(player.getUUID(), has(player), isSuperman(player), level(player), xp(player),
                 energy(player), flags(player), destroyBlocks(player), cds, noCooldowns(player),
-                infiniteEnergy(player), inSunlight(player));
+                infiniteEnergy(player), inSunlight(player), suit(player), temporaryTicks(player));
     }
 
     public static void sync(ServerPlayer player) {

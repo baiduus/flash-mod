@@ -701,6 +701,31 @@ public class FlashProgressScreen extends Screen {
         drawSwitch(g, "ssw1", switchX(), cfgY(1) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
         configRow(g, 2, "gui.flash.superman.cfg.energy", "gui.flash.superman.cfg.energy.desc", mx, my);
         configRow(g, 3, "gui.flash.superman.cfg.commands", "gui.flash.superman.cfg.commands.desc", mx, my);
+        configRow(g, 4, "gui.flash.superman.cfg.suit", "gui.flash.superman.cfg.suit.desc", mx, my);
+        drawSuitPicker(g, cfgY(4) + 7, mx, my);
+    }
+
+    private static int suitPickerX() {
+        return PW - PAD - 12 - 2 * SEG_W;
+    }
+
+    /** Suit selector: arrows on the sides, suit name and number in the middle. */
+    private void drawSuitPicker(GuiGraphics g, int y, int mx, int my) {
+        int x = suitPickerX();
+        int w = 2 * SEG_W;
+        int idx = com.flash.superman.SupermanSuits.clamp(com.flash.superman.SupermanState.suit(this.minecraft.player));
+        g.fill(x, y, x + w, y + SEG_H, COLOR_BORDER);
+        g.fill(x + 1, y + 1, x + w - 1, y + SEG_H - 1, COLOR_TRACK);
+        boolean hl = inside(mx, my, x, y, 20, SEG_H);
+        boolean hr = inside(mx, my, x + w - 20, y, 20, SEG_H);
+        g.fill(x + 1, y + 1, x + 20, y + SEG_H - 1, hl ? accentDark() : withAlpha(accent(), 0.18F));
+        g.fill(x + w - 20, y + 1, x + w - 1, y + SEG_H - 1, hr ? accentDark() : withAlpha(accent(), 0.18F));
+        g.drawCenteredString(this.font, "<", x + 10, y + 6, hl ? 0xFFFFFFFF : accent());
+        g.drawCenteredString(this.font, ">", x + w - 10, y + 6, hr ? 0xFFFFFFFF : accent());
+        String name = this.font.plainSubstrByWidth(com.flash.superman.SupermanSuits.name(idx).getString(), w - 70);
+        String num = (idx + 1) + "/" + com.flash.superman.SupermanSuits.IDS.length;
+        g.drawCenteredString(this.font, name, x + w / 2 - 8, y + 6, COLOR_TEXT);
+        g.drawString(this.font, num, x + w - 24 - this.font.width(num), y + 6, COLOR_MUTED, false);
     }
 
     private boolean clickSupermanConfig(int mx, int my) {
@@ -714,6 +739,20 @@ public class FlashProgressScreen extends Screen {
         if (inRow(mx, my, 1)) {
             FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
             click();
+            return true;
+        }
+        if (inRow(mx, my, 4)) {
+            int x = suitPickerX();
+            int y = cfgY(4) + 7;
+            int w = 2 * SEG_W;
+            int step = inside(mx, my, x, y, w / 2, SEG_H) ? -1 : inside(mx, my, x + w / 2, y, w / 2, SEG_H) ? 1 : 0;
+            if (step != 0 && this.minecraft.player != null) {
+                int n = com.flash.superman.SupermanSuits.IDS.length;
+                int idx = Math.floorMod(com.flash.superman.SupermanState.suit(this.minecraft.player) + step, n);
+                com.flash.superman.SupermanState.setSuit(this.minecraft.player.getUUID(), idx, -1, 0L);
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanSuitPacket(idx));
+                click();
+            }
             return true;
         }
         return inRow(mx, my, 2) || inRow(mx, my, 3);

@@ -11,7 +11,7 @@ import net.minecraftforge.network.NetworkEvent;
 /** Server -> client: Superman state of a player (form and flags for everyone, the rest for himself). */
 public record SupermanSyncPacket(UUID playerId, boolean has, boolean superman, int level, float xp, float energy,
                                  int flags, boolean destroy, int[] cooldowns, boolean noCooldowns,
-                                 boolean infinite, boolean sun) {
+                                 boolean infinite, boolean sun, int suit, int tempTicks) {
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUUID(this.playerId);
@@ -29,12 +29,14 @@ public record SupermanSyncPacket(UUID playerId, boolean has, boolean superman, i
         buffer.writeBoolean(this.noCooldowns);
         buffer.writeBoolean(this.infinite);
         buffer.writeBoolean(this.sun);
+        buffer.writeVarInt(this.suit);
+        buffer.writeVarInt(Math.max(0, this.tempTicks));
     }
 
     public SupermanSyncPacket(FriendlyByteBuf buffer) {
         this(buffer.readUUID(), buffer.readBoolean(), buffer.readBoolean(), buffer.readVarInt(), buffer.readFloat(),
                 buffer.readFloat(), buffer.readVarInt(), buffer.readBoolean(), readInts(buffer), buffer.readBoolean(),
-                buffer.readBoolean(), buffer.readBoolean());
+                buffer.readBoolean(), buffer.readBoolean(), buffer.readVarInt(), buffer.readVarInt());
     }
 
     private static int[] readInts(FriendlyByteBuf buffer) {
@@ -58,6 +60,7 @@ public record SupermanSyncPacket(UUID playerId, boolean has, boolean superman, i
             long now = mc.level != null ? mc.level.getGameTime() : 0L;
             SupermanState.setClient(p.playerId, p.has, p.superman, p.flags, local, p.level, p.xp, p.energy,
                     p.destroy, p.cooldowns, p.noCooldowns, p.infinite, p.sun, now);
+            SupermanState.setSuit(p.playerId, p.suit, local ? p.tempTicks : -1, now);
         }
     }
 }

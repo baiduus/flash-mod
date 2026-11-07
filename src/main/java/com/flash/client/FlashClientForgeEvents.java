@@ -172,7 +172,9 @@ public final class FlashClientForgeEvents {
         boolean right = event.getArm() == net.minecraft.world.entity.HumanoidArm.RIGHT;
         boolean ring = right && FlashClientRing.has(event.getPlayer());
         boolean hulk = com.flash.hulk.HulkState.isTransformed(event.getPlayer());
-        if (!ring && !hulk) {
+        boolean suit = !hulk && event.getPlayer() instanceof net.minecraft.client.player.AbstractClientPlayer acp
+                && SupermanSuitLayer.worn(acp) != null;
+        if (!ring && !hulk && !suit) {
             return;
         }
         net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
@@ -198,6 +200,10 @@ public final class FlashClientForgeEvents {
         }
         if (hulk) {
             HulkClient.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
+                    event.getPlayer(), player.getModel(), event.getArm());
+        }
+        if (suit) {
+            SupermanSuitLayer.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
                     event.getPlayer(), player.getModel(), event.getArm());
         }
         if (ring) {

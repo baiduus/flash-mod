@@ -1,0 +1,7 @@
+{
+  "type": "flash:kryptonian_ship",
+  "biomes": "#flash:has_structure/kryptonian_ship",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

@@ -255,10 +255,21 @@ public class FlashHud implements IGuiOverlay {
                 }
             }
         }
+        int extraY = y + boxHeight + 4;
+        int temp = com.flash.superman.SupermanState.temporaryTicks(mc.level.getGameTime());
+        if (temp > 0) {
+            String t = Component.translatable("hud.flash.superman_temporary", time(temp)).getString();
+            int tw = font.width(t) + 14;
+            g.fill(x, extraY, x + tw, extraY + 14, FlashHudStyle.PANEL);
+            FlashHudStyle.barVertical(g, x, extraY, 3, 14);
+            g.drawString(font, t, x + 8, extraY + 3, temp < 1200 && (mc.player.tickCount / 10) % 2 == 0
+                    ? 0xFFFF5050 : 0xFF7FD6FF, true);
+            extraY += 18;
+        }
         // ultimate charging: the solar countdown
         if (com.flash.superman.SupermanState.flag(mc.player, com.flash.superman.SupermanPowers.F_ULTIMATE)) {
             String t = Component.translatable("hud.flash.superman_ultimate").getString();
-            int ty = y + boxHeight + 4;
+            int ty = extraY;
             int tw = font.width(t) + 14;
             g.fill(x, ty, x + tw, ty + 14, FlashHudStyle.PANEL);
             FlashHudStyle.barVertical(g, x, ty, 3, 14);

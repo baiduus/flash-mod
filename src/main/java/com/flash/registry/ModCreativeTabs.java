@@ -24,6 +24,8 @@ public final class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModItems.TRANSFORMATION_CHAMBER.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.TRANSFORMATION_CHAMBER.get());
+                        output.accept(ModItems.KRYPTONIAN_BABY.get());
+                        output.accept(ModItems.KRYPTONIAN_DEBRIS.get());
                         output.accept(ModItems.POTION_CONTAINER.get());
                         output.accept(ModItems.ACCELERATION_STONE.get());
                         output.accept(ModItems.ACCELERATION_CRYSTAL.get());

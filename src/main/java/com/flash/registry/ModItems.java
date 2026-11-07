@@ -48,6 +48,12 @@ public final class ModItems {
             () -> new net.minecraft.world.item.BlockItem(ModBlocks.NEGATIVE_CRYSTAL.get(),
                     new Item.Properties()));
 
+    public static final RegistryObject<Item> KRYPTONIAN_BABY = ITEMS.register("kryptonian_baby",
+            com.flash.item.KryptonianBabyItem::new);
+    public static final RegistryObject<Item> KRYPTONIAN_DEBRIS = ITEMS.register("kryptonian_debris",
+            () -> new FlashTooltipItem(new Item.Properties(), "tooltip.flash.kryptonian_debris",
+                    "tooltip.flash.kryptonian_debris.2"));
+
     public static final RegistryObject<Item> TORN_SUIT = ITEMS.register(
             "torn_suit",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(1),

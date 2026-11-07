@@ -109,7 +109,34 @@ public final class SupermanState {
         return c > 0 ? Math.max(0, c - elapsed) : 0;
     }
 
+    private static final Map<UUID, Integer> SUITS = new ConcurrentHashMap<>();
+    private static volatile int tempTicks;
+    private static volatile long tempSyncedAt;
+
+    public static void setSuit(UUID id, int suit, int temp, long now) {
+        SUITS.put(id, suit);
+        if (temp >= 0) {
+            tempTicks = temp;
+            tempSyncedAt = now;
+        }
+    }
+
+    /** Suit index chosen by a player (client side; 0 = classic). */
+    public static int suit(Player player) {
+        if (player.level().isClientSide) {
+            return SUITS.getOrDefault(player.getUUID(), 0);
+        }
+        return SupermanPowers.suit(player);
+    }
+
+    /** Ticks left of the local temporary power (0 = permanent). */
+    public static int temporaryTicks(long now) {
+        return tempTicks <= 0 ? 0 : (int) Math.max(0L, tempTicks - (now - tempSyncedAt));
+    }
+
     public static void resetClient() {
+        SUITS.clear();
+        tempTicks = 0;
         CLIENT.clear();
         level = 0;
         xp = 0.0F;

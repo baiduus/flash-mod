@@ -23,6 +23,12 @@ public final class ModStructures {
     public static final RegistryObject<StructurePieceType> FLASH_MUSEUM_PIECE =
             PIECE_TYPES.register("flash_museum", () -> (context, tag) -> new FlashMuseumPiece(tag));
 
+    public static final RegistryObject<StructureType<com.flash.worldgen.KryptonianShipStructure>> KRYPTONIAN_SHIP =
+            STRUCTURE_TYPES.register("kryptonian_ship", () -> () -> com.flash.worldgen.KryptonianShipStructure.CODEC);
+
+    public static final RegistryObject<StructurePieceType> KRYPTONIAN_SHIP_PIECE =
+            PIECE_TYPES.register("kryptonian_ship", () -> (context, tag) -> new com.flash.worldgen.KryptonianShipPiece(tag));
+
     private ModStructures() {
     }
 }
