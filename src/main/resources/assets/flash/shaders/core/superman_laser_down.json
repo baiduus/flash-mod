@@ -1,0 +1,23 @@
+{
+  "vertex": "flash:superman_laser_quad",
+  "fragment": "flash:superman_laser_down",
+  "attributes": [
+    "Position"
+  ],
+  "samplers": [
+    {
+      "name": "Src"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "SrcTexel",
+      "type": "float",
+      "count": 2,
+      "values": [
+        1.0,
+        1.0
+      ]
+    }
+  ]
+}

@@ -248,8 +248,20 @@ public final class SupermanClient {
         return BEAM_ENDS.get(player);
     }
 
+    /** One heat vision of this frame: both eye points, where it hits, laser mode, seen in first person. */
+    public record Beam(Player player, Vec3 rightEye, Vec3 leftEye, Vec3 stop, boolean laser, boolean firstPerson) {
+    }
+
+    private static final List<Beam> BEAMS = new ArrayList<>();
+
+    /** The heat vision beams of this frame (filled after the entities are drawn). */
+    public static List<Beam> beams() {
+        return BEAMS;
+    }
+
     private static void renderBeams(RenderLevelStageEvent event, Minecraft mc, ClientLevel level) {
         BEAM_ENDS.clear();
+        BEAMS.clear();
         List<Player> users = new ArrayList<>();
         for (Player p : level.players()) {
             if (SupermanState.flag(p, SupermanPowers.F_HEAT) && SupermanState.isSuperman(p)) {
@@ -290,6 +302,12 @@ public final class SupermanClient {
             boolean laser = SupermanState.flag(p, SupermanPowers.F_LASER);
             float thick = laser ? 1.8F : 1.0F;
             double spread = firstPerson ? 0.09D : 0.065D;
+            BEAMS.add(new Beam(p, start.add(side.scale(-spread)), start.add(side.scale(spread)), stop, laser,
+                    firstPerson));
+            if (SupermanShaders.ready()) {
+                // drawn by the pack shaders at the end of the level render
+                continue;
+            }
             for (int s = -1; s <= 1; s += 2) {
                 List<Vec3> points = new ArrayList<>();
                 Vec3 from = start.add(side.scale(s * spread));

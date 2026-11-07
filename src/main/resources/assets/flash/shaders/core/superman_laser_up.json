@@ -1,0 +1,35 @@
+{
+  "vertex": "flash:superman_laser_quad",
+  "fragment": "flash:superman_laser_up",
+  "attributes": [
+    "Position"
+  ],
+  "samplers": [
+    {
+      "name": "Src"
+    },
+    {
+      "name": "Cur"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "SrcTexel",
+      "type": "float",
+      "count": 2,
+      "values": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "Weights",
+      "type": "float",
+      "count": 2,
+      "values": [
+        1.0,
+        1.0
+      ]
+    }
+  ]
+}

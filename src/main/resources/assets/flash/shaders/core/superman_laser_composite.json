@@ -1,0 +1,28 @@
+{
+  "vertex": "flash:superman_laser_quad",
+  "fragment": "flash:superman_laser_composite",
+  "attributes": [
+    "Position"
+  ],
+  "samplers": [
+    {
+      "name": "SceneSampler"
+    },
+    {
+      "name": "BloomSampler"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "CompositeParams",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

@@ -232,7 +232,9 @@ public final class SupermanFx {
                 side = side.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : side.normalize();
                 VertexConsumer glow = buffers.getBuffer(RenderType.eyes(GLOW));
                 boolean firstPerson = p == mc.player && mc.options.getCameraType().isFirstPerson();
-                if (!firstPerson) {
+                // with the pack shaders the eye and impact flares come from the beam shader
+                boolean shaders = SupermanShaders.ready();
+                if (!firstPerson && !shaders) {
                     for (int s = -1; s <= 1; s += 2) {
                         billboard(glow, m, eye.add(look.scale(0.26D)).add(side.scale(s * 0.065D)).add(0, 0.02D, 0),
                                 left, up, laser ? 0.35F : 0.22F, 1.0F, 0.25F, 0.1F, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F);
@@ -241,8 +243,10 @@ public final class SupermanFx {
                 Vec3 hit = SupermanClient.beamEnd(p.getUUID());
                 if (hit != null) {
                     float pulse = 0.8F + 0.2F * (float) Math.sin(time * 1.7F);
-                    billboard(glow, m, hit, left, up, (laser ? 1.6F : 1.0F) * pulse, 1.0F, 0.35F, 0.08F, 1.0F,
-                            0.0F, 0.0F, 1.0F, 1.0F);
+                    if (!shaders) {
+                        billboard(glow, m, hit, left, up, (laser ? 1.6F : 1.0F) * pulse, 1.0F, 0.35F, 0.08F, 1.0F,
+                                0.0F, 0.0F, 1.0F, 1.0F);
+                    }
                     // laser clash: two beams meeting
                     for (Player o : level.players()) {
                         if (o == p || !SupermanState.flag(o, SupermanPowers.F_HEAT)) {
