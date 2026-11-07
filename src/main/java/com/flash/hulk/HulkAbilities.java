@@ -670,10 +670,12 @@ public final class HulkAbilities {
     private static final Map<Integer, Flight> FLIGHTS = new ConcurrentHashMap<>();
 
     private static void superThrow(ServerPlayer player, ServerLevel level, LivingEntity target, Vec3 look) {
-        Vec3 flat = new Vec3(look.x, 0.0D, look.z);
-        flat = flat.lengthSqr() < 1.0E-4D ? flatLook(player) : flat.normalize();
-        FLIGHTS.put(target.getId(), new Flight(player.getUUID(), target.position(), flat,
-                150.0D + Math.max(0.0D, look.y) * 150.0D, player.tickCount));
+        // aimed: the whole 3D direction the Hulk looks at (up, down or straight ahead)
+        Vec3 aim = look.lengthSqr() < 1.0E-4D ? flatLook(player) : look.normalize();
+        // only a small arc on top of the straight line, smaller the steeper the aim
+        double arc = 40.0D * (1.0D - Math.abs(aim.y));
+        FLIGHTS.put(target.getId(), new Flight(player.getUUID(), target.position().add(0.0D, 1.0D, 0.0D), aim,
+                arc, player.tickCount));
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 3.0F, 0.4F);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE,
@@ -747,9 +749,10 @@ public final class HulkAbilities {
 
     /** Point of the super-throw arc at {@code t} (0..1). */
     private static Vec3 flightPoint(Flight f, double t) {
-        return new Vec3(f.from().x + f.dir().x * SUPER_DISTANCE * t,
-                f.from().y + 4.0D * f.peak() * t * (1.0D - t),
-                f.from().z + f.dir().z * SUPER_DISTANCE * t);
+        double y = f.from().y + f.dir().y * SUPER_DISTANCE * t + 4.0D * f.peak() * t * (1.0D - t);
+        // never above the build limit: it flies along the top of the world instead
+        y = Math.min(y, 318.0D);
+        return new Vec3(f.from().x + f.dir().x * SUPER_DISTANCE * t, y, f.from().z + f.dir().z * SUPER_DISTANCE * t);
     }
 
     private static void move(LivingEntity target, double x, double y, double z) {
