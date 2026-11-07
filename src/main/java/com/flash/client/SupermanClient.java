@@ -131,6 +131,9 @@ public final class SupermanClient {
     private static int holdTicks;
     private static boolean jumpWasDown;
     private static boolean waitRelease;
+    /** Horizontal push of the big leap, kept for its first ticks (the ground friction would eat it). */
+    private static Vec3 leapVel = Vec3.ZERO;
+    private static int leapTicks;
     private static int launchedFor = -1;
 
     /**
@@ -170,11 +173,16 @@ public final class SupermanClient {
         if (pressed && input.shiftKeyDown && p.onGround() && jumpHeld < 0) {
             input.jumping = false;
             int lvl = Math.max(1, SupermanState.level());
-            Vec3 look = p.getLookAngle().multiply(1.0D, 0.0D, 1.0D);
-            look = look.lengthSqr() < 1.0E-4D ? Vec3.ZERO : look.normalize();
-            double forward = 0.7D + 0.04D * lvl;
-            // about 13 blocks up at level 1, 22 at level 10
-            p.setDeltaMovement(look.x * forward, 1.5D + 0.05D * lvl, look.z * forward);
+            // toward where he looks: looking ahead goes far, looking up goes high
+            Vec3 look = p.getLookAngle();
+            Vec3 flat = look.multiply(1.0D, 0.0D, 1.0D);
+            flat = flat.lengthSqr() < 1.0E-4D ? Vec3.ZERO : flat.normalize();
+            double strength = 1.6D + 0.06D * lvl;
+            double horizontal = strength * Math.max(0.45D, Math.sqrt(look.x * look.x + look.z * look.z));
+            double up = Math.max(0.9D + 0.04D * lvl, strength * look.y);
+            leapVel = flat.scale(horizontal);
+            leapTicks = 3;
+            p.setDeltaMovement(leapVel.x, up, leapVel.z);
             p.hasImpulse = true;
             p.playSound(ModSounds.TAKEOFF.get(), 0.7F, 1.3F);
             return;
@@ -240,6 +248,11 @@ public final class SupermanClient {
             boostArmed = false;
         }
         sprintWasDown = sprint;
+        if (leapTicks > 0) {
+            leapTicks--;
+            Vec3 v = p.getDeltaMovement();
+            p.setDeltaMovement(leapVel.x, v.y, leapVel.z);
+        }
         // after the charged takeoff: hover at the top of the jump
         if (launchedFor >= 0) {
             launchedFor++;
