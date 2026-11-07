@@ -70,11 +70,11 @@ public final class HulkEvents {
         // jump grows with the active level: close at level 1, very far at level 10
         double t = (Math.max(1, HulkState.activeLevel(player)) - 1) / (double) (HulkPowers.MAX_LEVEL - 1);
         if (player.isShiftKeyDown()) {
-            Vec3 look = player.getLookAngle();
-            Vec3 flat = new Vec3(look.x, 0.0D, look.z);
-            flat = flat.lengthSqr() < 1.0E-4D ? Vec3.ZERO : flat.normalize();
-            double forward = 1.4D + 6.0D * t;
-            player.setDeltaMovement(flat.x * forward, 0.95D + 1.75D * t, flat.z * forward);
+            // aimed leap: follows the full 3D look (up = tall leap, ahead = long leap)
+            Vec3 look = player.getLookAngle().normalize();
+            double power = 1.6D + 6.0D * t;
+            double up = look.y * power + 0.4D; // small lift so a flat aim still clears the ground
+            player.setDeltaMovement(look.x * power, Math.max(0.5D, up), look.z * power);
         } else {
             player.setDeltaMovement(motion.x, motion.y * (1.35D + 1.25D * t), motion.z);
         }
