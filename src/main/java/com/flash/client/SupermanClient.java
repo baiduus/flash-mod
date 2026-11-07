@@ -277,7 +277,9 @@ public final class SupermanClient {
     @SubscribeEvent
     public static void onRenderPlayerPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
-        if (!SupermanState.isSuperman(p) || !TILT_POSES.contains(SupermanPose.base(p.getUUID()))) {
+        String base = SupermanPose.base(p.getUUID());
+        // (Set.of(...).contains(null) throws: no base animation = nothing to tilt)
+        if (base == null || !SupermanState.isSuperman(p) || !TILT_POSES.contains(base)) {
             return;
         }
         float partial = event.getPartialTick();
