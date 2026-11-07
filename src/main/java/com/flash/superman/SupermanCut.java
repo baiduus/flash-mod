@@ -45,20 +45,21 @@ public final class SupermanCut {
             return;
         }
         CompoundTag data = target.getPersistentData();
+        // the first hit already cuts (the beam kills fast), then one more limb every few hits, and the killing hit
+        // always takes one
         int progress = data.getInt(PROGRESS) + 1;
-        int need = laser ? 3 : 5;
-        if (progress < need && target.isAlive()) {
-            data.putInt(PROGRESS, progress);
+        data.putInt(PROGRESS, progress);
+        int every = laser ? 2 : 3;
+        if (progress != 1 && progress % every != 0 && target.isAlive()) {
             return;
         }
-        data.putInt(PROGRESS, 0);
         if (!humanoid(target)) {
             send(target, 0, BLEED, hit);
             return;
         }
         int mask = data.getInt(TAG);
         boolean boss = target.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES);
-        int limb = target.isAlive() ? pick(target, hit, mask, boss) : (boss || (mask & HEAD) != 0 ? 0 : HEAD);
+        int limb = pick(target, hit, mask, boss);
         if (limb == 0) {
             send(target, mask, BLEED, hit);
             return;

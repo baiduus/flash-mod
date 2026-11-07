@@ -386,10 +386,7 @@ public final class SupermanPose {
         if (SupermanState.flag(player, SupermanPowers.F_HOLDING)) {
             return "grab_hold";
         }
-        if (SupermanState.flag(player, SupermanPowers.F_CHARGE)) {
-            // the punch wound up and held until the key is released
-            return "super_punch#4";
-        }
+        // (charging the punch keeps the normal arms, as in Man of Tomorrow: the Super Punch plays on release)
         return null;
     }
 }

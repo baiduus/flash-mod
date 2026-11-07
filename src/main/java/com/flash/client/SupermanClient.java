@@ -122,16 +122,21 @@ public final class SupermanClient {
     // Charged takeoff: hold jump on the ground
     // ------------------------------------------------------------------
 
-    private static final int TAP_TICKS = 5;
+    /** Jump held this long (and back on the ground) starts the coil of the charged takeoff. */
+    private static final int TAP_TICKS = 6;
     private static final int LAUNCH_AT = TAP_TICKS + 20;
+    /** Ticks of the coil (-1 = not coiling). */
     private static int jumpHeld = -1;
+    /** Ticks the jump key has been held without a break. */
+    private static int holdTicks;
+    private static boolean jumpWasDown;
     private static boolean waitRelease;
-    private static boolean replayJump;
     private static int launchedFor = -1;
 
     /**
-     * A quick tap still jumps; holding jump on the ground coils into the crouch and, after about a second, the ground
-     * cracks and Superman shoots ~10 blocks up, switching to flight at the top.
+     * Jump stays the normal, instant one (double jump flies). Sneak + jump on the ground: a big leap like the
+     * Hulk's, much weaker. Keep jump held: after the first hop, back on the ground, Superman coils into the crouch and
+     * about a second later the ground cracks and he shoots ~10 blocks up, switching to flight at the top.
      */
     @SubscribeEvent
     public static void onMovementInput(net.minecraftforge.client.event.MovementInputUpdateEvent event) {
@@ -141,52 +146,65 @@ public final class SupermanClient {
             return;
         }
         var input = event.getInput();
-        // crouch + hold jump coils the charged takeoff; a plain jump is instant (double jump to fly)
-        boolean usable = SupermanState.isSuperman(p) && !p.getAbilities().flying && p.onGround() && !p.isInWater()
-                && !p.isPassenger() && mc.screen == null && (input.shiftKeyDown || jumpHeld >= 0);
-        if (replayJump) {
-            replayJump = false;
-            input.jumping = true;
-            return;
-        }
+        boolean down = input.jumping;
+        boolean pressed = down && !jumpWasDown;
+        jumpWasDown = down;
+        holdTicks = down ? holdTicks + 1 : 0;
+        boolean usable = SupermanState.isSuperman(p) && !p.getAbilities().flying && !p.isInWater()
+                && !p.isPassenger() && mc.screen == null;
         if (waitRelease) {
-            if (input.jumping) {
+            if (down) {
                 input.jumping = false;
                 return;
             }
             waitRelease = false;
         }
         if (!usable) {
-            if (jumpHeld >= TAP_TICKS) {
+            if (jumpHeld >= 0) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
             }
             jumpHeld = -1;
             return;
         }
-        if (input.jumping) {
+        // sneak + jump: the big leap
+        if (pressed && input.shiftKeyDown && p.onGround() && jumpHeld < 0) {
+            input.jumping = false;
+            int lvl = Math.max(1, SupermanState.level());
+            Vec3 look = p.getLookAngle().multiply(1.0D, 0.0D, 1.0D);
+            look = look.lengthSqr() < 1.0E-4D ? Vec3.ZERO : look.normalize();
+            double forward = 0.45D + 0.03D * lvl;
+            p.setDeltaMovement(look.x * forward, 1.1D + 0.04D * lvl, look.z * forward);
+            p.hasImpulse = true;
+            p.playSound(ModSounds.TAKEOFF.get(), 0.7F, 1.3F);
+            return;
+        }
+        if (jumpHeld < 0) {
+            // held through the first hop and landed again: coil
+            if (down && !input.shiftKeyDown && holdTicks >= TAP_TICKS && p.onGround()) {
+                jumpHeld = 0;
+                input.jumping = false;
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
+            }
+            return;
+        }
+        if (down) {
             jumpHeld++;
             input.jumping = false;
-            if (jumpHeld == TAP_TICKS) {
-                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
-            } else if (jumpHeld >= LAUNCH_AT) {
+            if (jumpHeld >= LAUNCH_AT - TAP_TICKS) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
                 jumpHeld = -1;
                 waitRelease = true;
                 launchedFor = 0;
             }
-        } else if (jumpHeld >= 0) {
-            if (jumpHeld < TAP_TICKS) {
-                replayJump = !input.shiftKeyDown;
-            } else {
-                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
-            }
+        } else {
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
             jumpHeld = -1;
         }
     }
 
     /** True while the local player coils for the charged takeoff. */
     public static boolean charging() {
-        return jumpHeld >= TAP_TICKS;
+        return jumpHeld >= 0;
     }
 
     /** Current stage of the local flight (0 hover, 1 slow, 2 fast, 3 fastest). */
@@ -234,9 +252,35 @@ public final class SupermanClient {
             return;
         }
         float forward = p.input.forwardImpulse;
-        flightStage = forward > 0.0F ? (sprint ? 2 : 1) : 0;
-        // the movement itself is the Minecraft flight (as in the Green Lantern mod): W/A/S/D on the horizontal,
-        // jump rises, sneak sinks, with the game's inertia; the speed comes from the level (SupermanPowers.flySpeed)
+        float strafe = p.input.leftImpulse;
+        int stage = forward > 0.0F ? (sprint ? (boostArmed ? 3 : 2) : 1) : 0;
+        if (stage == 3 && flightStage < 3) {
+            p.playSound(ModSounds.PUNCH_SONIC.get(), 0.7F, 1.3F);
+        }
+        flightStage = stage;
+        // four times the old speeds, growing with the level: about 40 % at level 1, all of it at level 10
+        double scale = 4.0D * (0.34D + 0.066D * Math.max(1, SupermanState.level()));
+        Vec3 look = p.getLookAngle();
+        Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
+        flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
+        Vec3 target = Vec3.ZERO;
+        if (forward > 0.0F) {
+            target = look.scale(Math.min(MAX_SPEED, STAGE_SPEED[stage] * scale));
+        } else if (forward < 0.0F) {
+            target = look.scale(-0.3D * scale);
+        }
+        // leftImpulse > 0 = left
+        target = target.add(flatRight.scale(-strafe * 0.35D * Math.min(scale, 2.0D)));
+        if (p.input.jumping) {
+            target = target.add(0.0D, 0.45D * Math.min(scale, 2.0D), 0.0D);
+        }
+        if (p.input.shiftKeyDown) {
+            target = target.add(0.0D, -0.45D * Math.min(scale, 2.0D), 0.0D);
+        }
+        Vec3 cur = p.getDeltaMovement();
+        // speeds up a little slower than it brakes
+        double k = target.lengthSqr() > cur.lengthSqr() ? 0.16D : 0.3D;
+        p.setDeltaMovement(cur.add(target.subtract(cur).scale(k)));
         p.fallDistance = 0.0F;
     }
 
