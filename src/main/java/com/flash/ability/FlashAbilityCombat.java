@@ -75,11 +75,11 @@ public final class FlashAbilityCombat {
     }
 
     /**
-     * Ability damage of the Flash, buffed x2.5 but kept a little under the Hulk's (at most 24
+     * Ability damage of the Flash, buffed x4 (at most 36
      * per hit; hits that were already stronger, like the infinite mass punch, stay as they are).
      */
     static float buffed(float damage) {
-        return Math.min(damage * 2.5F, Math.max(damage, 24.0F));
+        return Math.min(damage * 4.0F, Math.max(damage, 36.0F));
     }
 
     public static boolean hit(ServerPlayer player, LivingEntity target, float damage) {

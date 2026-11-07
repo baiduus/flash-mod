@@ -256,7 +256,20 @@ public final class HulkAbilities {
     }
 
     /** Multiplier of every ability hit (lowered: the abilities were killing everything at once). */
-    private static final float ABILITY_DAMAGE = 0.6F;
+    private static final float ABILITY_DAMAGE = 0.8F;
+
+    /** Hit that ignores every kind of armour (the charge): attributed to the Hulk, armour does nothing. */
+    private static void hitPiercing(ServerPlayer player, LivingEntity target, float damage, Vec3 push) {
+        target.invulnerableTime = 0;
+        net.minecraft.world.damagesource.DamageSource source = new net.minecraft.world.damagesource.DamageSource(
+                player.level().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
+                        .getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.INDIRECT_MAGIC), player, player);
+        target.hurt(source, damage * ABILITY_DAMAGE);
+        target.setLastHurtByPlayer(player);
+        target.setDeltaMovement(target.getDeltaMovement().add(push));
+        target.hurtMarked = true;
+        HulkPowers.addRage(player, 2.0F);
+    }
 
     private static void hit(ServerPlayer player, LivingEntity target, float damage, Vec3 push) {
         target.invulnerableTime = 0;
@@ -349,7 +362,7 @@ public final class HulkAbilities {
         player.hurtMarked = true;
         float damage = 6.0F + 1.5F * power(player);
         for (LivingEntity e : around(player, player.getBoundingBox().inflate(1.0D))) {
-            hit(player, e, damage, dir.scale(1.8D).add(0.0D, 0.5D, 0.0D));
+            hitPiercing(player, e, damage, dir.scale(1.8D).add(0.0D, 0.5D, 0.0D)); // ignores armour
         }
         if (HulkPowers.destroyBlocks(player)) {
             AABB front = player.getBoundingBox().move(dir.scale(1.0D)).deflate(0.05D, 0.0D, 0.05D);
