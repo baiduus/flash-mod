@@ -539,10 +539,8 @@ public final class SupermanClient {
             double spread = firstPerson ? 0.15D : 0.065D;
             BEAMS.add(new Beam(p, start.add(side.scale(-spread)), start.add(side.scale(spread)), stop, laser,
                     firstPerson));
-            if (SupermanShaders.ready() && firstPerson) {
-                // first person: only the pack shader beam
-                continue;
-            }
+            // the red ribbon is always drawn, also for the one firing in first person (the shader beam alone could
+            // stay invisible to him)
             for (int s = -1; s <= 1; s += 2) {
                 List<Vec3> points = new ArrayList<>();
                 Vec3 from = start.add(side.scale(s * spread));
