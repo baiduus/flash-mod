@@ -172,8 +172,7 @@ public final class FlashClientForgeEvents {
         boolean right = event.getArm() == net.minecraft.world.entity.HumanoidArm.RIGHT;
         boolean ring = right && FlashClientRing.has(event.getPlayer());
         boolean hulk = com.flash.hulk.HulkState.isTransformed(event.getPlayer());
-        boolean suit = !hulk && event.getPlayer() instanceof net.minecraft.client.player.AbstractClientPlayer acp
-                && SupermanSuitLayer.worn(acp) != null;
+        boolean suit = !hulk && SupermanSuitLayer.worn(event.getPlayer()) != null;
         if (!ring && !hulk && !suit) {
             return;
         }
