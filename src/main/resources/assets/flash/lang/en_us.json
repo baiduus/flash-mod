@@ -532,7 +532,7 @@
   "hud.flash.superman_punch_full": "SONIC BOOM!",
   "hud.flash.superman_transform": "Superman / Clark",
   "ability.flash.superman.flight": "Flight",
-  "ability.flash.superman.flight.description": "Toggles the flight, which goes where you look. Walk = stage 1, sprint = stage 2, sprint twice and hold = stage 3. Sneak + jump on the ground: big leap. Hold jump: after the hop, crouch, gather strength and blast into the sky.",
+  "ability.flash.superman.flight.description": "Tap: take off and land; the flight goes where you look (walk = stage 1, sprint = 2, sprint twice and hold = 3). Hold on the ground: crouch, gather strength and blast into the sky. Sneak + jump on the ground: big leap.",
   "ability.flash.superman.super_speed": "Super speed",
   "ability.flash.superman.super_speed.description": "Toggle: run 4 times faster.",
   "ability.flash.superman.heat_vision": "Heat vision",

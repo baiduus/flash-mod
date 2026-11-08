@@ -134,8 +134,8 @@ public final class SupermanClient {
     // Charged takeoff: hold jump on the ground
     // ------------------------------------------------------------------
 
-    /** Jump held this long starts the coil of the charged takeoff (the hop that just began is pulled back down). */
-    private static final int TAP_TICKS = 3;
+    /** Flight key held this long on the ground starts the coil of the charged takeoff. */
+    private static final int TAP_TICKS = 5;
     private static final int LAUNCH_AT = TAP_TICKS + 20;
     /** Ticks of the coil (-1 = not coiling). */
     private static int jumpHeld = -1;
@@ -181,6 +181,14 @@ public final class SupermanClient {
             jumpHeld = -1;
             return;
         }
+        if (flightHeld >= TAP_TICKS && !flightLaunched) {
+            // coiling for the charged takeoff: feet planted
+            input.jumping = false;
+            input.forwardImpulse = 0.0F;
+            input.leftImpulse = 0.0F;
+            input.up = input.down = input.left = input.right = false;
+            return;
+        }
         // sneak + jump: the big leap
         if (pressed && input.shiftKeyDown && p.onGround() && jumpHeld < 0) {
             input.jumping = false;
@@ -199,38 +207,65 @@ public final class SupermanClient {
             p.playSound(ModSounds.TAKEOFF.get(), 0.7F, 1.3F);
             return;
         }
-        if (jumpHeld < 0) {
-            // still held a moment after the press: no hop, Superman crouches and coils right away
-            if (down && !input.shiftKeyDown && holdTicks == TAP_TICKS && (p.onGround() || p.getY() - p.yo > 0.0D)) {
-                jumpHeld = 0;
-                input.jumping = false;
-                Vec3 v = p.getDeltaMovement();
-                p.setDeltaMovement(v.x * 0.3D, Math.min(v.y, -0.6D), v.z * 0.3D);
-                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
+        // (the charged takeoff is on the flight key now: jump stays the normal one)
+    }
+
+    /** Ticks the flight key has been held on the ground (-1 = not coiling). */
+    private static int flightHeld = -1;
+    private static boolean flightLaunched;
+
+    /**
+     * The flight key on the ground: a tap takes off as before; held, Superman crouches and coils, and after about a
+     * second the ground cracks and he shoots ~10 blocks up, flying at the top. In the air it just flies / lands.
+     * Returns true when it handled the key this tick.
+     */
+    private static boolean flightKey(Minecraft mc, int index, boolean down) {
+        net.minecraft.client.player.LocalPlayer p = mc.player;
+        boolean ground = p.onGround() && !p.getAbilities().flying && !p.isInWater() && !p.isPassenger();
+        boolean was = KEY_DOWN[index];
+        KEY_DOWN[index] = down;
+        if (down && !was) {
+            if (!ground) {
+                FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(index, true));
+                return true;
             }
-            return;
+            flightHeld = 0;
+            flightLaunched = false;
+            return true;
+        }
+        if (flightHeld < 0) {
+            return true;
         }
         if (down) {
-            // the coil counts once he is back on his feet
-            if (p.onGround()) {
-                jumpHeld++;
+            if (flightLaunched) {
+                return true;
             }
-            input.jumping = false;
-            if (jumpHeld >= LAUNCH_AT - TAP_TICKS) {
+            flightHeld++;
+            if (flightHeld == TAP_TICKS) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
+            } else if (flightHeld >= LAUNCH_AT) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
-                jumpHeld = -1;
-                waitRelease = true;
+                flightLaunched = true;
                 launchedFor = 0;
             }
-        } else {
-            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
-            jumpHeld = -1;
+            return true;
         }
+        // released
+        if (!flightLaunched) {
+            if (flightHeld >= TAP_TICKS) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
+            }
+            // a short press (or let go before the launch): the normal takeoff
+            FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(index, true));
+        }
+        flightHeld = -1;
+        flightLaunched = false;
+        return true;
     }
 
     /** True while the local player coils for the charged takeoff. */
     public static boolean charging() {
-        return jumpHeld >= 0;
+        return jumpHeld >= 0 || (flightHeld >= TAP_TICKS && !flightLaunched);
     }
 
     /** Current stage of the local flight (0 hover, 1 slow, 2 fast, 3 fastest). */
@@ -428,6 +463,9 @@ public final class SupermanClient {
             SupermanAbility a = abilities[i];
             KeyMapping key = key(a);
             boolean down = active && key != null && key.isDown();
+            if (a == SupermanAbility.FLIGHT && flightKey(mc, i, down)) {
+                continue;
+            }
             if (down == KEY_DOWN[i]) {
                 continue;
             }

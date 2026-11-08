@@ -532,7 +532,7 @@
   "hud.flash.superman_punch_full": "SONIC BOOM!",
   "hud.flash.superman_transform": "Superman / Clark",
   "ability.flash.superman.flight": "Voo",
-  "ability.flash.superman.flight.description": "Liga e desliga o voo, que vai para onde você olha. Andar = estágio 1, correr = estágio 2, correr duas vezes e segurar = estágio 3. Shift + espaço no chão: pulo grande. Segurar espaço: depois do pulo, agacha, junta força e explode para o céu.",
+  "ability.flash.superman.flight.description": "Toque: levanta voo e pousa; o voo vai para onde você olha (andar = estágio 1, correr = 2, correr duas vezes e segurar = 3). Segurar no chão: agacha, junta força e explode para o céu. Shift + espaço no chão: pulo grande.",
   "ability.flash.superman.super_speed": "Supercorrida",
   "ability.flash.superman.super_speed.description": "Liga e desliga: corre 4 vezes mais rápido.",
   "ability.flash.superman.heat_vision": "Visão de calor",

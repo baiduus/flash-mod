@@ -211,10 +211,10 @@ public final class SupermanPowers {
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
     public static float damageFactor(Player player) {
-        // tougher every level: 41 % less damage at level 1, 67 % at level 10 (twice 15 % under the old 56 / 93 %)
+        // tougher every level: 44 % less damage at level 1, 73 % at level 10
         float old = Math.max(0.07F, 0.48F - 0.041F * level(player));
         float once = 0.15F + 0.85F * old;
-        return 0.15F + 0.85F * once;
+        return 0.08F + 0.92F * once;
     }
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
@@ -590,9 +590,17 @@ public final class SupermanPowers {
                 player.setAirSupply(player.getMaxAirSupply());
             }
             applyRun(player, flag(player, F_SPEED));
-            // Kryptonian healing: as Regeneration II (1 health point every 25 ticks)
-            if (player.tickCount % 25 == 0 && player.getHealth() < player.getMaxHealth()) {
-                player.heal(1.0F);
+            // the sun heals: Regeneration II under the open sky by day, III up high where it recharges;
+            // in caves and at night the normal regeneration of the game
+            if (sun) {
+                int amp = high ? 2 : 1;
+                var regen = player.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+                // renewed while it still has a few seconds (the effect heals on its own timer: renewing it every
+                // tick would break the rhythm)
+                if (regen == null || regen.getAmplifier() < amp || regen.getDuration() < 60) {
+                    player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                            net.minecraft.world.effect.MobEffects.REGENERATION, 120, amp, true, false, true));
+                }
             }
             SupermanMeteor.tick(player);
         } else {
