@@ -481,6 +481,12 @@ public final class SupermanClient {
                 }
                 continue;
             }
+            if (a == SupermanAbility.CHARGED_PUNCH && !down && chargeStart >= 0L) {
+                // the Super Punch plays right away on the release (no wait for the server), and the hand swings in
+                // first person
+                SupermanPose.play(mc.player.getUUID(), "super_punch");
+                mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
             if (a == SupermanAbility.CHARGED_PUNCH) {
                 chargeStart = down && unlocked && SupermanState.cooldown(a, mc.level.getGameTime()) <= 0
                         ? mc.level.getGameTime() : -1L;

@@ -662,8 +662,9 @@ public final class SupermanAbilities {
         if (!pay(player, SupermanAbility.CHARGED_PUNCH.energy() + 7.0F * charge)) {
             return;
         }
-        // the wind-up was held while charging: the strike starts right at the hit
+        // the Super Punch of Man of Tomorrow on the release (the client of the puncher already started it)
         anim(player, "super_punch");
+        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
         float power = SupermanPowers.power(player);
         Vec3 look = player.getLookAngle();
         Entity target = null;
