@@ -46,7 +46,8 @@ public class HulkBoulder extends ThrowableItemProjectile {
         float min = sizeFor(1);
         float max = sizeFor(10);
         float t = Math.max(0.0F, Math.min(1.0F, (size - min) / (max - min)));
-        return 8.0F + 52.0F * t * t;
+        // 3 (a small rock) up to 8 (the biggest, two TNTs): the push of a blast reaches twice its power
+        return 3.0F + 5.0F * t;
     }
 
     /** Rock size from the Hulk's active level: small at level 1, twice as big at level 10. */
@@ -106,11 +107,18 @@ public class HulkBoulder extends ThrowableItemProjectile {
         if (this.getOwner() instanceof net.minecraft.server.level.ServerPlayer owner) {
             // the rock bursts on impact (the Hulk is left out of the blast)
             // small rock, small blast; big rock, big blast
-            level.explode(this, this.getX(), this.getY(), this.getZ(),
-                    blastPower(size) * (0.2F + 0.8F * this.charge),
+            // the blast pushes and hurts out to twice its power: kept in step with the crater it opens
+            float power = blastPower(size) * (0.2F + 0.8F * this.charge);
+            level.explode(this, this.getX(), this.getY(), this.getZ(), power,
                     com.flash.hulk.HulkPowers.destroyBlocks(owner)
                             ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
                             : net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+            // the visible blast as wide as its reach
+            int n = Math.max(1, Math.round(power * 1.5F));
+            level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, this.getX(), this.getY(), this.getZ(),
+                    Math.max(1, n / 4), power * 0.35D, power * 0.15D, power * 0.35D, 0.0D);
+            level.sendParticles(ParticleTypes.EXPLOSION, this.getX(), this.getY(), this.getZ(), n * 2,
+                    power * 0.6D, power * 0.25D, power * 0.6D, 0.0D);
         }
         level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
                 1.0F, 0.8F);
