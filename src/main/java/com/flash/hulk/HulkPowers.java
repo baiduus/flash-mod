@@ -666,8 +666,9 @@ public final class HulkPowers {
 
     /** Extra punch damage of a level (the fury multiplies it by 1.5). */
     public static double bonusDamage(int level, boolean furious) {
-        // as strong as the lore: 13 at level 1 up to 49 at level 10 (x1.5 in fury)
-        return (8.0D + 4.0D * Math.max(1, level)) * (furious ? 1.5D : 1.0D);
+        // 15 % under the old lore values: about 11 at level 1 up to 41 at level 10 (x1.5 in fury); the abilities are
+        // multiples of the punch, so they go down with it
+        return (8.0D + 4.0D * Math.max(1, level)) * 0.85D * (furious ? 1.5D : 1.0D);
     }
 
     /** Punch damage of the Hulk (a normal empty-hand punch is 1). */
