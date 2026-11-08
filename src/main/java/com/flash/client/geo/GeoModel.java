@@ -76,6 +76,9 @@ public final class GeoModel {
         public boolean visible = true;
         /** True: only this bone's own cubes are skipped (the children are drawn). */
         public boolean hideCubes;
+        /** Bend of the limb (playerAnimator / bendy-lib style): direction around Y and amount, in radians. */
+        public float bendAxis;
+        public float bendValue;
 
         Bone(String name, float px, float py, float pz, float rx, float ry, float rz) {
             this.name = name;
@@ -93,6 +96,8 @@ public final class GeoModel {
             sx = sy = sz = 1.0F;
             visible = true;
             hideCubes = false;
+            bendAxis = 0.0F;
+            bendValue = 0.0F;
         }
 
         public float pivotX() {
@@ -444,13 +449,136 @@ public final class GeoModel {
         pose.translate(-bone.px / 16.0F, -bone.py / 16.0F, -bone.pz / 16.0F);
         if (bone.group == group && !bone.hideCubes) {
             for (Cube cube : bone.cubes) {
-                drawCube(cube, pose, consumer, light, overlay, r, g, b, a);
+                if (Math.abs(bone.bendValue) > 1.0E-3F) {
+                    drawBentCube(bone, cube, pose, consumer, light, overlay, r, g, b, a);
+                } else {
+                    drawCube(cube, pose, consumer, light, overlay, r, g, b, a);
+                }
             }
         }
         for (Bone child : bone.children) {
             renderBone(child, pose, consumer, light, overlay, group, r, g, b, a, true);
         }
         pose.popPose();
+    }
+
+    /**
+     * A limb cube bent in the middle like bendy-lib does it: the half away from the bone's pivot (forearm, shin)
+     * turns by the bend around an axis lying across the limb (direction {@code bendAxis} around Y), the middle by half
+     * of it so the two halves stay joined. Positive bends forward (-Z), as playerAnimator's.
+     */
+    private static void drawBentCube(Bone bone, Cube cube, PoseStack pose, VertexConsumer consumer, int light,
+                                     int overlay, float r, float g, float b, float a) {
+        float minY = Float.MAX_VALUE;
+        float maxY = -Float.MAX_VALUE;
+        float minX = Float.MAX_VALUE;
+        float maxX = -Float.MAX_VALUE;
+        float minZ = Float.MAX_VALUE;
+        float maxZ = -Float.MAX_VALUE;
+        for (Quad q : cube.quads) {
+            for (float[] v : q.v()) {
+                minX = Math.min(minX, v[0]);
+                maxX = Math.max(maxX, v[0]);
+                minY = Math.min(minY, v[1]);
+                maxY = Math.max(maxY, v[1]);
+                minZ = Math.min(minZ, v[2]);
+                maxZ = Math.max(maxZ, v[2]);
+            }
+        }
+        if (maxY - minY < 1.0E-3F) {
+            drawCube(cube, pose, consumer, light, overlay, r, g, b, a);
+            return;
+        }
+        float mid = (minY + maxY) * 0.5F;
+        boolean farIsMax = Math.abs(maxY - bone.py) >= Math.abs(minY - bone.py);
+        float cx = (minX + maxX) * 0.5F;
+        float cz = (minZ + maxZ) * 0.5F;
+        Matrix4f full = bendMatrix(cx, mid, cz, bone.bendAxis, bone.bendValue);
+        Matrix4f half = bendMatrix(cx, mid, cz, bone.bendAxis, bone.bendValue * 0.5F);
+        if (cube.rotated) {
+            pose.pushPose();
+            pose.translate(cube.px / 16.0F, cube.py / 16.0F, cube.pz / 16.0F);
+            pose.mulPose(new Quaternionf().rotationZYX(cube.rz, cube.ry, cube.rx));
+            pose.translate(-cube.px / 16.0F, -cube.py / 16.0F, -cube.pz / 16.0F);
+        }
+        Matrix4f matrix = pose.last().pose();
+        Matrix3f normalMatrix = pose.last().normal();
+        for (Quad q : cube.quads) {
+            float[][] v = q.v();
+            boolean anyNear = false;
+            boolean anyFar = false;
+            for (float[] c : v) {
+                boolean far = farIsMax ? c[1] > mid + 1.0E-4F : c[1] < mid - 1.0E-4F;
+                anyFar |= far;
+                anyNear |= !far;
+            }
+            if (anyNear && anyFar) {
+                // a side face across the joint: two quads, split at the middle
+                float[][] near = new float[4][];
+                float[][] farQ = new float[4][];
+                for (int i = 0; i < 4; i++) {
+                    float[] c = v[i];
+                    boolean far = farIsMax ? c[1] > mid : c[1] < mid;
+                    float[] partner = null;
+                    for (int k = 1; k <= 3 && partner == null; k += 2) {
+                        float[] o = v[(i + k) % 4];
+                        boolean ofar = farIsMax ? o[1] > mid : o[1] < mid;
+                        if (ofar != far) {
+                            partner = o;
+                        }
+                    }
+                    if (partner == null) {
+                        partner = v[(i + 2) % 4];
+                    }
+                    float t = (mid - c[1]) / (partner[1] - c[1]);
+                    float[] m = {c[0] + (partner[0] - c[0]) * t, mid, c[2] + (partner[2] - c[2]) * t,
+                            c[3] + (partner[3] - c[3]) * t, c[4] + (partner[4] - c[4]) * t};
+                    if (far) {
+                        farQ[i] = c;
+                        near[i] = m;
+                    } else {
+                        near[i] = c;
+                        farQ[i] = m;
+                    }
+                }
+                emit(near, q, matrix, normalMatrix, null, half, mid, consumer, light, overlay, r, g, b, a);
+                emit(farQ, q, matrix, normalMatrix, full, half, mid, consumer, light, overlay, r, g, b, a);
+            } else {
+                emit(v, q, matrix, normalMatrix, anyFar ? full : null, half, mid, consumer, light, overlay, r, g, b,
+                        a);
+            }
+        }
+        if (cube.rotated) {
+            pose.popPose();
+        }
+    }
+
+    private static Matrix4f bendMatrix(float cx, float cy, float cz, float axis, float value) {
+        return new Matrix4f().translation(cx / 16.0F, cy / 16.0F, cz / 16.0F)
+                .rotateY(axis).rotateX(-value).rotateY(-axis)
+                .translate(-cx / 16.0F, -cy / 16.0F, -cz / 16.0F);
+    }
+
+    /** One quad: the corners on the middle line take {@code half}, the others {@code bend} (null = unbent). */
+    private static void emit(float[][] v, Quad q, Matrix4f matrix, Matrix3f normalMatrix, Matrix4f bend,
+                             Matrix4f half, float mid, VertexConsumer consumer, int light, int overlay, float r,
+                             float g, float b, float a) {
+        Vector3f n = new Vector3f(q.nx(), q.ny(), q.nz());
+        if (bend != null) {
+            bend.transformDirection(n);
+        }
+        normalMatrix.transform(n);
+        Vector4f p = new Vector4f();
+        for (float[] c : v) {
+            p.set(c[0] / 16.0F, c[1] / 16.0F, c[2] / 16.0F, 1.0F);
+            if (Math.abs(c[1] - mid) < 1.0E-4F) {
+                half.transform(p);
+            } else if (bend != null) {
+                bend.transform(p);
+            }
+            matrix.transform(p);
+            consumer.vertex(p.x(), p.y(), p.z(), r, g, b, a, c[3], c[4], overlay, light, n.x(), n.y(), n.z());
+        }
     }
 
     private static void drawCube(Cube cube, PoseStack pose, VertexConsumer consumer, int light, int overlay,

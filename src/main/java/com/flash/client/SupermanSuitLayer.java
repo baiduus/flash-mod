@@ -79,6 +79,31 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         return SupermanSuits.id(SupermanState.suit(player));
     }
 
+    /** The elbow and knee bends of the playing animation (as Man of Tomorrow syncs them to its suit). */
+    private static void bends(GeoModel model, AbstractClientPlayer player) {
+        try {
+            if (!(player instanceof dev.kosmx.playerAnim.impl.IAnimatedPlayer animated)) {
+                return;
+            }
+            var anim = animated.playerAnimator_getAnimation();
+            if (anim == null || !anim.isActive()) {
+                return;
+            }
+            String[][] map = {{"right_arm", "rightArm"}, {"left_arm", "leftArm"}, {"right_leg", "rightLeg"},
+                    {"left_leg", "leftLeg"}};
+            for (String[] m : map) {
+                GeoModel.Bone bone = model.bone(m[0]);
+                var bend = anim.getBend(m[1]);
+                if (bone != null && bend != null && bend.getRight() != null) {
+                    bone.bendAxis = bend.getLeft() != null ? bend.getLeft() : 0.0F;
+                    bone.bendValue = bend.getRight();
+                }
+            }
+        } catch (Throwable ignored) {
+            // no bends then
+        }
+    }
+
     private static ModelPart part(PlayerModel<?> m, String bone) {
         return switch (bone) {
             case "head" -> m.head;
@@ -106,6 +131,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             return;
         }
         model.reset();
+        bends(model, player);
         PlayerModel<AbstractClientPlayer> parent = this.getParentModel();
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         RenderType top = RenderType.entityCutoutNoCull(tex(id, "layer_0"));
