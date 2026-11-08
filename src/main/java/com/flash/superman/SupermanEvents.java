@@ -102,7 +102,8 @@ public final class SupermanEvents {
             float distance = event.getDistance();
             event.setDamageMultiplier(0.0F);
             event.setDistance(0.0F);
-            if (distance > 6.0F) {
+            // more than 10 blocks: the ground cracks and he lands in the superhero pose
+            if (distance > 10.0F) {
                 SupermanAbilities.heroLanding(player, distance);
             }
         }

@@ -1640,7 +1640,7 @@ public final class SupermanAbilities {
         ServerLevel level = player.serverLevel();
         double radius = Math.min(7.5D, 4.5D + distance / 20.0D);
         float power = SupermanPowers.power(player);
-        anim(player, distance > 20.0F ? "hero_landing9" : "landing");
+        anim(player, "hero_landing9");
         sound(player, ModSounds.LANDING.get(), 1.4F, 1.0F);
         for (Entity e : level.getEntities(player, player.getBoundingBox().inflate(radius, 2.0D, radius),
                 x -> x.isAlive())) {
