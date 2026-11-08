@@ -178,7 +178,7 @@ public final class HulkAbilities {
     private static final Map<UUID, Hold> HOLDS = new ConcurrentHashMap<>();
 
     /** Thrown creatures: they take damage when they hit something. */
-    private record Thrown(UUID thrower, float damage, int since) {
+    private record Thrown(UUID thrower, float damage, int since, boolean explode) {
     }
 
     private static final Map<Integer, Thrown> THROWN = new ConcurrentHashMap<>();
@@ -518,6 +518,23 @@ public final class HulkAbilities {
         }
     }
 
+    /** A tap on the grab key with a creature in hand: it is let go, no throw. */
+    public static void dropHeld(ServerPlayer player) {
+        Hold hold = HOLDS.get(player.getUUID());
+        if (hold == null || hold.kind() != HOLD_ENTITY) {
+            return;
+        }
+        HOLDS.remove(player.getUUID());
+        net.minecraft.world.entity.Entity e = player.level().getEntity(hold.entityId());
+        if (e != null) {
+            e.setDeltaMovement(0.0D, -0.2D, 0.0D);
+            e.hurtMarked = true;
+        }
+        sendAnim(player, ANIM_RELEASE);
+        HulkPowers.setCooldown(player, HulkAbility.GRAB);
+        HulkPowers.syncSelf(player);
+    }
+
     /** Charge time of the super throw (1 minute). */
     public static final int SUPER_TICKS = 1200;
 
@@ -654,7 +671,7 @@ public final class HulkAbilities {
         target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
         target.hurtMarked = true;
         THROWN.put(target.getId(), new Thrown(player.getUUID(),
-                punch(player) * 2.0F * ABILITY_DAMAGE * (0.5F + 0.7F * charge), player.tickCount));
+                punch(player) * 2.0F * ABILITY_DAMAGE * (0.5F + 0.7F * charge), player.tickCount, charge >= 0.999F));
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 1.2F, 0.9F);
@@ -800,6 +817,13 @@ public final class HulkAbilities {
                 level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.GENERIC_EXPLODE,
                         SoundSource.PLAYERS, 1.0F, 0.7F);
                 HulkPowers.addRage(player, 3.0F);
+                if (thrown.explode()) {
+                    // thrown with the bar full: it blows up where it lands
+                    boolean destroy = HulkPowers.destroyBlocks(player);
+                    level.explode(player, target.getX(), target.getY() + 0.3D, target.getZ(), 3.0F,
+                            destroy ? net.minecraft.world.level.Level.ExplosionInteraction.TNT
+                                    : net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+                }
                 return true;
             }
             return false;

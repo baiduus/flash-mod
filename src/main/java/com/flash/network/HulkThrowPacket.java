@@ -21,7 +21,11 @@ public record HulkThrowPacket(float charge, boolean superThrow) {
         ServerPlayer player = context.getSender();
         context.setPacketHandled(true);
         if (player != null && Float.isFinite(this.charge)) {
-            HulkAbilities.throwHeld(player, Math.max(0.0F, Math.min(1.0F, this.charge)), this.superThrow);
+            if (this.charge < 0.0F) {
+                HulkAbilities.dropHeld(player);
+            } else {
+                HulkAbilities.throwHeld(player, Math.max(0.0F, Math.min(1.0F, this.charge)), this.superThrow);
+            }
         }
     }
 }

@@ -463,7 +463,7 @@ public final class SupermanAbilities {
                 if (target instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
                 }
-                target.hurt(level.damageSources().playerAttack(player), 3.6F * power * (laser ? 2.2F : 1.0F));
+                target.hurt(level.damageSources().playerAttack(player), 6.0F * power * (laser ? 1.8F : 1.0F));
                 target.setSecondsOnFire(laser ? 8 : 4);
                 SupermanPowers.addXp(player, 0.1F);
                 if (target instanceof LivingEntity living) {
@@ -715,7 +715,7 @@ public final class SupermanAbilities {
                 }
                 if (e instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
-                    living.hurt(level.damageSources().playerAttack(player), 8.0F * power);
+                    living.hurt(level.damageSources().playerAttack(player), 12.0F * power);
                 }
                 e.setDeltaMovement(look.x * 2.0D, 0.5D, look.z * 2.0D);
                 e.hurtMarked = true;
@@ -767,7 +767,7 @@ public final class SupermanAbilities {
             e.clearFire();
             if (e instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
-                living.hurt(level.damageSources().playerAttack(player), (float) (10.0F * power * fall) + 2.0F);
+                living.hurt(level.damageSources().playerAttack(player), (float) (28.0F * power * fall) + 2.0F);
             }
             double push = 0.8D + 3.5D * fall;
             e.setDeltaMovement(look.x * push, 0.6D + look.y * push * 0.4D, look.z * push);
@@ -923,10 +923,10 @@ public final class SupermanAbilities {
         if (e instanceof LivingEntity living) {
             living.invulnerableTime = 0;
         }
-        e.hurt(level.damageSources().playerAttack(player), (3.0F + 5.0F * charge) * power);
+        e.hurt(level.damageSources().playerAttack(player), (6.0F + 12.0F * charge) * power);
         e.setDeltaMovement(look.scale(speed).add(0.0D, 0.2D, 0.0D));
         e.hurtMarked = true;
-        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (4.0F + 6.0F * charge) * power, new int[1], full));
+        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (6.0F + 12.0F * charge) * power, new int[1], full));
         s.throwCharge = 0.0F;
         sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2F, 0.6F);
         SupermanPowers.setCooldown(player, SupermanAbility.GRAB);
@@ -1165,7 +1165,7 @@ public final class SupermanAbilities {
             return;
         }
         if (t == 8) {
-            hitCombo(player, level, target, (full ? 7.0F : 6.0F) * power);
+            hitCombo(player, level, target, (full ? 20.0F : 18.0F) * power);
             target.setDeltaMovement(0.0D, full ? 2.1D : 1.25D, 0.0D);
             target.hurtMarked = true;
             sound(player, ModSounds.PUNCH_SONIC.get(), 1.0F, 1.2F);
@@ -1212,7 +1212,7 @@ public final class SupermanAbilities {
             return;
         }
         if (t == 36) {
-            hitCombo(player, level, target, 10.0F * power);
+            hitCombo(player, level, target, 20.0F * power);
             target.setDeltaMovement(0.0D, -3.4D, 0.0D);
             target.hurtMarked = true;
             sound(player, ModSounds.DIVE.get(), 1.0F, 1.2F);
@@ -1221,7 +1221,7 @@ public final class SupermanAbilities {
         if (t > 36 && s.comboMark < 0) {
             if (target.onGround() || target.isInWater() || t >= 70) {
                 s.comboMark = t;
-                crash(player, level, target, 12.0F * power);
+                crash(player, level, target, 24.0F * power);
                 Vec3 hover = target.position().add(0.0D, 5.0D, 0.0D);
                 face(player, hover, target.position());
                 laserOn(player, true);
@@ -1243,7 +1243,7 @@ public final class SupermanAbilities {
                 level.playSound(null, tp.x, tp.y, tp.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 1.1F);
                 if (target.isAlive()) {
                     target.invulnerableTime = 0;
-                    target.hurt(level.damageSources().playerAttack(player), 8.0F * power);
+                    target.hurt(level.damageSources().playerAttack(player), 16.0F * power);
                 }
                 laserOn(player, false);
                 SupermanPowers.addXp(player, 2.5F);
@@ -1427,7 +1427,7 @@ public final class SupermanAbilities {
             endCombo(player, s);
             return;
         }
-        float power = SupermanPowers.power(player) * 0.6F;
+        float power = SupermanPowers.power(player);
         if (t == 0) {
             s.comboOrigin = target.position();
             s.comboStart = player.position();
@@ -1601,7 +1601,7 @@ public final class SupermanAbilities {
             if (e instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
                 // the pack: 100 on creatures, 25 on players (here a little more near the centre)
-                float base = living instanceof net.minecraft.world.entity.player.Player ? 25.0F : 100.0F;
+                float base = living instanceof net.minecraft.world.entity.player.Player ? 15.0F : 50.0F;
                 living.hurt(level.damageSources().playerAttack(player), (float) (base * power * (0.6D + 0.4D * f)));
                 living.setSecondsOnFire(8);
             }

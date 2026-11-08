@@ -43,6 +43,9 @@ public final class HulkClient {
     public static final int SUPER_TICKS = com.flash.hulk.HulkAbilities.SUPER_TICKS;
     private static boolean chargeArmed;
     private static int chargeTicks;
+    /** Ticks of the second press on the grab key (-1 = none); shorter than the tap = let go. */
+    private static int grabPress = -1;
+    private static final int GRAB_TAP_TICKS = 5;
 
     public static boolean charging() {
         return charging;
@@ -132,6 +135,36 @@ public final class HulkClient {
             boolean grab = abilities[i] == com.flash.hulk.HulkAbility.GRAB;
             if ((rock && holdingRock) || (grab && holdingCreature)) {
                 // holding: a new press charges the force bar, the release throws
+                if (grab) {
+                    // like Superman: a tap lets the creature go, holding fills the bar, the release throws
+                    if (!down && !charging && grabPress < 0) {
+                        chargeArmed = true;
+                    } else if (down && chargeArmed) {
+                        chargeArmed = false;
+                        grabPress = 0;
+                    } else if (down && grabPress >= 0) {
+                        grabPress++;
+                        if (!charging && grabPress >= GRAB_TAP_TICKS) {
+                            charging = true;
+                            chargingGrab = true;
+                            chargeTicks = 0;
+                        } else if (charging) {
+                            chargeTicks = Math.min(superTicks(), chargeTicks + 1);
+                        }
+                    } else if (!down && grabPress >= 0) {
+                        grabPress = -1;
+                        if (charging) {
+                            charging = false;
+                            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkThrowPacket(chargeFraction(),
+                                    chargeTicks >= superTicks()));
+                        } else {
+                            // just lets go
+                            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HulkThrowPacket(-1.0F, false));
+                        }
+                    }
+                    KEY_DOWN[i] = down;
+                    continue;
+                }
                 if (!down && !charging) {
                     chargeArmed = true;
                 } else if (down && chargeArmed) {
@@ -155,6 +188,7 @@ public final class HulkClient {
                 }
                 if (!holdingRock && !holdingCreature) {
                     chargeArmed = false;
+                    grabPress = -1;
                 }
             }
             if (down && !KEY_DOWN[i]) {
