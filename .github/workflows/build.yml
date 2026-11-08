@@ -16,6 +16,8 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build --no-daemon
+      - name: Conferir jarjar
+        run: for j in build/libs/*.jar; do echo "== $j"; unzip -l "$j" | grep -i "jarjar\|bendy" || true; done
       - uses: actions/upload-artifact@v4
         with:
           name: flash-jar
