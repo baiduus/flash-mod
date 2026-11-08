@@ -256,7 +256,8 @@ public final class SupermanPose {
 
     private static void update(AbstractClientPlayer player) {
         State st = STATES.get(player.getUUID());
-        if (!SupermanState.isSuperman(player)) {
+        // the flight poses are Thor's too
+        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player)) {
             if (st != null) {
                 STATES.remove(player.getUUID());
                 set(player, BASE, null, 0, 5, false);
@@ -311,7 +312,8 @@ public final class SupermanPose {
         if (player == Minecraft.getInstance().player) {
             return player.getAbilities().flying;
         }
-        return SupermanState.flag(player, SupermanPowers.F_FLYING);
+        return SupermanState.flag(player, SupermanPowers.F_FLYING)
+                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FLYING);
     }
 
     /** Base animation from the flight state and the motion. */

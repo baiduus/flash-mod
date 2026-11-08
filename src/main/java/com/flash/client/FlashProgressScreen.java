@@ -139,7 +139,7 @@ public class FlashProgressScreen extends Screen {
 
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
-        if (PowerTheme.localHulk() || PowerTheme.localSuperman()) {
+        if (PowerTheme.localHulk() || PowerTheme.localSuperman() || PowerTheme.localThor()) {
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         return FlashClientData.hasPowers() ? new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG}
@@ -247,6 +247,8 @@ public class FlashProgressScreen extends Screen {
             drawProgressTab(graphics, mx, my);
         } else if (current == TAB_EQUIP) {
             drawEquipTab(graphics, mx, my);
+        } else if (PowerTheme.localThor()) {
+            drawThorConfig(graphics, mx, my);
         } else if (PowerTheme.localSuperman()) {
             drawSupermanConfig(graphics, mx, my);
         } else if (PowerTheme.localHulk()) {
@@ -287,7 +289,11 @@ public class FlashProgressScreen extends Screen {
         boolean hulkForm = hulkPower && com.flash.hulk.HulkState.isTransformed(Minecraft.getInstance().player);
         boolean superPower = PowerTheme.localSuperman();
         boolean superForm = superPower && com.flash.superman.SupermanState.isSuperman(Minecraft.getInstance().player);
-        Component badge = superPower
+        boolean thorPower = PowerTheme.localThor();
+        boolean thorForm = thorPower && com.flash.thor.ThorState.isThor(Minecraft.getInstance().player);
+        Component badge = thorPower
+                ? Component.translatable(thorForm ? "gui.flash.thor.badge_thor" : "gui.flash.thor.badge_civil")
+                : superPower
                 ? Component.translatable(superForm ? "gui.flash.superman.badge_superman" : "gui.flash.superman.badge_clark")
                 : hulkPower
                 ? Component.translatable(hulkForm ? "gui.flash.hulk.badge_hulk" : "gui.flash.hulk.badge_banner")
@@ -353,7 +359,9 @@ public class FlashProgressScreen extends Screen {
     }
 
     private void drawFooter(GuiGraphics g) {
-        Component text = PowerTheme.localSuperman()
+        Component text = PowerTheme.localThor()
+                ? Component.translatable("gui.flash.footer.thor", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage())
+                : PowerTheme.localSuperman()
                 ? Component.translatable("gui.flash.footer.superman", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage())
                 : PowerTheme.localHulk()
                 ? Component.translatable("gui.flash.footer.hulk", FlashKeys.HULK_TRANSFORM.getTranslatedKeyMessage())
@@ -373,6 +381,10 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
+        if (PowerTheme.localThor()) {
+            drawThorTab(g, mx, my);
+            return;
+        }
         if (PowerTheme.localSuperman()) {
             drawSupermanTab(g, mx, my);
             return;
@@ -692,6 +704,200 @@ public class FlashProgressScreen extends Screen {
         if (tooltip != null) {
             g.renderTooltip(this.font, this.font.split(tooltip, 220), mx, my);
         }
+    }
+
+    private static final String[] THOR_PASSIVES = {"worthy", "asgardian_body", "storm"};
+
+    private void drawThorTab(GuiGraphics g, int mx, int my) {
+        Minecraft mc = Minecraft.getInstance();
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
+        boolean form = mc.player != null && com.flash.thor.ThorState.isThor(mc.player);
+        int level = Math.max(1, com.flash.thor.ThorState.level());
+        float xp = Math.max(0.0F, Math.min(1.0F, com.flash.thor.ThorState.xp()
+                / com.flash.thor.ThorPowers.MAX_XP));
+        boolean infinite = com.flash.thor.ThorState.infiniteEnergy();
+        float energy = infinite ? 1.0F : Math.max(0.0F, Math.min(1.0F, com.flash.thor.ThorState.energy()
+                / com.flash.thor.ThorPowers.MAX_ENERGY));
+        int half = (LEFT_W - 8) / 2;
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.superman.level"),
+                Component.translatable("gui.flash.superman.level_value", level),
+                Component.literal(String.format(java.util.Locale.ROOT, "x%.2f",
+                        0.55F + 0.05F * level)));
+        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.superman.form"),
+                Component.translatable(form ? "gui.flash.thor.form_thor" : "gui.flash.thor.form_civil"),
+                Component.translatable("gui.flash.hulk.key_short", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage()));
+
+        sectionTitle(g, Component.translatable("gui.flash.hulk.levels"), PAD, GRID_Y - 13);
+        int cols = 5;
+        int cw = (LEFT_W - GRID_GAP * (cols - 1)) / cols;
+        int ch = 30;
+        float pulse = 0.5F + 0.5F * (float) Math.sin(seconds() * 3.2F);
+        for (int l = 1; l <= com.flash.thor.ThorPowers.MAX_LEVEL; l++) {
+            int cx = PAD + ((l - 1) % cols) * (cw + GRID_GAP);
+            int cy = GRID_Y + ((l - 1) / cols) * (ch + GRID_GAP);
+            boolean reached = l <= level;
+            if (l == level) {
+                g.fill(cx - 2, cy - 2, cx + cw + 2, cy + ch + 2, withAlpha(accent(), 0.25F + 0.35F * pulse));
+                g.fill(cx - 1, cy - 1, cx + cw + 1, cy + ch + 1, accent());
+                g.fill(cx, cy, cx + cw, cy + ch, accentSoft());
+            } else {
+                card(g, cx, cy, cw, ch, 0.0F);
+                if (reached) {
+                    g.fill(cx + 1, cy + ch - 2, cx + cw - 1, cy + ch - 1, withAlpha(accent(), 0.6F));
+                }
+            }
+            Component n = Component.literal(Integer.toString(l));
+            int nw = Math.round(this.font.width(n) * 1.5F);
+            scaledText(g, n, cx + (cw - nw) / 2, cy + 9, 1.5F,
+                    l == level ? accent() : reached ? COLOR_TEXT : COLOR_DIM);
+            if (!reached) {
+                drawLock(g, cx + cw - 10, cy + 3, COLOR_DIM);
+            }
+        }
+
+        // strength and solar energy
+        double punch = com.flash.thor.ThorPowers.punchDamage(level);
+        int sy = GRID_Y + 2 * (ch + GRID_GAP) + 6;
+        int sh = PROGRESS_Y - 6 - sy;
+        card(g, PAD, sy, LEFT_W, sh, 0.0F);
+        g.fill(PAD, sy + 6, PAD + 2, sy + sh - 6, accent());
+        g.drawString(this.font, Component.translatable("gui.flash.superman.strength"), PAD + 10, sy + 6, COLOR_MUTED, false);
+        scaledText(g, Component.literal(String.format(java.util.Locale.ROOT, "x%.1f", punch)), PAD + 10, sy + 17,
+                1.4F, accent());
+        int resist = Math.round((1.0F - Math.max(0.24F, 0.64F - 0.04F * level)) * 100.0F);
+        Component dmg = Component.translatable("gui.flash.superman.punch_damage",
+                String.format(java.util.Locale.ROOT, "%.1f", punch),
+                String.format(java.util.Locale.ROOT, "%.1f", punch / 2.0D));
+        g.drawString(this.font, dmg, PAD + LEFT_W - 10 - this.font.width(dmg), sy + 6, COLOR_TEXT, false);
+        Component res = Component.translatable("gui.flash.superman.resistance", resist);
+        g.drawString(this.font, res, PAD + LEFT_W - 10 - this.font.width(res), sy + 17, COLOR_MUTED, false);
+
+        // progress to the next level and the energy bar
+        int y = PROGRESS_Y;
+        card(g, PAD, y, LEFT_W, CONTENT_BOTTOM - y, 0.0F);
+        if (this.shownProgress < 0.0F) {
+            this.shownProgress = 0.0F;
+        }
+        this.shownProgress += (xp - this.shownProgress) * Math.min(1.0F, this.dt * 5.0F);
+        boolean maxed = level >= com.flash.thor.ThorPowers.MAX_LEVEL;
+        Component energyText = Component.translatable(infinite ? "gui.flash.thor.energy_infinite"
+                : "gui.flash.thor.energy", Math.round(energy * 100.0F));
+        g.drawString(this.font, energyText, PAD + 10, y + 6, com.flash.thor.ThorState.storm() > 0
+                ? 0xFF8FD8FF : COLOR_TEXT, false);
+        drawBar(g, PAD + 10, y + 17, LEFT_W - 20, energy, energy < 0.15F ? 0xFFFF3A3A : 0xFF6FC3FF);
+        Component next = Component.translatable(maxed ? "gui.flash.superman.maxed" : "gui.flash.superman.next",
+                level + 1, Math.round(xp * 100.0F));
+        g.drawString(this.font, next, PAD + 10, y + 27, COLOR_MUTED, false);
+        if (!maxed) {
+            drawBar(g, PAD + 10, y + 38, LEFT_W - 20, this.shownProgress, accent());
+        }
+
+        // passives and abilities, with level, key and cooldown
+        sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
+        int top = CONTENT_Y + 14;
+        com.flash.thor.ThorAbility[] all = com.flash.thor.ThorAbility.values();
+        int total = all.length + THOR_PASSIVES.length;
+        int rowStep = Math.min(SKILL_ROW, (PH - 22 - top) / total);
+        int rh = rowStep - 1;
+        int textY = (rh - 8) / 2;
+        Component tooltip = null;
+        for (int k = 0; k < total; k++) {
+            int ry = top + k * rowStep;
+            Component name;
+            Component desc;
+            Component right;
+            int req = 1;
+            int cooldown = 0;
+            if (k < THOR_PASSIVES.length) {
+                name = Component.translatable("ability.flash.thor." + THOR_PASSIVES[k]);
+                desc = Component.translatable("ability.flash.thor." + THOR_PASSIVES[k] + ".description");
+                right = Component.translatable("gui.flash.hulk.passive");
+            } else {
+                com.flash.thor.ThorAbility a = all[k - THOR_PASSIVES.length];
+                name = a.displayName();
+                desc = a.description();
+                req = a.level();
+                cooldown = com.flash.thor.ThorState.cooldown(a, now);
+                net.minecraft.client.KeyMapping key = ThorClient.key(a);
+                right = cooldown > 0 ? Component.literal(formatTime(cooldown))
+                        : key != null ? key.getTranslatedKeyMessage() : Component.empty();
+            }
+            boolean unlocked = level >= req;
+            if (!unlocked) {
+                right = Component.translatable("gui.flash.progress.level_short", req);
+            }
+            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            float hv = hover("tsk" + k, hovered);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            if (unlocked) {
+                drawCheck(g, RIGHT_X + 6, ry + Math.max(1, textY), accent());
+            } else {
+                drawLock(g, RIGHT_X + 6, ry + Math.max(0, textY - 1), COLOR_DIM);
+            }
+            int rw = this.font.width(right);
+            g.drawString(this.font, this.font.plainSubstrByWidth(name.getString(), RIGHT_W - 30 - rw),
+                    RIGHT_X + 18, ry + textY + 1, unlocked ? COLOR_TEXT : COLOR_DIM, false);
+            g.drawString(this.font, right, RIGHT_X + RIGHT_W - 6 - rw, ry + textY + 1,
+                    cooldown > 0 ? COLOR_ORANGE : unlocked ? accent() : COLOR_DIM, false);
+            if (hovered) {
+                tooltip = desc;
+            }
+        }
+        if (tooltip != null) {
+            g.renderTooltip(this.font, this.font.split(tooltip, 220), mx, my);
+        }
+    }
+
+    private void drawThorConfig(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.thor.cfg.destroy", "gui.flash.thor.cfg.destroy.desc", mx, my);
+        drawSwitch(g, "tsw0", switchX(), cfgY(0) + 8, com.flash.thor.ThorState.destroyBlocks());
+        configRow(g, 1, "gui.flash.config.hud", "gui.flash.superman.cfg.hud.desc", mx, my);
+        drawSwitch(g, "tsw1", switchX(), cfgY(1) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+        configRow(g, 2, "gui.flash.thor.cfg.energy", "gui.flash.thor.cfg.energy.desc", mx, my);
+        configRow(g, 3, "gui.flash.superman.cfg.suit", "gui.flash.thor.cfg.suit.desc", mx, my);
+        int suit = com.flash.thor.ThorSuits.clamp(com.flash.thor.ThorState.suit(this.minecraft.player));
+        drawPicker(g, cfgY(3) + 7, mx, my, com.flash.thor.ThorSuits.name(suit).getString(), suit,
+                com.flash.thor.ThorSuits.IDS.length);
+        configRow(g, 4, "gui.flash.thor.cfg.helmet", "gui.flash.thor.cfg.helmet.desc", mx, my);
+        drawSwitch(g, "tsw4", switchX(), cfgY(4) + 8, !com.flash.thor.ThorState.helmetOff(this.minecraft.player));
+    }
+
+    private boolean clickThorConfig(int mx, int my) {
+        if (inRow(mx, my, 0)) {
+            boolean destroy = !com.flash.thor.ThorState.destroyBlocks();
+            com.flash.thor.ThorState.setDestroyOptimistic(destroy);
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.ThorSettingsPacket(
+                    com.flash.network.ThorSettingsPacket.DESTROY, destroy ? 1 : 0));
+            click();
+            return true;
+        }
+        if (inRow(mx, my, 1)) {
+            FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
+            click();
+            return true;
+        }
+        if (inRow(mx, my, 3)) {
+            int step = pickerStep(mx, my, 3);
+            if (step != 0 && this.minecraft.player != null) {
+                int n = com.flash.thor.ThorSuits.IDS.length;
+                int idx = Math.floorMod(com.flash.thor.ThorState.suit(this.minecraft.player) + step, n);
+                com.flash.thor.ThorState.setLocalLook(this.minecraft.player.getUUID(), idx, null);
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.ThorSettingsPacket(
+                        com.flash.network.ThorSettingsPacket.SUIT, idx));
+                click();
+            }
+            return true;
+        }
+        if (inRow(mx, my, 4) && this.minecraft.player != null) {
+            boolean off = !com.flash.thor.ThorState.helmetOff(this.minecraft.player);
+            com.flash.thor.ThorState.setLocalLook(this.minecraft.player.getUUID(),
+                    com.flash.thor.ThorState.suit(this.minecraft.player), off);
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.ThorSettingsPacket(
+                    com.flash.network.ThorSettingsPacket.HELMET, off ? 1 : 0));
+            click();
+            return true;
+        }
+        return inRow(mx, my, 2);
     }
 
     private void drawSupermanConfig(GuiGraphics g, int mx, int my) {
@@ -1516,6 +1722,9 @@ public class FlashProgressScreen extends Screen {
 
         if (activeTab() == TAB_EQUIP) {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localThor()) {
+            return clickThorConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localSuperman()) {
             return clickSupermanConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);

@@ -33,6 +33,29 @@ public final class ModSounds {
     private ModSounds() {
     }
 
+    public static final RegistryObject<SoundEvent> THOR_SPIN = thor("mjolnir_spin");
+    public static final RegistryObject<SoundEvent> THOR_SPIN_ATTACK = thor("mjolnir_spin_attack");
+    public static final RegistryObject<SoundEvent> THOR_BLOCK = thor("mjolnir_block");
+    public static final RegistryObject<SoundEvent> THOR_HIT = thor("mjolnir_hit");
+    public static final RegistryObject<SoundEvent> THOR_THROW = thor("mjolnir_thrown");
+    public static final RegistryObject<SoundEvent> THOR_HUM = thor("mjolnir_hum");
+    public static final RegistryObject<SoundEvent> THOR_GRAB = thor("mjolnir_grab");
+    public static final RegistryObject<SoundEvent> THOR_THUMP = thor("mjolnir_thump");
+    public static final RegistryObject<SoundEvent> THOR_LIGHTNING = thor("mjolnir_lightning_strike");
+    public static final RegistryObject<SoundEvent> THOR_STORM_STRIKER = thor("mjolnir_storm_striker");
+    public static final RegistryObject<SoundEvent> THOR_OVERCHARGE = thor("overcharge");
+    public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_START = thor("overcharge_start");
+    public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_LOOP = thor("overcharge_loop");
+    public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_END = thor("overcharge_end");
+    public static final RegistryObject<SoundEvent> THOR_GOD_BLAST = thor("god_blast");
+    public static final java.util.List<RegistryObject<SoundEvent>> THOR_LINES = java.util.stream.IntStream
+            .rangeClosed(1, 15).mapToObj(i -> thor("thor_line" + i)).toList();
+
+    private static RegistryObject<SoundEvent> thor(String name) {
+        String id = "thor." + name;
+        return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));
+    }
+
     private static RegistryObject<SoundEvent> sound(String name) {
         String id = "superman." + name;
         return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));

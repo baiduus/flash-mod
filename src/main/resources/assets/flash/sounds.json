@@ -94,5 +94,425 @@
     "sounds": [
       "flash:superman/clark_rip"
     ]
+  },
+  "thor.mjolnir_spin": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_spin",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_spin_attack": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_spin_attack",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_block": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_block",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_hit": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_hit1",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_hit2",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_hit3",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_hit4",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_hit5",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_thrown": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_throw1",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_throw2",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_throw3",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_throw4",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/mjolnir_throw5",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_hum": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_hum",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_grab": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_grab",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_thump": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_thump",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_lightning_strike": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_lightning_strike",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.mjolnir_storm_striker": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/mjolnir_storm_striker",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.overcharge": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/overcharge",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.overcharge_start": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/overcharge_start",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.overcharge_loop": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/overcharge_loop",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.overcharge_end": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/overcharge_end",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.god_blast": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/god_blast",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.stormbreaker_hit": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/stormbreaker_hit1",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_hit2",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_hit3",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_hit4",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_hit5",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.stormbreaker_thrown": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/stormbreaker_throw1",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_throw2",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_throw3",
+        "stream": false
+      },
+      {
+        "name": "flash:thor/stormbreaker_throw4",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.stormbreaker_thump": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/stormbreaker_thump",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.bifrost_arrive": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/bifrost_arrive",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.bifrost_away": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/bifrost_away",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line1": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line1",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line2": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line2",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line3": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line3",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line4": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line4",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line5": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line5",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line6": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line6",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line7": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line7",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line8": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line8",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line9": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line9",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line10": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line10",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line11": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line11",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line12": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line12",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line13": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line13",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line14": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line14",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.thor_line15": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/thor_line15",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.jarvis_dossier_asgardian": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "flash:thor/jarvis_dossier_asgardian",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
   }
 }

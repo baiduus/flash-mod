@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "28";
+    private static final String PROTOCOL = "29";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -156,6 +156,36 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(SupermanSettingsPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(SupermanSettingsPacket::encode)
                 .decoder(SupermanSettingsPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(ThorSyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ThorSyncPacket::encode)
+                .decoder(ThorSyncPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(ThorAbilityPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ThorAbilityPacket::encode)
+                .decoder(ThorAbilityPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(ThorTransformPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ThorTransformPacket::encode)
+                .decoder(ThorTransformPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(ThorSettingsPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ThorSettingsPacket::encode)
+                .decoder(ThorSettingsPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(ThorFxPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ThorFxPacket::encode)
+                .decoder(ThorFxPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
 

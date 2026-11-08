@@ -56,6 +56,7 @@ public final class FlashClientEvents {
                 AccelerationPhantomRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.HULK_BOULDER.get(),
                 HulkBoulderRenderer::new);
+        event.registerEntityRenderer(com.flash.registry.ModEntities.MJOLNIR.get(), MjolnirRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new

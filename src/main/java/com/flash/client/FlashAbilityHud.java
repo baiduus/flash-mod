@@ -27,6 +27,13 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && PowerTheme.localThor()) {
+            if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
+                    && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
+                renderThor(graphics, minecraft, width, height);
+            }
+            return;
+        }
         if (minecraft.player != null && PowerTheme.localSuperman()) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug) {
@@ -174,6 +181,45 @@ public final class FlashAbilityHud implements IGuiOverlay {
             int cd = com.flash.superman.SupermanState.cooldown(a, now);
             drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(),
                     keyLabel(SupermanClient.key(a)), cd, Math.max(1, a.cooldown()), SupermanClient.active(a));
+            y += ROW_HEIGHT + ROW_GAP;
+        }
+    }
+
+    /** Thor panel: the transform key and the unlocked abilities (lit while running). */
+    private static void renderThor(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
+        Font font = minecraft.font;
+        long now = minecraft.level != null ? minecraft.level.getGameTime() : 0L;
+        int level = Math.max(1, com.flash.thor.ThorState.level());
+        boolean form = com.flash.thor.ThorState.isThor(minecraft.player);
+        String transform = Component.translatable("hud.flash.thor_transform").getString();
+        int rows = 1;
+        int panelWidth = Math.max(MIN_WIDTH, rowWidth(font, transform, keyLabel(FlashKeys.TOGGLE_SUIT)));
+        if (form) {
+            for (com.flash.thor.ThorAbility a : com.flash.thor.ThorAbility.values()) {
+                if (a.level() <= level) {
+                    rows++;
+                    panelWidth = Math.max(panelWidth, rowWidth(font, a.displayName().getString(),
+                            keyLabel(ThorClient.key(a))));
+                }
+            }
+        }
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - rows * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        if (x < 4 || y < 4) {
+            return;
+        }
+        drawRow(graphics, font, x, y, panelWidth, transform, keyLabel(FlashKeys.TOGGLE_SUIT), 0, 1, form);
+        y += ROW_HEIGHT + ROW_GAP;
+        if (!form) {
+            return;
+        }
+        for (com.flash.thor.ThorAbility a : com.flash.thor.ThorAbility.values()) {
+            if (a.level() > level) {
+                continue;
+            }
+            int cd = com.flash.thor.ThorState.cooldown(a, now);
+            drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(), keyLabel(ThorClient.key(a)), cd,
+                    Math.max(1, a.cooldown()), ThorClient.active(a));
             y += ROW_HEIGHT + ROW_GAP;
         }
     }

@@ -312,8 +312,11 @@ public final class SupermanClient {
                 launchedFor = -1;
             }
         }
-        if (!SupermanState.isSuperman(p) || !p.getAbilities().flying || p.isPassenger()
-                || !SupermanState.flag(p, SupermanPowers.F_FLIGHT)) {
+        // Thor flies the same way (with the Mjolnir in hand), a little slower
+        boolean thorFlight = com.flash.thor.ThorState.isThor(p)
+                && com.flash.thor.ThorState.flag(p, com.flash.thor.ThorPowers.F_FLIGHT);
+        boolean superFlight = SupermanState.isSuperman(p) && SupermanState.flag(p, SupermanPowers.F_FLIGHT);
+        if ((!superFlight && !thorFlight) || !p.getAbilities().flying || p.isPassenger()) {
             flightStage = 0;
             return;
         }
@@ -325,7 +328,8 @@ public final class SupermanClient {
         }
         flightStage = stage;
         // four times the old speeds, growing with the level: about 40 % at level 1, all of it at level 10
-        double scale = 4.0D * (0.34D + 0.066D * Math.max(1, SupermanState.level()));
+        int heroLevel = thorFlight && !superFlight ? com.flash.thor.ThorState.level() : SupermanState.level();
+        double scale = 4.0D * (0.34D + 0.066D * Math.max(1, heroLevel)) * (thorFlight && !superFlight ? 0.8D : 1.0D);
         Vec3 look = p.getLookAngle();
         Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
@@ -379,7 +383,7 @@ public final class SupermanClient {
     public static void onRenderPlayerPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         String base = SupermanPose.base(p.getUUID());
-        if (base == null || !SupermanState.isSuperman(p)) {
+        if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p))) {
             LEANS.remove(p.getUUID());
             return;
         }
@@ -568,6 +572,8 @@ public final class SupermanClient {
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         SupermanState.resetClient();
+        com.flash.thor.ThorState.resetClient();
+        ThorFx.reset();
         SupermanPose.reset();
         SupermanLimbs.reset();
         LOOPS.clear();

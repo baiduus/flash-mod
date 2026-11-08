@@ -26,6 +26,10 @@ public class FlashHud implements IGuiOverlay {
                 || minecraft.options.renderDebug) {
             return;
         }
+        if (PowerTheme.localThor()) {
+            drawThor(graphics, minecraft);
+            return;
+        }
         if (PowerTheme.localSuperman()) {
             drawSuperman(graphics, minecraft);
             return;
@@ -210,6 +214,43 @@ public class FlashHud implements IGuiOverlay {
     }
 
     /** Superman HUD (top left): form, level, solar energy bar and progress to the next level. */
+    /** Thor: level, storm energy and the Mjolnir charge ("Mjolnir · X %"). */
+    private static void drawThor(GuiGraphics g, Minecraft mc) {
+        var font = mc.font;
+        boolean form = com.flash.thor.ThorState.isThor(mc.player);
+        int level = Math.max(1, com.flash.thor.ThorState.level());
+        float energy = com.flash.thor.ThorState.energy();
+        float charge = com.flash.thor.ThorState.charge();
+        boolean infinite = com.flash.thor.ThorState.infiniteEnergy();
+        int storm = com.flash.thor.ThorState.storm();
+        String line1 = form ? Component.translatable("hud.flash.thor_level", level).getString()
+                : Component.translatable("hud.flash.thor_civil").getString();
+        String line2 = form
+                ? Component.translatable(infinite ? "hud.flash.thor_energy_infinite"
+                        : storm > 0 ? "hud.flash.thor_energy_storm" : "hud.flash.thor_energy", Math.round(energy)).getString()
+                : Component.translatable("hud.flash.thor_hint", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage()).getString();
+        String line3 = form ? Component.translatable("hud.flash.thor_charge", Math.round(charge)).getString()
+                : level >= com.flash.thor.ThorPowers.MAX_LEVEL ? Component.translatable("hud.flash.superman_max").getString()
+                : Component.translatable("hud.flash.superman_next", level + 1,
+                        Math.round(com.flash.thor.ThorState.xp())).getString();
+        int textWidth = Math.max(font.width(line1), Math.max(font.width(line2), font.width(line3)));
+        int x = 6;
+        int y = 6;
+        int boxWidth = Math.max(120, textWidth + 14);
+        int boxHeight = 40;
+        g.fill(x, y, x + boxWidth, y + boxHeight, FlashHudStyle.PANEL);
+        FlashHudStyle.barVertical(g, x, y, 3, boxHeight);
+        FlashHudStyle.gradientText(g, font, line1, x + 8, y + 4);
+        g.drawString(font, line2, x + 8, y + 15, storm > 0 && form ? 0xFF8FD8FF : FlashHudStyle.TEXT_MUTED, true);
+        g.drawString(font, line3, x + 8, y + 26, charge > 100.0F ? 0xFFB98BFF : 0xFF6FC3FF, true);
+        float f = infinite ? 1.0F : Math.max(0.0F, Math.min(1.0F, energy / com.flash.thor.ThorPowers.MAX_ENERGY));
+        int filled = Math.round((boxWidth - 3) * f);
+        g.fill(x + 3, y + boxHeight - 3, x + boxWidth, y + boxHeight, 0xFF101010);
+        if (filled > 0) {
+            g.fill(x + 3, y + boxHeight - 3, x + 3 + filled, y + boxHeight, 0xFF6FC3FF);
+        }
+    }
+
     private static void drawSuperman(GuiGraphics g, Minecraft mc) {
         var font = mc.font;
         boolean form = com.flash.superman.SupermanState.isSuperman(mc.player);

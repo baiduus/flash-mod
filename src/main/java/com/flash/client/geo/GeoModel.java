@@ -126,6 +126,10 @@ public final class GeoModel {
     private GeoModel() {
     }
 
+    public java.util.Collection<Bone> allBones() {
+        return bones.values();
+    }
+
     public Bone bone(String name) {
         return bones.get(name);
     }
@@ -457,6 +461,11 @@ public final class GeoModel {
             }
         }
         for (Bone child : bone.children) {
+            if (Math.abs(bone.bendValue) > 1.0E-3F && Math.abs(child.bendValue) <= 1.0E-3F) {
+                // the parts of a limb bend with it (models whose limb cubes sit in child bones)
+                child.bendAxis = bone.bendAxis;
+                child.bendValue = bone.bendValue;
+            }
             renderBone(child, pose, consumer, light, overlay, group, r, g, b, a, true);
         }
         pose.popPose();

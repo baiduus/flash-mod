@@ -48,6 +48,7 @@ public final class ModItems {
             () -> new net.minecraft.world.item.BlockItem(ModBlocks.NEGATIVE_CRYSTAL.get(),
                     new Item.Properties()));
 
+    public static final RegistryObject<Item> MJOLNIR = ITEMS.register("mjolnir", com.flash.item.MjolnirItem::new);
     public static final RegistryObject<Item> KRYPTONIAN_BABY = ITEMS.register("kryptonian_baby",
             com.flash.item.KryptonianBabyItem::new);
     public static final RegistryObject<Item> KRYPTONIAN_DEBRIS = ITEMS.register("kryptonian_debris",

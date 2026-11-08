@@ -1,0 +1,171 @@
+{
+ "version": 3,
+ "name": "thor_bifrostflight",
+ "author": "Legends: Superheroes",
+ "description": "Thor: animation.player.bifrostflight",
+ "emote": {
+  "beginTick": 0,
+  "endTick": 15,
+  "stopTick": 21,
+  "isLoop": false,
+  "returnTick": 0,
+  "degrees": true,
+  "easeBeforeKeyframe": true,
+  "moves": [
+   {
+    "tick": 0,
+    "easing": "linear",
+    "head": {
+     "pitch": -0.0,
+     "yaw": -0.0,
+     "roll": 0.0
+    },
+    "leftArm": {
+     "pitch": -0.0,
+     "yaw": -0.0,
+     "roll": 0.0,
+     "x": -0.0,
+     "y": -0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": -0.0,
+     "yaw": -0.0,
+     "roll": 0.0,
+     "x": -0.0,
+     "y": -0.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": -0.0,
+     "yaw": -0.0,
+     "roll": 0.0
+    },
+    "rightLeg": {
+     "pitch": -0.0,
+     "yaw": -0.0,
+     "roll": 0.0
+    }
+   },
+   {
+    "tick": 2,
+    "easing": "linear",
+    "rightArm": {
+     "pitch": 25.38081,
+     "yaw": -18.73121,
+     "roll": 35.05915
+    }
+   },
+   {
+    "tick": 6,
+    "easing": "linear",
+    "torso": {
+     "pitch": -0.0,
+     "yaw": -0.0,
+     "roll": 0.0
+    },
+    "head": {
+     "pitch": -26.34359,
+     "yaw": -21.40584,
+     "roll": 7.09999
+    },
+    "leftArm": {
+     "pitch": 54.38814,
+     "yaw": -50.93909,
+     "roll": 9.20933,
+     "x": -0.0,
+     "y": -0.0,
+     "z": -2.0
+    },
+    "rightArm": {
+     "pitch": -27.11925,
+     "yaw": -52.44997,
+     "roll": 45.57532,
+     "x": -0.0,
+     "y": -0.0,
+     "z": -1.0
+    },
+    "leftLeg": {
+     "pitch": -10.0,
+     "yaw": -0.0,
+     "roll": 0.0,
+     "x": -0.0,
+     "y": -0.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": -12.5,
+     "yaw": -0.0,
+     "roll": 0.0,
+     "x": -0.0,
+     "y": -0.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 10,
+    "easing": "linear",
+    "torso": {
+     "pitch": 5.0,
+     "yaw": -27.5,
+     "roll": 0.0
+    },
+    "head": {
+     "pitch": 47.39118,
+     "yaw": -3.68425,
+     "roll": 3.38262
+    },
+    "leftArm": {
+     "pitch": 11.02047,
+     "yaw": -20.67136,
+     "roll": -14.82156,
+     "x": 1.0,
+     "y": -1.0,
+     "z": -3.0
+    },
+    "rightArm": {
+     "pitch": 146.75296,
+     "yaw": -6.99589,
+     "roll": -7.00295,
+     "x": -0.0,
+     "y": -2.0,
+     "z": 1.0
+    },
+    "leftLeg": {
+     "pitch": -9.09196,
+     "yaw": -13.58143,
+     "roll": -5.31775,
+     "x": -0.0,
+     "y": -0.0,
+     "z": -2.0
+    },
+    "rightLeg": {
+     "pitch": -10.0,
+     "yaw": -30.0,
+     "roll": 0.0,
+     "x": 1.0,
+     "y": -1.0,
+     "z": -1.0
+    }
+   },
+   {
+    "tick": 11,
+    "easing": "linear",
+    "body": {
+     "x": -0.0,
+     "y": 0.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 14,
+    "easing": "linear",
+    "body": {
+     "x": -0.0,
+     "y": 8.4375,
+     "z": 0.0
+    }
+   }
+  ]
+ }
+}

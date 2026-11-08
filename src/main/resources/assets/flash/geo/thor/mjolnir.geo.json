@@ -1,0 +1,944 @@
+{
+ "format_version": "1.12.0",
+ "minecraft:geometry": [
+  {
+   "description": {
+    "identifier": "geometry.mjolnir",
+    "texture_width": 150,
+    "texture_height": 100,
+    "visible_bounds_width": 3,
+    "visible_bounds_height": 3.5,
+    "visible_bounds_offset": [
+     0,
+     1.25,
+     0
+    ]
+   },
+   "bones": [
+    {
+     "name": "HammerBase",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -8.5,
+        25.5,
+        7.5
+       ],
+       "size": [
+        1.0,
+        1.0,
+        1.0
+       ],
+       "uv": [
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer1",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -15.0,
+        22.0,
+        4.0
+       ],
+       "size": [
+        14.0,
+        8.0,
+        8.0
+       ],
+       "uv": [
+        0,
+        1
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer2",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -1.4,
+        22.5,
+        5.0
+       ],
+       "size": [
+        2.0,
+        7.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer3",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer3_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer3",
+     "rotation": [
+      0.0,
+      -22.5001,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -3.1967,
+        22.5,
+        1.92
+       ],
+       "size": [
+        2.0,
+        7.0,
+        1.0
+       ],
+       "uv": [
+        70,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer4",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer4_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer4",
+     "rotation": [
+      0.0,
+      0.0,
+      22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -8.8873,
+        30.404,
+        5.0
+       ],
+       "size": [
+        2.0,
+        1.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        20
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer5",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer5_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer5",
+     "rotation": [
+      0.0,
+      0.0,
+      -22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        2.0413,
+        18.3828,
+        5.0
+       ],
+       "size": [
+        2.0,
+        1.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        20
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Handle",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -9.0,
+        3.5,
+        7.0
+       ],
+       "size": [
+        2.0,
+        18.0,
+        2.0
+       ],
+       "uv": [
+        0,
+        50
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleTop",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "Handle",
+     "cubes": [
+      {
+       "origin": [
+        -10.0,
+        20.8,
+        6.0
+       ],
+       "size": [
+        4.0,
+        1.0,
+        4.0
+       ],
+       "uv": [
+        0,
+        30
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleBottom",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "Handle",
+     "cubes": [
+      {
+       "origin": [
+        -9.5,
+        1.0,
+        6.5
+       ],
+       "size": [
+        3.0,
+        3.0,
+        3.0
+       ],
+       "uv": [
+        0,
+        44
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleBottom2",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom",
+     "cubes": [
+      {
+       "origin": [
+        -9.0,
+        1.8,
+        7.0
+       ],
+       "size": [
+        2.0,
+        1.0,
+        2.0
+       ],
+       "uv": [
+        0,
+        46
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead1",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom"
+    },
+    {
+     "name": "HandleLead1_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "HandleLead1",
+     "rotation": [
+      0.0,
+      0.0,
+      -22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -11.4081,
+        -0.9865,
+        7.5
+       ],
+       "size": [
+        1.0,
+        4.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead3",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom"
+    },
+    {
+     "name": "HandleLead3_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "HandleLead3",
+     "rotation": [
+      0.0,
+      0.0,
+      22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -5.5919,
+        -0.9865,
+        7.5
+       ],
+       "size": [
+        1.0,
+        4.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead7",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom",
+     "cubes": [
+      {
+       "origin": [
+        -9.0,
+        -7.6,
+        7.48
+       ],
+       "size": [
+        2.0,
+        1.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead2",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom",
+     "cubes": [
+      {
+       "origin": [
+        -10.61,
+        -3.85,
+        7.48
+       ],
+       "size": [
+        1.0,
+        3.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead5",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom"
+    },
+    {
+     "name": "HandleLead5_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "HandleLead5",
+     "rotation": [
+      0.0,
+      0.0,
+      -22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -16.369,
+        -5.7158,
+        7.5
+       ],
+       "size": [
+        1.0,
+        4.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead4",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom",
+     "cubes": [
+      {
+       "origin": [
+        -6.39,
+        -3.85,
+        7.48
+       ],
+       "size": [
+        1.0,
+        3.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HandleLead6",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HandleBottom"
+    },
+    {
+     "name": "HandleLead6_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "HandleLead6",
+     "rotation": [
+      0.0,
+      0.0,
+      22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -0.64,
+        -5.7052,
+        7.5
+       ],
+       "size": [
+        1.0,
+        4.0,
+        1.0
+       ],
+       "uv": [
+        40,
+        40
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer6",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -16.6,
+        22.5,
+        5.0
+       ],
+       "size": [
+        2.0,
+        7.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer7",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer7_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer7",
+     "rotation": [
+      0.0,
+      22.5001,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -14.7681,
+        22.5,
+        1.9395
+       ],
+       "size": [
+        2.0,
+        7.0,
+        1.0
+       ],
+       "uv": [
+        70,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer8",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer8_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer8",
+     "rotation": [
+      0.0,
+      0.0,
+      -22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -9.1324,
+        30.4639,
+        5.0
+       ],
+       "size": [
+        2.0,
+        1.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        20
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer9",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer9_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer9",
+     "rotation": [
+      0.0,
+      0.0,
+      22.5001
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -19.9389,
+        18.3166,
+        5.0
+       ],
+       "size": [
+        2.0,
+        1.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        20
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HammerTop",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -10.5,
+        30.0,
+        5.0
+       ],
+       "size": [
+        5.0,
+        1.0,
+        6.0
+       ],
+       "uv": [
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HammerTop1",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerTop",
+     "cubes": [
+      {
+       "origin": [
+        -11.0,
+        30.0,
+        5.5
+       ],
+       "size": [
+        6.0,
+        1.0,
+        5.0
+       ],
+       "uv": [
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "HammerTop2",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerTop",
+     "cubes": [
+      {
+       "origin": [
+        -10.5,
+        30.1,
+        5.5
+       ],
+       "size": [
+        5.0,
+        1.0,
+        5.0
+       ],
+       "uv": [
+        16,
+        21
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer10",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer10_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer10",
+     "rotation": [
+      0.0,
+      22.5001,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -3.1974,
+        22.5,
+        13.0915
+       ],
+       "size": [
+        2.0,
+        7.0,
+        1.0
+       ],
+       "uv": [
+        70,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer11",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase"
+    },
+    {
+     "name": "Hammer11_r1",
+     "pivot": [
+      -8.0,
+      11.75,
+      8.0059
+     ],
+     "parent": "Hammer11",
+     "rotation": [
+      0.0,
+      -22.5001,
+      0.0
+     ],
+     "cubes": [
+      {
+       "origin": [
+        -14.7525,
+        22.5,
+        13.0415
+       ],
+       "size": [
+        2.0,
+        7.0,
+        1.0
+       ],
+       "uv": [
+        70,
+        0
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer12",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -15.0,
+        29.5,
+        4.5
+       ],
+       "size": [
+        14.0,
+        1.0,
+        7.0
+       ],
+       "uv": [
+        2,
+        1
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Hammer13",
+     "pivot": [
+      0.0,
+      24.0,
+      0.0
+     ],
+     "parent": "HammerBase",
+     "cubes": [
+      {
+       "origin": [
+        -15.0,
+        21.5,
+        4.5
+       ],
+       "size": [
+        14.0,
+        1.0,
+        7.0
+       ],
+       "uv": [
+        0,
+        1
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

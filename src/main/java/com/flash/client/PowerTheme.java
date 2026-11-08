@@ -46,6 +46,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFF3F8CFF, 0xFF0E2350, 0xFF0A1630,
             "gui.flash.theme.superman.title", "gui.flash.theme.superman.subtitle", Icon.SHIELD, true);
 
+    /** Thor: storm blue with silver. */
+    public static final PowerTheme THOR = new PowerTheme("thor",
+            0xFF6FC3FF, 0xFF13304A, 0xFF0B1A2A,
+            "gui.flash.theme.thor.title", "gui.flash.theme.thor.subtitle", Icon.BOLT, true);
+
+    /** True when the local player carries the Thor power. */
+    public static boolean localThor() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && com.flash.thor.ThorState.has(player);
+    }
+
     /** True when the local player carries the Superman power. */
     public static boolean localSuperman() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
@@ -65,6 +76,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
     }
 
     public static PowerTheme current() {
+        if (localThor()) {
+            return THOR;
+        }
         if (localSuperman()) {
             return SUPERMAN;
         }

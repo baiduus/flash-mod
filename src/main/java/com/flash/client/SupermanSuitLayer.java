@@ -64,15 +64,24 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     private static GeoModel model(String id) {
         return MODELS.computeIfAbsent(id, k -> GeoModel.load(new ResourceLocation(FlashMod.MODID,
-                "geo/superman/" + k + ".geo.json"), null));
+                (thor(k) ? "geo/thor/" : "geo/superman/") + k + ".geo.json"), null));
     }
 
     private static ResourceLocation tex(String id, String name) {
-        return new ResourceLocation(FlashMod.MODID, "textures/superman_suits/" + id + "/" + name + ".png");
+        return new ResourceLocation(FlashMod.MODID, (thor(id) ? "textures/thor_suits/" : "textures/superman_suits/")
+                + id + "/" + name + ".png");
+    }
+
+    /** Thor suits (same layer: 3D model on the body, physics cape) are told apart by their id. */
+    private static boolean thor(String id) {
+        return id.startsWith("thor");
     }
 
     /** Suit worn by this player now, or null (not in the Superman form). */
     public static String worn(AbstractClientPlayer player) {
+        if (com.flash.thor.ThorState.isThor(player)) {
+            return com.flash.thor.ThorSuits.id(com.flash.thor.ThorState.suit(player));
+        }
         if (!SupermanState.isSuperman(player)) {
             return null;
         }
@@ -134,7 +143,19 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         bends(model, player);
         PlayerModel<AbstractClientPlayer> parent = this.getParentModel();
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
-        RenderType top = RenderType.entityCutoutNoCull(tex(id, "layer_0"));
+        String layer0 = "layer_0";
+        if (thor(id) && com.flash.thor.ThorState.helmetOff(player)) {
+            // the helmet taken off (the K menu): its bones hidden, the texture without it when the suit has one
+            for (GeoModel.Bone b : model.allBones()) {
+                if (b.name.startsWith("Helmet") || b.name.startsWith("Wing")) {
+                    b.visible = false;
+                }
+            }
+            if (com.flash.thor.ThorSuits.hasHelmetless(id)) {
+                layer0 = "layer_0_helmetless";
+            }
+        }
+        RenderType top = RenderType.entityCutoutNoCull(tex(id, layer0));
         RenderType bottom = RenderType.entityCutoutNoCull(tex(id, "layer_1"));
         for (String b : new String[] {"right_leg", "left_leg"}) {
             draw(model, parent, b, pose, buffers, bottom, light, overlay);
@@ -146,11 +167,16 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             draw(model, parent, "head", pose, buffers, RenderType.entityTranslucent(tex(id, "helmet_overlay")), light,
                     overlay);
         }
-        if (SupermanState.flag(player, SupermanPowers.F_HEAT) || SupermanState.flag(player, SupermanPowers.F_LASER)) {
+        boolean thorGlow = thor(id) && (com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FURY)
+                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_BLAST)
+                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_ULTIMATE)
+                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_OVERCHARGE));
+        if (thorGlow || (!thor(id) && (SupermanState.flag(player, SupermanPowers.F_HEAT)
+                || SupermanState.flag(player, SupermanPowers.F_LASER)))) {
             draw(model, parent, "head", pose, buffers, RenderType.entityTranslucentEmissive(tex(id, "eyes")),
                     0xF000F0, overlay);
         }
-        if (SupermanSuits.hasCape(id) && !player.isSpectator()) {
+        if ((thor(id) ? com.flash.thor.ThorSuits.hasCape(id) : SupermanSuits.hasCape(id)) && !player.isSpectator()) {
             SupermanCape.render(pose, buffers, light, player, this.getParentModel(), partialTick, tex(id, "cape"));
         }
     }

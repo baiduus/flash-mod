@@ -217,6 +217,10 @@ public final class FlashPowers {
                 && com.flash.superman.SupermanPowers.has(server)) {
             com.flash.superman.SupermanPowers.revoke(server);
         }
+        if (player instanceof net.minecraft.server.level.ServerPlayer server
+                && com.flash.thor.ThorPowers.has(server)) {
+            com.flash.thor.ThorPowers.revoke(server);
+        }
         FlashV9.adoptPowers(player);
         if (hasPermanentPowers(player)) {
             int max = Math.max(1, getMaxLevel(player));

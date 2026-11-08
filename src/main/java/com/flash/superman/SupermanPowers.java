@@ -284,6 +284,9 @@ public final class SupermanPowers {
 
     /** Only one power at a time: the Hulk and the speedster powers go away. */
     private static void clearOtherPowers(ServerPlayer player) {
+        if (com.flash.thor.ThorPowers.has(player)) {
+            com.flash.thor.ThorPowers.revoke(player);
+        }
         if (com.flash.hulk.HulkPowers.has(player)) {
             com.flash.hulk.HulkPowers.revoke(player);
         }
@@ -592,10 +595,10 @@ public final class SupermanPowers {
                 player.setAirSupply(player.getMaxAirSupply());
             }
             applyRun(player, flag(player, F_SPEED));
-            // the sun heals: Regeneration II under the open sky by day, III up high where it recharges;
+            // the sun heals: Regeneration III under the open sky by day, V up high where it recharges;
             // in caves and at night the normal regeneration of the game
             if (sun) {
-                int amp = high ? 2 : 1;
+                int amp = high ? 4 : 2;
                 var regen = player.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
                 // renewed while it still has a few seconds (the effect heals on its own timer: renewing it every
                 // tick would break the rhythm)

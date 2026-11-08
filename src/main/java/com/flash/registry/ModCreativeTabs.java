@@ -24,8 +24,6 @@ public final class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModItems.TRANSFORMATION_CHAMBER.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.TRANSFORMATION_CHAMBER.get());
-                        output.accept(ModItems.KRYPTONIAN_BABY.get());
-                        output.accept(ModItems.KRYPTONIAN_DEBRIS.get());
                         output.accept(ModItems.POTION_CONTAINER.get());
                         output.accept(ModItems.ACCELERATION_STONE.get());
                         output.accept(ModItems.ACCELERATION_CRYSTAL.get());
@@ -89,6 +87,31 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.SYRINGE.get());
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
                                 com.flash.item.SyringeContents.GAMMA));
+                    })
+                    .build());
+
+    /** Everything of Superman (Krypton). */
+    public static final RegistryObject<CreativeModeTab> SUPERMAN = CREATIVE_MODE_TABS.register(
+            "superman",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.flash.superman"))
+                    .icon(() -> new ItemStack(ModItems.KRYPTONIAN_BABY.get()))
+                    .withTabsBefore(HULK.getKey())
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModItems.KRYPTONIAN_BABY.get());
+                        output.accept(ModItems.KRYPTONIAN_DEBRIS.get());
+                    })
+                    .build());
+
+    /** Everything of Thor (Asgard). */
+    public static final RegistryObject<CreativeModeTab> THOR = CREATIVE_MODE_TABS.register(
+            "thor",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.flash.thor"))
+                    .icon(() -> new ItemStack(ModItems.MJOLNIR.get()))
+                    .withTabsBefore(SUPERMAN.getKey())
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModItems.MJOLNIR.get());
                     })
                     .build());
 
