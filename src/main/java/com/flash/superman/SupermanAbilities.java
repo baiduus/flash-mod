@@ -924,10 +924,10 @@ public final class SupermanAbilities {
         if (e instanceof LivingEntity living) {
             living.invulnerableTime = 0;
         }
-        e.hurt(level.damageSources().playerAttack(player), (6.0F + 12.0F * charge) * power);
+        // no damage on the throw itself: it all comes when the target hits something
         e.setDeltaMovement(look.scale(speed).add(0.0D, 0.2D, 0.0D));
         e.hurtMarked = true;
-        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (6.0F + 12.0F * charge) * power, new int[1], full));
+        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (12.0F + 24.0F * charge) * power, new int[1], full));
         s.throwCharge = 0.0F;
         sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2F, 0.6F);
         SupermanPowers.setCooldown(player, SupermanAbility.GRAB);

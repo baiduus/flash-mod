@@ -109,6 +109,15 @@ public final class SupermanEvents {
         }
     }
 
+    /** Superman can always fly (mayfly), so a fall comes as this event instead of LivingFallEvent. */
+    @SubscribeEvent
+    public static void onFlyableFall(net.minecraftforge.event.entity.player.PlayerFlyableFallEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && SupermanPowers.isSuperman(player)
+                && event.getDistance() > 10.0F) {
+            SupermanAbilities.heroLanding(player, event.getDistance());
+        }
+    }
+
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         SupermanPowers.copy(event.getOriginal(), event.getEntity(), event.isWasDeath());

@@ -640,7 +640,10 @@ public final class SupermanPowers {
             abilities.setFlyingSpeed(speed);
             player.onUpdateAbilities();
         }
-        player.fallDistance = 0.0F;
+        // only while flying: a real fall still counts (more than 10 blocks = the hero landing)
+        if (abilities.flying) {
+            player.fallDistance = 0.0F;
+        }
     }
 
     public static void stopFlight(ServerPlayer player) {
