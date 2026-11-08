@@ -40,13 +40,21 @@ public class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
         if (model == null) {
             return;
         }
-        var v = entity.getDeltaMovement();
-        float heading = (float) Math.toDegrees(Math.atan2(v.x, v.z));
         pose.pushPose();
-        pose.translate(0.0D, 0.25D, 0.0D);
-        pose.mulPose(Axis.YP.rotationDegrees(heading));
-        // head first, tumbling
-        pose.mulPose(Axis.XP.rotationDegrees((entity.tickCount + partialTick) * 40.0F));
+        if (entity.statue()) {
+            // lying on the ground: standing on its head, the handle up
+            pose.translate(0.0D, 0.42D, 0.0D);
+            pose.mulPose(Axis.YP.rotationDegrees(entity.getId() * 37 % 360));
+            pose.mulPose(Axis.XP.rotationDegrees(180.0F));
+        } else {
+            // flying straight: head first along the velocity, no tumbling
+            var v = entity.getDeltaMovement();
+            float heading = (float) Math.toDegrees(Math.atan2(v.x, v.z));
+            float pitch = (float) Math.toDegrees(Math.atan2(v.y, Math.sqrt(v.x * v.x + v.z * v.z)));
+            pose.translate(0.0D, 0.25D, 0.0D);
+            pose.mulPose(Axis.YP.rotationDegrees(heading));
+            pose.mulPose(Axis.XP.rotationDegrees(90.0F - pitch));
+        }
         float s = 0.9F;
         pose.scale(-s, -s, s);
         pose.translate(-model.centerX() / 16.0F, -model.centerY() / 16.0F, -model.centerZ() / 16.0F);

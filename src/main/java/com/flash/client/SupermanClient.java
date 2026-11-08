@@ -174,6 +174,14 @@ public final class SupermanClient {
             }
             waitRelease = false;
         }
+        if (thorCoiling) {
+            // Thor coiling for the charged takeoff: feet planted
+            input.jumping = false;
+            input.forwardImpulse = 0.0F;
+            input.leftImpulse = 0.0F;
+            input.up = input.down = input.left = input.right = false;
+            return;
+        }
         if (!usable) {
             if (jumpHeld >= 0) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
@@ -261,6 +269,14 @@ public final class SupermanClient {
         flightHeld = -1;
         flightLaunched = false;
         return true;
+    }
+
+    /** Set by ThorClient while Thor coils for his charged takeoff. */
+    public static boolean thorCoiling;
+
+    /** After a charged takeoff (also Thor's): switch to flight at the top of the jump. */
+    public static void hoverAtTop() {
+        launchedFor = 0;
     }
 
     /** True while the local player coils for the charged takeoff. */

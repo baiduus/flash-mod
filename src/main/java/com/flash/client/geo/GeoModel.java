@@ -126,6 +126,11 @@ public final class GeoModel {
     private GeoModel() {
     }
 
+    /** The top bones of the model. */
+    public List<Bone> roots() {
+        return roots;
+    }
+
     public java.util.Collection<Bone> allBones() {
         return bones.values();
     }

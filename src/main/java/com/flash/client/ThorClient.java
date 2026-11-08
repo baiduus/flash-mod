@@ -50,6 +50,60 @@ public final class ThorClient {
         };
     }
 
+    private static final int TAP_TICKS = 5;
+    private static final int LAUNCH_AT = TAP_TICKS + 20;
+    private static int flightHeld = -1;
+    private static boolean flightLaunched;
+
+    /**
+     * Flight key on the ground: a tap takes off as before; held, Thor coils and after about a second the ground
+     * cracks and he shoots ~20 blocks up, flying at the top. In the air it just toggles flight.
+     */
+    private static boolean flightKey(Minecraft mc, int index, boolean down) {
+        var p = mc.player;
+        boolean ground = p.onGround() && !p.getAbilities().flying && !p.isInWater() && !p.isPassenger();
+        boolean was = KEY_DOWN[index];
+        KEY_DOWN[index] = down;
+        if (down && !was) {
+            if (!ground) {
+                FlashNetwork.CHANNEL.sendToServer(new ThorAbilityPacket(index, true));
+                return true;
+            }
+            flightHeld = 0;
+            flightLaunched = false;
+            return true;
+        }
+        if (flightHeld < 0) {
+            return true;
+        }
+        if (down) {
+            if (flightLaunched) {
+                return true;
+            }
+            flightHeld++;
+            if (flightHeld == TAP_TICKS) {
+                SupermanClient.thorCoiling = true;
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
+            } else if (flightHeld >= LAUNCH_AT) {
+                SupermanClient.thorCoiling = false;
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
+                flightLaunched = true;
+                SupermanClient.hoverAtTop();
+            }
+            return true;
+        }
+        SupermanClient.thorCoiling = false;
+        if (!flightLaunched) {
+            if (flightHeld >= TAP_TICKS) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
+            }
+            FlashNetwork.CHANNEL.sendToServer(new ThorAbilityPacket(index, true));
+        }
+        flightHeld = -1;
+        flightLaunched = false;
+        return true;
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
@@ -63,6 +117,9 @@ public final class ThorClient {
             ThorAbility a = abilities[i];
             KeyMapping key = key(a);
             boolean down = active && key != null && key.isDown();
+            if (a == ThorAbility.FLIGHT && flightKey(mc, i, down)) {
+                continue;
+            }
             if (down == KEY_DOWN[i]) {
                 continue;
             }

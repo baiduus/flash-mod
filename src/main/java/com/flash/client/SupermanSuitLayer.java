@@ -101,7 +101,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             String[][] map = {{"right_arm", "rightArm"}, {"left_arm", "leftArm"}, {"right_leg", "rightLeg"},
                     {"left_leg", "leftLeg"}};
             for (String[] m : map) {
-                GeoModel.Bone bone = model.bone(m[0]);
+                GeoModel.Bone bone = rootFor(model, m[0]);
                 var bend = anim.getBend(m[1]);
                 if (bone != null && bend != null && bend.getRight() != null) {
                     bone.bendAxis = bend.getLeft() != null ? bend.getLeft() : 0.0F;
@@ -157,11 +157,23 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
         RenderType top = RenderType.entityCutoutNoCull(tex(id, layer0));
         RenderType bottom = RenderType.entityCutoutNoCull(tex(id, "layer_1"));
-        for (String b : new String[] {"right_leg", "left_leg"}) {
-            draw(model, parent, b, pose, buffers, bottom, light, overlay);
-        }
-        for (String b : BONES) {
-            draw(model, parent, b, pose, buffers, top, light, overlay);
+        if (thor(id)) {
+            // the Thor models: every top bone (whatever its name: "head", "Head", "RightLeg", a loose "Cape"...)
+            // goes on its body part, with the trousers layer under the main one on all of them (some suits paint
+            // the belt or the hips on layer_1)
+            for (GeoModel.Bone root : model.roots()) {
+                drawBone(model, root, partFor(parent, root.name), pose, buffers, bottom, light, overlay);
+            }
+            for (GeoModel.Bone root : model.roots()) {
+                drawBone(model, root, partFor(parent, root.name), pose, buffers, top, light, overlay);
+            }
+        } else {
+            for (String b : new String[] {"right_leg", "left_leg"}) {
+                draw(model, parent, b, pose, buffers, bottom, light, overlay);
+            }
+            for (String b : BONES) {
+                draw(model, parent, b, pose, buffers, top, light, overlay);
+            }
         }
         if (SupermanSuits.hasOverlay(id)) {
             draw(model, parent, "head", pose, buffers, RenderType.entityTranslucent(tex(id, "helmet_overlay")), light,
@@ -181,13 +193,45 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
     }
 
+    /** The vanilla part a top bone follows, from its name (any case, with or without "_"). */
+    private static ModelPart partFor(PlayerModel<?> m, String bone) {
+        String n = bone.toLowerCase(java.util.Locale.ROOT).replace("_", "");
+        return switch (n) {
+            case "head" -> m.head;
+            case "rightarm" -> m.rightArm;
+            case "leftarm" -> m.leftArm;
+            case "rightleg" -> m.rightLeg;
+            case "leftleg" -> m.leftLeg;
+            default -> m.body;
+        };
+    }
+
+    /** The top bone standing for a body part (head, right_arm...), whatever its spelling in the model. */
+    private static GeoModel.Bone rootFor(GeoModel model, String part) {
+        GeoModel.Bone exact = model.bone(part);
+        if (exact != null) {
+            return exact;
+        }
+        String want = part.replace("_", "");
+        for (GeoModel.Bone r : model.roots()) {
+            if (r.name.toLowerCase(java.util.Locale.ROOT).replace("_", "").equals(want)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     private static void draw(GeoModel model, PlayerModel<?> parent, String boneName, PoseStack pose,
                              MultiBufferSource buffers, RenderType type, int light, int overlay) {
-        GeoModel.Bone bone = model.bone(boneName);
+        GeoModel.Bone bone = rootFor(model, boneName);
         if (bone == null) {
             return;
         }
-        ModelPart part = part(parent, boneName);
+        drawBone(model, bone, part(parent, boneName), pose, buffers, type, light, overlay);
+    }
+
+    private static void drawBone(GeoModel model, GeoModel.Bone bone, ModelPart part, PoseStack pose,
+                                 MultiBufferSource buffers, RenderType type, int light, int overlay) {
         pose.pushPose();
         pose.translate(part.x / 16.0F, part.y / 16.0F, part.z / 16.0F);
         if (part.xRot != 0.0F || part.yRot != 0.0F || part.zRot != 0.0F) {

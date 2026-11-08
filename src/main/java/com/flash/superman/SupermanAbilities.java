@@ -1705,7 +1705,7 @@ public final class SupermanAbilities {
         SupermanPowers.setFlag(player, SupermanPowers.F_FLIGHT, true);
         player.getAbilities().mayfly = true;
         player.onUpdateAbilities();
-        player.setDeltaMovement(player.getDeltaMovement().x, 1.45D, player.getDeltaMovement().z);
+        player.setDeltaMovement(player.getDeltaMovement().x, 2.0D, player.getDeltaMovement().z);
         player.hurtMarked = true;
         cracks(level, player.position(), 3.5F);
         anim(player, "charged_launch9");

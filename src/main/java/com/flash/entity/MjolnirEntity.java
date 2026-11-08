@@ -18,7 +18,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -33,9 +32,13 @@ import net.minecraft.world.phys.Vec3;
  * charge), stops on a wall with a shockwave and flies back to the owner's hand on its own (or when recalled),
  * going through blocks and hitting whatever is in the way.
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.flash.FlashMod.MODID)
 public class MjolnirEntity extends Projectile {
 
     private static final EntityDataAccessor<Boolean> RETURNING = SynchedEntityData.defineId(MjolnirEntity.class,
+            EntityDataSerializers.BOOLEAN);
+    /** Lying on the ground (dropped): only the worthy pick it up, with a right click. */
+    private static final EntityDataAccessor<Boolean> STATUE = SynchedEntityData.defineId(MjolnirEntity.class,
             EntityDataSerializers.BOOLEAN);
     private static final Map<UUID, MjolnirEntity> OUT = new ConcurrentHashMap<>();
 
@@ -73,10 +76,32 @@ public class MjolnirEntity extends Projectile {
     @Override
     protected void defineSynchedData() {
         this.entityData.define(RETURNING, false);
+        this.entityData.define(STATUE, false);
     }
 
     public boolean returning() {
         return this.entityData.get(RETURNING);
+    }
+
+    public boolean statue() {
+        return this.entityData.get(STATUE);
+    }
+
+    /** A dropped Mjolnir: it stays where it falls. */
+    public static MjolnirEntity statue(Level level, ItemStack stack, Vec3 at) {
+        MjolnirEntity e = new MjolnirEntity(ModEntities.MJOLNIR.get(), level);
+        e.stack = stack.copy();
+        e.entityData.set(STATUE, true);
+        e.setPos(at.x, at.y, at.z);
+        return e;
+    }
+
+    /** Called back by its worthy owner: it lifts off and flies to the hand. */
+    public void callTo(ServerPlayer owner) {
+        this.entityData.set(STATUE, false);
+        this.setOwner(owner);
+        OUT.put(owner.getUUID(), this);
+        this.recall();
     }
 
     public void recall() {
@@ -87,6 +112,17 @@ public class MjolnirEntity extends Projectile {
 
     @Override
     public void tick() {
+        if (this.statue()) {
+            // lying on the ground: falls, then stays (only a worthy right click lifts it)
+            this.baseTick();
+            Vec3 v = this.getDeltaMovement();
+            if (!this.onGround()) {
+                v = v.add(0.0D, -0.08D, 0.0D);
+            }
+            this.move(net.minecraft.world.entity.MoverType.SELF, new Vec3(0.0D, v.y, 0.0D));
+            this.setDeltaMovement(this.onGround() ? Vec3.ZERO : new Vec3(0.0D, v.y * 0.98D, 0.0D));
+            return;
+        }
         super.tick();
         if (this.level().isClientSide) {
             Vec3 v = this.getDeltaMovement();
@@ -161,8 +197,7 @@ public class MjolnirEntity extends Projectile {
 
     private void drop() {
         if (!this.stack.isEmpty()) {
-            this.level().addFreshEntity(new ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(),
-                    this.stack.copy()));
+            this.level().addFreshEntity(statue(this.level(), this.stack, this.position()));
         }
         Entity o = this.getOwner();
         if (o != null) {
@@ -177,6 +212,48 @@ public class MjolnirEntity extends Projectile {
     }
 
     @Override
+    public boolean isPickable() {
+        return this.statue();
+    }
+
+    @Override
+    public float getPickRadius() {
+        return 0.2F;
+    }
+
+    /** Right click on the hammer on the ground: the worthy take it to the empty hand, the others cannot lift it. */
+    @Override
+    public net.minecraft.world.InteractionResult interact(net.minecraft.world.entity.player.Player player,
+                                                          net.minecraft.world.InteractionHand hand) {
+        if (!this.statue()) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+        if (this.level().isClientSide) {
+            return net.minecraft.world.InteractionResult.SUCCESS;
+        }
+        if (player instanceof ServerPlayer sp && ThorPowers.isThor(sp)) {
+            ThorAbilities.catchHammer(sp, this.stack);
+            this.discard();
+        } else {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.flash.thor_unworthy"),
+                    true);
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    com.flash.registry.ModSounds.THOR_BLOCK.get(), SoundSource.PLAYERS, 0.6F, 0.8F);
+        }
+        return net.minecraft.world.InteractionResult.CONSUME;
+    }
+
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        return false;
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
+    @Override
     public boolean shouldRenderAtSqrDistance(double d) {
         return d < 128.0D * 128.0D;
     }
@@ -186,6 +263,7 @@ public class MjolnirEntity extends Projectile {
         super.addAdditionalSaveData(tag);
         tag.put("stack", this.stack.save(new CompoundTag()));
         tag.putFloat("force", this.force);
+        tag.putBoolean("statue", this.statue());
     }
 
     @Override
@@ -193,7 +271,37 @@ public class MjolnirEntity extends Projectile {
         super.readAdditionalSaveData(tag);
         this.stack = ItemStack.of(tag.getCompound("stack"));
         this.force = tag.getFloat("force");
-        this.recall();
+        if (tag.getBoolean("statue")) {
+            this.entityData.set(STATUE, true);
+        } else {
+            this.recall();
+        }
+    }
+
+    /** Every Mjolnir item thrown on the ground (Q, death, a full inventory...) turns into the hammer lying there. */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof net.minecraft.world.entity.item.ItemEntity item)
+                || !(item.getItem().getItem() instanceof com.flash.item.MjolnirItem)) {
+            return;
+        }
+        event.setCanceled(true);
+        event.getLevel().addFreshEntity(statue(event.getLevel(), item.getItem(), item.position()));
+    }
+
+    /** The hammers lying around a player (loaded chunks), the nearest first. */
+    public static MjolnirEntity nearestStatue(ServerPlayer player, double range) {
+        MjolnirEntity best = null;
+        double bd = Double.MAX_VALUE;
+        for (MjolnirEntity e : player.serverLevel().getEntitiesOfClass(MjolnirEntity.class,
+                player.getBoundingBox().inflate(range), MjolnirEntity::statue)) {
+            double d = e.distanceToSqr(player);
+            if (d < bd) {
+                bd = d;
+                best = e;
+            }
+        }
+        return best;
     }
 
     public void playThump(ServerLevel level) {

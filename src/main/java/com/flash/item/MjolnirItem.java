@@ -53,6 +53,16 @@ public class MjolnirItem extends Item {
         return slot == EquipmentSlot.MAINHAND ? this.modifiers : super.getDefaultAttributeModifiers(slot);
     }
 
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(new net.minecraftforge.client.extensions.common.IClientItemExtensions() {
+            @Override
+            public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return com.flash.client.MjolnirItemRenderer.get();
+            }
+        });
+    }
+
     public static boolean worthy(Player player) {
         return ThorPowers.isThor(player) || com.flash.thor.ThorState.isThor(player);
     }

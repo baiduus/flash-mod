@@ -9,6 +9,7 @@ import sys
 
 src, dst = sys.argv[1], sys.argv[2]
 
+ONLY_ANIMS = len(sys.argv) > 3 and sys.argv[3] == "anims"
 # suits: model + textures
 suits = sorted(f[:-9] for f in os.listdir(os.path.join(src, "trajes/modelos_3d")) if f.endswith(".geo.json"))
 os.makedirs(os.path.join(dst, "geo/thor"), exist_ok=True)
@@ -53,6 +54,8 @@ open(sj_path, "a").write("\n")
 # animations: Bedrock (Blockbench) -> playerAnimator emote (degrees)
 BONES = {"head": "head", "torso": "torso", "body": "body", "right_arm": "rightArm", "left_arm": "leftArm",
          "right_leg": "rightLeg", "left_leg": "leftLeg"}
+REST = {"head": (0.0, 0.0, 0.0), "torso": (0.0, 0.0, 0.0), "rightArm": (-5.0, 2.0, 0.0),
+        "leftArm": (5.0, 2.0, 0.0), "rightLeg": (-1.9, 12.0, 0.0), "leftLeg": (1.9, 12.0, 0.0)}
 anim = json.load(open(os.path.join(src, "animacoes_do_jogador/player_thor.animation.json")))
 os.makedirs(os.path.join(dst, "player_animation"), exist_ok=True)
 
@@ -81,14 +84,17 @@ for full, a in anim["animations"].items():
             continue
         for t, (x, y, z) in frames(ch.get("rotation")).items():
             k = ticks.setdefault(round(t * 20), {})
-            # Bedrock -> Java model space: x and y mirrored
-            k.setdefault(part, {}).update({"pitch": -x, "yaw": -y, "roll": z})
+            # Bedrock rotations run the other way on X and Y; the Java model has Y pointing down:
+            # pitch = x, yaw = -y, roll = -z (an arm raised forward stays forward)
+            k.setdefault(part, {}).update({"pitch": x, "yaw": -y, "roll": -z})
         for t, (x, y, z) in frames(ch.get("position")).items():
             k = ticks.setdefault(round(t * 20), {})
             if part == "body":
-                k.setdefault(part, {}).update({"x": -x / 16.0, "y": y / 16.0, "z": z / 16.0})
+                k.setdefault(part, {}).update({"x": x / 16.0, "y": y / 16.0, "z": z / 16.0})
             else:
-                k.setdefault(part, {}).update({"x": -x, "y": -y, "z": z})
+                # emote positions of the parts are absolute (the rest position of the part + the offset)
+                dx, dy, dz = REST[part]
+                k.setdefault(part, {}).update({"x": dx + x, "y": dy - y, "z": dz + z})
     moves = []
     for t in sorted(ticks):
         m = {"tick": t, "easing": "linear"}

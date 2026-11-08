@@ -105,6 +105,11 @@ public final class ThorAbilities {
         if (hasHammerItem(player) || MjolnirEntity.find(player) != null) {
             return;
         }
+        MjolnirEntity lying = MjolnirEntity.nearestStatue(player, 256.0D);
+        if (lying != null) {
+            lying.callTo(player);
+            return;
+        }
         summonFromAfar(player);
     }
 
@@ -151,8 +156,11 @@ public final class ThorAbilities {
 
     public static void catchHammer(ServerPlayer player, ItemStack stack) {
         ItemStack s = stack.isEmpty() ? new ItemStack(ModItems.MJOLNIR.get()) : stack.copy();
+        // to the hand that is empty right now (main hand first)
         if (player.getMainHandItem().isEmpty()) {
             player.setItemInHand(InteractionHand.MAIN_HAND, s);
+        } else if (player.getOffhandItem().isEmpty()) {
+            player.setItemInHand(InteractionHand.OFF_HAND, s);
         } else if (!player.getInventory().add(s)) {
             player.drop(s, false);
         }
@@ -333,6 +341,38 @@ public final class ThorAbilities {
         }
     }
 
+    /** Flight key held on the ground: 0 coil, 1 the ground cracks and Thor shoots ~20 blocks up, 2 cancelled. */
+    public static void launch(ServerPlayer player, int phase) {
+        if (!ThorPowers.isThor(player) || player.getAbilities().flying) {
+            return;
+        }
+        if (phase == 0) {
+            SupermanAbilities.anim(player, "charge_takeoff9");
+            return;
+        }
+        if (phase != 1) {
+            SupermanAbilities.anim(player, "none");
+            return;
+        }
+        if (!holdingHammer(player)) {
+            SupermanAbilities.anim(player, "none");
+            player.displayClientMessage(Component.translatable("message.flash.thor_need_hammer"), true);
+            return;
+        }
+        ThorPowers.setFlag(player, ThorPowers.F_FLIGHT, true);
+        player.getAbilities().mayfly = true;
+        player.onUpdateAbilities();
+        player.setDeltaMovement(player.getDeltaMovement().x, 2.0D, player.getDeltaMovement().z);
+        player.hurtMarked = true;
+        ServerLevel level = player.serverLevel();
+        SupermanAbilities.cracks(level, player.position(), 3.5F);
+        SupermanAbilities.anim(player, "charged_launch9");
+        SupermanAbilities.groundPuff(level, player.position(), 2.5D, 30);
+        sound(player, ModSounds.THOR_THROW.get(), 1.4F, 0.8F);
+        strikeVisual(level, player.position());
+        ThorPowers.sync(player);
+    }
+
     public static void stopAll(ServerPlayer player) {
         Session s = SESSIONS.remove(player.getUUID());
         if (s != null && s.sparkTarget >= 0 && player.serverLevel().getEntity(s.sparkTarget) instanceof LivingEntity t) {
@@ -418,6 +458,13 @@ public final class ThorAbilities {
         MjolnirEntity out = MjolnirEntity.find(player);
         if (out != null) {
             out.recall();
+            return true;
+        }
+        // lying on the ground somewhere around: it lifts off and flies to the hand
+        MjolnirEntity lying = MjolnirEntity.nearestStatue(player, 256.0D);
+        if (lying != null && !holdingHammer(player)) {
+            lying.callTo(player);
+            sound(player, ModSounds.THOR_THROW.get(), 1.0F, 0.8F);
             return true;
         }
         if (holdingHammer(player)) {

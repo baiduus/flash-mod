@@ -90,4 +90,9 @@ public final class FlashClientEvents {
         event.registerAboveAll("flash_speed", new FlashHud());
         event.registerAboveAll("flash_abilities", new FlashAbilityHud());
     }
+
+    @SubscribeEvent
+    public static void onRegisterModels(net.minecraftforge.client.event.ModelEvent.RegisterAdditional event) {
+        event.register(MjolnirItemRenderer.MODEL);
+    }
 }
