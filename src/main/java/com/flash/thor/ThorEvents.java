@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -77,8 +76,8 @@ public final class ThorEvents {
                 && ThorPowers.isThor(attacker)) {
             ThorPowers.addXp(attacker, 0.4F);
             if (event.getSource().getDirectEntity() == attacker && ThorPowers.flag(attacker, ThorPowers.F_FURY)
-                    && event.getEntity() instanceof LivingEntity target && target.invulnerableTime <= 10) {
-                ThorAbilities.furyPunch(attacker, target);
+                    && event.getEntity().invulnerableTime <= 10) {
+                ThorAbilities.furyPunch(attacker, event.getEntity());
             }
         }
     }
