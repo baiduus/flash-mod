@@ -212,10 +212,11 @@ public final class SupermanPowers {
 
     /** Damage taken in the Superman form is multiplied by this (steel body). */
     public static float damageFactor(Player player) {
-        // tougher every level: 51 % less damage at level 1, 77 % at level 10
+        // tougher every level: 80 % less damage at level 1, 91 % at level 10. Set from the Warden: its slap took
+        // 2.5 hearts and should take 1, so the old factor (51 % / 77 %) times 0.4
         float old = Math.max(0.07F, 0.48F - 0.041F * level(player));
         float once = 0.15F + 0.85F * old;
-        return 0.05F + 0.85F * once;
+        return (0.05F + 0.85F * once) * 0.4F;
     }
 
     /** Extra punch damage (a normal empty-hand punch is 1). */
