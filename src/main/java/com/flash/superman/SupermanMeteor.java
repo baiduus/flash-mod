@@ -113,6 +113,25 @@ public final class SupermanMeteor {
         boolean destroy = SupermanPowers.destroyBlocks(player);
         level.explode(player, at.x, at.y + 0.5D, at.z, POWER, destroy,
                 destroy ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE);
+        // explosion damage all over the impact area (falls off toward the edge), even behind cover
+        double radius = POWER * 1.6D;
+        float power = SupermanPowers.power(player);
+        for (net.minecraft.world.entity.LivingEntity e : level.getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(radius),
+                x -> x != player && x.isAlive())) {
+            double d = e.position().distanceTo(at);
+            if (d > radius) {
+                continue;
+            }
+            double f = 1.0D - d / radius;
+            e.invulnerableTime = 0;
+            e.hurt(level.damageSources().explosion(player, player), (float) (24.0F * power * (0.3D + 0.7D * f)));
+            e.setSecondsOnFire(6);
+            Vec3 away = e.position().subtract(at);
+            away = away.lengthSqr() < 1.0E-4D ? new Vec3(0, 1, 0) : away.normalize();
+            e.setDeltaMovement(away.x * (0.6D + 1.6D * f), 0.4D + 0.8D * f, away.z * (0.6D + 1.6D * f));
+            e.hurtMarked = true;
+        }
         if (destroy) {
             spreadFire(level, BlockPos.containing(at), player.getRandom());
         }
