@@ -465,7 +465,7 @@ public final class GeoModel {
     /**
      * A limb cube bent in the middle like bendy-lib does it: the half away from the bone's pivot (forearm, shin)
      * turns by the bend around an axis lying across the limb (direction {@code bendAxis} around Y), the middle by half
-     * of it so the two halves stay joined. Positive bends forward (-Z), as playerAnimator's.
+     * of it so the two halves stay joined (the sign checked in game: knees back, elbows forward).
      */
     private static void drawBentCube(Bone bone, Cube cube, PoseStack pose, VertexConsumer consumer, int light,
                                      int overlay, float r, float g, float b, float a) {
@@ -555,7 +555,7 @@ public final class GeoModel {
 
     private static Matrix4f bendMatrix(float cx, float cy, float cz, float axis, float value) {
         return new Matrix4f().translation(cx / 16.0F, cy / 16.0F, cz / 16.0F)
-                .rotateY(axis).rotateX(-value).rotateY(-axis)
+                .rotateY(axis).rotateX(value).rotateY(-axis)
                 .translate(-cx / 16.0F, -cy / 16.0F, -cz / 16.0F);
     }
 
