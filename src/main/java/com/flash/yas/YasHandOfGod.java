@@ -70,6 +70,11 @@ public final class YasHandOfGod {
                     b.set(true);
                 }
             }
+            // creative mode does not hand out its powers: they are Yas's alone
+            Object creative = c.getField("CRIATIVO_LIBERA_TUDO").get(null);
+            if (creative instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get()) {
+                b.set(false);
+            }
         } catch (ReflectiveOperationException | LinkageError | IllegalStateException e) {
             // Hand of God missing or its config not loaded
         }
@@ -101,7 +106,7 @@ public final class YasHandOfGod {
         }
         int level = p.experienceLevel;
         Integer before = LEVELS.put(p.getUUID(), level);
-        if (yas || p.isCreative()) {
+        if (yas) {
             return;
         }
         try {
@@ -111,7 +116,7 @@ public final class YasHandOfGod {
                 setFull.invoke(null, p, false);
                 clear.invoke(null, p);
                 sync.invoke(null, p);
-                if (before != null && before > level) {
+                if (before != null && before > level && !p.isCreative()) {
                     p.giveExperienceLevels(before - level);
                 }
                 LEVELS.put(p.getUUID(), p.experienceLevel);
