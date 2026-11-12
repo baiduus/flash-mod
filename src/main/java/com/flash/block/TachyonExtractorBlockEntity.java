@@ -56,6 +56,9 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
         }
     }
 
+    /** Kryptonian cells needed for one capsule of Kryptonian blood. */
+    public static final int CELLS_PER_BLOOD = 5;
+
     private static final java.util.List<Recipe> RECIPES = java.util.List.of(
             // Flash: a Torn Suit gives 1-3 tachyons; 4 Nether fungi give corrupted matter
             new Recipe(TachyonExtractorBlock::isSuit, 1, ModItems.TACHYON, 1, 3, true),
@@ -63,9 +66,6 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
             // Superman: the 5 Kryptonian cells of a crashed ship give the Kryptonian blood
             new Recipe(s -> s.is(ModItems.KRYPTONIAN_CELL.get()), CELLS_PER_BLOOD, ModItems.KRYPTONIAN_BLOOD_CAPSULE,
                     1, 1, false));
-
-    /** Kryptonian cells needed for one capsule of Kryptonian blood. */
-    public static final int CELLS_PER_BLOOD = 5;
 
     static boolean isFungus(ItemStack stack) {
         return stack.is(Items.NETHER_WART) || stack.is(Items.CRIMSON_FUNGUS)
