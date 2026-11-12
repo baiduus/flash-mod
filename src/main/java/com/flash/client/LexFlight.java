@@ -233,24 +233,36 @@ public final class LexFlight {
                     && SupermanPose.shot(this.player.getUUID()) == null;
         }
 
+        /** The pitch of the whole body this frame (radians, negative leaning forward: -1.43 lying in the fast flight). */
+        private float bodyPitch;
+
         @Override
         public Vec3f get3DTransform(String modelName, TransformType type, float tickDelta, Vec3f value0) {
             if (type != TransformType.ROTATION) {
                 return value0;
             }
-            // well behind the body (about 45 degrees hovering, 60 in the fast flight), a little out to the sides,
-            // the palms turned back like the repulsors of Iron Man steering
-            float fast = part(this.player, P_THRUSTERS, tickDelta);
-            float sway = (float) Math.sin((this.player.tickCount + tickDelta) * 0.08F) * 0.04F;
-            float back = 0.8F + 0.25F * fast;
-            float out = 0.24F - 0.1F * fast;
+            if ("body".equals(modelName)) {
+                // (asked before the limbs) how far the flight pose lays the body down
+                this.bodyPitch = value0.getX();
+                return value0;
+            }
+            if (!"rightArm".equals(modelName) && !"leftArm".equals(modelName)) {
+                return value0;
+            }
+            // Iron Man's arms: along the body toward the feet, palms turned back. Upright (hovering) they sit
+            // clearly behind the body; lying (fast flight, dive) they lie along it, close to the legs, never
+            // ahead of the head as Superman's fists
+            String base = SupermanPose.base(this.player.getUUID());
+            boolean lyingPose = base != null && (base.startsWith("prone") || base.startsWith("boost")
+                    || base.startsWith("cruise") || base.startsWith("dive") || base.startsWith("strafe"));
+            float lying = Math.max(lyingPose ? 1.0F : 0.0F, Mth.clamp(-this.bodyPitch / 1.4F, 0.0F, 1.0F));
+            float sway = (float) Math.sin((this.player.tickCount + tickDelta) * 0.08F) * 0.03F;
+            float back = Mth.lerp(lying, 0.7F, 0.12F);
+            float out = Mth.lerp(lying, 0.22F, 0.1F);
             if ("rightArm".equals(modelName)) {
-                return new Vec3f(back + sway, 0.35F, out);
+                return new Vec3f(back + sway, 0.3F, out);
             }
-            if ("leftArm".equals(modelName)) {
-                return new Vec3f(back - sway, -0.35F, -out);
-            }
-            return value0;
+            return new Vec3f(back - sway, -0.3F, -out);
         }
 
         @Override
