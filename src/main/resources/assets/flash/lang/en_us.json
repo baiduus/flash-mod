@@ -1016,7 +1016,7 @@
   "gui.flash.yas.stat_punch_hint": "1.5× Superman",
   "gui.flash.yas.about": "About Yas",
   "gui.flash.yas.about1": "Who transcended on the floating island leaves the limits of common powers behind: the Sun and the Moon, time, reality and matter obey her hand.",
-  "gui.flash.yas.about2": "The abilities are the Hand of God's: hold the middle mouse button for the ability wheel, or use each one's key (Options > Controls > Hand of God).",
+  "gui.flash.yas.about2": "Each power has its key (listed beside and in the corner of the screen): pressing it uses it. Alt + scroll also picks the power; the chosen one is lit in the corner. Keys in Options > Controls > Hand of God.",
   "gui.flash.yas.about3": "Double jump flies, faster than Superman at level 10. She never takes fall damage.",
   "gui.flash.yas.about4": "An empty syringe keeps her essence, which only she can inject back.",
   "gui.flash.yas.wheel": "Wheel",
@@ -1032,5 +1032,7 @@
   "gui.flash.yas.cfg.lightning.desc": "The white and yellow lightning running over the body (everyone sees it).",
   "gui.flash.yas.cfg.eyes": "Glowing eyes",
   "gui.flash.yas.cfg.eyes.desc": "The white glowing eyes (everyone sees them).",
-  "message.flash.time_slow_stopped": "Slow motion off."
+  "message.flash.time_slow_stopped": "Slow motion off.",
+  "hud.flash.yas_pick": "Alt + scroll: pick",
+  "message.flash.yas_selected": "Power: %s"
 }

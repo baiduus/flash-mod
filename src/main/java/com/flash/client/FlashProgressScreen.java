@@ -904,13 +904,16 @@ public class FlashProgressScreen extends Screen {
             "camera_lenta", "visao_termica", "sombra", "eletrocinese"};
 
     private static Component yasKey(int i) {
-        String name = "key.hand_of_god." + YAS_KEYS[i];
-        for (net.minecraft.client.KeyMapping k : Minecraft.getInstance().options.keyMappings) {
-            if (k.getName().equals(name)) {
-                return k.isUnbound() ? Component.translatable("gui.flash.yas.wheel") : k.getTranslatedKeyMessage();
+        net.minecraft.client.KeyMapping k = YasAbilities.key(i);
+        if (k == null) {
+            String name = "key.hand_of_god." + YAS_KEYS[i];
+            for (net.minecraft.client.KeyMapping m : Minecraft.getInstance().options.keyMappings) {
+                if (m.getName().equals(name)) {
+                    k = m;
+                }
             }
         }
-        return Component.translatable("gui.flash.yas.wheel");
+        return k == null || k.isUnbound() ? Component.literal("-") : k.getTranslatedKeyMessage();
     }
     private static final String[] YAS_PASSIVES = {"flight", "toughness", "punch", "fall"};
 

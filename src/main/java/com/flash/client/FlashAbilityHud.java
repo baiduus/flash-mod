@@ -27,6 +27,13 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && PowerTheme.localYas()) {
+            if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
+                    && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
+                renderYas(graphics, minecraft, width, height);
+            }
+            return;
+        }
         if (minecraft.player != null && PowerTheme.localLex()) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
@@ -221,6 +228,34 @@ public final class FlashAbilityHud implements IGuiOverlay {
             };
             drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(), keyLabel(LexClient.key(a)), cd,
                     Math.max(1, a.cooldown()), active);
+            y += ROW_HEIGHT + ROW_GAP;
+        }
+    }
+
+    /** Yas: the nine powers of the Hand of God with their keys, the chosen one lit (Alt + scroll picks it). */
+    private static void renderYas(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
+        if (!YasAbilities.available()) {
+            return;
+        }
+        Font font = minecraft.font;
+        int n = YasAbilities.POWERS.length;
+        String hint = Component.translatable("hud.flash.yas_pick").getString();
+        int panelWidth = Math.max(MIN_WIDTH, font.width(hint) + 12);
+        for (int i = 0; i < n; i++) {
+            panelWidth = Math.max(panelWidth, rowWidth(font, YasAbilities.name(i).getString(),
+                    keyLabel(YasAbilities.key(i))));
+        }
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - (n + 1) * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        if (x < 4 || y < 4) {
+            return;
+        }
+        graphics.drawString(font, hint, x + panelWidth - font.width(hint), y + 3, 0xFFB8B0A0, true);
+        y += ROW_HEIGHT + ROW_GAP;
+        int chosen = YasAbilities.selected();
+        for (int i = 0; i < n; i++) {
+            drawRow(graphics, font, x, y, panelWidth, YasAbilities.name(i).getString(),
+                    keyLabel(YasAbilities.key(i)), 0, 1, i == chosen);
             y += ROW_HEIGHT + ROW_GAP;
         }
     }
