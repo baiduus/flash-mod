@@ -25,6 +25,7 @@ public class FlashSuitStandRenderer extends LivingEntityRenderer<FlashSuitStand,
                 new HumanoidModel<>(context.bakeLayer(ModelLayers.ARMOR_STAND_OUTER_ARMOR)),
                 context.getModelManager()));
         this.addLayer(new FlashGeoSuitLayer<>(this));
+        this.addLayer(new LexSuitLayer<>(this));
         this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
     }
 

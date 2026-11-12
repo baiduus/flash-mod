@@ -612,5 +612,147 @@
       }
     ],
     "subtitle": "subtitles.flash.lex"
+  },
+  "lex.repulsor_blast": {
+    "sounds": [
+      {
+        "name": "flash:lex/repulsor_blast1"
+      },
+      {
+        "name": "flash:lex/repulsor_blast2"
+      },
+      {
+        "name": "flash:lex/repulsor_blast3"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.repulsor_beam": {
+    "sounds": [
+      {
+        "name": "flash:lex/repulsor_beam"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.repulsor_continuous": {
+    "sounds": [
+      {
+        "name": "flash:lex/repulsor_continuous"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.repulsor_charge": {
+    "sounds": [
+      {
+        "name": "flash:lex/repulsor_charge"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.repulsor_impact": {
+    "sounds": [
+      {
+        "name": "flash:lex/repulsor_impact"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.unibeam_charge": {
+    "sounds": [
+      {
+        "name": "flash:lex/unibeam_charge"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.unibeam_blast": {
+    "sounds": [
+      {
+        "name": "flash:lex/unibeam_blast1"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.unibeam_powerdown": {
+    "sounds": [
+      {
+        "name": "flash:lex/unibeam_powerdown"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.laser": {
+    "sounds": [
+      {
+        "name": "flash:lex/laser"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.missile": {
+    "sounds": [
+      {
+        "name": "flash:lex/missile"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.micromissiles": {
+    "sounds": [
+      {
+        "name": "flash:lex/micromissilering"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.overdrive": {
+    "sounds": [
+      {
+        "name": "flash:lex/armor_overdrive"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.overdrive_off": {
+    "sounds": [
+      {
+        "name": "flash:lex/armor_overdrive_off"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.helmet_open": {
+    "sounds": [
+      {
+        "name": "flash:lex/ironman_helmet_open"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.helmet_close": {
+    "sounds": [
+      {
+        "name": "flash:lex/ironman_helmet_close"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.powerdown": {
+    "sounds": [
+      {
+        "name": "flash:lex/ironman_powerdown"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.recharge": {
+    "sounds": [
+      {
+        "name": "flash:lex/ironman_recharge"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
   }
 }

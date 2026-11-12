@@ -27,6 +27,13 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && PowerTheme.localLex()) {
+            if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
+                    && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
+                renderLex(graphics, minecraft, width, height);
+            }
+            return;
+        }
         if (minecraft.player != null && PowerTheme.localThor()) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
@@ -186,6 +193,37 @@ public final class FlashAbilityHud implements IGuiOverlay {
     }
 
     /** Thor panel: the transform key and the unlocked abilities (lit while running). */
+    /** Lex Luthor's suit: its systems, keys and cooldowns. */
+    private static void renderLex(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
+        Font font = minecraft.font;
+        long now = minecraft.level != null ? minecraft.level.getGameTime() : 0L;
+        com.flash.lex.LexAbility[] all = com.flash.lex.LexAbility.values();
+        int panelWidth = MIN_WIDTH;
+        for (com.flash.lex.LexAbility a : all) {
+            panelWidth = Math.max(panelWidth, rowWidth(font, a.displayName().getString(), keyLabel(LexClient.key(a))));
+        }
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - all.length * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        if (x < 4 || y < 4) {
+            return;
+        }
+        for (com.flash.lex.LexAbility a : all) {
+            int cd = com.flash.lex.LexState.cooldown(a, now);
+            boolean active = switch (a) {
+                case REPULSOR_BEAM -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_BEAM);
+                case UNIBEAM -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_UNIBEAM)
+                        || com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_UNI_CHARGING);
+                case OVERDRIVE -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_OVERDRIVE);
+                case FACEPLATE -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_OPEN);
+                case POWER_DIVE -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_DIVE);
+                default -> false;
+            };
+            drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(), keyLabel(LexClient.key(a)), cd,
+                    Math.max(1, a.cooldown()), active);
+            y += ROW_HEIGHT + ROW_GAP;
+        }
+    }
+
     private static void renderThor(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
         Font font = minecraft.font;
         long now = minecraft.level != null ? minecraft.level.getGameTime() : 0L;

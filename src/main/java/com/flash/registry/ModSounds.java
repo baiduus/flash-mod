@@ -57,6 +57,24 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> LEX_BEAM_LOOP = lex("beam_loop");
     public static final RegistryObject<SoundEvent> LEX_EQUIP = lex("equip");
     public static final RegistryObject<SoundEvent> LEX_EMPTY = lex("empty");
+    /** The Iron Man sounds of Legends: Superheroes (the Mark 6 systems of the suit). */
+    public static final RegistryObject<SoundEvent> LEX_REPULSOR_BLAST = lex("repulsor_blast");
+    public static final RegistryObject<SoundEvent> LEX_REPULSOR_BEAM = lex("repulsor_beam");
+    public static final RegistryObject<SoundEvent> LEX_REPULSOR_CONTINUOUS = lex("repulsor_continuous");
+    public static final RegistryObject<SoundEvent> LEX_REPULSOR_CHARGE = lex("repulsor_charge");
+    public static final RegistryObject<SoundEvent> LEX_REPULSOR_IMPACT = lex("repulsor_impact");
+    public static final RegistryObject<SoundEvent> LEX_UNIBEAM_CHARGE = lex("unibeam_charge");
+    public static final RegistryObject<SoundEvent> LEX_UNIBEAM_BLAST = lex("unibeam_blast");
+    public static final RegistryObject<SoundEvent> LEX_UNIBEAM_POWERDOWN = lex("unibeam_powerdown");
+    public static final RegistryObject<SoundEvent> LEX_LASER = lex("laser");
+    public static final RegistryObject<SoundEvent> LEX_MISSILE = lex("missile");
+    public static final RegistryObject<SoundEvent> LEX_MICROMISSILES = lex("micromissiles");
+    public static final RegistryObject<SoundEvent> LEX_OVERDRIVE = lex("overdrive");
+    public static final RegistryObject<SoundEvent> LEX_OVERDRIVE_OFF = lex("overdrive_off");
+    public static final RegistryObject<SoundEvent> LEX_HELMET_OPEN = lex("helmet_open");
+    public static final RegistryObject<SoundEvent> LEX_HELMET_CLOSE = lex("helmet_close");
+    public static final RegistryObject<SoundEvent> LEX_POWERDOWN = lex("powerdown");
+    public static final RegistryObject<SoundEvent> LEX_RECHARGE = lex("recharge");
 
     public static final RegistryObject<SoundEvent> THOR_BLAST_START = thor("blast_start");
     public static final RegistryObject<SoundEvent> THOR_BLAST_LOOP = thor("blast_loop");

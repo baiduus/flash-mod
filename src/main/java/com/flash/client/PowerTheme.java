@@ -51,6 +51,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFF6FC3FF, 0xFF13304A, 0xFF0B1A2A,
             "gui.flash.theme.thor.title", "gui.flash.theme.thor.subtitle", Icon.BOLT, true);
 
+    /** Lex Luthor's suit: Kryptonite green with LexCorp purple. */
+    public static final PowerTheme LEX = new PowerTheme("lex",
+            0xFF6CFF6C, 0xFF2A1440, 0xFF140A20,
+            "gui.flash.theme.lex.title", "gui.flash.theme.lex.subtitle", Icon.SHIELD, true);
+
+    /** True when the local player flies Lex Luthor's suit (and has no powers of his own). */
+    public static boolean localLex() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && LexClient.pilot(player);
+    }
+
     /** True when the local player carries the Thor power. */
     public static boolean localThor() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
@@ -86,7 +97,7 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             return localRedHulk() ? RED_HULK : HULK;
         }
         if (!FlashClientData.hasPowers()) {
-            return NEUTRAL;
+            return localLex() ? LEX : NEUTRAL;
         }
         if (FlashClientVisualLevels.isLocalV9()) {
             return V9;

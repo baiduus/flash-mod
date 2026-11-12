@@ -1,0 +1,277 @@
+{
+ "version": 3,
+ "name": "lex_repulsor",
+ "author": "Herois_baiduu (from the code animations of Legends: Superheroes)",
+ "description": "Thor: lex_repulsor",
+ "emote": {
+  "beginTick": 0,
+  "endTick": 16,
+  "stopTick": 22,
+  "isLoop": false,
+  "returnTick": 0,
+  "degrees": true,
+  "easeBeforeKeyframe": true,
+  "moves": [
+   {
+    "tick": 0,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 3,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": -92.0,
+     "yaw": -4.0,
+     "roll": 0.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": -10.0,
+     "yaw": 0.0,
+     "roll": -8.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 5,
+    "easing": "easeOutQuad",
+    "head": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": -108.0,
+     "yaw": -4.0,
+     "roll": 0.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": -10.0,
+     "yaw": 0.0,
+     "roll": -8.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 10,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": -92.0,
+     "yaw": -4.0,
+     "roll": 0.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": -10.0,
+     "yaw": 0.0,
+     "roll": -8.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 16,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   }
+  ]
+ }
+}

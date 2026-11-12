@@ -200,7 +200,7 @@ public final class SupermanPose {
                 State st = STATES.get(this.player.getUUID());
                 // Thor's moves keep their own legs too: with the walking legs under a moved torso the body
                 // came apart
-                if (st != null && st.shot != null && (WHOLE_BODY.contains(st.shot) || st.shot.startsWith("thor_"))) {
+                if (st != null && st.shot != null && (WHOLE_BODY.contains(st.shot) || st.shot.startsWith("thor_") || st.shot.equals("lex_land") || st.shot.equals("lex_unibeam"))) {
                     return false;
                 }
             }

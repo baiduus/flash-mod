@@ -81,6 +81,13 @@ public class LexArmorItem extends ArmorItem {
         super(MATERIAL, type, new Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant());
     }
 
+    /** The plain armour model draws nothing: the suit is the Mark 6 model (LexSuitLayer). */
+    @Override
+    public String getArmorTexture(ItemStack stack, net.minecraft.world.entity.Entity entity, EquipmentSlot slot,
+                                  String type) {
+        return "flash:textures/models/armor/lex_empty.png";
+    }
+
     public static boolean isLex(ItemStack stack) {
         return stack.getItem() instanceof LexArmorItem;
     }

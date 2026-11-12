@@ -139,6 +139,9 @@ public class FlashProgressScreen extends Screen {
 
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
+        if (PowerTheme.localLex() && !FlashClientData.hasPowers()) {
+            return new int[] {TAB_PROGRESS, TAB_EQUIP};
+        }
         if (PowerTheme.localHulk() || PowerTheme.localSuperman() || PowerTheme.localThor()) {
             // every hero has the equipment tab (the Processor works for all of them)
             return new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG};
@@ -382,6 +385,10 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
+        if (theme() == PowerTheme.LEX) {
+            drawLexTab(g, mx, my);
+            return;
+        }
         if (PowerTheme.localThor()) {
             drawThorTab(g, mx, my);
             return;
@@ -842,6 +849,85 @@ public class FlashProgressScreen extends Screen {
                     RIGHT_X + 18, ry + textY + 1, unlocked ? COLOR_TEXT : COLOR_DIM, false);
             g.drawString(this.font, right, RIGHT_X + RIGHT_W - 6 - rw, ry + textY + 1,
                     cooldown > 0 ? COLOR_ORANGE : unlocked ? accent() : COLOR_DIM, false);
+            if (hovered) {
+                tooltip = desc;
+            }
+        }
+        if (tooltip != null) {
+            g.renderTooltip(this.font, this.font.split(tooltip, 220), mx, my);
+        }
+    }
+
+    /** Lex Luthor's suit: the battery, the passives and the Mark 6 systems with their keys and cooldowns. */
+    private void drawLexTab(GuiGraphics g, int mx, int my) {
+        Minecraft mc = Minecraft.getInstance();
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
+        float energy = mc.player == null ? 0.0F : com.flash.item.LexArmorItem.energy(
+                mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST));
+        int half = (LEFT_W - 8) / 2;
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.lex.battery"),
+                Component.literal(Math.round(energy) + "%"),
+                Component.translatable("gui.flash.lex.battery_hint"));
+        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.lex.level"),
+                Component.translatable("gui.flash.lex.level_value"),
+                Component.translatable("gui.flash.lex.level_hint"));
+        int sy = GRID_Y - 13;
+        sectionTitle(g, Component.translatable("gui.flash.lex.about"), PAD, sy);
+        int cy = sy + 14;
+        card(g, PAD, cy, LEFT_W, CONTENT_BOTTOM - cy, 0.0F);
+        int ty = cy + 8;
+        for (String k : new String[] {"gui.flash.lex.about1", "gui.flash.lex.about2", "gui.flash.lex.about3",
+                "gui.flash.lex.about4", "gui.flash.lex.about5"}) {
+            for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.translatable(k),
+                    LEFT_W - 20)) {
+                if (ty > CONTENT_BOTTOM - 12) {
+                    break;
+                }
+                g.drawString(this.font, line, PAD + 10, ty, COLOR_MUTED, false);
+                ty += 10;
+            }
+            ty += 3;
+        }
+        drawBar(g, PAD + 10, CONTENT_BOTTOM - 14, LEFT_W - 20, energy / 100.0F,
+                energy < 20.0F ? 0xFFFF3A3A : 0xFF6CFF6C);
+
+        sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
+        int top = CONTENT_Y + 14;
+        com.flash.lex.LexAbility[] all = com.flash.lex.LexAbility.values();
+        String[] passives = {"thrusters", "strength", "armor"};
+        int total = all.length + passives.length;
+        int rowStep = Math.min(SKILL_ROW, (PH - 22 - top) / total);
+        int rh = rowStep - 1;
+        int textY = (rh - 8) / 2;
+        Component tooltip = null;
+        for (int k = 0; k < total; k++) {
+            int ry = top + k * rowStep;
+            Component name;
+            Component desc;
+            Component right;
+            int cooldown = 0;
+            if (k < passives.length) {
+                name = Component.translatable("ability.flash.lex." + passives[k]);
+                desc = Component.translatable("ability.flash.lex." + passives[k] + ".description");
+                right = Component.translatable("gui.flash.hulk.passive");
+            } else {
+                com.flash.lex.LexAbility a = all[k - passives.length];
+                name = a.displayName();
+                desc = a.description();
+                cooldown = com.flash.lex.LexState.cooldown(a, now);
+                net.minecraft.client.KeyMapping key = LexClient.key(a);
+                right = cooldown > 0 ? Component.literal(formatTime(cooldown))
+                        : key != null ? key.getTranslatedKeyMessage() : Component.empty();
+            }
+            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            float hv = hover("lsk" + k, hovered);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            drawCheck(g, RIGHT_X + 6, ry + Math.max(1, textY), accent());
+            int rw = this.font.width(right);
+            g.drawString(this.font, this.font.plainSubstrByWidth(name.getString(), RIGHT_W - 30 - rw),
+                    RIGHT_X + 18, ry + textY + 1, COLOR_TEXT, false);
+            g.drawString(this.font, right, RIGHT_X + RIGHT_W - 6 - rw, ry + textY + 1,
+                    cooldown > 0 ? COLOR_ORANGE : accent(), false);
             if (hovered) {
                 tooltip = desc;
             }
@@ -1518,7 +1604,8 @@ public class FlashProgressScreen extends Screen {
     }
 
     private static boolean flashEquipment() {
-        return !(PowerTheme.localHulk() || PowerTheme.localSuperman() || PowerTheme.localThor());
+        return !(PowerTheme.localHulk() || PowerTheme.localSuperman() || PowerTheme.localThor()
+                || theme() == PowerTheme.LEX);
     }
 
     /** The Processor card: the machine of every hero and what it makes. */

@@ -58,7 +58,7 @@ public final class FlashClientEvents {
                 HulkBoulderRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.MJOLNIR.get(), MjolnirRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.LEX_MISSILE.get(),
-                ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0F, true));
+                LexMissileRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.ACCELERATION_PORTAL.get(),
                 AccelerationPortalRenderer::new
@@ -82,6 +82,7 @@ public final class FlashClientEvents {
                 player.addLayer(new FlashAmplifierLayer(player));
                 player.addLayer(new HulkClient.Layer(player));
                 player.addLayer(new SupermanSuitLayer(player));
+                player.addLayer(new LexSuitLayer<>(player));
                 player.addLayer(new SupermanAuraLayer(player));
             }
         }

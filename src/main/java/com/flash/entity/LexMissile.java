@@ -92,12 +92,20 @@ public class LexMissile extends ThrowableItemProjectile {
 
     private void explode(Vec3 at) {
         ServerLevel level = (ServerLevel) this.level();
-        // a small blast that hurts and throws, without breaking blocks
-        level.explode(this, this.damageSources().explosion(this, this.getOwner()), null, at.x, at.y, at.z, 1.3F, false,
-                Level.ExplosionInteraction.NONE);
-        level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 2, 0.3D, 0.3D, 0.3D, 0.0D);
-        level.sendParticles(ParticleTypes.LARGE_SMOKE, at.x, at.y, at.z, 12, 0.4D, 0.4D, 0.4D, 0.03D);
-        level.playSound(null, at.x, at.y, at.z, ModSounds.LEX_MISSILE_BOOM.get(), SoundSource.PLAYERS, 1.4F, 1.0F);
+        // a small blast that throws whoever is around (without breaking blocks)
+        for (Entity e : level.getEntities(this, new net.minecraft.world.phys.AABB(at, at).inflate(2.0D),
+                x -> x instanceof LivingEntity && x.isAlive() && x != this.getOwner())) {
+            LivingEntity l = (LivingEntity) e;
+            l.invulnerableTime = 0;
+            l.hurt(this.damageSources().explosion(this, this.getOwner()), this.damage * 0.4F);
+            Vec3 away = e.position().subtract(at).normalize();
+            e.setDeltaMovement(e.getDeltaMovement().add(away.x * 0.5D, 0.3D, away.z * 0.5D));
+            e.hurtMarked = true;
+        }
+        level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 10, 0.2D, 0.2D, 0.2D, 0.05D);
+        level.sendParticles(ParticleTypes.LARGE_SMOKE, at.x, at.y, at.z, 8, 0.3D, 0.3D, 0.3D, 0.03D);
+        level.playSound(null, at.x, at.y, at.z, ModSounds.LEX_MISSILE_BOOM.get(), SoundSource.PLAYERS, 1.2F, 1.1F);
         this.discard();
     }
 }

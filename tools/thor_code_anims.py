@@ -159,7 +159,33 @@ LEX_KICK = {"rightArm": {"p": -105.0, "y": -6.0}, "leftArm": {"p": -105.0, "y": 
             "head": {"p": -6.0}}
 emote("lex_missile_fire", [(0, S, REST_POSE), (4, S, LEX_AIM), (6, "easeOutQuad", LEX_KICK), (12, S, LEX_AIM),
                            (20, S, REST_POSE)])
-emote("lex_beam", [(0, S, REST_POSE), (4, S, {"rightArm": {"p": -92.0, "y": -4.0}, "leftArm": {"p": -20.0}}),
-                   (12, S, {"rightArm": {"p": -92.0, "y": -4.0}, "leftArm": {"p": -20.0}})], loop=True, return_tick=4)
+emote("lex_beam", [(0, S, REST_POSE), (4, S, LEX_AIM), (12, S, {**LEX_AIM, "torso": {"p": 6.0}})], loop=True,
+      return_tick=4)
+# repulsor blast: the right palm out, a kick back
+REP = {"rightArm": {"p": -92.0, "y": -4.0}, "leftArm": {"p": -10.0, "r": -8.0}}
+emote("lex_repulsor", [(0, S, REST_POSE), (3, S, REP), (5, "easeOutQuad", {**REP, "rightArm": {"p": -108.0, "y": -4.0}}),
+                       (10, S, REP), (16, S, REST_POSE)])
+# unibeam: arms back, chest out (looped while it fires)
+UNI = {"rightArm": {"p": 30.0, "r": 30.0}, "leftArm": {"p": 30.0, "r": -30.0}, "torso": {"p": -12.0},
+       "head": {"p": -8.0}, "rightLeg": {"p": 10.0}, "leftLeg": {"p": -14.0, "dz": -1.0}}
+emote("lex_unibeam", [(0, S, REST_POSE), (8, S, UNI), (20, S, {**UNI, "torso": {"p": -14.0}})], loop=True,
+      return_tick=8)
+# wrist lasers: both arms out to the sides at shoulder height, sweeping in
+LAS_A = {"rightArm": {"p": -90.0, "y": 60.0}, "leftArm": {"p": -90.0, "y": -60.0}}
+LAS_B = {"rightArm": {"p": -90.0, "y": -40.0}, "leftArm": {"p": -90.0, "y": 40.0}}
+emote("lex_lasers", [(0, S, REST_POSE), (3, S, LAS_A), (13, L, LAS_B), (20, S, REST_POSE)])
+# power thrust: arms back, body leaning into it
+THR = {"rightArm": {"p": 40.0, "r": 12.0}, "leftArm": {"p": 40.0, "r": -12.0}, "torso": {"p": 20.0},
+       "rightLeg": {"p": 20.0}, "leftLeg": {"p": 14.0}}
+emote("lex_thrust", [(0, S, REST_POSE), (3, S, THR), (14, S, THR), (22, S, REST_POSE)])
+# power dive: fist down, head first
+DIVE = {"rightArm": {"p": -170.0}, "leftArm": {"p": -170.0}, "head": {"p": 20.0}, "rightLeg": {"p": 10.0},
+        "leftLeg": {"p": -6.0}}
+emote("lex_dive", [(0, S, REST_POSE), (4, S, DIVE), (12, S, DIVE)], loop=True, return_tick=4)
+# the landing of the dive: one knee and a fist on the ground
+LAND = {"rightArm": {"p": -20.0, "dz": -1.0}, "leftArm": {"p": -60.0, "r": -20.0}, "torso": {"p": 28.0},
+        "head": {"p": 12.0}, "rightLeg": {"p": -80.0, "dy": -1.0, "dz": -2.0}, "leftLeg": {"p": 30.0, "dy": -2.0,
+                                                                                         "dz": 1.5}}
+emote("lex_land", [(0, L, DIVE), (3, "easeInCubic", LAND), (18, S, LAND), (28, S, REST_POSE)])
 
 print("ok")

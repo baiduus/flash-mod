@@ -162,6 +162,8 @@ public final class FlashClientForgeEvents {
         FlashClientData.reset();
         FlashClientVisualLevels.reset();
         FlashClientRing.reset();
+        com.flash.lex.LexState.reset();
+        LexFx.reset();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */
@@ -177,7 +179,9 @@ public final class FlashClientForgeEvents {
         boolean ring = right && FlashClientRing.has(event.getPlayer());
         boolean hulk = com.flash.hulk.HulkState.isTransformed(event.getPlayer());
         boolean suit = !hulk && SupermanSuitLayer.worn(event.getPlayer()) != null;
-        if (!ring && !hulk && !suit) {
+        boolean lex = !hulk && !suit && com.flash.item.LexArmorItem.isLex(
+                event.getPlayer().getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST));
+        if (!ring && !hulk && !suit && !lex) {
             return;
         }
         net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
@@ -205,6 +209,10 @@ public final class FlashClientForgeEvents {
         }
         if (hulk) {
             HulkClient.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
+                    event.getPlayer(), player.getModel(), event.getArm());
+        }
+        if (lex) {
+            LexSuitLayer.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
                     event.getPlayer(), player.getModel(), event.getArm());
         }
         if (suit) {
