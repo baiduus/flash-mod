@@ -48,6 +48,10 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_LOOP = thor("overcharge_loop");
     public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_END = thor("overcharge_end");
     public static final RegistryObject<SoundEvent> THOR_GOD_BLAST = thor("god_blast");
+    /** The Lightning Blast (the Shazam blast of Man of Tomorrow): start, held loop, the zap of each pulse. */
+    public static final RegistryObject<SoundEvent> THOR_BLAST_START = thor("blast_start");
+    public static final RegistryObject<SoundEvent> THOR_BLAST_LOOP = thor("blast_loop");
+    public static final RegistryObject<SoundEvent> THOR_BLAST_ZAP = thor("blast_zap");
     public static final RegistryObject<SoundEvent> THOR_SB_HIT = thor("stormbreaker_hit");
     public static final RegistryObject<SoundEvent> THOR_SB_THROW = thor("stormbreaker_thrown");
     public static final RegistryObject<SoundEvent> THOR_SB_THUMP = thor("stormbreaker_thump");

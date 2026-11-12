@@ -79,7 +79,9 @@ public final class FlashAbilityCombat {
      * per hit; hits that were already stronger, like the infinite mass punch, stay as they are).
      */
     static float buffed(float damage) {
-        return Math.min(damage * 4.0F, Math.max(damage, 36.0F));
+        // balanced against the other heroes: the Flash hits many times, each hit light (at most 8; the hits
+        // already stronger, like the infinite mass punch, stay as they are)
+        return Math.min(damage * 2.0F, Math.max(damage, 8.0F));
     }
 
     public static boolean hit(ServerPlayer player, LivingEntity target, float damage) {

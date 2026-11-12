@@ -469,8 +469,10 @@ public final class ThorAbilities {
         if (pressed && !was) {
             anim(player, ability == ThorAbility.LIGHTNING_BLAST ? "thor_lightning_blast"
                     : block ? "thor_block" : "thor_hammer_spin");
-            sound(player, ability == ThorAbility.LIGHTNING_BLAST ? ModSounds.THOR_LIGHTNING.get()
-                    : block ? ModSounds.THOR_BLOCK.get() : ModSounds.THOR_SPIN.get(), 1.0F, 1.0F);
+            // (the Lightning Blast sounds on the clients, tied to the key: it stops when it is released)
+            if (ability != ThorAbility.LIGHTNING_BLAST) {
+                sound(player, block ? ModSounds.THOR_BLOCK.get() : ModSounds.THOR_SPIN.get(), 1.0F, 1.0F);
+            }
         } else if (!pressed && was) {
             anim(player, "none");
         }
@@ -702,6 +704,8 @@ public final class ThorAbilities {
         if (hit instanceof EntityHitResult eh && eh.getEntity() instanceof LivingEntity target) {
             hurt(player, target, 6.0F * power * bonus);
             herald(player, target, 3.0F * power);
+            level.playSound(null, target.getX(), target.getY(), target.getZ(), ModSounds.THOR_BLAST_ZAP.get(),
+                    SoundSource.PLAYERS, 0.7F, 1.0F);
             if (player.getRandom().nextFloat() < 0.15F) {
                 stun(target, 20);
             }
@@ -962,7 +966,7 @@ public final class ThorAbilities {
             int f = s.sparkFall++;
             if (target.onGround() || target.isInWater() || f > 30) {
                 Vec3 at = target.position();
-                hurt(player, target, 8.0F * power);
+                hurt(player, target, 6.0F * power);
                 stun(target, 30);
                 strikeVisual(level, at);
                 bolt(level, at.add(0.0D, 26.0D, 0.0D), at.add(0.0D, 0.3D, 0.0D), 1.8F);
@@ -997,7 +1001,7 @@ public final class ThorAbilities {
             }
         } else if (t == 5) {
             // 1. thrown up high
-            hurt(player, target, 7.0F * power);
+            hurt(player, target, 5.0F * power);
             target.setDeltaMovement(0.0D, 1.55D, 0.0D);
             target.hurtMarked = true;
             sound(player, ModSounds.THOR_SPIN_ATTACK.get(), 1.0F, 1.0F);
@@ -1013,7 +1017,7 @@ public final class ThorAbilities {
             }
         } else if (t == 13) {
             // 3. the bolt; it stays up there, stunned
-            hurt(player, target, 6.0F * power);
+            hurt(player, target, 4.0F * power);
             bolt(level, mid.add(0.0D, 26.0D, 0.0D), mid, 1.8F);
             strikeVisual(level, target.position());
             if (!(target instanceof Player)) {
@@ -1061,7 +1065,7 @@ public final class ThorAbilities {
             player.setDeltaMovement(Vec3.ZERO);
             player.hurtMarked = true;
             if (t == s.sparkSmash + 6) {
-                hurt(player, target, 10.0F * power);
+                hurt(player, target, 7.0F * power);
                 bolt(level, player.getEyePosition(), mid, 1.2F);
                 sound(player, hitSound(player), 1.4F, 0.8F);
                 target.setNoGravity(false);
@@ -1748,9 +1752,10 @@ public final class ThorAbilities {
         }
         if (t % 10 == 5 && !inside.isEmpty()) {
             Vec3 from = player.position().add(0.0D, 1.2D, 0.0D);
+            java.util.Collections.shuffle(inside, new java.util.Random(level.random.nextLong()));
             for (int i = 0; i < Math.min(4, inside.size()); i++) {
-                LivingEntity e = inside.get(level.random.nextInt(inside.size()));
-                hurt(player, e, 3.5F * power);
+                LivingEntity e = inside.get(i);
+                hurt(player, e, 2.0F * power);
                 bolt(level, from, e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D), 1.2F);
             }
             level.playSound(null, from.x, from.y, from.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.8F,
@@ -1764,7 +1769,7 @@ public final class ThorAbilities {
         }
         // the domain collapses on whoever is still inside
         for (LivingEntity e : inside) {
-            hurt(player, e, 10.0F * power);
+            hurt(player, e, 6.0F * power);
             bolt(level, e.position().add(0.0D, 16.0D, 0.0D), e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D),
                     1.5F);
         }

@@ -496,6 +496,8 @@ public final class SupermanClient {
             if (a == SupermanAbility.XRAY) {
                 if (down && unlocked) {
                     xray = !xray;
+                    // the night vision of the X-ray comes from the server
+                    FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(i, xray));
                     mc.player.displayClientMessage(Component.translatable(xray ? "message.flash.superman_xray_on"
                             : "message.flash.superman_xray_off"), true);
                 } else if (down) {

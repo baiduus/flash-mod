@@ -835,7 +835,7 @@ public final class FlashAbilityManager {
 
         List<LivingEntity> targets = FlashAbilityCombat.targetsInFront(player, 15.0D, 0.45D, 32);
         for (LivingEntity target : targets) {
-            FlashAbilityCombat.hit(player, target, 100.0F);
+            FlashAbilityCombat.hit(player, target, 60.0F);
             target.setDeltaMovement(look.scale(2.0D).add(0.0D, 0.45D, 0.0D));
             target.hurtMarked = true;
         }

@@ -514,5 +514,32 @@
       }
     ],
     "subtitle": "subtitles.flash.thor"
+  },
+  "thor.blast_loop": {
+    "sounds": [
+      {
+        "name": "flash:thor/blast_loop",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.blast_start": {
+    "sounds": [
+      {
+        "name": "flash:thor/blast_start",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
+  },
+  "thor.blast_zap": {
+    "sounds": [
+      {
+        "name": "flash:thor/blast_zap",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.thor"
   }
 }

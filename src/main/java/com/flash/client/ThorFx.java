@@ -188,6 +188,7 @@ public final class ThorFx {
             return;
         }
         ClientLevel level = mc.level;
+        blastSounds(mc, level);
         for (Player p : level.players()) {
             if (!ThorState.isThor(p)) {
                 continue;
@@ -232,6 +233,56 @@ public final class ThorFx {
                 add(h, h.add((RANDOM.nextDouble() - 0.5D) * 1.2D, RANDOM.nextDouble() * 0.9D,
                         (RANDOM.nextDouble() - 0.5D) * 1.2D), 0.3F, 3, cosmic);
             }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Lightning Blast sound: the blast of Man of Tomorrow's Shazam when it starts, its crackle while the key is
+    // held; both stop the moment it is released (no old instance keeps playing)
+    // ------------------------------------------------------------------
+
+    private static final java.util.Map<java.util.UUID, BlastSound[]> BLAST_SOUNDS = new java.util.HashMap<>();
+
+    private static void blastSounds(Minecraft mc, ClientLevel level) {
+        for (Player p : level.players()) {
+            boolean on = ThorState.isThor(p) && ThorState.flag(p, ThorPowers.F_BLAST);
+            BlastSound[] s = BLAST_SOUNDS.get(p.getUUID());
+            if (on && (s == null || s[1].isStopped())) {
+                BlastSound start = new BlastSound(com.flash.registry.ModSounds.THOR_BLAST_START.get(), p, false);
+                BlastSound loop = new BlastSound(com.flash.registry.ModSounds.THOR_BLAST_LOOP.get(), p, true);
+                mc.getSoundManager().play(start);
+                mc.getSoundManager().playDelayed(loop, 4);
+                BLAST_SOUNDS.put(p.getUUID(), new BlastSound[] {start, loop});
+            }
+        }
+        BLAST_SOUNDS.values().removeIf(s -> s[0].isStopped() && s[1].isStopped());
+    }
+
+    private static final class BlastSound extends net.minecraft.client.resources.sounds.AbstractTickableSoundInstance {
+        private final Player player;
+
+        BlastSound(net.minecraft.sounds.SoundEvent sound, Player player, boolean loop) {
+            super(sound, net.minecraft.sounds.SoundSource.PLAYERS,
+                    net.minecraft.client.resources.sounds.SoundInstance.createUnseededRandom());
+            this.player = player;
+            this.looping = loop;
+            this.delay = 0;
+            this.volume = loop ? 0.8F : 1.0F;
+            this.x = player.getX();
+            this.y = player.getEyeY();
+            this.z = player.getZ();
+        }
+
+        @Override
+        public void tick() {
+            if (this.player.isRemoved() || !ThorState.isThor(this.player)
+                    || !ThorState.flag(this.player, ThorPowers.F_BLAST)) {
+                this.stop();
+                return;
+            }
+            this.x = this.player.getX();
+            this.y = this.player.getEyeY();
+            this.z = this.player.getZ();
         }
     }
 
@@ -350,6 +401,9 @@ public final class ThorFx {
                     box, e -> !e.isSpectator() && e.isPickable(), eye.distanceToSqr(stop));
             if (hit != null) {
                 stop = hit.getLocation();
+            } else if (block.getType() != HitResult.Type.MISS) {
+                // the burnt trail the beam leaves on the blocks, as Superman's heat vision
+                SupermanScorch.paint(p.getUUID(), stop, Vec3.atLowerCornerOf(block.getDirection().getNormal()), false);
             }
             Vec3 from = hand(p, partial);
             boolean cosmic = cosmic(p);

@@ -342,7 +342,7 @@ public final class HulkAbilities {
         Vec3 dir = flatLook(player);
         double ahead = player.getBbWidth() * 0.5D + 1.5D;
         BlockPos g = ground(level, player.getX() + dir.x * ahead, player.getY(), player.getZ() + dir.z * ahead);
-        float damage = 3.0F * punch(player); // the ground punch: 3 punches
+        float damage = 2.0F * punch(player); // the ground punch: 2 punches
         player.swing(InteractionHand.MAIN_HAND, true);
         player.swing(InteractionHand.OFF_HAND, true);
         for (int d = 1; d <= 6; d++) {
@@ -444,7 +444,8 @@ public final class HulkAbilities {
     private static int thunderclap(ServerPlayer player, ServerLevel level) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle().normalize();
-        float damage = 2.5F * punch(player);
+        // two punches, as Superman's
+        float damage = 2.0F * punch(player);
         double range = clapRange(HulkPowers.activeLevel(player));
         for (LivingEntity e : around(player, player.getBoundingBox().inflate(range + 2.0D))) {
             Vec3 d = e.getBoundingBox().getCenter().subtract(eye);
@@ -558,7 +559,7 @@ public final class HulkAbilities {
         boulder.setItem(rock.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : rock);
         float size = com.flash.entity.HulkBoulder.sizeFor(HulkPowers.activeLevel(player));
         boulder.setSize(size);
-        boulder.setDamage(punch(player) * (2.0F + 2.0F * Math.min(1.0F, size / 3.0F)) * ABILITY_DAMAGE
+        boulder.setDamage(punch(player) * (1.2F + 1.3F * Math.min(1.0F, size / 3.0F)) * ABILITY_DAMAGE
                 * (0.4F + 0.6F * charge));
         boulder.setCharge(charge);
         boulder.setPos(player.getX(), player.getY() + player.getBbHeight() * 0.95D, player.getZ());
@@ -671,7 +672,7 @@ public final class HulkAbilities {
         target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
         target.hurtMarked = true;
         THROWN.put(target.getId(), new Thrown(player.getUUID(),
-                punch(player) * 2.0F * ABILITY_DAMAGE * (0.5F + 0.7F * charge), player.tickCount, charge >= 0.999F));
+                punch(player) * 2.0F * ABILITY_DAMAGE * (0.35F + 0.45F * charge), player.tickCount, charge >= 0.999F));
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 1.2F, 0.9F);
@@ -747,7 +748,7 @@ public final class HulkAbilities {
                     move(target, impact.x, impact.y, impact.z);
                     target.fallDistance = 0.0F;
                     target.invulnerableTime = 0;
-                    target.hurt(player.damageSources().playerAttack(player), 4.0F * punch(player));
+                    target.hurt(player.damageSources().playerAttack(player), 2.0F * punch(player));
                 }
                 // the impact blows up like 6 TNTs (even if the creature is gone)
                 blast(player, level, impact.x, impact.y + 0.5D, impact.z, SUPER_BLAST);
@@ -841,7 +842,7 @@ public final class HulkAbilities {
     /** Level 8: a burst of gamma radiation all around. */
     private static void gammaWave(ServerPlayer player, ServerLevel level) {
         double radius = 10.0D;
-        float damage = 3.0F * punch(player);
+        float damage = 2.0F * punch(player);
         for (LivingEntity e : around(player, player.getBoundingBox().inflate(radius))) {
             Vec3 away = e.position().subtract(player.position());
             double d = away.length();

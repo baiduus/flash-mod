@@ -136,7 +136,7 @@ public final class SupermanMeteor {
             }
             double f = 1.0D - d / radius;
             e.invulnerableTime = 0;
-            e.hurt(level.damageSources().explosion(player, player), (float) (24.0F * power * (0.3D + 0.7D * f)));
+            e.hurt(level.damageSources().explosion(player, player), (float) (20.0F * power * (0.3D + 0.7D * f)));
             e.setSecondsOnFire(6);
             Vec3 away = e.position().subtract(at);
             away = away.lengthSqr() < 1.0E-4D ? new Vec3(0, 1, 0) : away.normalize();

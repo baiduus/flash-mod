@@ -180,6 +180,11 @@ public final class SupermanAbilities {
             grabKey(player, s, pressed);
             return;
         }
+        if (ability == SupermanAbility.XRAY) {
+            // the X-ray is drawn by the client; here only its night vision (pressed = on / off)
+            xray(player, pressed);
+            return;
+        }
         switch (ability.kind()) {
             case TOGGLE -> {
                 if (pressed) {
@@ -352,6 +357,7 @@ public final class SupermanAbilities {
     // ------------------------------------------------------------------
 
     public static void tick(ServerPlayer player) {
+        xrayTick(player);
         Session s = SESSIONS.get(player.getUUID());
         if (!SupermanPowers.isSuperman(player)) {
             if (s != null) {
@@ -463,7 +469,7 @@ public final class SupermanAbilities {
                 if (target instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
                 }
-                target.hurt(level.damageSources().playerAttack(player), 6.0F * power * (laser ? 1.8F : 1.0F));
+                target.hurt(level.damageSources().playerAttack(player), 1.5F * power * (laser ? 1.4F : 1.0F));
                 target.setSecondsOnFire(laser ? 8 : 4);
                 SupermanPowers.addXp(player, 0.1F);
                 if (target instanceof LivingEntity living) {
@@ -504,6 +510,22 @@ public final class SupermanAbilities {
             s.heatOnBlock = 0;
         }
         s.heatOnBlock++;
+        // five seconds of laser on one block cook it: sand to glass, stone to smooth stone, clay to terracotta,
+        // cobblestone to stone (instead of melting it away)
+        net.minecraft.world.level.block.Block cooked = cooked(state);
+        if (cooked != null) {
+            if (player.tickCount % 4 == 0) {
+                level.sendParticles(ParticleTypes.FLAME, p.x, p.y, p.z, 1, 0.1D, 0.1D, 0.1D, 0.01D);
+            }
+            if (s.heatOnBlock >= HEAT_COOK_TICKS) {
+                level.setBlockAndUpdate(pos, cooked.defaultBlockState());
+                level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.6F, 1.4F);
+                level.sendParticles(ParticleTypes.LARGE_SMOKE, p.x, p.y, p.z, 8, 0.25D, 0.25D, 0.25D, 0.02D);
+                // the new block starts its own count (stone keeps cooking into smooth stone)
+                s.heatOnBlock = 0;
+            }
+            return;
+        }
         float hardness = state.getDestroySpeed(level, pos);
         if (hardness >= 0.0F && !state.isAir()) {
             int need = (int) (Math.min(80.0F, 6.0F + hardness * 10.0F) / (laser ? 2.5F : 1.0F));
@@ -525,6 +547,72 @@ public final class SupermanAbilities {
             }
         }
 
+    }
+
+    /** Five seconds of continuous laser on the same block. */
+    private static final int HEAT_COOK_TICKS = 100;
+
+    /** What a block becomes when the laser cooks it, or null. */
+    private static net.minecraft.world.level.block.Block cooked(BlockState state) {
+        if (state.is(Blocks.SAND) || state.is(Blocks.RED_SAND)) {
+            return Blocks.GLASS;
+        }
+        if (state.is(Blocks.STONE)) {
+            return Blocks.SMOOTH_STONE;
+        }
+        if (state.is(Blocks.CLAY)) {
+            return Blocks.TERRACOTTA;
+        }
+        if (state.is(Blocks.COBBLESTONE)) {
+            return Blocks.STONE;
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------
+    // X-ray night vision
+    // ------------------------------------------------------------------
+
+    private static final java.util.Set<UUID> XRAY = new java.util.HashSet<>();
+    private static final int XRAY_VISION = 400;
+
+    private static void xray(ServerPlayer player, boolean on) {
+        if (on) {
+            XRAY.add(player.getUUID());
+            keepXrayVision(player);
+        } else {
+            XRAY.remove(player.getUUID());
+            dropXrayVision(player);
+        }
+    }
+
+    /** Ours is the ambient one (a potion or a beacon of the player stays untouched). */
+    private static void keepXrayVision(ServerPlayer player) {
+        MobEffectInstance nv = player.getEffect(MobEffects.NIGHT_VISION);
+        if (nv == null || (nv.isAmbient() && nv.getDuration() < XRAY_VISION - 100)) {
+            player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, XRAY_VISION, 0, true, false, true));
+        }
+    }
+
+    private static void dropXrayVision(ServerPlayer player) {
+        MobEffectInstance nv = player.getEffect(MobEffects.NIGHT_VISION);
+        if (nv != null && nv.isAmbient() && nv.getDuration() <= XRAY_VISION) {
+            player.removeEffect(MobEffects.NIGHT_VISION);
+        }
+    }
+
+    private static void xrayTick(ServerPlayer player) {
+        if (!XRAY.contains(player.getUUID())) {
+            return;
+        }
+        if (!SupermanPowers.isSuperman(player)) {
+            XRAY.remove(player.getUUID());
+            dropXrayVision(player);
+            return;
+        }
+        if (player.tickCount % 20 == 0) {
+            keepXrayVision(player);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -685,7 +773,7 @@ public final class SupermanAbilities {
             if (target instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
             }
-            target.hurt(level.damageSources().playerAttack(player), (12.0F + 28.0F * charge) * power);
+            target.hurt(level.damageSources().playerAttack(player), (12.0F + 18.0F * charge) * power);
             if (charge >= 0.95F && target instanceof LivingEntity living) {
                 living.addEffect(new MobEffectInstance(ModEffects.BLEEDING.get(), 60, 0));
             }
@@ -716,7 +804,7 @@ public final class SupermanAbilities {
                 }
                 if (e instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
-                    living.hurt(level.damageSources().playerAttack(player), 12.0F * power);
+                    living.hurt(level.damageSources().playerAttack(player), 8.0F * power);
                 }
                 e.setDeltaMovement(look.x * 2.0D, 0.5D, look.z * 2.0D);
                 e.hurtMarked = true;
@@ -768,7 +856,7 @@ public final class SupermanAbilities {
             e.clearFire();
             if (e instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
-                living.hurt(level.damageSources().playerAttack(player), (float) (28.0F * power * fall) + 2.0F);
+                living.hurt(level.damageSources().playerAttack(player), (float) (24.0F * power * fall));
             }
             double push = 0.8D + 3.5D * fall;
             e.setDeltaMovement(look.x * push, 0.6D + look.y * push * 0.4D, look.z * push);
@@ -927,7 +1015,7 @@ public final class SupermanAbilities {
         // no damage on the throw itself: it all comes when the target hits something
         e.setDeltaMovement(look.scale(speed).add(0.0D, 0.2D, 0.0D));
         e.hurtMarked = true;
-        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (12.0F + 24.0F * charge) * power, new int[1], full));
+        THROWN.put(e.getId(), new Thrown(player.getUUID(), level, (6.0F + 10.0F * charge) * power, new int[1], full));
         s.throwCharge = 0.0F;
         sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2F, 0.6F);
         SupermanPowers.setCooldown(player, SupermanAbility.GRAB);
@@ -1166,7 +1254,7 @@ public final class SupermanAbilities {
             return;
         }
         if (t == 8) {
-            hitCombo(player, level, target, (full ? 20.0F : 18.0F) * power);
+            hitCombo(player, level, target, (full ? 10.0F : 12.0F) * power);
             target.setDeltaMovement(0.0D, full ? 2.1D : 1.25D, 0.0D);
             target.hurtMarked = true;
             sound(player, ModSounds.PUNCH_SONIC.get(), 1.0F, 1.2F);
@@ -1186,7 +1274,7 @@ public final class SupermanAbilities {
                     target.fallDistance = 0.0F;
                 }
                 if (t % 2 == 0) {
-                    laserHit(player, level, target, 1.5F * power);
+                    laserHit(player, level, target, 0.6F * power);
                 }
             } else if (t >= 42) {
                 laserOn(player, false);
@@ -1213,7 +1301,7 @@ public final class SupermanAbilities {
             return;
         }
         if (t == 36) {
-            hitCombo(player, level, target, 20.0F * power);
+            hitCombo(player, level, target, 8.0F * power);
             target.setDeltaMovement(0.0D, -3.4D, 0.0D);
             target.hurtMarked = true;
             sound(player, ModSounds.DIVE.get(), 1.0F, 1.2F);
@@ -1222,7 +1310,7 @@ public final class SupermanAbilities {
         if (t > 36 && s.comboMark < 0) {
             if (target.onGround() || target.isInWater() || t >= 70) {
                 s.comboMark = t;
-                crash(player, level, target, 24.0F * power);
+                crash(player, level, target, 10.0F * power);
                 Vec3 hover = target.position().add(0.0D, 5.0D, 0.0D);
                 face(player, hover, target.position());
                 laserOn(player, true);
@@ -1235,7 +1323,7 @@ public final class SupermanAbilities {
             Vec3 tp = target.position();
             face(player, tp.add(0.0D, 5.0D, 0.0D), tp.add(0.0D, target.getBbHeight() * 0.4D, 0.0D));
             if (k % 2 == 0 && target.isAlive()) {
-                laserHit(player, level, target, 1.4F * power);
+                laserHit(player, level, target, 0.4F * power);
             }
             if (k >= 30 || !target.isAlive()) {
                 // it blows up
@@ -1244,7 +1332,7 @@ public final class SupermanAbilities {
                 level.playSound(null, tp.x, tp.y, tp.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 1.1F);
                 if (target.isAlive()) {
                     target.invulnerableTime = 0;
-                    target.hurt(level.damageSources().playerAttack(player), 16.0F * power);
+                    target.hurt(level.damageSources().playerAttack(player), 4.0F * power);
                 }
                 laserOn(player, false);
                 SupermanPowers.addXp(player, 2.5F);
@@ -1329,8 +1417,12 @@ public final class SupermanAbilities {
         if (t == end) {
             laserOn(player, false);
             boolean boss = target.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES);
-            float damage = boss ? 40.0F : target instanceof net.minecraft.world.entity.player.Player ? 12.0F
-                    : Float.MAX_VALUE;
+            // a finisher: it ends a creature that is already weak (up to three punches of health left); on
+            // anything else (bosses, players, the big ones) it is a heavy hit of two and a half punches
+            float pw = SupermanPowers.power(player);
+            boolean weak = !boss && !(target instanceof net.minecraft.world.entity.player.Player)
+                    && target.getHealth() <= 36.0F * pw;
+            float damage = weak ? Float.MAX_VALUE : 30.0F * pw;
             target.invulnerableTime = 0;
             target.hurt(level.damageSources().playerAttack(player), damage);
             if (eyes) {
@@ -1476,7 +1568,7 @@ public final class SupermanAbilities {
                     0.2D, 0.02D);
         }
         if (t == 12 || t == 40 || t == 69) {
-            hitCombo(player, level, target, 20.0F * power);
+            hitCombo(player, level, target, 7.0F * power);
             fxAt(level, SupermanFxPacket.RING, tp.add(0.0D, target.getBbHeight() * 0.5D, 0.0D),
                     t == 12 ? new Vec3(0, 1, 0) : comboForward(yaw), 2.0F);
             sound(player, ModSounds.PUNCH_SONIC.get(), 1.2F, t == 12 ? 1.2F : 1.0F);
@@ -1486,7 +1578,7 @@ public final class SupermanAbilities {
             sound(player, ModSounds.DIVE.get(), 1.2F, 1.1F);
         } else if (t == 117) {
             target.setNoGravity(false);
-            crash(player, level, target, 25.0F * power);
+            crash(player, level, target, 12.0F * power);
             target.addEffect(new MobEffectInstance(ModEffects.BLEEDING.get(), 100, 1));
             BlockState ground = level.getBlockState(BlockPos.containing(tp).below());
             if (!ground.isAir()) {
@@ -1497,7 +1589,7 @@ public final class SupermanAbilities {
                     x -> x != player && x.isAlive())) {
                 if (other instanceof LivingEntity living) {
                     living.invulnerableTime = 0;
-                    living.hurt(level.damageSources().playerAttack(player), 6.0F * power);
+                    living.hurt(level.damageSources().playerAttack(player), 4.0F * power);
                 }
                 Vec3 away = other.position().subtract(tp);
                 Vec3 push = new Vec3(away.x, 0.0D, away.z).normalize().scale(1.4D);
@@ -1602,7 +1694,7 @@ public final class SupermanAbilities {
             if (e instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
                 // the pack: 100 on creatures, 25 on players (here a little more near the centre)
-                float base = living instanceof net.minecraft.world.entity.player.Player ? 15.0F : 50.0F;
+                float base = 36.0F;
                 living.hurt(level.damageSources().playerAttack(player), (float) (base * power * (0.6D + 0.4D * f)));
                 living.setSecondsOnFire(8);
             }
@@ -1649,7 +1741,7 @@ public final class SupermanAbilities {
             double d = Math.max(0.5D, away.length());
             if (e instanceof LivingEntity living) {
                 living.hurt(level.damageSources().playerAttack(player),
-                        (float) ((5.0F + Math.min(15.0F, distance * 0.3F)) * power * (1.0D - Math.min(0.8D, d / (radius + 1.0D)))));
+                        (float) ((4.0F + Math.min(10.0F, distance * 0.25F)) * power * (1.0D - Math.min(0.8D, d / (radius + 1.0D)))));
             }
             Vec3 push = new Vec3(away.x, 0.0D, away.z).normalize().scale(1.5D);
             e.setDeltaMovement(push.x, 0.6D, push.z);
