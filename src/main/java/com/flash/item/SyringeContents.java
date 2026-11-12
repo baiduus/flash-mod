@@ -42,14 +42,33 @@ public final class SyringeContents {
             "kryptonian_blood", 4, ModItems.KRYPTONIAN_BLOOD_CAPSULE::get,
             p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.SUPERMAN)));
     public static final SyringeContent HULK_ESSENCE = register(new SyringeContent(
-            "hulk_essence", 5, ModItems.HULK_ESSENCE_CAPSULE::get,
-            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.HULK)));
+            "hulk_essence", 5, ModItems.HULK_ESSENCE_CAPSULE::get, p -> injectHulk(p, false)));
+    /** The Red Hulk (the green gamma turned in the Processor). */
+    public static final SyringeContent RED_HULK_ESSENCE = register(new SyringeContent(
+            "red_hulk_essence", 8, ModItems.RED_HULK_ESSENCE_CAPSULE::get, p -> injectHulk(p, true)));
     public static final SyringeContent FLASH_ESSENCE = register(new SyringeContent(
             "flash_essence", 6, ModItems.FLASH_ESSENCE_CAPSULE::get,
             p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.FLASH)));
     public static final SyringeContent THOR_ESSENCE = register(new SyringeContent(
-            "thor_essence", 7, ModItems.THOR_ESSENCE_CAPSULE::get,
-            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.THOR)));
+            "thor_essence", 7, ModItems.THOR_ESSENCE_CAPSULE::get, SyringeContents::injectThor));
+
+    private static boolean injectHulk(net.minecraft.server.level.ServerPlayer p, boolean red) {
+        if (!com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.HULK)) {
+            return false;
+        }
+        com.flash.hulk.HulkPowers.setRed(p, red);
+        return true;
+    }
+
+    /** Only the worthy hold the power of Thor (raid won and 100 hostile creatures: HeroAdvancements). */
+    private static boolean injectThor(net.minecraft.server.level.ServerPlayer p) {
+        if (!com.flash.power.HeroAdvancements.isWorthy(p)) {
+            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.flash.not_worthy"),
+                    true);
+            return false;
+        }
+        return com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.THOR);
+    }
 
     private SyringeContents() {
     }

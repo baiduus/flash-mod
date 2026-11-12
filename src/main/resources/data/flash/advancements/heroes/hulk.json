@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:hulk_essence_capsule"
+    },
+    "title": {
+      "translate": "advancements.flash.hulk.title"
+    },
+    "description": {
+      "translate": "advancements.flash.hulk.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "flash:heroes/root",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

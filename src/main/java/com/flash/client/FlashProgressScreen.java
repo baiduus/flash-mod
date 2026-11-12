@@ -402,7 +402,7 @@ public class FlashProgressScreen extends Screen {
             return;
         }
         if (!FlashClientData.hasPowers()) {
-            drawEmptyState(g);
+            drawHeroGuide(g, mx, my);
             return;
         }
         int half = (LEFT_W - 8) / 2;
@@ -1264,6 +1264,128 @@ public class FlashProgressScreen extends Screen {
     }
 
     /** Neutral screen shown while the player has no power. */
+    // ------------------------------------------------------------------
+    // No powers: the heroes of the mod and how to get each one
+    // ------------------------------------------------------------------
+
+    /** Hero id (its advancement and its texts gui.flash.guide.<id>), number of steps. */
+    private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex"};
+    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4};
+    private static final int GUIDE_LIST_W = 168;
+    private static final int GUIDE_ROW_H = 36;
+    private static final int GUIDE_ROW_GAP = 2;
+    private static int guideHero;
+
+    private static net.minecraft.world.item.ItemStack guideIcon(int i) {
+        return new net.minecraft.world.item.ItemStack(switch (i) {
+            case 0 -> com.flash.registry.ModItems.FLASH_RING.get();
+            case 1 -> com.flash.registry.ModItems.HULK_ESSENCE_CAPSULE.get();
+            case 2 -> com.flash.registry.ModItems.RED_HULK_ESSENCE_CAPSULE.get();
+            case 3 -> com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get();
+            case 4 -> com.flash.registry.ModItems.MJOLNIR.get();
+            default -> com.flash.registry.ModItems.LEX_HELMET.get();
+        });
+    }
+
+    private static int guideRowY(int i) {
+        return CONTENT_Y + i * (GUIDE_ROW_H + GUIDE_ROW_GAP);
+    }
+
+    private void drawHeroGuide(GuiGraphics g, int mx, int my) {
+        // the list
+        for (int i = 0; i < GUIDE.length; i++) {
+            int y = guideRowY(i);
+            boolean hover = inside(mx, my, PAD, y, GUIDE_LIST_W, GUIDE_ROW_H);
+            boolean sel = i == guideHero;
+            card(g, PAD, y, GUIDE_LIST_W, GUIDE_ROW_H, sel ? 1.0F : hover ? 0.5F : 0.0F);
+            if (sel) {
+                g.fill(PAD, y + 5, PAD + 2, y + GUIDE_ROW_H - 5, accent());
+            }
+            g.renderItem(guideIcon(i), PAD + 9, y + 10);
+            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 8,
+                    sel ? COLOR_TEXT : COLOR_MUTED, false);
+            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i] + ".sub"), PAD + 32,
+                    y + 20, COLOR_DIM, false);
+            if (HeroProgressClient.has(GUIDE[i])) {
+                g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + 14, accent(), false);
+            }
+        }
+        // the manual of the hero picked
+        int x = PAD + GUIDE_LIST_W + 8;
+        int w = PW - PAD - x;
+        int h = CONTENT_BOTTOM - CONTENT_Y;
+        card(g, x, CONTENT_Y, w, h, 0.0F);
+        String id = GUIDE[guideHero];
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(x + 10, CONTENT_Y + 8, 0.0F);
+        pose.scale(1.5F, 1.5F, 1.0F);
+        g.renderItem(guideIcon(guideHero), 0, 0);
+        pose.popPose();
+        scaledText(g, Component.translatable("gui.flash.guide." + id), x + 40, CONTENT_Y + 9, 1.3F, COLOR_TEXT);
+        boolean got = HeroProgressClient.has(id);
+        Component status = Component.translatable(got ? "gui.flash.guide.got" : "gui.flash.guide.locked");
+        g.drawString(this.font, status, x + w - 10 - this.font.width(status), CONTENT_Y + 12,
+                got ? accent() : COLOR_DIM, false);
+        g.drawString(this.font, Component.translatable("gui.flash.guide." + id + ".sub"), x + 40, CONTENT_Y + 23,
+                COLOR_DIM, false);
+        int y = CONTENT_Y + 40;
+        int textW = w - 34;
+        for (int step = 1; step <= GUIDE_STEPS[guideHero]; step++) {
+            y = guideStep(g, x, y, textW, step, Component.translatable("gui.flash.guide." + id + "." + step));
+            if ("thor".equals(id) && step == 1) {
+                y = drawWorthyChecklist(g, x + 26, y, w - 36);
+            }
+        }
+    }
+
+    /** A numbered step: the number in a little square, the text wrapped beside it. */
+    private int guideStep(GuiGraphics g, int x, int y, int textW, int n, Component text) {
+        g.fill(x + 10, y, x + 21, y + 11, withAlpha(accentDark(), 0.9F));
+        String num = String.valueOf(n);
+        g.drawString(this.font, num, x + 16 - this.font.width(num) / 2, y + 2, accent(), false);
+        java.util.List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(text, textW);
+        for (net.minecraft.util.FormattedCharSequence line : lines) {
+            g.drawString(this.font, line, x + 27, y + 2, COLOR_MUTED, false);
+            y += 10;
+        }
+        return y + 6;
+    }
+
+    /** The way to be worthy: raid won, 100 hostile creatures (with the count), worthy. */
+    private int drawWorthyChecklist(GuiGraphics g, int x, int y, int w) {
+        boolean village = HeroProgressClient.has(com.flash.power.HeroAdvancements.VILLAGE);
+        boolean hunter = HeroProgressClient.has(com.flash.power.HeroAdvancements.HUNTER);
+        boolean worthy = HeroProgressClient.has(com.flash.power.HeroAdvancements.WORTHY);
+        int kills = Math.min(com.flash.power.HeroAdvancements.KILLS_NEEDED, HeroProgressClient.kills());
+        card(g, x, y - 2, w, 54, 0.0F);
+        checkLine(g, x + 8, y + 3, village, Component.translatable("gui.flash.guide.thor.village"));
+        checkLine(g, x + 8, y + 15, hunter, Component.translatable("gui.flash.guide.thor.hunter", kills));
+        drawBar(g, x + 20, y + 26, w - 30, kills / (float) com.flash.power.HeroAdvancements.KILLS_NEEDED,
+                hunter ? accent() : 0xFFB0B8C4);
+        checkLine(g, x + 8, y + 39, worthy, Component.translatable("gui.flash.guide.thor.worthy"));
+        return y + 60;
+    }
+
+    private void checkLine(GuiGraphics g, int x, int y, boolean done, Component text) {
+        g.drawString(this.font, done ? "✔" : "✘", x, y, done ? accent() : 0xFFFF5A5A, false);
+        g.drawString(this.font, text, x + 12, y, done ? COLOR_TEXT : COLOR_MUTED, false);
+    }
+
+    /** Click in the hero guide: picks a hero. */
+    private boolean clickHeroGuide(int mx, int my) {
+        for (int i = 0; i < GUIDE.length; i++) {
+            if (inside(mx, my, PAD, guideRowY(i), GUIDE_LIST_W, GUIDE_ROW_H)) {
+                if (guideHero != i) {
+                    guideHero = i;
+                    click();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void drawEmptyState(GuiGraphics g) {
         int cx = PW / 2;
         int cy = (CONTENT_Y + CONTENT_BOTTOM) / 2;
@@ -1726,7 +1848,9 @@ public class FlashProgressScreen extends Screen {
                 {net.minecraft.world.item.Items.NETHER_WART, "gui.flash.equip.processor_fungi",
                         com.flash.registry.ModItems.CORRUPTED_MATTER.get()},
                 {com.flash.registry.ModItems.KRYPTONIAN_CELL.get(), "gui.flash.equip.processor_cells",
-                        com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get()}};
+                        com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get()},
+                {com.flash.registry.ModItems.HULK_ESSENCE_CAPSULE.get(), "gui.flash.equip.processor_gamma",
+                        com.flash.registry.ModItems.RED_HULK_ESSENCE_CAPSULE.get()}};
         int ry = y + 40;
         for (Object[] r : rows) {
             if (ry + 18 > y + h) {
@@ -2030,6 +2154,11 @@ public class FlashProgressScreen extends Screen {
             return super.mouseClicked(mouseX, mouseY, button);
         }
 
+        if (activeTab() == TAB_PROGRESS && !FlashClientData.hasPowers() && theme() != PowerTheme.LEX
+                && !PowerTheme.localThor() && !PowerTheme.localSuperman() && !PowerTheme.localHulk()
+                && clickHeroGuide(ix, iy)) {
+            return true;
+        }
         int level = levelAt(ix, iy);
         if (level >= 0
                 && FlashClientData.hasPowers()

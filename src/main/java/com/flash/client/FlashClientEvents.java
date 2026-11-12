@@ -64,6 +64,7 @@ public final class FlashClientEvents {
                 AccelerationPortalRenderer::new
         );
         event.registerBlockEntityRenderer(ModBlockEntities.GAMMA_CHAMBER.get(), GammaChamberRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.MJOLNIR_STONE.get(), MjolnirStoneRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.TACHYON_EXTRACTOR.get(),
                 TachyonExtractorRenderer::new

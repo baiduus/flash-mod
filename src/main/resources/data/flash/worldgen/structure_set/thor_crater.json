@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "flash:thor_crater",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 64,
+    "separation": 24,
+    "salt": 830144207
+  }
+}

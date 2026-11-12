@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:kryptonian_blood_capsule"
+    },
+    "title": {
+      "translate": "advancements.flash.superman.title"
+    },
+    "description": {
+      "translate": "advancements.flash.superman.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "flash:heroes/root",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

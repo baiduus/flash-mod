@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:mjolnir"
+    },
+    "title": {
+      "translate": "advancements.flash.thor.title"
+    },
+    "description": {
+      "translate": "advancements.flash.thor.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "flash:heroes/worthy",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

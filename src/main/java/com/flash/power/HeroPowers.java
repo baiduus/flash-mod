@@ -212,11 +212,13 @@ public final class HeroPowers {
             return false;
         }
         int level = hero.level(player);
+        // the Red Hulk's power comes out as red gamma
+        boolean red = hero == Hero.HULK && HulkPowers.isRed(player);
         CompoundTag mem = player.getPersistentData().getCompound(MEMORY).copy();
         mem.put(hero.id(), hero.save(player));
         player.getPersistentData().put(MEMORY, mem);
         hero.revoke(player);
-        ItemStack capsule = new ItemStack(hero.capsule());
+        ItemStack capsule = new ItemStack(red ? ModItems.RED_HULK_ESSENCE_CAPSULE.get() : hero.capsule());
         player.getInventory().placeItemBackInInventory(capsule);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH,
                 SoundSource.PLAYERS, 1.0F, 0.8F);

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:flash_ring"
+    },
+    "title": {
+      "translate": "advancements.flash.flash.title"
+    },
+    "description": {
+      "translate": "advancements.flash.flash.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "flash:heroes/root",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "type": "flash:thor_crater",
+  "biomes": "#flash:has_structure/thor_crater",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:flash_ring"
+    },
+    "title": {
+      "translate": "advancements.flash.root.title"
+    },
+    "description": {
+      "translate": "advancements.flash.root.description"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "minecraft:textures/block/blackstone.png"
+  },
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

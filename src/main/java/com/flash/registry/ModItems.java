@@ -193,6 +193,10 @@ public final class ModItems {
     public static final RegistryObject<Item> HULK_ESSENCE_CAPSULE = ITEMS.register("hulk_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.hulk_essence_capsule", "tooltip.flash.power_capsule"));
+    /** The Red Hulk's gamma: made in the Processor from the green one (and back). */
+    public static final RegistryObject<Item> RED_HULK_ESSENCE_CAPSULE = ITEMS.register("red_hulk_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.red_hulk_essence_capsule", "tooltip.flash.power_capsule"));
     public static final RegistryObject<Item> FLASH_ESSENCE_CAPSULE = ITEMS.register("flash_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.flash_essence_capsule", "tooltip.flash.power_capsule"));

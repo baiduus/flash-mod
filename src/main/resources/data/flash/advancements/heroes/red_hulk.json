@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:red_hulk_essence_capsule"
+    },
+    "title": {
+      "translate": "advancements.flash.red_hulk.title"
+    },
+    "description": {
+      "translate": "advancements.flash.red_hulk.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "flash:heroes/hulk",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

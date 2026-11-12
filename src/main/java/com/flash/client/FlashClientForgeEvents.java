@@ -165,6 +165,7 @@ public final class FlashClientForgeEvents {
         com.flash.lex.LexState.reset();
         LexFx.reset();
         LexFlight.reset();
+        HeroProgressClient.reset();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */

@@ -86,6 +86,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.GAMMA_REACTOR.get());
                         output.accept(ModItems.GAMMA_CAPSULE.get());
                         output.accept(ModItems.HULK_ESSENCE_CAPSULE.get());
+                        output.accept(ModItems.RED_HULK_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.TACHYON_EXTRACTOR.get());
                         output.accept(ModItems.SYRINGE.get());
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),

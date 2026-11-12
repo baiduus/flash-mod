@@ -89,6 +89,16 @@ public final class ModBlocks {
                     .strength(-1.0F, 3600000.0F)
                     .sound(SoundType.GLASS)));
 
+    /** Mjolnir stuck in the asteroid crater: only the worthy lift it. */
+    public static final RegistryObject<Block> MJOLNIR_STONE = BLOCKS.register("mjolnir_stone",
+            () -> new com.flash.block.MjolnirStoneBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(-1.0F, 3600000.0F)
+                    .noLootTable()
+                    .noOcclusion()
+                    .sound(SoundType.ANVIL)
+                    .lightLevel(state -> 6)));
+
     public static final RegistryObject<Block> TACHYON_EXTRACTOR = BLOCKS.register(
             "tachyon_extractor",
             () -> new TachyonExtractorBlock(BlockBehaviour.Properties.of()

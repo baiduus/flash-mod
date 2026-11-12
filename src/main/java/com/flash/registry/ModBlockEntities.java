@@ -36,6 +36,11 @@ public final class ModBlockEntities {
                             ModBlocks.ACCELERATION_PORTAL.get()
                     ).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.flash.block.MjolnirStoneBlockEntity>> MJOLNIR_STONE =
+            BLOCK_ENTITIES.register("mjolnir_stone", () ->
+                    BlockEntityType.Builder.of(com.flash.block.MjolnirStoneBlockEntity::new,
+                            ModBlocks.MJOLNIR_STONE.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<TachyonExtractorBlockEntity>> TACHYON_EXTRACTOR =
             BLOCK_ENTITIES.register("tachyon_extractor", () ->
                     BlockEntityType.Builder.of(

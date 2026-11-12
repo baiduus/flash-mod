@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Generates the art of the power system: the Kryptonian cell, the power capsules (Kryptonian blood, gamma
-essence, Speed Force, Asgardian essence) and their syringes, and the new Processor (block model, item model and
+essence, Speed Force, Asgardian essence, red gamma essence) and their syringes, and the new Processor (block model, item model and
 textures, drawn from scratch). Run from the repository root."""
 import colorsys
 import json
@@ -36,6 +36,8 @@ CAPSULES = {
     "hulk_essence": (0.31, 0.9, 1.0),
     "flash_essence": (0.12, 0.95, 1.15),
     "thor_essence": (0.58, 0.85, 1.15),
+    # the Red Hulk's gamma (made in the Processor from the green one): a dark ruby
+    "red_hulk_essence": (0.995, 1.0, 0.78),
 }
 
 

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "flash:lex_armor_helmet"
+    },
+    "title": {
+      "translate": "advancements.flash.lex.title"
+    },
+    "description": {
+      "translate": "advancements.flash.lex.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "flash:heroes/root",
+  "criteria": {
+    "granted": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

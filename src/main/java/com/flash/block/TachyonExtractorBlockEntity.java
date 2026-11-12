@@ -65,7 +65,22 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
             new Recipe(TachyonExtractorBlockEntity::isFungus, FUNGI_PER_MATTER, ModItems.CORRUPTED_MATTER, 1, 1, false),
             // Superman: the 5 Kryptonian cells of a crashed ship give the Kryptonian blood
             new Recipe(s -> s.is(ModItems.KRYPTONIAN_CELL.get()), CELLS_PER_BLOOD, ModItems.KRYPTONIAN_BLOOD_CAPSULE,
-                    1, 1, false));
+                    1, 1, false),
+            // Hulk: the gamma essence turns red (the Red Hulk), and the red one back to green, in 10 s of
+            // deep blue, neon purple, magenta and white lightning
+            new Recipe(s -> s.is(ModItems.HULK_ESSENCE_CAPSULE.get()), 1, ModItems.RED_HULK_ESSENCE_CAPSULE, 1, 1,
+                    true),
+            new Recipe(s -> s.is(ModItems.RED_HULK_ESSENCE_CAPSULE.get()), 1, ModItems.HULK_ESSENCE_CAPSULE, 1, 1,
+                    true));
+
+    /** The lightning of the gamma work: deep blue, neon purple, magenta, bright white. */
+    public static final int[] GAMMA_COLORS = {0x1A2BFF, 0xA21CFF, 0xFF1FD2, 0xF4F0FF};
+
+    /** Working a gamma essence (the Red Hulk recipe): the lightning effects. */
+    public boolean isGammaWork() {
+        return this.input.is(ModItems.HULK_ESSENCE_CAPSULE.get())
+                || this.input.is(ModItems.RED_HULK_ESSENCE_CAPSULE.get());
+    }
 
     static boolean isFungus(ItemStack stack) {
         return stack.is(Items.NETHER_WART) || stack.is(Items.CRIMSON_FUNGUS)
@@ -196,6 +211,9 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
         }
         boolean working = powered && extractor.canProcess();
 
+        if (working && extractor.isGammaWork() && level instanceof net.minecraft.server.level.ServerLevel server) {
+            gammaFx(server, pos, extractor.progress);
+        }
         if (working) {
             extractor.progress++;
             if (extractor.progress % HUM_INTERVAL == 1) {
@@ -239,7 +257,46 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
         }
         this.progress = 0;
         level.playSound(null, pos, SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.BLOCKS, 0.6F, 2.0F);
+        if (this.output.is(ModItems.RED_HULK_ESSENCE_CAPSULE.get()) || this.output.is(ModItems.HULK_ESSENCE_CAPSULE.get())) {
+            if (level instanceof net.minecraft.server.level.ServerLevel server) {
+                // the last discharge
+                level.playSound(null, pos, SoundEvents.TRIDENT_THUNDER, SoundSource.BLOCKS, 0.8F, 1.4F);
+                for (int c : GAMMA_COLORS) {
+                    server.sendParticles(dust(c, 1.6F), pos.getX() + 0.5D, pos.getY() + 0.6D, pos.getZ() + 0.5D, 30,
+                            0.6D, 0.6D, 0.6D, 0.05D);
+                }
+                server.sendParticles(net.minecraft.core.particles.ParticleTypes.FLASH, pos.getX() + 0.5D,
+                        pos.getY() + 0.6D, pos.getZ() + 0.5D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
         syncToClients();
+    }
+
+    private static net.minecraft.core.particles.DustParticleOptions dust(int rgb, float size) {
+        return new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((rgb >> 16) & 255) / 255.0F,
+                ((rgb >> 8) & 255) / 255.0F, (rgb & 255) / 255.0F), size);
+    }
+
+    /** Sparks of the four colours around the chamber, crackling louder as the 10 s go by. */
+    private static void gammaFx(net.minecraft.server.level.ServerLevel level, BlockPos pos, int progress) {
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D;
+        float t = progress / (float) TOTAL_TICKS;
+        if (progress % 2 == 0) {
+            int c = GAMMA_COLORS[level.random.nextInt(GAMMA_COLORS.length)];
+            level.sendParticles(dust(c, 0.9F + t), x, y, z, 2 + (int) (t * 6), 0.45D, 0.4D, 0.45D, 0.02D);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, x, y, z,
+                    1 + (int) (t * 4), 0.4D, 0.4D, 0.4D, 0.15D);
+        }
+        if (progress % 12 == 0) {
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.6F + t * 0.6F,
+                    0.6F + t);
+        }
+        if (progress % 30 == 15) {
+            level.playSound(null, pos, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.BLOCKS, 0.25F + t * 0.4F,
+                    1.6F - t * 0.4F);
+        }
     }
 
     private void addOutput(ItemStack stack, int count) {
@@ -311,6 +368,6 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(this.worldPosition).inflate(0.5D);
+        return new AABB(this.worldPosition).inflate(1.0D);
     }
 }

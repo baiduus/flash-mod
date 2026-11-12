@@ -29,6 +29,12 @@ public final class ModStructures {
     public static final RegistryObject<StructurePieceType> KRYPTONIAN_SHIP_PIECE =
             PIECE_TYPES.register("kryptonian_ship", () -> (context, tag) -> new com.flash.worldgen.KryptonianShipPiece(tag));
 
+    public static final RegistryObject<StructureType<com.flash.worldgen.ThorCraterStructure>> THOR_CRATER =
+            STRUCTURE_TYPES.register("thor_crater", () -> () -> com.flash.worldgen.ThorCraterStructure.CODEC);
+
+    public static final RegistryObject<StructurePieceType> THOR_CRATER_PIECE =
+            PIECE_TYPES.register("thor_crater", () -> (context, tag) -> new com.flash.worldgen.ThorCraterPiece(tag));
+
     private ModStructures() {
     }
 }

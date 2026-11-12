@@ -42,6 +42,12 @@
     "flash:content": 7
    },
    "model": "flash:item/syringe_thor_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 8
+   },
+   "model": "flash:item/syringe_red_hulk_essence"
   }
  ]
 }
