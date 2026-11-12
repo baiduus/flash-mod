@@ -541,5 +541,76 @@
       }
     ],
     "subtitle": "subtitles.flash.thor"
+  },
+  "lex.missile_launch": {
+    "sounds": [
+      {
+        "name": "flash:lex/missile_launch",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.missile_fly": {
+    "sounds": [
+      {
+        "name": "flash:lex/missile_fly",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.missile_boom": {
+    "sounds": [
+      {
+        "name": "flash:lex/missile_boom1",
+        "stream": false
+      },
+      {
+        "name": "flash:lex/missile_boom2",
+        "stream": false
+      },
+      {
+        "name": "flash:lex/missile_boom3",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.low_energy": {
+    "sounds": [
+      {
+        "name": "flash:lex/low_energy",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.beam_loop": {
+    "sounds": [
+      {
+        "name": "flash:lex/beam_loop",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.equip": {
+    "sounds": [
+      {
+        "name": "flash:lex/equip",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.empty": {
+    "sounds": [
+      {
+        "name": "flash:lex/empty",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
   }
 }

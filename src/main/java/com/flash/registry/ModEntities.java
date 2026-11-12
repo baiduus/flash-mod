@@ -40,6 +40,15 @@ public final class ModEntities {
                             .updateInterval(5)
                             .build("hulk_boulder"));
 
+    public static final RegistryObject<EntityType<com.flash.entity.LexMissile>> LEX_MISSILE =
+            ENTITY_TYPES.register("lex_missile",
+                    () -> EntityType.Builder.<com.flash.entity.LexMissile>of(
+                                    com.flash.entity.LexMissile::new, MobCategory.MISC)
+                            .sized(0.3F, 0.3F)
+                            .clientTrackingRange(8)
+                            .updateInterval(1)
+                            .build("lex_missile"));
+
     public static final RegistryObject<EntityType<com.flash.entity.MjolnirEntity>> MJOLNIR =
             ENTITY_TYPES.register("mjolnir",
                     () -> EntityType.Builder.<com.flash.entity.MjolnirEntity>of(

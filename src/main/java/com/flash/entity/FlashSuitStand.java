@@ -70,6 +70,15 @@ public class FlashSuitStand extends ArmorStand {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (!this.level().isClientSide) {
+            // Lex Luthor's suit charges here when the stand is fed with redstone
+            com.flash.lex.LexSuit.standTick(this);
+        }
+    }
+
+    @Override
     public ItemStack getPickResult() {
         return new ItemStack(ModItems.FLASH_SUIT_STAND.get());
     }

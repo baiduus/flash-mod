@@ -805,5 +805,21 @@
   "hero.flash.flash": "Flash",
   "hero.flash.hulk": "Hulk",
   "hero.flash.superman": "Superman",
-  "hero.flash.thor": "Thor"
+  "hero.flash.thor": "Thor",
+  "item.flash.lex_armor_helmet": "Lex Luthor Armor Helmet",
+  "item.flash.lex_armor_chestplate": "Lex Luthor Armor Chestplate",
+  "item.flash.lex_armor_leggings": "Lex Luthor Armor Leggings",
+  "item.flash.lex_armor_boots": "Lex Luthor Armor Boots",
+  "item.flash.lex_missile": "LexCorp Missile",
+  "entity.flash.lex_missile": "LexCorp Missile",
+  "tooltip.flash.lex_armor": "LexCorp's green and purple war suit.",
+  "tooltip.flash.lex_armor.2": "All 4 pieces: Superman's powers (level 5, weaker). Double jump flies, N fires missiles, hold R: beam. Charges on the Armor Stand with redstone.",
+  "tooltip.flash.lex_energy": "Battery: %s%%",
+  "hud.flash.lex_energy": "LexCorp",
+  "hud.flash.lex_charging": "Charging",
+  "hud.flash.lex_low": "LOW BATTERY",
+  "message.flash.lex_no_energy": "The suit has no battery. Charge it on the Armor Stand with redstone.",
+  "message.flash.lex_low": "Suit battery at %s%%.",
+  "message.flash.lex_empty": "The suit battery ran out: flight, beam and missiles off.",
+  "subtitles.flash.lex": "LexCorp suit"
 }

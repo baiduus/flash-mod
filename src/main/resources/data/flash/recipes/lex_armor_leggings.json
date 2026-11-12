@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "EAE",
+    "I I",
+    "A A"
+  ],
+  "key": {
+    "E": {
+      "item": "minecraft:emerald"
+    },
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "flash:lex_armor_leggings"
+  }
+}

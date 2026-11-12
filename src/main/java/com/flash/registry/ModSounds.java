@@ -49,6 +49,15 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_END = thor("overcharge_end");
     public static final RegistryObject<SoundEvent> THOR_GOD_BLAST = thor("god_blast");
     /** The Lightning Blast (the Shazam blast of Man of Tomorrow): start, held loop, the zap of each pulse. */
+    /** Lex Luthor's war suit (sounds of Man of Tomorrow's LexCorp mech and armours). */
+    public static final RegistryObject<SoundEvent> LEX_MISSILE_LAUNCH = lex("missile_launch");
+    public static final RegistryObject<SoundEvent> LEX_MISSILE_FLY = lex("missile_fly");
+    public static final RegistryObject<SoundEvent> LEX_MISSILE_BOOM = lex("missile_boom");
+    public static final RegistryObject<SoundEvent> LEX_LOW_ENERGY = lex("low_energy");
+    public static final RegistryObject<SoundEvent> LEX_BEAM_LOOP = lex("beam_loop");
+    public static final RegistryObject<SoundEvent> LEX_EQUIP = lex("equip");
+    public static final RegistryObject<SoundEvent> LEX_EMPTY = lex("empty");
+
     public static final RegistryObject<SoundEvent> THOR_BLAST_START = thor("blast_start");
     public static final RegistryObject<SoundEvent> THOR_BLAST_LOOP = thor("blast_loop");
     public static final RegistryObject<SoundEvent> THOR_BLAST_ZAP = thor("blast_zap");
@@ -59,6 +68,11 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> THOR_BIFROST_AWAY = thor("bifrost_away");
     public static final java.util.List<RegistryObject<SoundEvent>> THOR_LINES = java.util.stream.IntStream
             .rangeClosed(1, 15).mapToObj(i -> thor("thor_line" + i)).toList();
+
+    private static RegistryObject<SoundEvent> lex(String name) {
+        String id = "lex." + name;
+        return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));
+    }
 
     private static RegistryObject<SoundEvent> thor(String name) {
         String id = "thor." + name;

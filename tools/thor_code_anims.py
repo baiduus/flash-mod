@@ -153,4 +153,13 @@ SB_DOWN = {"rightArm": {"p": -50.0, "y": -8.0}, "leftArm": {"p": -50.0, "y": 8.0
 emote("thor_stormbreaker_slam", [(0, S, REST_POSE), (6, S, SB_UP), (10, "easeInCubic", SB_DOWN), (22, S, SB_DOWN),
                                  (30, S, REST_POSE)])
 
+# Lex Luthor's suit: the shoulder pods fire (both arms forward, a recoil), and the beam from the palm (held).
+LEX_AIM = {"rightArm": {"p": -90.0, "y": -6.0}, "leftArm": {"p": -90.0, "y": 6.0}, "torso": {"p": 4.0}}
+LEX_KICK = {"rightArm": {"p": -105.0, "y": -6.0}, "leftArm": {"p": -105.0, "y": 6.0}, "torso": {"p": -6.0},
+            "head": {"p": -6.0}}
+emote("lex_missile_fire", [(0, S, REST_POSE), (4, S, LEX_AIM), (6, "easeOutQuad", LEX_KICK), (12, S, LEX_AIM),
+                           (20, S, REST_POSE)])
+emote("lex_beam", [(0, S, REST_POSE), (4, S, {"rightArm": {"p": -92.0, "y": -4.0}, "leftArm": {"p": -20.0}}),
+                   (12, S, {"rightArm": {"p": -92.0, "y": -4.0}, "leftArm": {"p": -20.0}})], loop=True, return_tick=4)
+
 print("ok")

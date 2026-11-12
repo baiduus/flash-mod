@@ -200,6 +200,18 @@ public final class ModItems {
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.thor_essence_capsule", "tooltip.flash.power_capsule"));
 
+    /** Lex Luthor's green and purple war suit. */
+    public static final RegistryObject<Item> LEX_HELMET = ITEMS.register("lex_armor_helmet",
+            () -> new com.flash.item.LexArmorItem(net.minecraft.world.item.ArmorItem.Type.HELMET));
+    public static final RegistryObject<Item> LEX_CHESTPLATE = ITEMS.register("lex_armor_chestplate",
+            () -> new com.flash.item.LexArmorItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE));
+    public static final RegistryObject<Item> LEX_LEGGINGS = ITEMS.register("lex_armor_leggings",
+            () -> new com.flash.item.LexArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS));
+    public static final RegistryObject<Item> LEX_BOOTS = ITEMS.register("lex_armor_boots",
+            () -> new com.flash.item.LexArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS));
+    public static final RegistryObject<Item> LEX_MISSILE = ITEMS.register("lex_missile",
+            () -> new Item(new Item.Properties()));
+
     public static final RegistryObject<Item> GAMMA_CAPSULE = ITEMS.register(
             "gamma_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16),

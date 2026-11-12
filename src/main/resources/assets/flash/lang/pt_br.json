@@ -805,5 +805,21 @@
   "hero.flash.flash": "Flash",
   "hero.flash.hulk": "Hulk",
   "hero.flash.superman": "Superman",
-  "hero.flash.thor": "Thor"
+  "hero.flash.thor": "Thor",
+  "item.flash.lex_armor_helmet": "Capacete da Armadura de Lex Luthor",
+  "item.flash.lex_armor_chestplate": "Peitoral da Armadura de Lex Luthor",
+  "item.flash.lex_armor_leggings": "Calças da Armadura de Lex Luthor",
+  "item.flash.lex_armor_boots": "Botas da Armadura de Lex Luthor",
+  "item.flash.lex_missile": "Míssil da LexCorp",
+  "entity.flash.lex_missile": "Míssil da LexCorp",
+  "tooltip.flash.lex_armor": "A armadura de guerra verde e roxa da LexCorp.",
+  "tooltip.flash.lex_armor.2": "Com as 4 peças: poderes do Superman (nível 5, mais fracos). Pulo duplo voa, N dispara mísseis, R segurado: raio. Carrega no Suporte de Armadura com redstone.",
+  "tooltip.flash.lex_energy": "Bateria: %s%%",
+  "hud.flash.lex_energy": "LexCorp",
+  "hud.flash.lex_charging": "Carregando",
+  "hud.flash.lex_low": "BATERIA FRACA",
+  "message.flash.lex_no_energy": "A armadura está sem bateria. Carregue no Suporte de Armadura com redstone.",
+  "message.flash.lex_low": "Bateria da armadura em %s%%.",
+  "message.flash.lex_empty": "A bateria da armadura acabou: voo, raio e mísseis desligados.",
+  "subtitles.flash.lex": "Armadura da LexCorp"
 }

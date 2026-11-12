@@ -101,6 +101,11 @@ public final class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModItems.KRYPTONIAN_BABY.get()))
                     .withTabsBefore(HULK.getKey())
                     .displayItems((parameters, output) -> {
+                        output.accept(ModItems.LEX_HELMET.get());
+                        output.accept(ModItems.LEX_CHESTPLATE.get());
+                        output.accept(ModItems.LEX_LEGGINGS.get());
+                        output.accept(ModItems.LEX_BOOTS.get());
+                        output.accept(ModItems.FLASH_SUIT_STAND.get());
                         output.accept(ModItems.KRYPTONIAN_CELL.get());
                         output.accept(ModItems.KRYPTONIAN_BLOOD_CAPSULE.get());
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
