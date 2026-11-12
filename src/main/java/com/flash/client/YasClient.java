@@ -62,13 +62,27 @@ public final class YasClient {
     public static void reset() {
         YAS.clear();
         FLYING.clear();
+        NO_LIGHTNING.clear();
+        NO_EYES.clear();
         FX.clear();
         flashUntil = 0L;
     }
 
     private static final Set<Integer> FLYING = new HashSet<>();
+    private static final Set<Integer> NO_LIGHTNING = new HashSet<>();
+    private static final Set<Integer> NO_EYES = new HashSet<>();
 
-    public static void setYas(int entity, boolean yas, boolean flying) {
+    public static void setYas(int entity, boolean yas, boolean flying, boolean lightning, boolean eyes) {
+        if (lightning) {
+            NO_LIGHTNING.remove(entity);
+        } else {
+            NO_LIGHTNING.add(entity);
+        }
+        if (eyes) {
+            NO_EYES.remove(entity);
+        } else {
+            NO_EYES.add(entity);
+        }
         if (yas) {
             YAS.add(entity);
         } else {
@@ -78,6 +92,33 @@ public final class YasClient {
             FLYING.add(entity);
         } else {
             FLYING.remove(entity);
+        }
+    }
+
+    /** Whether her body shows the lightning / the eyes glow (her choice in the K menu). */
+    public static boolean showLightning(Entity e) {
+        return !NO_LIGHTNING.contains(e.getId());
+    }
+
+    public static boolean showEyes(Entity e) {
+        return !NO_EYES.contains(e.getId());
+    }
+
+    public static boolean localLightning() {
+        var p = Minecraft.getInstance().player;
+        return p == null || showLightning(p);
+    }
+
+    public static boolean localEyes() {
+        var p = Minecraft.getInstance().player;
+        return p == null || showEyes(p);
+    }
+
+    /** Shown at once in the menu (the server confirms with the sync). */
+    public static void setLocalLook(boolean lightning, boolean eyes) {
+        var p = Minecraft.getInstance().player;
+        if (p != null) {
+            setYas(p.getId(), isYas(p), FLYING.contains(p.getId()), lightning, eyes);
         }
     }
 

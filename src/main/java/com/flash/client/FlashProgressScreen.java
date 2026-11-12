@@ -139,6 +139,9 @@ public class FlashProgressScreen extends Screen {
 
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
+        if (PowerTheme.localYas()) {
+            return new int[] {TAB_PROGRESS, TAB_CONFIG};
+        }
         if (PowerTheme.localLex() && !FlashClientData.hasPowers()) {
             return new int[] {TAB_PROGRESS, TAB_EQUIP};
         }
@@ -251,6 +254,8 @@ public class FlashProgressScreen extends Screen {
             drawProgressTab(graphics, mx, my);
         } else if (current == TAB_EQUIP) {
             drawEquipTab(graphics, mx, my);
+        } else if (PowerTheme.localYas()) {
+            drawYasConfig(graphics, mx, my);
         } else if (PowerTheme.localThor()) {
             drawThorConfig(graphics, mx, my);
         } else if (PowerTheme.localSuperman()) {
@@ -295,7 +300,8 @@ public class FlashProgressScreen extends Screen {
         boolean superForm = superPower && com.flash.superman.SupermanState.isSuperman(Minecraft.getInstance().player);
         boolean thorPower = PowerTheme.localThor();
         boolean thorForm = thorPower && com.flash.thor.ThorState.isThor(Minecraft.getInstance().player);
-        Component badge = thorPower
+        boolean yasPower = PowerTheme.localYas();
+        Component badge = yasPower ? Component.translatable("gui.flash.yas.badge") : thorPower
                 ? Component.translatable(thorForm ? "gui.flash.thor.badge_thor" : "gui.flash.thor.badge_civil")
                 : superPower
                 ? Component.translatable(superForm ? "gui.flash.superman.badge_superman" : "gui.flash.superman.badge_clark")
@@ -312,7 +318,7 @@ public class FlashProgressScreen extends Screen {
         int bw = tw + 22;
         int bx = PW - PAD - bw;
         int by = 13;
-        int color = FlashClientData.hasPowers() || hulkPower || superPower ? accent() : COLOR_MUTED;
+        int color = FlashClientData.hasPowers() || hulkPower || superPower || yasPower ? accent() : COLOR_MUTED;
         g.fill(bx, by, bx + bw, by + 20, withAlpha(color, 0.55F));
         g.fill(bx + 1, by + 1, bx + bw - 1, by + 19, accentSoft());
         // little live dot
@@ -408,6 +414,10 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
+        if (PowerTheme.localYas()) {
+            drawYasTab(g, mx, my);
+            return;
+        }
         if (theme() == PowerTheme.LEX) {
             drawLexTab(g, mx, my);
             return;
@@ -882,6 +892,117 @@ public class FlashProgressScreen extends Screen {
     }
 
     /** Lex Luthor's suit: the battery, the passives and the Mark 6 systems with their keys and cooldowns. */
+    // ------------------------------------------------------------------
+    // Yas
+    // ------------------------------------------------------------------
+
+    /** Her powers: those of Hand of God (its keys and its ability wheel), in its own words. */
+    private static final String[] YAS_POWERS = {"celeste", "temporal", "realidade", "materia", "telecinese",
+            "supervelocidade", "visao_termica", "void", "eletrocinese"};
+    /** The Hand of God key of each power (its own key settings). */
+    private static final String[] YAS_KEYS = {"celeste", "acelerar", "realidade", "desintegrar", "telecinese",
+            "camera_lenta", "visao_termica", "sombra", "eletrocinese"};
+
+    private static Component yasKey(int i) {
+        String name = "key.hand_of_god." + YAS_KEYS[i];
+        for (net.minecraft.client.KeyMapping k : Minecraft.getInstance().options.keyMappings) {
+            if (k.getName().equals(name)) {
+                return k.isUnbound() ? Component.translatable("gui.flash.yas.wheel") : k.getTranslatedKeyMessage();
+            }
+        }
+        return Component.translatable("gui.flash.yas.wheel");
+    }
+    private static final String[] YAS_PASSIVES = {"flight", "toughness", "punch", "fall"};
+
+    private void drawYasTab(GuiGraphics g, int mx, int my) {
+        int half = (LEFT_W - 8) / 2;
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.yas.stat_toughness"),
+                Component.translatable("gui.flash.yas.stat_toughness_value"),
+                Component.translatable("gui.flash.yas.stat_toughness_hint"));
+        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.yas.stat_punch"),
+                Component.literal("+" + Math.round(com.flash.yas.YasPowers.PUNCH_BONUS)),
+                Component.translatable("gui.flash.yas.stat_punch_hint"));
+        int sy = GRID_Y - 13;
+        sectionTitle(g, Component.translatable("gui.flash.yas.about"), PAD, sy);
+        int cy = sy + 14;
+        card(g, PAD, cy, LEFT_W, CONTENT_BOTTOM - cy, 0.0F);
+        int ty = cy + 8;
+        for (String k : new String[] {"gui.flash.yas.about1", "gui.flash.yas.about2", "gui.flash.yas.about3",
+                "gui.flash.yas.about4"}) {
+            for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.translatable(k),
+                    LEFT_W - 20)) {
+                if (ty > CONTENT_BOTTOM - 22) {
+                    break;
+                }
+                g.drawString(this.font, line, PAD + 10, ty, COLOR_MUTED, false);
+                ty += 10;
+            }
+            ty += 3;
+        }
+        drawCredits(g, "gui.flash.credits.yas", PAD + LEFT_W - 8, CONTENT_BOTTOM - 12, LEFT_W - 16);
+
+        sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
+        int top = CONTENT_Y + 14;
+        int total = YAS_PASSIVES.length + YAS_POWERS.length;
+        int rowStep = Math.min(SKILL_ROW, (PH - 22 - top) / total);
+        int rh = rowStep - 1;
+        int textY = (rh - 8) / 2;
+        Component tooltip = null;
+        for (int k = 0; k < total; k++) {
+            int ry = top + k * rowStep;
+            Component name;
+            Component desc;
+            Component right;
+            if (k < YAS_PASSIVES.length) {
+                name = Component.translatable("ability.flash.yas." + YAS_PASSIVES[k]);
+                desc = Component.translatable("ability.flash.yas." + YAS_PASSIVES[k] + ".description");
+                right = Component.translatable("gui.flash.hulk.passive");
+            } else {
+                int i = k - YAS_PASSIVES.length;
+                name = Component.translatable("poder.hand_of_god." + YAS_POWERS[i]);
+                desc = Component.translatable("poder.hand_of_god." + YAS_POWERS[i] + ".desc");
+                right = yasKey(i);
+            }
+            boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            float hv = hover("ysk" + k, hovered);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            drawCheck(g, RIGHT_X + 6, ry + Math.max(1, textY), accent());
+            int rw = this.font.width(right);
+            g.drawString(this.font, this.font.plainSubstrByWidth(name.getString(), RIGHT_W - 30 - rw),
+                    RIGHT_X + 18, ry + textY + 1, COLOR_TEXT, false);
+            g.drawString(this.font, right, RIGHT_X + RIGHT_W - 6 - rw, ry + textY + 1, accent(), false);
+            if (hovered) {
+                tooltip = desc;
+            }
+        }
+        if (tooltip != null) {
+            g.renderTooltip(this.font, this.font.split(tooltip, 220), mx, my);
+        }
+    }
+
+    private void drawYasConfig(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.yas.cfg.lightning", "gui.flash.yas.cfg.lightning.desc", mx, my);
+        drawSwitch(g, "ysw0", switchX(), cfgY(0) + 8, YasClient.localLightning());
+        configRow(g, 1, "gui.flash.yas.cfg.eyes", "gui.flash.yas.cfg.eyes.desc", mx, my);
+        drawSwitch(g, "ysw1", switchX(), cfgY(1) + 8, YasClient.localEyes());
+    }
+
+    private boolean clickYasConfig(int mx, int my) {
+        boolean lightning = YasClient.localLightning();
+        boolean eyes = YasClient.localEyes();
+        if (inRow(mx, my, 0)) {
+            lightning = !lightning;
+        } else if (inRow(mx, my, 1)) {
+            eyes = !eyes;
+        } else {
+            return false;
+        }
+        YasClient.setLocalLook(lightning, eyes);
+        FlashNetwork.CHANNEL.sendToServer(new com.flash.network.YasSettingsPacket(lightning, eyes));
+        click();
+        return true;
+    }
+
     private void drawLexTab(GuiGraphics g, int mx, int my) {
         Minecraft mc = Minecraft.getInstance();
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
@@ -2182,6 +2303,9 @@ public class FlashProgressScreen extends Screen {
         if (activeTab() == TAB_EQUIP) {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
         }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localYas()) {
+            return clickYasConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
+        }
         if (activeTab() == TAB_CONFIG && PowerTheme.localThor()) {
             return clickThorConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
         }
@@ -2236,6 +2360,7 @@ public class FlashProgressScreen extends Screen {
         }
 
         if (activeTab() == TAB_PROGRESS && !FlashClientData.hasPowers() && theme() != PowerTheme.LEX
+                && !PowerTheme.localYas()
                 && !PowerTheme.localThor() && !PowerTheme.localSuperman() && !PowerTheme.localHulk()
                 && clickHeroGuide(ix, iy)) {
             return true;

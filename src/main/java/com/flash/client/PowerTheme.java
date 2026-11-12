@@ -51,6 +51,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFF6FC3FF, 0xFF13304A, 0xFF0B1A2A,
             "gui.flash.theme.thor.title", "gui.flash.theme.thor.subtitle", Icon.BOLT, true);
 
+    /** Yas, the transcendence: pale gold light on deep night. */
+    public static final PowerTheme YAS = new PowerTheme("yas",
+            0xFFFFE89A, 0xFF3A3010, 0xFF17130A,
+            "gui.flash.theme.yas.title", "gui.flash.theme.yas.subtitle", Icon.BOLT, true);
+
+    /** True when the local player is Yas. */
+    public static boolean localYas() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && YasClient.isYas(player);
+    }
+
     /** Lex Luthor's suit: Kryptonite green with LexCorp purple. */
     public static final PowerTheme LEX = new PowerTheme("lex",
             0xFF6CFF6C, 0xFF2A1440, 0xFF140A20,
@@ -87,6 +98,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
     }
 
     public static PowerTheme current() {
+        if (localYas()) {
+            return YAS;
+        }
         if (localThor()) {
             return THOR;
         }

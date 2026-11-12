@@ -35,9 +35,12 @@ public class YasLayer<T extends LivingEntity, M extends HumanoidModel<T>> extend
         }
         M m = this.getParentModel();
         VertexConsumer c = buffers.getBuffer(RenderType.lightning());
+        boolean ascending = YasClient.ascending(entity);
+        boolean showLightning = ascending || YasClient.showLightning(entity);
+        boolean showEyes = ascending || YasClient.showEyes(entity);
         ModelPart[] parts = {m.head, m.body, m.rightArm, m.leftArm, m.rightLeg, m.leftLeg};
         Random r = new Random((long) (ageInTicks / 3.0F) * 31337L + entity.getId());
-        for (int i = 0; i < parts.length; i++) {
+        for (int i = 0; i < parts.length && showLightning; i++) {
             if (r.nextInt(3) == 0) {
                 continue;
             }
@@ -46,11 +49,12 @@ public class YasLayer<T extends LivingEntity, M extends HumanoidModel<T>> extend
             crawl(c, pose.last().pose(), r, BOXES[i]);
             pose.popPose();
         }
-        // the eyes always shine
-        pose.pushPose();
-        m.head.translateAndRotate(pose);
-        eyes(c, pose.last().pose(), ageInTicks);
-        pose.popPose();
+        if (showEyes) {
+            pose.pushPose();
+            m.head.translateAndRotate(pose);
+            eyes(c, pose.last().pose(), ageInTicks);
+            pose.popPose();
+        }
     }
 
     /** A jagged bolt over one face of the part's box, a little outside the skin. */

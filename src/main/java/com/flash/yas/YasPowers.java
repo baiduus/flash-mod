@@ -60,6 +60,7 @@ public final class YasPowers {
         }
         p.getPersistentData().remove(KEY);
         stopFlight(p);
+        removeAttributes(p);
         YasHandOfGod.apply(p, false);
         sync(p);
     }
@@ -74,7 +75,8 @@ public final class YasPowers {
     }
 
     public static void sync(ServerPlayer p) {
-        YasSyncPacket packet = new YasSyncPacket(p.getId(), has(p), has(p) && p.getAbilities().flying);
+        YasSyncPacket packet = new YasSyncPacket(p.getId(), has(p), has(p) && p.getAbilities().flying,
+                lightning(p), eyes(p));
         FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p), packet);
     }
 
@@ -89,6 +91,9 @@ public final class YasPowers {
         boolean yas = has(p);
         if (yas) {
             flight(p);
+            if (p.tickCount % 20 == 0) {
+                applyAttributes(p);
+            }
         }
         boolean flying = yas && p.getAbilities().flying;
         if (flying != WAS_FLYING.contains(p.getUUID())) {
@@ -125,6 +130,82 @@ public final class YasPowers {
         p.fallDistance = 0.0F;
     }
 
+    // ------------------------------------------------------------------
+    // Her body: 5 times tougher than Superman at level 10, a harder punch
+    // ------------------------------------------------------------------
+
+    /** Damage taken: a fifth of what Superman at level 10 takes (SupermanPowers.damageFactor). */
+    public static float damageFactor() {
+        float old = 0.07F;
+        float once = 0.15F + 0.85F * old;
+        return (0.05F + 0.85F * once) * 0.4F / 5.0F;
+    }
+
+    /** The punch: half again Superman's at level 10 (43.2 extra). */
+    public static final double PUNCH_BONUS = 43.2D * 1.5D;
+
+    private static final java.util.UUID DAMAGE_ID = java.util.UUID.fromString("6f1b7a8e-3c0d-4d6f-9a42-1d5e7c0a9b11");
+    private static final java.util.UUID HEALTH_ID = java.util.UUID.fromString("6f1b7a8e-3c0d-4d6f-9a42-1d5e7c0a9b12");
+    private static final java.util.UUID KNOCKBACK_ID = java.util.UUID.fromString("6f1b7a8e-3c0d-4d6f-9a42-1d5e7c0a9b13");
+    private static final java.util.UUID PUNCH_ID = java.util.UUID.fromString("6f1b7a8e-3c0d-4d6f-9a42-1d5e7c0a9b14");
+    private static final java.util.UUID SPEED_ID = java.util.UUID.fromString("6f1b7a8e-3c0d-4d6f-9a42-1d5e7c0a9b15");
+    private static final java.util.UUID STEP_ID = java.util.UUID.fromString("6f1b7a8e-3c0d-4d6f-9a42-1d5e7c0a9b16");
+
+    private static void applyAttributes(ServerPlayer p) {
+        var add = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION;
+        set(p, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, DAMAGE_ID, PUNCH_BONUS, add);
+        set(p, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, HEALTH_ID, 40.0D, add);
+        set(p, net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0D, add);
+        set(p, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_KNOCKBACK, PUNCH_ID, 3.5D, add);
+        set(p, net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, SPEED_ID, 0.5D,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE);
+        set(p, net.minecraftforge.common.ForgeMod.STEP_HEIGHT_ADDITION.get(), STEP_ID, 0.6D, add);
+    }
+
+    private static void set(ServerPlayer p, net.minecraft.world.entity.ai.attributes.Attribute attribute,
+                            java.util.UUID id, double amount,
+                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation op) {
+        var instance = p.getAttribute(attribute);
+        if (instance == null) {
+            return;
+        }
+        var current = instance.getModifier(id);
+        if (current != null && Math.abs(current.getAmount() - amount) < 1.0E-6D) {
+            return;
+        }
+        if (current != null) {
+            instance.removeModifier(id);
+        }
+        instance.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(id, "yas",
+                amount, op));
+    }
+
+    private static void removeAttributes(ServerPlayer p) {
+        for (var pair : new Object[][] {
+                {net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, DAMAGE_ID},
+                {net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, HEALTH_ID},
+                {net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID},
+                {net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_KNOCKBACK, PUNCH_ID},
+                {net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, SPEED_ID},
+                {net.minecraftforge.common.ForgeMod.STEP_HEIGHT_ADDITION.get(), STEP_ID}}) {
+            var instance = p.getAttribute((net.minecraft.world.entity.ai.attributes.Attribute) pair[0]);
+            if (instance != null) {
+                instance.removeModifier((java.util.UUID) pair[1]);
+            }
+        }
+        if (p.getHealth() > p.getMaxHealth()) {
+            p.setHealth(p.getMaxHealth());
+        }
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (event.getEntity() instanceof ServerPlayer victim && has(victim)
+                && !event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            event.setAmount(event.getAmount() * damageFactor());
+        }
+    }
+
     /** Yas never takes fall damage. */
     @SubscribeEvent
     public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
@@ -158,7 +239,8 @@ public final class YasPowers {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer
                 && has(target)) {
             FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
-                    new YasSyncPacket(target.getId(), true, target.getAbilities().flying));
+                    new YasSyncPacket(target.getId(), true, target.getAbilities().flying, lightning(target),
+                            eyes(target)));
         }
     }
 
@@ -179,6 +261,26 @@ public final class YasPowers {
         if (event.getEntity() instanceof ServerPlayer p) {
             sync(p);
         }
+    }
+
+    /** Her look, chosen in her K menu (seen by everyone): the lightning on the body, the glow of the eyes. */
+    public static boolean lightning(Player p) {
+        return !p.getPersistentData().getCompound(KEY).getBoolean("noLightning");
+    }
+
+    public static boolean eyes(Player p) {
+        return !p.getPersistentData().getCompound(KEY).getBoolean("noEyes");
+    }
+
+    public static void setLook(ServerPlayer p, boolean lightning, boolean eyes) {
+        if (!has(p)) {
+            return;
+        }
+        CompoundTag tag = p.getPersistentData().getCompound(KEY);
+        tag.putBoolean("noLightning", !lightning);
+        tag.putBoolean("noEyes", !eyes);
+        p.getPersistentData().put(KEY, tag);
+        sync(p);
     }
 
     public static Component name() {
