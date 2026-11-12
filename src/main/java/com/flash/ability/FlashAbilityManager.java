@@ -82,6 +82,16 @@ public final class FlashAbilityManager {
             return;
         }
 
+        // the slow motion is a switch: pressed again while running, it stops at once
+        PlayerState running = STATES.get(player.getUUID());
+        if (ability == FlashAbility.TIME_SLOW && running != null && running.slow != null) {
+            FlashTimeSlow.end(player, running.slow);
+            running.slow = null;
+            sendSync(player, FlashAbility.TIME_SLOW, false);
+            player.displayClientMessage(Component.translatable("message.flash.time_slow_stopped"), true);
+            return;
+        }
+
         long now = gameTime(player);
         long end = cooldownEnd(player, ability);
         if (end > now) {

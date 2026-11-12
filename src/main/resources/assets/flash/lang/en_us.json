@@ -209,7 +209,7 @@
   "ability.flash.dash_punch": "Dash Punch",
   "ability.flash.time_slow": "Time Slow",
   "ability.flash.dash_punch.description": "Rushes to the nearest entities and punches each one four times (up to five targets).",
-  "ability.flash.time_slow.description": "For 15 seconds everything within 15 blocks of you moves in slow motion, even incoming arrows.",
+  "ability.flash.time_slow.description": "On and off: for up to 15 seconds everything within 15 blocks of you is in slow motion, even arrows entering the area. Press again to turn it off.",
   "key.flash.ability.dash_punch": "Dash Punch",
   "key.flash.ability.time_slow": "Time Slow",
   "message.flash.dash_no_targets": "Nobody is close enough.",
@@ -1031,5 +1031,6 @@
   "gui.flash.yas.cfg.lightning": "Body lightning",
   "gui.flash.yas.cfg.lightning.desc": "The white and yellow lightning running over the body (everyone sees it).",
   "gui.flash.yas.cfg.eyes": "Glowing eyes",
-  "gui.flash.yas.cfg.eyes.desc": "The white glowing eyes (everyone sees them)."
+  "gui.flash.yas.cfg.eyes.desc": "The white glowing eyes (everyone sees them).",
+  "message.flash.time_slow_stopped": "Slow motion off."
 }
