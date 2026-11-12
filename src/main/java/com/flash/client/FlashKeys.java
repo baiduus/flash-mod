@@ -73,6 +73,22 @@ public final class FlashKeys {
             CATEGORY
     );
 
+    /** Yas: the ability of the mode chosen with Alt + scroll (default R). */
+    public static final KeyMapping YAS_USE = new KeyMapping(
+            "key.flash.yas.use",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_R,
+            CATEGORY
+    );
+
+    /** Yas: the variant of the mode (Temporal: speed up the day; default Z). */
+    public static final KeyMapping YAS_VARIANT = new KeyMapping(
+            "key.flash.yas.variant",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_Z,
+            CATEGORY
+    );
+
     private FlashKeys() {
     }
 
@@ -84,5 +100,7 @@ public final class FlashKeys {
         event.register(TOGGLE_SPEED);
         event.register(TOGGLE_SUIT);
         event.register(HULK_TRANSFORM);
+        event.register(YAS_USE);
+        event.register(YAS_VARIANT);
     }
 }

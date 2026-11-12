@@ -94,6 +94,7 @@ public final class YasPowers {
             if (p.tickCount % 20 == 0) {
                 applyAttributes(p);
             }
+            regeneration(p);
             // diving from Y = 200 or higher she burns like a meteor
             com.flash.superman.SupermanMeteor.tick(p, METEOR_POWER, true, false);
         }
@@ -211,6 +212,17 @@ public final class YasPowers {
         }
     }
 
+    /** Regeneration I always; near death (2 hearts or less) Regeneration III. */
+    private static void regeneration(ServerPlayer p) {
+        int amp = p.getHealth() <= 4.0F ? 2 : 0;
+        var regen = p.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+        // renewed while it still has a few seconds (renewing every tick would break the healing rhythm)
+        if (regen == null || regen.getAmplifier() < amp || regen.getDuration() < 40) {
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.REGENERATION, 120, amp, true, false, true));
+        }
+    }
+
     /** Yas never takes fall damage. */
     @SubscribeEvent
     public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
@@ -229,6 +241,11 @@ public final class YasPowers {
         ab.flying = false;
         ab.setFlyingSpeed(0.05F);
         p.onUpdateAbilities();
+    }
+
+    @SubscribeEvent
+    public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) {
+        YasHandOfGod.enablePlayerTargets();
     }
 
     @SubscribeEvent

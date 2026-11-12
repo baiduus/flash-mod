@@ -232,32 +232,50 @@ public final class FlashAbilityHud implements IGuiOverlay {
         }
     }
 
-    /** Yas: the nine powers of the Hand of God with their keys, the chosen one lit (Alt + scroll picks it). */
+    /**
+     * Yas: the combat mode chosen with Alt + scroll (its icon, name and place among the nine) and what its keys do
+     * (R, and Z for the variants), in Hand of God's own words.
+     */
     private static void renderYas(GuiGraphics graphics, Minecraft minecraft, int width, int height) {
         if (!YasAbilities.available()) {
             return;
         }
         Font font = minecraft.font;
+        int mode = Math.max(0, YasAbilities.selected());
         int n = YasAbilities.POWERS.length;
+        String title = YasAbilities.name(mode).getString();
+        String count = (mode + 1) + "/" + n;
         String hint = Component.translatable("hud.flash.yas_pick").getString();
-        int panelWidth = Math.max(MIN_WIDTH, font.width(hint) + 12);
-        for (int i = 0; i < n; i++) {
-            panelWidth = Math.max(panelWidth, rowWidth(font, YasAbilities.name(i).getString(),
-                    keyLabel(YasAbilities.key(i))));
+        int panelWidth = Math.max(150, Math.max(font.width(title) + font.width(count) + 40, font.width(hint) + 12));
+        java.util.List<String> lines = YasAbilities.panelLines(font, mode, panelWidth - 12);
+        for (String l : lines) {
+            panelWidth = Math.max(panelWidth, Math.min(220, font.width(l) + 12));
         }
+        int headH = 22;
+        int rows = Math.max(1, lines.size());
+        int total = headH + 2 + rows * 11 + 4 + 11;
         int x = width - panelWidth - MARGIN;
-        int y = height - 26 - (n + 1) * (ROW_HEIGHT + ROW_GAP) + ROW_GAP;
+        int y = height - 26 - total;
         if (x < 4 || y < 4) {
             return;
         }
-        graphics.drawString(font, hint, x + panelWidth - font.width(hint), y + 3, 0xFFB8B0A0, true);
-        y += ROW_HEIGHT + ROW_GAP;
-        int chosen = YasAbilities.selected();
-        for (int i = 0; i < n; i++) {
-            drawRow(graphics, font, x, y, panelWidth, YasAbilities.name(i).getString(),
-                    keyLabel(YasAbilities.key(i)), 0, 1, i == chosen);
-            y += ROW_HEIGHT + ROW_GAP;
+        int accent = YasAbilities.color(mode);
+        // the mode
+        graphics.fill(x, y, x + panelWidth, y + headH, FlashHudStyle.PANEL);
+        graphics.fill(x, y, x + 2, y + headH, accent);
+        YasAbilities.drawIcon(graphics, mode, x + 6, y + 4, 1);
+        graphics.drawString(font, title, x + 22, y + 7, 0xFFFFFFFF, true);
+        graphics.drawString(font, count, x + panelWidth - 6 - font.width(count), y + 7, accent, false);
+        int ly = y + headH + 2;
+        // its abilities
+        graphics.fill(x, ly, x + panelWidth, ly + rows * 11 + 4, 0xA0101014);
+        ly += 3;
+        for (String l : lines) {
+            graphics.drawString(font, l, x + 6, ly, 0xFFE8E2D0, false);
+            ly += 11;
         }
+        ly += 2;
+        graphics.drawString(font, hint, x + panelWidth - font.width(hint), ly, 0xFFB8B0A0, true);
     }
 
     private static void renderThor(GuiGraphics graphics, Minecraft minecraft, int width, int height) {

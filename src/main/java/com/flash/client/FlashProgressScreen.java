@@ -899,23 +899,38 @@ public class FlashProgressScreen extends Screen {
     /** Her powers: those of Hand of God (its keys and its ability wheel), in its own words. */
     private static final String[] YAS_POWERS = {"celeste", "temporal", "realidade", "materia", "telecinese",
             "supervelocidade", "visao_termica", "void", "eletrocinese"};
-    /** The Hand of God key of each power (its own key settings). */
-    private static final String[] YAS_KEYS = {"celeste", "acelerar", "realidade", "desintegrar", "telecinese",
-            "camera_lenta", "visao_termica", "sombra", "eletrocinese"};
+    private static final String[] YAS_PASSIVES = {"flight", "toughness", "punch", "regen"};
 
     private static Component yasKey(int i) {
-        net.minecraft.client.KeyMapping k = YasAbilities.key(i);
-        if (k == null) {
-            String name = "key.hand_of_god." + YAS_KEYS[i];
-            for (net.minecraft.client.KeyMapping m : Minecraft.getInstance().options.keyMappings) {
-                if (m.getName().equals(name)) {
-                    k = m;
+        Component use = FlashKeys.YAS_USE.getTranslatedKeyMessage();
+        return "TEMPORAL".equals(YasAbilities.POWERS[i])
+                ? use.copy().append(" / ").append(FlashKeys.YAS_VARIANT.getTranslatedKeyMessage()) : use;
+    }
+
+    private static int yasRowTop() {
+        return CONTENT_Y + 14;
+    }
+
+    private static int yasRowStep() {
+        int total = YAS_PASSIVES.length + YAS_POWERS.length;
+        return Math.min(SKILL_ROW, (PH - 22 - yasRowTop()) / total);
+    }
+
+    /** A click on a mode in the K menu picks it. */
+    private boolean clickYasTab(int mx, int my) {
+        int step = yasRowStep();
+        for (int i = 0; i < YAS_POWERS.length; i++) {
+            int ry = yasRowTop() + (YAS_PASSIVES.length + i) * step;
+            if (inside(mx, my, RIGHT_X, ry, RIGHT_W, step - 1)) {
+                if (YasAbilities.selected() != i) {
+                    YasAbilities.select(i);
+                    click();
                 }
+                return true;
             }
         }
-        return k == null || k.isUnbound() ? Component.literal("-") : k.getTranslatedKeyMessage();
+        return false;
     }
-    private static final String[] YAS_PASSIVES = {"flight", "toughness", "punch", "fall"};
 
     private void drawYasTab(GuiGraphics g, int mx, int my) {
         int half = (LEFT_W - 8) / 2;
@@ -967,8 +982,12 @@ public class FlashProgressScreen extends Screen {
                 right = yasKey(i);
             }
             boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
+            boolean chosen = k >= YAS_PASSIVES.length && YasAbilities.selected() == k - YAS_PASSIVES.length;
             float hv = hover("ysk" + k, hovered);
-            card(g, RIGHT_X, ry, RIGHT_W, rh, hv);
+            card(g, RIGHT_X, ry, RIGHT_W, rh, chosen ? 1.0F : hv);
+            if (chosen) {
+                g.fill(RIGHT_X, ry + 2, RIGHT_X + 2, ry + rh - 2, accent());
+            }
             drawCheck(g, RIGHT_X + 6, ry + Math.max(1, textY), accent());
             int rw = this.font.width(right);
             g.drawString(this.font, this.font.plainSubstrByWidth(name.getString(), RIGHT_W - 30 - rw),
@@ -2305,6 +2324,9 @@ public class FlashProgressScreen extends Screen {
 
         if (activeTab() == TAB_EQUIP) {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_PROGRESS && PowerTheme.localYas() && clickYasTab(ix, iy)) {
+            return true;
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localYas()) {
             return clickYasConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);

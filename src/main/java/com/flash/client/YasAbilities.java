@@ -1,44 +1,67 @@
 package com.flash.client;
 
 import com.flash.FlashMod;
+import com.mojang.blaze3d.platform.InputConstants;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
 
 /**
- * Yas's abilities the way of the other heroes of the mod, over the powers of Hand of God (embedded): no ability
- * wheel needed.
+ * Yas's combat modes over the powers of Hand of God (embedded): each mode is one power (Celestial, Temporal,
+ * Reality, Matter, Telekinesis, Super speed, Heat vision, Void, Electrokinesis) and they all use the same keys:
  * <ul>
- * <li>the panel at the bottom right lists the nine powers with their keys, the chosen one lit
- * (FlashAbilityHud);</li>
- * <li>Alt + scroll picks the power;</li>
- * <li>pressing the key of any power picks it at once, so the key just uses it (Hand of God only lets the chosen
- * power act).</li>
+ * <li>{@link FlashKeys#YAS_USE} (R): the ability of the mode (held or pressed as Hand of God wants it; Shift still
+ * gives the area / cone variants);</li>
+ * <li>{@link FlashKeys#YAS_VARIANT} (Z): the second key of a mode that has one (Temporal: R marks and rewinds, Z
+ * speeds up the day);</li>
+ * <li>Alt + scroll, or a click in the K menu, changes the mode; the panel at the bottom right shows the mode (icon,
+ * name, its abilities).</li>
  * </ul>
- * Hand of God is reached by reflection ({@code handofgod.client.Selecao}, {@code Teclas}, {@code Poder}).
+ * How: Hand of God lets only the chosen power act and reads its own keys, so the mode is chosen in it
+ * ({@code Selecao.escolher}) and its keys are pointed at R / Z for the mode's power and left unbound for the others
+ * (they come back as they were when she is no longer Yas). Reached by reflection.
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT)
 public final class YasAbilities {
 
-    /** The nine powers, in the order of the panel (Hand of God's {@code Poder} names). */
+    /** The nine modes, in order (Hand of God's {@code Poder} names). */
     public static final String[] POWERS = {"CELESTE", "TEMPORAL", "REALIDADE", "MATERIA", "TELECINESE",
             "SUPERVELOCIDADE", "VISAO_TERMICA", "VOID", "ELETROCINESE"};
+    /** Hand of God's key of each mode, put on R (Temporal's second key goes on Z). */
+    private static final String[] MAIN_KEY = {"celeste", "voltar", "realidade", "desintegrar", "telecinese",
+            "camera_lenta", "visao_termica", "sombra", "eletrocinese"};
+    private static final String VARIANT_KEY = "acelerar";
+    /** Every Hand of God key the modes manage. */
+    private static final String[] ALL_KEYS = {"celeste", "acelerar", "voltar", "realidade", "desintegrar",
+            "telecinese", "camera_lenta", "visao_termica", "sombra", "eletrocinese"};
 
     private static boolean looked;
-    private static Class<?> poderClass;
     private static Method escolher;
     private static Method avisar;
     private static Method atual;
-    private static Method tecla;
+    private static Method linhas;
+    private static Method icone;
+    private static Field cor;
     private static Object[] poderes;
+
+    /** The user's own Hand of God keys, kept while the modes borrow them. */
+    private static final Map<String, InputConstants.Key> ORIGINAL = new HashMap<>();
+    private static String applied = "";
 
     private YasAbilities() {
     }
@@ -47,15 +70,22 @@ public final class YasAbilities {
         if (!looked) {
             looked = true;
             try {
-                poderClass = Class.forName("handofgod.Poder");
+                Class<?> poder = Class.forName("handofgod.Poder");
                 Class<?> selecao = Class.forName("handofgod.client.Selecao");
-                escolher = selecao.getMethod("escolher", poderClass);
+                escolher = selecao.getMethod("escolher", poder);
                 avisar = selecao.getMethod("avisarServidor");
                 atual = selecao.getMethod("poder");
-                tecla = Class.forName("handofgod.client.Teclas").getMethod("de", poderClass);
+                linhas = Class.forName("handofgod.client.Teclas").getMethod("linhas", poder);
+                cor = poder.getField("cor");
+                try {
+                    icone = Class.forName("handofgod.client.Icones").getDeclaredMethod("de", poder);
+                    icone.setAccessible(true);
+                } catch (ReflectiveOperationException e) {
+                    icone = null;
+                }
                 poderes = new Object[POWERS.length];
                 for (int i = 0; i < POWERS.length; i++) {
-                    poderes[i] = poderClass.getMethod("valueOf", String.class).invoke(null, POWERS[i]);
+                    poderes[i] = poder.getMethod("valueOf", String.class).invoke(null, POWERS[i]);
                 }
             } catch (ReflectiveOperationException | LinkageError e) {
                 poderes = null;
@@ -68,23 +98,11 @@ public final class YasAbilities {
         return ready();
     }
 
-    /** The name of a power (Hand of God's own translation). */
     public static Component name(int i) {
         return Component.translatable("poder.hand_of_god." + POWERS[i].toLowerCase(java.util.Locale.ROOT));
     }
 
-    public static KeyMapping key(int i) {
-        if (!ready()) {
-            return null;
-        }
-        try {
-            return (KeyMapping) tecla.invoke(null, poderes[i]);
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
-    }
-
-    /** The power chosen now (-1 none). */
+    /** The mode now (-1 none chosen yet). */
     public static int selected() {
         if (!ready()) {
             return -1;
@@ -102,71 +120,151 @@ public final class YasAbilities {
         return -1;
     }
 
+    /** Picks a mode (Alt + scroll, the K menu). */
     public static void select(int i) {
-        if (!ready() || i == selected()) {
+        if (!ready() || i < 0 || i >= POWERS.length) {
             return;
         }
-        try {
-            escolher.invoke(null, poderes[i]);
-            avisar.invoke(null);
-        } catch (ReflectiveOperationException ignored) {
-            // Hand of God changed: nothing to do
+        if (i != selected()) {
+            try {
+                escolher.invoke(null, poderes[i]);
+                avisar.invoke(null);
+            } catch (ReflectiveOperationException ignored) {
+                // Hand of God changed: nothing to do
+            }
         }
+        bind(i);
+    }
+
+    /** What the mode does, key by key (Hand of God's own lines, with the keys now on R / Z). */
+    @SuppressWarnings("unchecked")
+    public static List<Component> lines(int i) {
+        if (!ready() || i < 0) {
+            return List.of();
+        }
+        try {
+            return (List<Component>) linhas.invoke(null, poderes[i]);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            return List.of();
+        }
+    }
+
+    public static int color(int i) {
+        try {
+            return 0xFF000000 | cor.getInt(poderes[i]);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return 0xFFFFE89A;
+        }
+    }
+
+    /** The pixel-art icon of the mode (Hand of God's: '#' the colour, '+' lighter), {@code px} pixels a dot. */
+    public static void drawIcon(GuiGraphics g, int i, int x, int y, int px) {
+        String[] rows = null;
+        if (icone != null && i >= 0) {
+            try {
+                rows = (String[]) icone.invoke(null, poderes[i]);
+            } catch (ReflectiveOperationException | ClassCastException ignored) {
+                rows = null;
+            }
+        }
+        int c = i >= 0 ? color(i) : 0xFFFFE89A;
+        if (rows == null) {
+            g.fill(x + px * 3, y + px * 3, x + px * 9, y + px * 9, c);
+            return;
+        }
+        int light = 0xFF000000 | ((((c >> 16) & 255) + 255) / 2 << 16) | ((((c >> 8) & 255) + 255) / 2 << 8)
+                | (((c & 255) + 255) / 2);
+        for (int r = 0; r < rows.length; r++) {
+            for (int k = 0; k < rows[r].length(); k++) {
+                char ch = rows[r].charAt(k);
+                if (ch == '#' || ch == '+') {
+                    g.fill(x + k * px, y + r * px, x + (k + 1) * px, y + (r + 1) * px, ch == '#' ? c : light);
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // The keys
+    // ------------------------------------------------------------------
+
+    private static KeyMapping hogKey(String name) {
+        String full = "key.hand_of_god." + name;
+        for (KeyMapping m : Minecraft.getInstance().options.keyMappings) {
+            if (m.getName().equals(full)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /** Hand of God's keys pointed at R / Z for the mode, the others unbound. */
+    private static void bind(int mode) {
+        String want = mode + ":" + FlashKeys.YAS_USE.saveString() + ":" + FlashKeys.YAS_VARIANT.saveString();
+        if (want.equals(applied)) {
+            return;
+        }
+        for (String n : ALL_KEYS) {
+            KeyMapping k = hogKey(n);
+            if (k == null) {
+                continue;
+            }
+            ORIGINAL.putIfAbsent(n, k.getKey());
+            InputConstants.Key to = InputConstants.UNKNOWN;
+            if (mode >= 0 && n.equals(MAIN_KEY[mode])) {
+                to = FlashKeys.YAS_USE.getKey();
+            } else if (mode >= 0 && "TEMPORAL".equals(POWERS[mode]) && n.equals(VARIANT_KEY)) {
+                to = FlashKeys.YAS_VARIANT.getKey();
+            }
+            k.setKey(to);
+        }
+        KeyMapping.resetMapping();
+        applied = want;
+    }
+
+    /** Back to the user's own Hand of God keys. */
+    private static void unbind() {
+        if (ORIGINAL.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, InputConstants.Key> e : ORIGINAL.entrySet()) {
+            KeyMapping k = hogKey(e.getKey());
+            if (k != null) {
+                k.setKey(e.getValue());
+            }
+        }
+        ORIGINAL.clear();
+        KeyMapping.resetMapping();
+        applied = "";
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !PowerTheme.localYas() || !ready()) {
+            unbind();
+            return;
+        }
+        int mode = selected();
+        if (mode < 0) {
+            select(0);
+        } else {
+            bind(mode);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        unbind();
     }
 
     private static boolean active() {
         Minecraft mc = Minecraft.getInstance();
         return mc.player != null && mc.screen == null && !mc.player.isSpectator() && PowerTheme.localYas()
                 && ready();
-    }
-
-    /** Every Hand of God key of a power (the Temporal one has two: speed up the day, marker / rewind). */
-    private static java.util.List<KeyMapping> keys(int i) {
-        java.util.List<KeyMapping> out = new java.util.ArrayList<>();
-        KeyMapping main = key(i);
-        if (main != null) {
-            out.add(main);
-        }
-        if ("TEMPORAL".equals(POWERS[i])) {
-            for (KeyMapping m : Minecraft.getInstance().options.keyMappings) {
-                if (m != main && (m.getName().equals("key.hand_of_god.acelerar")
-                        || m.getName().equals("key.hand_of_god.voltar"))) {
-                    out.add(m);
-                }
-            }
-        }
-        return out;
-    }
-
-    /** The key of a power, pressed: that power is chosen before Hand of God reads the key. */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onKey(InputEvent.Key event) {
-        if (event.getAction() != GLFW.GLFW_PRESS || !active() || Screen.hasAltDown()) {
-            return;
-        }
-        for (int i = 0; i < POWERS.length; i++) {
-            for (KeyMapping k : keys(i)) {
-                if (!k.isUnbound() && k.matches(event.getKey(), event.getScanCode())) {
-                    select(i);
-                    return;
-                }
-            }
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onMouse(InputEvent.MouseButton.Pre event) {
-        if (event.getAction() != GLFW.GLFW_PRESS || !active()) {
-            return;
-        }
-        for (int i = 0; i < POWERS.length; i++) {
-            for (KeyMapping k : keys(i)) {
-                if (!k.isUnbound() && k.matchesMouse(event.getButton())) {
-                    select(i);
-                    return;
-                }
-            }
-        }
     }
 
     private static Method holding;
@@ -184,8 +282,8 @@ public final class YasAbilities {
     }
 
     /**
-     * Scroll: holding a creature by telekinesis, it comes closer (down) or goes farther (up) instead of the hotbar;
-     * Alt + scroll: the next / previous power.
+     * Alt + scroll: the next / previous mode. Scroll alone while the telekinesis holds a creature: it comes closer
+     * (down) or goes farther (up) instead of the hotbar.
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
@@ -207,8 +305,24 @@ public final class YasAbilities {
         select(next);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            mc.player.displayClientMessage(Component.translatable("message.flash.yas_selected", name(next)), true);
+            mc.player.displayClientMessage(Component.translatable("message.flash.yas_mode", name(next)), true);
             mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, 1.6F);
         }
+    }
+
+    /** The lines for the panel, cut to a width (Hand of God's text can be long). */
+    public static List<String> panelLines(net.minecraft.client.gui.Font font, int mode, int width) {
+        List<String> out = new ArrayList<>();
+        for (Component c : lines(mode)) {
+            for (net.minecraft.util.FormattedCharSequence seq : font.split(c, width)) {
+                StringBuilder sb = new StringBuilder();
+                seq.accept((index, style, cp) -> {
+                    sb.appendCodePoint(cp);
+                    return true;
+                });
+                out.add(sb.toString());
+            }
+        }
+        return out;
     }
 }

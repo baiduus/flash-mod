@@ -1016,8 +1016,8 @@
   "gui.flash.yas.stat_punch_hint": "1.5× Superman",
   "gui.flash.yas.about": "About Yas",
   "gui.flash.yas.about1": "Who transcended on the floating island leaves the limits of common powers behind: the Sun and the Moon, time, reality and matter obey her hand.",
-  "gui.flash.yas.about2": "Each power has its key (listed beside and in the corner of the screen): pressing it uses it. Alt + scroll also picks the power; the chosen one is lit in the corner. Keys in Options > Controls > Hand of God.",
-  "gui.flash.yas.about3": "Double jump flies, faster than Superman at level 10. She never takes fall damage.",
+  "gui.flash.yas.about2": "Each power is a combat mode: Alt + scroll changes mode (or click a mode here) and R uses the mode's ability (Shift gives the area variants). In Temporal mode, R marks and rewinds, Z speeds up time. The powers reach players too.",
+  "gui.flash.yas.about3": "Double jump flies, faster than Superman at level 10. Never takes fall damage. Regeneration I always, III near death.",
   "gui.flash.yas.about4": "Holding someone with Telekinesis, scroll to bring them closer or push them away. Diving from Y=200 or higher she burns like a meteor: the higher, the bigger the impact. The syringe keeps her essence, which only she can inject.",
   "gui.flash.yas.wheel": "Wheel",
   "ability.flash.yas.flight": "Transcendent Flight",
@@ -1033,6 +1033,11 @@
   "gui.flash.yas.cfg.eyes": "Glowing eyes",
   "gui.flash.yas.cfg.eyes.desc": "The white glowing eyes (everyone sees them).",
   "message.flash.time_slow_stopped": "Slow motion off.",
-  "hud.flash.yas_pick": "Alt + scroll: pick",
-  "message.flash.yas_selected": "Power: %s"
+  "hud.flash.yas_pick": "Alt + scroll: change mode",
+  "message.flash.yas_selected": "Power: %s",
+  "key.flash.yas.use": "Yas: ability of the mode",
+  "key.flash.yas.variant": "Yas: variant of the mode (speed up time)",
+  "message.flash.yas_mode": "Mode: %s",
+  "ability.flash.yas.regen": "Divine Regeneration",
+  "ability.flash.yas.regen.description": "Regeneration I all the time; near death (2 hearts or less) Regeneration III."
 }

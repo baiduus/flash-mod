@@ -1016,8 +1016,8 @@
   "gui.flash.yas.stat_punch_hint": "1,5× o Superman",
   "gui.flash.yas.about": "Sobre a Yas",
   "gui.flash.yas.about1": "Quem transcendeu na ilha flutuante deixa para trás os limites dos poderes comuns: o Sol e a Lua, o tempo, a realidade e a matéria obedecem à mão dela.",
-  "gui.flash.yas.about2": "Cada poder tem a sua tecla (lista ao lado e no canto da tela): apertar já usa. Alt + scroll também escolhe o poder; o escolhido fica aceso no canto. Teclas em Opções > Controles > Mão de Deus.",
-  "gui.flash.yas.about3": "Pulo duplo voa, mais rápido que o Superman no nível 10. Nunca toma dano de queda.",
+  "gui.flash.yas.about2": "Cada poder é um modo de combate: Alt + scroll troca de modo (ou clique num modo aqui ao lado) e o R usa a habilidade do modo (Shift dá as variantes de área). No modo Temporal, R marca e retrocede, Z acelera o tempo. Os poderes também atingem jogadores.",
+  "gui.flash.yas.about3": "Pulo duplo voa, mais rápido que o Superman no nível 10. Nunca toma dano de queda. Regeneração I sempre, III perto da morte.",
   "gui.flash.yas.about4": "Segurando alguém com a Telecinese, role o scroll para trazer mais perto ou afastar. Mergulhando de Y=200 para cima ela pega fogo como um meteoro: quanto mais alto, maior o impacto. A seringa guarda a essência dela, que só ela pode injetar.",
   "gui.flash.yas.wheel": "Roda",
   "ability.flash.yas.flight": "Voo Transcendente",
@@ -1033,6 +1033,11 @@
   "gui.flash.yas.cfg.eyes": "Brilho dos olhos",
   "gui.flash.yas.cfg.eyes.desc": "Os olhos brancos brilhando (todos veem).",
   "message.flash.time_slow_stopped": "Câmera lenta desligada.",
-  "hud.flash.yas_pick": "Alt + scroll: escolher",
-  "message.flash.yas_selected": "Poder: %s"
+  "hud.flash.yas_pick": "Alt + scroll: trocar de modo",
+  "message.flash.yas_selected": "Poder: %s",
+  "key.flash.yas.use": "Yas: habilidade do modo",
+  "key.flash.yas.variant": "Yas: variante do modo (acelerar o tempo)",
+  "message.flash.yas_mode": "Modo: %s",
+  "ability.flash.yas.regen": "Regeneração Divina",
+  "ability.flash.yas.regen.description": "Regeneração I o tempo todo; perto da morte (2 corações ou menos) Regeneração III."
 }

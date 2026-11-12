@@ -54,6 +54,27 @@ public final class YasHandOfGod {
         }
     }
 
+    /**
+     * Hand of God's options for its powers to reach players too (Matter, Super speed, Telekinesis, Heat vision,
+     * Void, Electrokinesis): turned on when the server starts.
+     */
+    private static final String[] PLAYER_OPTIONS = {"DESINT_JOGADORES", "LENTA_JOGADORES", "TK_JOGADORES",
+            "VT_JOGADORES", "SB_JOGADORES", "EL_JOGADORES"};
+
+    public static void enablePlayerTargets() {
+        try {
+            Class<?> c = Class.forName("handofgod.Config");
+            for (String f : PLAYER_OPTIONS) {
+                Object v = c.getField(f).get(null);
+                if (v instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && !b.get()) {
+                    b.set(true);
+                }
+            }
+        } catch (ReflectiveOperationException | LinkageError | IllegalStateException e) {
+            // Hand of God missing or its config not loaded
+        }
+    }
+
     /** Yas has every power of Hand of God, or none. */
     public static void apply(ServerPlayer p, boolean yas) {
         if (!present()) {
