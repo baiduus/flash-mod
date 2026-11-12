@@ -1,6 +1,7 @@
 package com.flash.client;
 
 import com.flash.FlashMod;
+import com.flash.client.geo.GeoModel;
 import com.flash.item.LexArmorItem;
 import com.flash.lex.LexState;
 import com.flash.lex.LexSuit;

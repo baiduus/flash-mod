@@ -1,6 +1,7 @@
 package com.flash.client;
 
 import com.flash.FlashMod;
+import com.flash.client.geo.GeoModel;
 import com.flash.entity.LexMissile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
