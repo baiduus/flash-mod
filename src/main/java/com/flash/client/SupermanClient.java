@@ -125,6 +125,8 @@ public final class SupermanClient {
     private static final double[] STAGE_SPEED = {0.0D, 0.45D, 1.1D, 2.4D};
     /** The server rejects moves above ~10 blocks per tick: the fastest stage stays under it. */
     private static final double MAX_SPEED = 9.0D;
+    /** Yas: a third faster than Superman at level 10 (who reaches MAX_SPEED). */
+    private static final double YAS_MAX_SPEED = 12.5D;
     private static int flightStage;
     private static boolean sprintWasDown;
     private static long lastSprintPress = -100L;
@@ -337,7 +339,10 @@ public final class SupermanClient {
         // Lex Luthor's suit flies the same way too (its thrusters: Superman level 5, a little slower)
         boolean lexFlight = !superFlight && !thorFlight && LexClient.pilot(p)
                 && com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON);
-        if ((!superFlight && !thorFlight && !lexFlight) || !p.getAbilities().flying || p.isPassenger()) {
+        // Yas flies faster than Superman at level 10
+        boolean yasFlight = !superFlight && !thorFlight && !lexFlight && YasClient.isYas(p);
+        if ((!superFlight && !thorFlight && !lexFlight && !yasFlight) || !p.getAbilities().flying
+                || p.isPassenger()) {
             flightStage = 0;
             return;
         }
@@ -355,12 +360,16 @@ public final class SupermanClient {
         if (lexFlight) {
             scale *= com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OVERDRIVE) ? 1.0D : 0.8D;
         }
+        if (yasFlight) {
+            scale = 5.4D;
+        }
+        double maxSpeed = yasFlight ? YAS_MAX_SPEED : MAX_SPEED;
         Vec3 look = p.getLookAngle();
         Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
         Vec3 target = Vec3.ZERO;
         if (forward > 0.0F) {
-            target = look.scale(Math.min(MAX_SPEED, STAGE_SPEED[stage] * scale));
+            target = look.scale(Math.min(maxSpeed, STAGE_SPEED[stage] * scale));
         } else if (forward < 0.0F) {
             target = look.scale(-0.3D * scale);
         }
@@ -409,7 +418,7 @@ public final class SupermanClient {
         Player p = event.getEntity();
         String base = SupermanPose.base(p.getUUID());
         if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p)
-                && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON))) {
+                && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON) && !YasClient.isYas(p))) {
             LEANS.remove(p.getUUID());
             return;
         }

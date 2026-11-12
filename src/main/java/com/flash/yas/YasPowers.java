@@ -59,6 +59,7 @@ public final class YasPowers {
             return;
         }
         p.getPersistentData().remove(KEY);
+        stopFlight(p);
         YasHandOfGod.apply(p, false);
         sync(p);
     }
@@ -73,15 +74,75 @@ public final class YasPowers {
     }
 
     public static void sync(ServerPlayer p) {
-        YasSyncPacket packet = new YasSyncPacket(p.getId(), has(p));
+        YasSyncPacket packet = new YasSyncPacket(p.getId(), has(p), has(p) && p.getAbilities().flying);
         FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p), packet);
     }
 
+    private static final java.util.Set<java.util.UUID> WAS_FLYING = new java.util.HashSet<>();
+
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer p) {
-            YasHandOfGod.guard(p, has(p));
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) {
+            return;
         }
+        YasHandOfGod.guard(p, has(p));
+        boolean yas = has(p);
+        if (yas) {
+            flight(p);
+        }
+        boolean flying = yas && p.getAbilities().flying;
+        if (flying != WAS_FLYING.contains(p.getUUID())) {
+            if (flying) {
+                WAS_FLYING.add(p.getUUID());
+            } else {
+                WAS_FLYING.remove(p.getUUID());
+            }
+            sync(p);
+        }
+    }
+
+    /**
+     * Yas flies (double jump, as the other heroes), steered on the client by the mod's aimed flight
+     * (SupermanClient), faster than Superman at level 10.
+     */
+    private static void flight(ServerPlayer p) {
+        if (p.isCreative() || p.isSpectator()) {
+            return;
+        }
+        var ab = p.getAbilities();
+        boolean changed = false;
+        if (!ab.mayfly) {
+            ab.mayfly = true;
+            changed = true;
+        }
+        if (ab.getFlyingSpeed() != 0.0F) {
+            ab.setFlyingSpeed(0.0F);
+            changed = true;
+        }
+        if (changed) {
+            p.onUpdateAbilities();
+        }
+        p.fallDistance = 0.0F;
+    }
+
+    /** Yas never takes fall damage. */
+    @SubscribeEvent
+    public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
+        if (event.getEntity() instanceof Player p && has(p)) {
+            event.setCanceled(true);
+        }
+    }
+
+    /** Back on the ground when the power goes. */
+    private static void stopFlight(ServerPlayer p) {
+        if (p.isCreative() || p.isSpectator()) {
+            return;
+        }
+        var ab = p.getAbilities();
+        ab.mayfly = false;
+        ab.flying = false;
+        ab.setFlyingSpeed(0.05F);
+        p.onUpdateAbilities();
     }
 
     @SubscribeEvent
@@ -97,7 +158,7 @@ public final class YasPowers {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer
                 && has(target)) {
             FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
-                    new YasSyncPacket(target.getId(), true));
+                    new YasSyncPacket(target.getId(), true, target.getAbilities().flying));
         }
     }
 

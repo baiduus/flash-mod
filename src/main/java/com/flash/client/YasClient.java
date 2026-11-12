@@ -61,16 +61,32 @@ public final class YasClient {
 
     public static void reset() {
         YAS.clear();
+        FLYING.clear();
         FX.clear();
         flashUntil = 0L;
     }
 
-    public static void setYas(int entity, boolean yas) {
+    private static final Set<Integer> FLYING = new HashSet<>();
+
+    public static void setYas(int entity, boolean yas, boolean flying) {
         if (yas) {
             YAS.add(entity);
         } else {
             YAS.remove(entity);
         }
+        if (yas && flying) {
+            FLYING.add(entity);
+        } else {
+            FLYING.remove(entity);
+        }
+    }
+
+    /** Yas in flight (the local player: her own abilities). */
+    public static boolean flying(net.minecraft.world.entity.player.Player p) {
+        if (!isYas(p)) {
+            return false;
+        }
+        return p == Minecraft.getInstance().player ? p.getAbilities().flying : FLYING.contains(p.getId());
     }
 
     public static boolean isYas(Entity e) {

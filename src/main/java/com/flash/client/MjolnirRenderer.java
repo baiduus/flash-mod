@@ -83,6 +83,34 @@ public class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
         super.render(entity, yaw, partialTick, pose, buffers, light);
     }
 
+    /**
+     * The classic Mjolnir standing on its head with the handle up, the size it has when thrown to the ground
+     * (the hammer stuck in the crater: MjolnirStoneRenderer).
+     */
+    public static void drawStatue(PoseStack pose, MultiBufferSource buffers, int light, float yaw, float time) {
+        if (MODELS[0] == null) {
+            MODELS[0] = GeoModel.load(GEO[0], null);
+        }
+        GeoModel model = MODELS[0];
+        if (model == null) {
+            return;
+        }
+        pose.pushPose();
+        pose.translate(0.0D, 0.47D, 0.0D);
+        pose.mulPose(Axis.YP.rotationDegrees(yaw));
+        pose.mulPose(Axis.XP.rotationDegrees(180.0F));
+        float s = 0.5F;
+        pose.scale(-s, -s, s);
+        pose.translate(-model.centerX() / 16.0F, -model.centerY() / 16.0F, -model.centerZ() / 16.0F);
+        model.reset();
+        model.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURES[0])), light,
+                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+        float glow = 0.6F + 0.4F * Mth.sin(time * 0.8F);
+        model.render(pose, buffers.getBuffer(RenderType.entityTranslucentEmissive(GLOWS[0])), 0xF000F0,
+                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, glow);
+        pose.popPose();
+    }
+
     @Override
     public ResourceLocation getTextureLocation(MjolnirEntity entity) {
         return TEXTURE;

@@ -265,7 +265,8 @@ public final class SupermanPose {
     private static void update(AbstractClientPlayer player) {
         State st = STATES.get(player.getUUID());
         // the flight poses are Thor's too
-        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player) && !lex(player)) {
+        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player) && !lex(player)
+                && !YasClient.isYas(player)) {
             if (st != null) {
                 STATES.remove(player.getUUID());
                 set(player, BASE, null, 0, 5, false);
@@ -322,7 +323,8 @@ public final class SupermanPose {
         }
         return SupermanState.flag(player, SupermanPowers.F_FLYING)
                 || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FLYING)
-                || com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_FLY);
+                || com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_FLY)
+                || YasClient.flying(player);
     }
 
     /** Lex's suit on (no powers of his own): his moves play here too, with Iron Man's flight poses. */
