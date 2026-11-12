@@ -214,8 +214,9 @@ public final class FlashSuitUtil {
 
     /** Stand: swaps suit pieces between the wearer and the stand. */
     public static boolean swapWithStand(Player player, LivingEntity stand) {
-        boolean wearing = countSuit(player) > 0;
-        boolean standHas = countSuit(stand) > 0;
+        // any hero suit / armour of the mod (Flash suits, Lex Luthor's armour...)
+        boolean wearing = countSuit(player) > 0 || countLex(player) > 0;
+        boolean standHas = countSuit(stand) > 0 || countLex(stand) > 0;
         if (!wearing && !standHas) {
             return false;
         }
@@ -223,14 +224,14 @@ public final class FlashSuitUtil {
             ItemStack mine = player.getItemBySlot(slot);
             ItemStack theirs = stand.getItemBySlot(slot);
             if (wearing) {
-                if (!isSuit(mine)) {
+                if (!isSuit(mine) && !LexArmorItem.isLex(mine)) {
                     continue;
                 }
                 stand.setItemSlot(slot, mine);
                 player.setItemSlot(slot, ItemStack.EMPTY);
                 giveOrDrop(player, theirs); // whatever the stand held goes to the player
             } else {
-                if (!isSuit(theirs)) {
+                if (!isSuit(theirs) && !LexArmorItem.isLex(theirs)) {
                     continue;
                 }
                 player.setItemSlot(slot, theirs);
@@ -245,6 +246,16 @@ public final class FlashSuitUtil {
                     stand.getZ(), 25, 0.3D, 0.7D, 0.3D, 0.15D);
         }
         return true;
+    }
+
+    private static int countLex(LivingEntity entity) {
+        int n = 0;
+        for (EquipmentSlot slot : SLOTS) {
+            if (LexArmorItem.isLex(entity.getItemBySlot(slot))) {
+                n++;
+            }
+        }
+        return n;
     }
 
     private static int countSuit(LivingEntity entity) {
