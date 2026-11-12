@@ -295,6 +295,14 @@ public final class FlashSpeedsterPose {
                 });
                 pose.popPose();
             }
+            if (FlashClientRing.hasAmplifier(player)) {
+                // the amplifier rides on the animated torso (it was left floating where the still body would be)
+                pose.pushPose();
+                if (body.transformToBone("torso", pose)) {
+                    FlashAmplifierLayer.draw(player, pose, buffers, light, partialTick);
+                }
+                pose.popPose();
+            }
             if (FlashClientRing.has(player)) {
                 pose.pushPose();
                 if (body.transformToBone("right_arm", pose)) {

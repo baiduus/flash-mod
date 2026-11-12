@@ -51,9 +51,18 @@ public class FlashAmplifierLayer extends RenderLayer<AbstractClientPlayer, Playe
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw,
                        float headPitch) {
-        if (!FlashClientRing.hasAmplifier(player) || player.isInvisible()) {
-            return;
+        if (!FlashClientRing.hasAmplifier(player) || player.isInvisible() || FlashSpeedsterPose.isPosing(player)) {
+            return; // (the speedster run draws it on its animated torso)
         }
+        pose.pushPose();
+        this.getParentModel().body.translateAndRotate(pose);
+        draw(player, pose, buffers, light, partialTick);
+        pose.popPose();
+    }
+
+    /** The device, the pose already at the torso (the body part, or the torso bone of the speedster run). */
+    public static void draw(AbstractClientPlayer player, PoseStack pose, MultiBufferSource buffers, int light,
+                            float partialTick) {
         // the front of the chest: the suit hugs the body (+0.28), other armour is inflated by 1.0, the bare
         // skin's jacket layer by 0.25
         net.minecraft.world.item.ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
@@ -75,7 +84,6 @@ public class FlashAmplifierLayer extends RenderLayer<AbstractClientPlayer, Playe
         double speed = player.position().subtract(player.xo, player.yo, player.zo).length();
 
         pose.pushPose();
-        this.getParentModel().body.translateAndRotate(pose);
         VertexConsumer c = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
         int glow = (int) (255 * pulse);
 

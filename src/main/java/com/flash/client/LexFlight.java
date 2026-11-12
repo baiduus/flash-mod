@@ -229,7 +229,7 @@ public final class LexFlight {
 
         @Override
         public boolean isActive() {
-            return flying(this.player) && !this.player.isPassenger() && SupermanPose.base(this.player.getUUID()) != null
+            return flying(this.player) && !this.player.isPassenger() && !this.player.isSwimming()
                     && SupermanPose.shot(this.player.getUUID()) == null;
         }
 
@@ -238,13 +238,17 @@ public final class LexFlight {
             if (type != TransformType.ROTATION) {
                 return value0;
             }
+            // well behind the body (about 45 degrees hovering, 60 in the fast flight), a little out to the sides,
+            // the palms turned back like the repulsors of Iron Man steering
             float fast = part(this.player, P_THRUSTERS, tickDelta);
-            float sway = (float) Math.sin((this.player.tickCount + tickDelta) * 0.08F) * 0.03F;
+            float sway = (float) Math.sin((this.player.tickCount + tickDelta) * 0.08F) * 0.04F;
+            float back = 0.8F + 0.25F * fast;
+            float out = 0.24F - 0.1F * fast;
             if ("rightArm".equals(modelName)) {
-                return new Vec3f(0.42F + 0.25F * fast + sway, 0.0F, 0.14F - 0.06F * fast);
+                return new Vec3f(back + sway, 0.35F, out);
             }
             if ("leftArm".equals(modelName)) {
-                return new Vec3f(0.42F + 0.25F * fast - sway, 0.0F, -0.14F + 0.06F * fast);
+                return new Vec3f(back - sway, -0.35F, -out);
             }
             return value0;
         }
