@@ -525,9 +525,8 @@ public class FlashProgressScreen extends Screen {
                 right = Component.translatable("gui.flash.hulk.passive");
             } else {
                 com.flash.hulk.HulkAbility a = com.flash.hulk.HulkAbility.values()[k - 2];
-                int weapon = com.flash.thor.ThorState.weapon(Minecraft.getInstance().player);
-                name = a.displayName(weapon);
-                desc = a.description(weapon);
+                name = a.displayName();
+                desc = a.description();
                 req = a.level();
                 cooldown = com.flash.hulk.HulkState.cooldown(a, now);
                 net.minecraft.client.KeyMapping key = HulkClient.key(a);
@@ -816,8 +815,9 @@ public class FlashProgressScreen extends Screen {
                 right = Component.translatable("gui.flash.hulk.passive");
             } else {
                 com.flash.thor.ThorAbility a = all[k - THOR_PASSIVES.length];
-                name = a.displayName();
-                desc = a.description();
+                int weapon = com.flash.thor.ThorState.weapon(Minecraft.getInstance().player);
+                name = a.displayName(weapon);
+                desc = a.description(weapon);
                 req = a.level();
                 cooldown = com.flash.thor.ThorState.cooldown(a, now);
                 net.minecraft.client.KeyMapping key = ThorClient.key(a);
