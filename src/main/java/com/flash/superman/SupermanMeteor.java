@@ -52,6 +52,14 @@ public final class SupermanMeteor {
     }
 
     public static void tick(ServerPlayer player) {
+        tick(player, SupermanPowers.power(player), SupermanPowers.destroyBlocks(player), false);
+    }
+
+    /**
+     * The dive of any hero that flies high (Superman, Thor): power scales the explosion damage, destroy decides
+     * the crater, thunder adds the lightning of Thor to the impact.
+     */
+    public static void tick(ServerPlayer player, float heroPower, boolean destroy, boolean thunder) {
         Dive d = DIVES.computeIfAbsent(player.getUUID(), k -> new Dive());
         double dy = player.getY() - d.lastY;
         d.lastY = player.getY();
@@ -94,7 +102,7 @@ public final class SupermanMeteor {
                 player.position().add(0.0D, -reach, 0.0D), ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, player));
         if (player.onGround() || player.isInWater() || hit.getType() == HitResult.Type.BLOCK && dy < -0.4D) {
             Vec3 impact = hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : player.position();
-            impact(player, level, impact);
+            impact(player, level, impact, heroPower, destroy, thunder);
             d.active = false;
             return;
         }
@@ -109,13 +117,16 @@ public final class SupermanMeteor {
         }
     }
 
-    private static void impact(ServerPlayer player, ServerLevel level, Vec3 at) {
-        boolean destroy = SupermanPowers.destroyBlocks(player);
+    private static void impact(ServerPlayer player, ServerLevel level, Vec3 at, float power, boolean destroy,
+                               boolean thunder) {
         level.explode(player, at.x, at.y + 0.5D, at.z, POWER, destroy,
                 destroy ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE);
         // explosion damage all over the impact area (falls off toward the edge), even behind cover
         double radius = POWER * 1.6D;
-        float power = SupermanPowers.power(player);
+        if (thunder) {
+            com.flash.thor.ThorAbilities.strikeVisual(level, at);
+            com.flash.thor.ThorAbilities.fx(level, com.flash.network.ThorFxPacket.IMPACT, at, Vec3.ZERO, (float) radius);
+        }
         for (net.minecraft.world.entity.LivingEntity e : level.getEntitiesOfClass(
                 net.minecraft.world.entity.LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(radius),
                 x -> x != player && x.isAlive())) {

@@ -165,7 +165,9 @@ public final class SupermanClient {
         boolean pressed = down && !jumpWasDown;
         jumpWasDown = down;
         holdTicks = down ? holdTicks + 1 : 0;
-        boolean usable = SupermanState.isSuperman(p) && !p.getAbilities().flying && !p.isInWater()
+        boolean thor = com.flash.thor.ThorState.isThor(p);
+        // Thor has the big crouch leap too
+        boolean usable = (SupermanState.isSuperman(p) || thor) && !p.getAbilities().flying && !p.isInWater()
                 && !p.isPassenger() && mc.screen == null;
         if (waitRelease) {
             if (down) {
@@ -200,7 +202,7 @@ public final class SupermanClient {
         // sneak + jump: the big leap
         if (pressed && input.shiftKeyDown && p.onGround() && jumpHeld < 0) {
             input.jumping = false;
-            int lvl = Math.max(1, SupermanState.level());
+            int lvl = Math.max(1, thor ? com.flash.thor.ThorState.level() : SupermanState.level());
             // toward where he looks: looking ahead goes far, looking up goes high
             Vec3 look = p.getLookAngle();
             Vec3 flat = look.multiply(1.0D, 0.0D, 1.0D);

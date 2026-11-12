@@ -1,7 +1,16 @@
 {
+ "credit": "Made with Blockbench",
  "texture_size": [
   150,
   100
+ ],
+ "overrides": [
+  {
+   "predicate": {
+    "legends_superheroes:cosmic_king": 1
+   },
+   "model": "legends_superheroes:item/mjolnir_cosmic_king"
+  }
  ],
  "textures": {
   "0": "flash:item/thor/mjolnir",
@@ -2191,6 +2200,478 @@
      "texture": "#0"
     }
    }
+  }
+ ],
+ "display": {
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0,
+    -2.75,
+    1
+   ],
+   "scale": [
+    0.4,
+    0.45,
+    0.45
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0,
+    -2.75,
+    1
+   ],
+   "scale": [
+    0.4,
+    0.45,
+    0.45
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    1.5,
+    -2.5,
+    0
+   ],
+   "scale": [
+    0.28,
+    0.4,
+    0.4
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    1.5,
+    -2.5,
+    0
+   ],
+   "scale": [
+    0.28,
+    0.4,
+    0.4
+   ]
+  },
+  "ground": {
+   "rotation": [
+    180,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    7,
+    0
+   ],
+   "scale": [
+    0.3,
+    0.35,
+    0.35
+   ]
+  },
+  "gui": {
+   "rotation": [
+    0,
+    0,
+    45
+   ],
+   "translation": [
+    2.25,
+    -2.25,
+    0
+   ],
+   "scale": [
+    0.4,
+    0.45,
+    0.45
+   ]
+  },
+  "head": {
+   "translation": [
+    0,
+    -6.5,
+    0
+   ]
+  },
+  "fixed": {
+   "translation": [
+    0,
+    -5.5,
+    0
+   ],
+   "scale": [
+    0.7,
+    0.75,
+    0.75
+   ]
+  }
+ },
+ "groups": [
+  {
+   "name": "root",
+   "origin": [
+    0,
+    24,
+    0
+   ],
+   "color": 0,
+   "children": [
+    {
+     "name": "HammerBase",
+     "origin": [
+      0,
+      24,
+      0
+     ],
+     "color": 0,
+     "children": [
+      {
+       "name": "Hammer1",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        0
+       ]
+      },
+      {
+       "name": "Hammer2",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        1
+       ]
+      },
+      {
+       "name": "Hammer3",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        2
+       ]
+      },
+      {
+       "name": "Hammer4",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        3
+       ]
+      },
+      {
+       "name": "Hammer5",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        4
+       ]
+      },
+      {
+       "name": "Handle",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        {
+         "name": "HandleTop",
+         "origin": [
+          0,
+          24,
+          0
+         ],
+         "color": 0,
+         "children": [
+          5
+         ]
+        },
+        {
+         "name": "HandleBottom",
+         "origin": [
+          0,
+          24,
+          0
+         ],
+         "color": 0,
+         "children": [
+          {
+           "name": "HandleBottom2",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            6
+           ]
+          },
+          {
+           "name": "HandleLead1",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            7
+           ]
+          },
+          {
+           "name": "HandleLead3",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            8
+           ]
+          },
+          {
+           "name": "HandleLead7",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            9
+           ]
+          },
+          {
+           "name": "HandleLead2",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            10
+           ]
+          },
+          {
+           "name": "HandleLead5",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            11
+           ]
+          },
+          {
+           "name": "HandleLead4",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            12
+           ]
+          },
+          {
+           "name": "HandleLead6",
+           "origin": [
+            0,
+            24,
+            0
+           ],
+           "color": 0,
+           "children": [
+            13
+           ]
+          },
+          14
+         ]
+        },
+        15
+       ]
+      },
+      {
+       "name": "Hammer6",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        16
+       ]
+      },
+      {
+       "name": "Hammer7",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        17
+       ]
+      },
+      {
+       "name": "Hammer8",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        18
+       ]
+      },
+      {
+       "name": "Hammer9",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        19
+       ]
+      },
+      {
+       "name": "HammerTop",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        {
+         "name": "HammerTop1",
+         "origin": [
+          0,
+          24,
+          0
+         ],
+         "color": 0,
+         "children": [
+          20
+         ]
+        },
+        {
+         "name": "HammerTop2",
+         "origin": [
+          0,
+          24,
+          0
+         ],
+         "color": 0,
+         "children": [
+          21
+         ]
+        },
+        22
+       ]
+      },
+      {
+       "name": "Hammer10",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        23
+       ]
+      },
+      {
+       "name": "Hammer11",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        24
+       ]
+      },
+      {
+       "name": "Hammer12",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        25
+       ]
+      },
+      {
+       "name": "Hammer13",
+       "origin": [
+        0,
+        24,
+        0
+       ],
+       "color": 0,
+       "children": [
+        26
+       ]
+      },
+      27
+     ]
+    }
+   ]
   }
  ]
 }

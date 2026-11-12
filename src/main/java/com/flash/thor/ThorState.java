@@ -57,6 +57,11 @@ public final class ThorState {
         return ThorPowers.suit(player);
     }
 
+    /** The weapon of a player's suit (ThorSuits.CLASSIC / MCU / COSMIC / STORMBREAKER). */
+    public static int weapon(Player player) {
+        return ThorSuits.weapon(suit(player));
+    }
+
     public static boolean helmetOff(Player player) {
         if (player.level().isClientSide) {
             Integer f = CLIENT.get(player.getUUID());

@@ -51,7 +51,10 @@ public final class ThorPowers {
     public static final int F_BLAST = 4;
     public static final int F_SPIN = 8;
     public static final int F_FURY = 16;
+    /** (Old Overcharge flag: the Thunder's Fury does its job now; never set.) */
     public static final int F_OVERCHARGE = 32;
+    /** Thunder's Fury: 15 s. */
+    public static final int FURY_TICKS = 300;
     public static final int F_ULTIMATE = 64;
     /** Crouch + right click: the hammer drinks lightning. */
     public static final int F_CHARGING = 128;
@@ -59,7 +62,15 @@ public final class ThorPowers {
     public static final int F_THROWN = 256;
     public static final int F_COMBO = 512;
 
-    public static final int TRANSIENT = F_BLAST | F_SPIN | F_ULTIMATE | F_CHARGING | F_COMBO;
+    /** The weapon whirls in the hand (Cosmic Judgement, the charge of the ultimates). */
+    public static final int F_TWIRL = 1024;
+    /** Stormbreaker Block held: physical damage from the front is stopped. */
+    public static final int F_BLOCK = 2048;
+    /** Devourer King domain up: 75 % less damage taken. */
+    public static final int F_DOMAIN = 4096;
+
+    public static final int TRANSIENT = F_BLAST | F_SPIN | F_ULTIMATE | F_CHARGING | F_COMBO | F_TWIRL | F_BLOCK
+            | F_DOMAIN;
 
     private static final UUID DAMAGE_ID = UUID.fromString("5d2a1c90-77e1-4c5b-9a0e-3f4b5c6d7e01");
     private static final UUID SPEED_ID = UUID.fromString("5d2a1c90-77e1-4c5b-9a0e-3f4b5c6d7e02");
@@ -133,6 +144,19 @@ public final class ThorPowers {
 
     public static int suit(Player player) {
         return has(player) ? ThorSuits.clamp(tag(player).getInt(SUIT)) : 0;
+    }
+
+    /** The weapon of the chosen suit (ThorSuits.CLASSIC / MCU / COSMIC / STORMBREAKER). */
+    public static int weapon(Player player) {
+        return ThorSuits.weapon(suit(player));
+    }
+
+    public static boolean stormbreaker(Player player) {
+        return weapon(player) == ThorSuits.STORMBREAKER;
+    }
+
+    public static boolean cosmic(Player player) {
+        return weapon(player) == ThorSuits.COSMIC;
     }
 
     public static boolean helmetOff(Player player) {
@@ -298,7 +322,8 @@ public final class ThorPowers {
         if (!has(player)) {
             return;
         }
-        float max = flag(player, F_OVERCHARGE) ? OVER_CHARGE : MAX_CHARGE;
+        // the Thunder's Fury lets the Mjolnir hold up to 150 % of charge
+        float max = flag(player, F_FURY) ? OVER_CHARGE : MAX_CHARGE;
         CompoundTag tag = tag(player).copy();
         tag.putFloat(CHARGE, Math.max(0.0F, Math.min(max, value)));
         save(player, tag);
@@ -472,13 +497,14 @@ public final class ThorPowers {
         CompoundTag t = tag(player);
         if (flag(player, F_FURY) && now >= t.getLong(FURY_UNTIL)) {
             setFlag(player, F_FURY, false);
-            player.displayClientMessage(Component.translatable("message.flash.thor_fury_end"), true);
-        }
-        if (flag(player, F_OVERCHARGE) && now >= t.getLong(OVER_UNTIL)) {
-            setFlag(player, F_OVERCHARGE, false);
+            // the charge over 100 % goes away with the fury
             setCharge(player, charge(player));
+            player.displayClientMessage(Component.translatable("message.flash.thor_fury_end"), true);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     com.flash.registry.ModSounds.THOR_OVERCHARGE_END.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+        }
+        if (flag(player, F_OVERCHARGE)) {
+            setFlag(player, F_OVERCHARGE, false);
         }
         // storm energy: 1 per second, 2 in the rain, 4 in a thunderstorm; faster while the hammer drinks lightning
         int storm = storm(player);
@@ -496,10 +522,15 @@ public final class ThorPowers {
         }
         if (thor) {
             keepFlight(player);
-            // the storm heals the god of thunder
-            if (storm > 0) {
+            // Regeneration II always, IV in the rain or a thunderstorm
+            {
                 var regen = player.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
-                int amp = storm == 2 ? 1 : 0;
+                int amp = player.level().isRaining() ? 3 : 1;
+                if (regen != null && regen.isAmbient() && regen.getAmplifier() > amp) {
+                    // the rain stopped: back to II
+                    player.removeEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+                    regen = null;
+                }
                 if (regen == null || regen.getAmplifier() < amp || regen.getDuration() < 60) {
                     player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                             net.minecraft.world.effect.MobEffects.REGENERATION, 120, amp, true, false, true));
@@ -508,6 +539,10 @@ public final class ThorPowers {
             if (player.tickCount % 40 == 0) {
                 applyAttributes(player);
             }
+            // the combustion of Superman: diving from the heights Thor becomes a meteor
+            com.flash.superman.SupermanMeteor.tick(player, power(player), destroyBlocks(player), true);
+        } else {
+            com.flash.superman.SupermanMeteor.clear(player);
         }
         ThorAbilities.tick(player);
         if (player.tickCount % 10 == 0) {
@@ -532,7 +567,11 @@ public final class ThorPowers {
 
     private static void keepFlight(ServerPlayer player) {
         var abilities = player.getAbilities();
-        boolean can = flag(player, F_FLIGHT) && ThorAbilities.holdingHammer(player);
+        // with the weapon in hand Thor can fly: double jump takes off (as Superman), the flight key too
+        boolean can = ThorAbilities.holdingHammer(player);
+        if (can && !flag(player, F_FLIGHT)) {
+            setFlag(player, F_FLIGHT, true);
+        }
         boolean creative = player.isCreative() || player.isSpectator();
         if (can) {
             if (!abilities.mayfly || Math.abs(abilities.getFlyingSpeed()) > 1.0E-4F) {

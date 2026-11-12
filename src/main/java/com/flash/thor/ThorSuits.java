@@ -22,7 +22,33 @@ public final class ThorSuits {
             "thor_cosmic_king", "thor_emh", "thor_emh_v2", "thor_godpack", "thor_heroes_reborn", "thor_iconic",
             "thor_ih", "thor_lat_v3", "thor_modern");
 
+    /** Weapons: the classic Mjolnir, the MCU Mjolnir, the Cosmic King Mjolnir and Stormbreaker. */
+    public static final int CLASSIC = 0;
+    public static final int MCU = 1;
+    public static final int COSMIC = 2;
+    public static final int STORMBREAKER = 3;
+
+    private static final Set<String> MCU_SUITS = Set.of("thor_2011", "thor_darkworld", "thor_avengers",
+            "thor_avengers_v2", "thor_aou", "thor_ragnarok_v1", "thor_ragnarok_v2", "thor_iwv1");
+    private static final Set<String> STORMBREAKER_SUITS = Set.of("thor_iwv2", "thor_lat_v1", "thor_lat_v2",
+            "thor_lat_v3");
+
     private ThorSuits() {
+    }
+
+    /** The weapon that goes with a suit. */
+    public static int weapon(String id) {
+        if (STORMBREAKER_SUITS.contains(id)) {
+            return STORMBREAKER;
+        }
+        if ("thor_cosmic_king".equals(id)) {
+            return COSMIC;
+        }
+        return MCU_SUITS.contains(id) ? MCU : CLASSIC;
+    }
+
+    public static int weapon(int index) {
+        return weapon(id(index));
     }
 
     public static int clamp(int index) {

@@ -19,8 +19,20 @@ public class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
     public static final ResourceLocation TEXTURE = new ResourceLocation(FlashMod.MODID, "textures/thor/mjolnir.png");
     public static final ResourceLocation LIGHTNING = new ResourceLocation(FlashMod.MODID,
             "textures/thor/mjolnir_lightning.png");
-    private static final ResourceLocation GEO = new ResourceLocation(FlashMod.MODID, "geo/thor/mjolnir.geo.json");
-    private static GeoModel model;
+    private static final ResourceLocation[] GEO = {
+            new ResourceLocation(FlashMod.MODID, "geo/thor/mjolnir.geo.json"),
+            new ResourceLocation(FlashMod.MODID, "geo/thor/mjolnirmcu.geo.json"),
+            new ResourceLocation(FlashMod.MODID, "geo/thor/mjolnir.geo.json"),
+            new ResourceLocation(FlashMod.MODID, "geo/thor/stormbreaker.geo.json")};
+    private static final ResourceLocation[] TEXTURES = {TEXTURE,
+            new ResourceLocation(FlashMod.MODID, "textures/thor/mjolnir_mcu.png"),
+            new ResourceLocation(FlashMod.MODID, "textures/thor/mjolnir_cosmic_king.png"),
+            new ResourceLocation(FlashMod.MODID, "textures/thor/stormbreaker_entity.png")};
+    private static final ResourceLocation[] GLOWS = {LIGHTNING,
+            new ResourceLocation(FlashMod.MODID, "textures/thor/mjolnir_mcu_lightning.png"),
+            new ResourceLocation(FlashMod.MODID, "textures/thor/mjolnir_cosmic_king_lightning.png"),
+            new ResourceLocation(FlashMod.MODID, "textures/thor/stormbreaker_entity_lit.png")};
+    private static final GeoModel[] MODELS = new GeoModel[GEO.length];
 
     public MjolnirRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -28,22 +40,24 @@ public class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
     }
 
     public static void reset() {
-        model = null;
+        java.util.Arrays.fill(MODELS, null);
     }
 
     @Override
     public void render(MjolnirEntity entity, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers,
                        int light) {
-        if (model == null) {
-            model = GeoModel.load(GEO, null);
+        int w = Math.max(0, Math.min(GEO.length - 1, entity.weapon()));
+        if (MODELS[w] == null) {
+            MODELS[w] = GeoModel.load(GEO[w], null);
         }
+        GeoModel model = MODELS[w];
         if (model == null) {
             return;
         }
         pose.pushPose();
         if (entity.statue()) {
             // lying on the ground: standing on its head, the handle up
-            pose.translate(0.0D, 0.42D, 0.0D);
+            pose.translate(0.0D, 0.47D, 0.0D);
             pose.mulPose(Axis.YP.rotationDegrees(entity.getId() * 37 % 360));
             pose.mulPose(Axis.XP.rotationDegrees(180.0F));
         } else {
@@ -55,14 +69,15 @@ public class MjolnirRenderer extends EntityRenderer<MjolnirEntity> {
             pose.mulPose(Axis.YP.rotationDegrees(heading));
             pose.mulPose(Axis.XP.rotationDegrees(90.0F - pitch));
         }
-        float s = 0.9F;
+        // on the ground about the size it has in the hand; a bit bigger in flight, to be seen
+        float s = entity.statue() ? 0.5F : 0.7F;
         pose.scale(-s, -s, s);
         pose.translate(-model.centerX() / 16.0F, -model.centerY() / 16.0F, -model.centerZ() / 16.0F);
         model.reset();
-        model.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light, OverlayTexture.NO_OVERLAY,
+        model.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURES[w])), light, OverlayTexture.NO_OVERLAY,
                 0, 1.0F, 1.0F, 1.0F, 1.0F);
         float glow = 0.6F + 0.4F * Mth.sin((entity.tickCount + partialTick) * 0.8F);
-        model.render(pose, buffers.getBuffer(RenderType.entityTranslucentEmissive(LIGHTNING)), 0xF000F0,
+        model.render(pose, buffers.getBuffer(RenderType.entityTranslucentEmissive(GLOWS[w])), 0xF000F0,
                 OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, glow);
         pose.popPose();
         super.render(entity, yaw, partialTick, pose, buffers, light);

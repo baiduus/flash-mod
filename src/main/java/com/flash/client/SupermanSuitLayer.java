@@ -182,7 +182,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         boolean thorGlow = thor(id) && (com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FURY)
                 || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_BLAST)
                 || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_ULTIMATE)
-                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_OVERCHARGE));
+                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FURY));
         if (thorGlow || (!thor(id) && (SupermanState.flag(player, SupermanPowers.F_HEAT)
                 || SupermanState.flag(player, SupermanPowers.F_LASER)))) {
             draw(model, parent, "head", pose, buffers, RenderType.entityTranslucentEmissive(tex(id, "eyes")),

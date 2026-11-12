@@ -44,6 +44,30 @@ public final class ThorEvents {
         if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
+        // Stormbreaker Block: everything physical that comes from the front stops on the axe
+        if (ThorPowers.flag(victim, ThorPowers.F_BLOCK) && source.getSourcePosition() != null
+                && !source.is(DamageTypeTags.BYPASSES_ARMOR) && !source.is(DamageTypeTags.IS_FALL)
+                && !source.is(DamageTypeTags.IS_DROWNING) && !source.is(DamageTypeTags.IS_FREEZING)) {
+            net.minecraft.world.phys.Vec3 to = source.getSourcePosition().subtract(victim.position())
+                    .multiply(1.0D, 0.0D, 1.0D);
+            net.minecraft.world.phys.Vec3 look = victim.getLookAngle().multiply(1.0D, 0.0D, 1.0D);
+            if (to.lengthSqr() > 1.0E-4D && look.lengthSqr() > 1.0E-4D && to.normalize().dot(look.normalize()) > 0.2D) {
+                event.setCanceled(true);
+                victim.level().playSound(null, victim.getX(), victim.getY(), victim.getZ(),
+                        com.flash.registry.ModSounds.THOR_BLOCK.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0F,
+                        1.0F);
+                ((net.minecraft.server.level.ServerLevel) victim.level()).sendParticles(
+                        net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, victim.getX() + look.normalize().x,
+                        victim.getEyeY() - 0.4D, victim.getZ() + look.normalize().z, 12, 0.2D, 0.2D, 0.2D, 0.2D);
+                if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity attacker
+                        && attacker.distanceTo(victim) < 4.0F) {
+                    net.minecraft.world.phys.Vec3 back = attacker.position().subtract(victim.position()).normalize();
+                    attacker.setDeltaMovement(back.x * 0.6D, 0.2D, back.z * 0.6D);
+                    attacker.hurtMarked = true;
+                }
+                return;
+            }
+        }
         if (source.is(DamageTypeTags.IS_LIGHTNING) || source.is(DamageTypeTags.IS_FIRE)
                 || source.is(DamageTypeTags.IS_FALL)
                 || (source.is(DamageTypeTags.IS_EXPLOSION) && source.getEntity() == victim)) {
@@ -65,7 +89,11 @@ public final class ThorEvents {
                 victim.level().playSound(null, victim.getX(), victim.getY(), victim.getZ(),
                         com.flash.registry.ModSounds.THOR_BLOCK.get(), net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F);
             }
-            if (ThorPowers.flag(victim, ThorPowers.F_OVERCHARGE) && (event.getSource().is(DamageTypeTags.IS_EXPLOSION)
+            if (ThorPowers.flag(victim, ThorPowers.F_DOMAIN)) {
+                // Devourer King: 75 % less inside his domain
+                amount *= 0.25F;
+            }
+            if (ThorPowers.flag(victim, ThorPowers.F_FURY) && (event.getSource().is(DamageTypeTags.IS_EXPLOSION)
                     || event.getSource().is(DamageTypeTags.IS_PROJECTILE) || event.getSource().is(DamageTypeTags.WITCH_RESISTANT_TO))) {
                 amount *= 0.75F;
             }

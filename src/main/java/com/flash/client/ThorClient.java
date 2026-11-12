@@ -29,6 +29,9 @@ public final class ThorClient {
         if (ability.specialKey() == ThorAbility.KEY_J) {
             return FlashKeys.TOGGLE_SPEED;
         }
+        if (ability.hidden() || ability.keySlot() == null) {
+            return null;
+        }
         return FlashAbilityKeys.mapping(ability.keySlot());
     }
 

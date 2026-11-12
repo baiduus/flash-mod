@@ -93,6 +93,9 @@ public final class FlashClientEvents {
 
     @SubscribeEvent
     public static void onRegisterModels(net.minecraftforge.client.event.ModelEvent.RegisterAdditional event) {
-        event.register(MjolnirItemRenderer.MODEL);
+        for (net.minecraft.resources.ResourceLocation m : MjolnirItemRenderer.MODELS) {
+            event.register(m);
+        }
+        event.register(MjolnirItemRenderer.STORMBREAKER_LIT);
     }
 }

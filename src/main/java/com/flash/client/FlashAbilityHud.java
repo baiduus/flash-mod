@@ -218,7 +218,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
                 continue;
             }
             int cd = com.flash.thor.ThorState.cooldown(a, now);
-            drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(), keyLabel(ThorClient.key(a)), cd,
+            drawRow(graphics, font, x, y, panelWidth, a.displayName(com.flash.thor.ThorState.weapon(minecraft.player)).getString(), keyLabel(ThorClient.key(a)), cd,
                     Math.max(1, a.cooldown()), ThorClient.active(a));
             y += ROW_HEIGHT + ROW_GAP;
         }

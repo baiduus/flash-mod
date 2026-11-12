@@ -63,6 +63,33 @@ public class MjolnirItem extends Item {
         });
     }
 
+    private static final String WEAPON = "ThorWeapon";
+
+    /** Which weapon this stack is (ThorSuits.CLASSIC / MCU / COSMIC / STORMBREAKER): it follows the suit. */
+    public static int weapon(ItemStack stack) {
+        return stack.hasTag() ? stack.getTag().getInt(WEAPON) : 0;
+    }
+
+    public static void setWeapon(ItemStack stack, int weapon) {
+        if (weapon(stack) != weapon) {
+            stack.getOrCreateTag().putInt(WEAPON, weapon);
+        }
+    }
+
+    public static boolean stormbreaker(ItemStack stack) {
+        return stack.getItem() instanceof MjolnirItem && weapon(stack) == com.flash.thor.ThorSuits.STORMBREAKER;
+    }
+
+    @Override
+    public Component getName(ItemStack stack) {
+        return Component.translatable(switch (weapon(stack)) {
+            case com.flash.thor.ThorSuits.MCU -> "item.flash.mjolnir_mcu";
+            case com.flash.thor.ThorSuits.COSMIC -> "item.flash.mjolnir_cosmic";
+            case com.flash.thor.ThorSuits.STORMBREAKER -> "item.flash.stormbreaker";
+            default -> "item.flash.mjolnir";
+        });
+    }
+
     public static boolean worthy(Player player) {
         return ThorPowers.isThor(player) || com.flash.thor.ThorState.isThor(player);
     }
@@ -87,7 +114,8 @@ public class MjolnirItem extends Item {
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.SPEAR;
+        // the arm stays down at the side (the neutral pose): only the hammer whirls, by the strap
+        return UseAnim.NONE;
     }
 
     @Override
@@ -99,6 +127,8 @@ public class MjolnirItem extends Item {
         ThorPowers.setFlag(player, ThorPowers.F_CHARGING, charging);
         if (charging) {
             ThorAbilities.chargeTick(player, getUseDuration(stack) - remaining);
+        } else {
+            ThorAbilities.whirlTick(player, getUseDuration(stack) - remaining);
         }
     }
 
@@ -139,15 +169,17 @@ public class MjolnirItem extends Item {
                 player.displayClientMessage(Component.translatable("message.flash.thor_unworthy"), true);
             }
         }
-        if (inHand && worthy(player) && level instanceof ServerLevel sl && level.getGameTime() % 80L == 0L
-                && ThorPowers.charge(player) > 60.0F) {
-            sl.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    com.flash.registry.ModSounds.THOR_HUM.get(), SoundSource.PLAYERS, 0.4F, 1.0F);
-        }
+
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+        if (weapon(stack) == com.flash.thor.ThorSuits.STORMBREAKER) {
+            tooltip.add(Component.translatable("tooltip.flash.stormbreaker").withStyle(ChatFormatting.GOLD,
+                    ChatFormatting.ITALIC));
+            tooltip.add(Component.translatable("tooltip.flash.mjolnir.2").withStyle(ChatFormatting.GRAY));
+            return;
+        }
         tooltip.add(Component.translatable("tooltip.flash.mjolnir").withStyle(ChatFormatting.GOLD, ChatFormatting.ITALIC));
         tooltip.add(Component.translatable("tooltip.flash.mjolnir.2").withStyle(ChatFormatting.GRAY));
     }

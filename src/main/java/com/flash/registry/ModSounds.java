@@ -48,6 +48,11 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_LOOP = thor("overcharge_loop");
     public static final RegistryObject<SoundEvent> THOR_OVERCHARGE_END = thor("overcharge_end");
     public static final RegistryObject<SoundEvent> THOR_GOD_BLAST = thor("god_blast");
+    public static final RegistryObject<SoundEvent> THOR_SB_HIT = thor("stormbreaker_hit");
+    public static final RegistryObject<SoundEvent> THOR_SB_THROW = thor("stormbreaker_thrown");
+    public static final RegistryObject<SoundEvent> THOR_SB_THUMP = thor("stormbreaker_thump");
+    public static final RegistryObject<SoundEvent> THOR_BIFROST_ARRIVE = thor("bifrost_arrive");
+    public static final RegistryObject<SoundEvent> THOR_BIFROST_AWAY = thor("bifrost_away");
     public static final java.util.List<RegistryObject<SoundEvent>> THOR_LINES = java.util.stream.IntStream
             .rangeClosed(1, 15).mapToObj(i -> thor("thor_line" + i)).toList();
 

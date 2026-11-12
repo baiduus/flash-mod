@@ -525,8 +525,9 @@ public class FlashProgressScreen extends Screen {
                 right = Component.translatable("gui.flash.hulk.passive");
             } else {
                 com.flash.hulk.HulkAbility a = com.flash.hulk.HulkAbility.values()[k - 2];
-                name = a.displayName();
-                desc = a.description();
+                int weapon = com.flash.thor.ThorState.weapon(Minecraft.getInstance().player);
+                name = a.displayName(weapon);
+                desc = a.description(weapon);
                 req = a.level();
                 cooldown = com.flash.hulk.HulkState.cooldown(a, now);
                 net.minecraft.client.KeyMapping key = HulkClient.key(a);
@@ -795,7 +796,8 @@ public class FlashProgressScreen extends Screen {
         // passives and abilities, with level, key and cooldown
         sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
         int top = CONTENT_Y + 14;
-        com.flash.thor.ThorAbility[] all = com.flash.thor.ThorAbility.values();
+        com.flash.thor.ThorAbility[] all = java.util.Arrays.stream(com.flash.thor.ThorAbility.values())
+                .filter(a -> !a.hidden()).toArray(com.flash.thor.ThorAbility[]::new);
         int total = all.length + THOR_PASSIVES.length;
         int rowStep = Math.min(SKILL_ROW, (PH - 22 - top) / total);
         int rh = rowStep - 1;

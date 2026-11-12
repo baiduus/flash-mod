@@ -17,9 +17,10 @@ public enum ThorAbility {
     STORM_STRIKER("storm_striker", 5, 200, 15.0F, Kind.PRESS, FlashAbility.SPEED_TORNADO, 0, true),
     HAMMER_SPARK("hammer_spark", 6, 240, 18.0F, Kind.PRESS, null, ThorAbility.KEY_J, true),
     LIGHTNING_VORTEX("lightning_vortex", 7, 200, 15.0F, Kind.PRESS, FlashAbility.TIME_SLOW, 0, true),
-    WARRIORS_FURY("warriors_fury", 8, 1200, 30.0F, Kind.PRESS, FlashAbility.DASH_PUNCH, 0, false),
+    WARRIORS_FURY("warriors_fury", 8, 400, 25.0F, Kind.PRESS, FlashAbility.DASH_PUNCH, 0, false),
     MIGHTY_TORNADO("mighty_tornado", 9, 600, 30.0F, Kind.PRESS, FlashAbility.SPEED_MANIPULATION, 0, false),
-    OVERCHARGE("overcharge", 9, 900, 0.0F, Kind.PRESS, null, ThorAbility.KEY_V, true),
+    /** Merged into the Thunder's Fury (WARRIORS_FURY): kept only so the saved cooldown slots stay in place. */
+    OVERCHARGE("overcharge", 99, 0, 0.0F, Kind.PRESS, null, 0, true),
     GOD_OF_THUNDER("god_of_thunder", 10, 1800, 70.0F, Kind.PRESS, FlashAbility.ACCELERATION_FORCE, 0, true);
 
     public enum Kind { PRESS, TOGGLE, HOLD }
@@ -46,6 +47,11 @@ public enum ThorAbility {
         this.keySlot = keySlot;
         this.specialKey = specialKey;
         this.needsHammer = needsHammer;
+    }
+
+    /** Not an ability any more (not listed, no key). */
+    public boolean hidden() {
+        return this == OVERCHARGE;
     }
 
     public String id() {
@@ -88,6 +94,38 @@ public enum ThorAbility {
 
     public Component description() {
         return Component.translatable("ability.flash.thor." + this.id + ".description");
+    }
+
+    /**
+     * The ability in this key for a weapon: the Stormbreaker suits have Summon Stormbreaker, Block, the axe Storm
+     * Striker, Bifrost and Weapon of a King; the Cosmic King has Cosmic Judgement and Devourer King.
+     */
+    public String id(int weapon) {
+        if (weapon == ThorSuits.STORMBREAKER) {
+            switch (this) {
+                case SUMMON: return "summon_stormbreaker";
+                case HAMMER_SPIN: return "block";
+                case STORM_STRIKER: return "storm_striker_axe";
+                case LIGHTNING_VORTEX: return "bifrost";
+                case GOD_OF_THUNDER: return "weapon_of_a_king";
+                default: break;
+            }
+        } else if (weapon == ThorSuits.COSMIC) {
+            switch (this) {
+                case LIGHTNING_VORTEX: return "cosmic_judgement";
+                case GOD_OF_THUNDER: return "devourer_king";
+                default: break;
+            }
+        }
+        return this.id;
+    }
+
+    public Component displayName(int weapon) {
+        return Component.translatable("ability.flash.thor." + this.id(weapon));
+    }
+
+    public Component description(int weapon) {
+        return Component.translatable("ability.flash.thor." + this.id(weapon) + ".description");
     }
 
     public static ThorAbility byId(int id) {

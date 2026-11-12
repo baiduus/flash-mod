@@ -40,6 +40,9 @@ public class MjolnirEntity extends Projectile {
     /** Lying on the ground (dropped): only the worthy pick it up, with a right click. */
     private static final EntityDataAccessor<Boolean> STATUE = SynchedEntityData.defineId(MjolnirEntity.class,
             EntityDataSerializers.BOOLEAN);
+    /** Which weapon it is (ThorSuits.CLASSIC / MCU / COSMIC / STORMBREAKER), for the renderer. */
+    private static final EntityDataAccessor<Integer> WEAPON = SynchedEntityData.defineId(MjolnirEntity.class,
+            EntityDataSerializers.INT);
     private static final Map<UUID, MjolnirEntity> OUT = new ConcurrentHashMap<>();
 
     private ItemStack stack = ItemStack.EMPTY;
@@ -47,6 +50,8 @@ public class MjolnirEntity extends Projectile {
     private int flying;
     private int resting;
     private final Set<Integer> hit = new HashSet<>();
+    /** Weapon of a King: the creature it chases (-1 = none). */
+    private int homing = -1;
 
     public MjolnirEntity(EntityType<? extends MjolnirEntity> type, Level level) {
         super(type, level);
@@ -56,7 +61,7 @@ public class MjolnirEntity extends Projectile {
     public MjolnirEntity(Level level, ServerPlayer owner, ItemStack stack, float force) {
         this(ModEntities.MJOLNIR.get(), level);
         this.setOwner(owner);
-        this.stack = stack.copy();
+        this.setStack(stack);
         this.force = force;
         Vec3 eye = owner.getEyePosition();
         this.setPos(eye.x, eye.y - 0.2D, eye.z);
@@ -77,6 +82,21 @@ public class MjolnirEntity extends Projectile {
     protected void defineSynchedData() {
         this.entityData.define(RETURNING, false);
         this.entityData.define(STATUE, false);
+        this.entityData.define(WEAPON, 0);
+    }
+
+    private void setStack(ItemStack stack) {
+        this.stack = stack.copy();
+        this.entityData.set(WEAPON, com.flash.item.MjolnirItem.weapon(stack));
+    }
+
+    public int weapon() {
+        return this.entityData.get(WEAPON);
+    }
+
+    /** Chases a creature (Weapon of a King): it turns toward it on the way. */
+    public void home(Entity target) {
+        this.homing = target.getId();
     }
 
     public boolean returning() {
@@ -90,7 +110,7 @@ public class MjolnirEntity extends Projectile {
     /** A dropped Mjolnir: it stays where it falls. */
     public static MjolnirEntity statue(Level level, ItemStack stack, Vec3 at) {
         MjolnirEntity e = new MjolnirEntity(ModEntities.MJOLNIR.get(), level);
-        e.stack = stack.copy();
+        e.setStack(stack);
         e.entityData.set(STATUE, true);
         e.setPos(at.x, at.y, at.z);
         return e;
@@ -139,6 +159,11 @@ public class MjolnirEntity extends Projectile {
             return;
         }
         OUT.put(owner.getUUID(), this);
+        if (this.tickCount % 8 == 0 && this.resting == 0) {
+            // the whoosh: only while it actually flies
+            level.playSound(null, this.getX(), this.getY(), this.getZ(), com.flash.registry.ModSounds.THOR_SPIN.get(),
+                    SoundSource.PLAYERS, 0.7F, 1.2F);
+        }
         if (!this.returning()) {
             this.flying++;
             if (this.resting > 0) {
@@ -147,6 +172,19 @@ public class MjolnirEntity extends Projectile {
                     this.recall();
                 }
                 return;
+            }
+            if (this.homing >= 0) {
+                Entity t = level.getEntity(this.homing);
+                if (t != null && t.isAlive() && !this.hit.contains(this.homing)) {
+                    Vec3 to = t.position().add(0.0D, t.getBbHeight() * 0.5D, 0.0D).subtract(this.position());
+                    double sp = this.getDeltaMovement().length();
+                    this.setDeltaMovement(this.getDeltaMovement().normalize().scale(0.6D)
+                            .add(to.normalize().scale(0.4D)).normalize().scale(sp));
+                    this.flying = Math.min(this.flying, 20);
+                }
+                if (this.tickCount % 2 == 0) {
+                    ThorAbilities.bolt(level, this.position(), this.position().subtract(this.getDeltaMovement()), 0.9F);
+                }
             }
             Vec3 pos = this.position();
             Vec3 next = pos.add(this.getDeltaMovement());
@@ -269,7 +307,7 @@ public class MjolnirEntity extends Projectile {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.stack = ItemStack.of(tag.getCompound("stack"));
+        this.setStack(ItemStack.of(tag.getCompound("stack")));
         this.force = tag.getFloat("force");
         if (tag.getBoolean("statue")) {
             this.entityData.set(STATUE, true);
