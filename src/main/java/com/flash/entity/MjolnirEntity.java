@@ -132,6 +132,11 @@ public class MjolnirEntity extends Projectile {
 
     @Override
     public void tick() {
+        if (!this.level().isClientSide && this.tickCount % 20 == 0
+                && com.flash.item.MjolnirItem.stale(this.stack, this.level().getServer())) {
+            this.discard();
+            return;
+        }
         if (this.statue()) {
             // lying on the ground: falls, then stays (only a worthy right click lifts it)
             this.baseTick();
@@ -329,6 +334,15 @@ public class MjolnirEntity extends Projectile {
 
     /** The hammers lying around a player (loaded chunks), the nearest first. */
     public static MjolnirEntity nearestStatue(ServerPlayer player, double range) {
+        // his own hammer lying anywhere loaded in this world, however far
+        UUID me = player.getUUID();
+        for (Entity e : player.serverLevel().getAllEntities()) {
+            if (e instanceof MjolnirEntity m && m.isAlive() && m.statue()
+                    && me.equals(com.flash.item.MjolnirItem.owner(m.stack))
+                    && !com.flash.item.MjolnirItem.stale(m.stack, player.getServer())) {
+                return m;
+            }
+        }
         MjolnirEntity best = null;
         double bd = Double.MAX_VALUE;
         for (MjolnirEntity e : player.serverLevel().getEntitiesOfClass(MjolnirEntity.class,

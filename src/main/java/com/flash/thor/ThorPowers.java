@@ -86,6 +86,22 @@ public final class ThorPowers {
     // Queries
     // ------------------------------------------------------------------
 
+    private static final String HAMMER_GEN = "hammerGen";
+
+    /** Which hammer of this player is the real one: each new one summoned from nowhere is a new generation, the
+     * older ones vanish (no duplicates). */
+    public static int hammerGen(Player player) {
+        return has(player) ? tag(player).getInt(HAMMER_GEN) : 0;
+    }
+
+    public static int newHammerGen(Player player) {
+        CompoundTag t = tag(player).copy();
+        int g = t.getInt(HAMMER_GEN) + 1;
+        t.putInt(HAMMER_GEN, g);
+        save(player, t);
+        return g;
+    }
+
     static CompoundTag tag(Player player) {
         return player.getPersistentData().getCompound(KEY);
     }

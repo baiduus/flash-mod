@@ -64,6 +64,28 @@ public class MjolnirItem extends Item {
     }
 
     private static final String WEAPON = "ThorWeapon";
+    private static final String OWNER = "ThorOwner";
+    private static final String GEN = "ThorGen";
+
+    /** Marks the hammer as the one of this player (its generation). */
+    public static void stamp(ItemStack stack, java.util.UUID owner, int gen) {
+        stack.getOrCreateTag().putUUID(OWNER, owner);
+        stack.getOrCreateTag().putInt(GEN, gen);
+    }
+
+    public static java.util.UUID owner(ItemStack stack) {
+        return stack.hasTag() && stack.getTag().hasUUID(OWNER) ? stack.getTag().getUUID(OWNER) : null;
+    }
+
+    /** An old copy of a hammer that was summoned again elsewhere: it must go (checked while its owner is on). */
+    public static boolean stale(ItemStack stack, net.minecraft.server.MinecraftServer server) {
+        java.util.UUID owner = owner(stack);
+        if (owner == null || server == null) {
+            return false;
+        }
+        ServerPlayer p = server.getPlayerList().getPlayer(owner);
+        return p != null && ThorPowers.has(p) && stack.getTag().getInt(GEN) < ThorPowers.hammerGen(p);
+    }
 
     /** Which weapon this stack is (ThorSuits.CLASSIC / MCU / COSMIC / STORMBREAKER): it follows the suit. */
     public static int weapon(ItemStack stack) {
@@ -157,7 +179,15 @@ public class MjolnirItem extends Item {
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (level.isClientSide || !(entity instanceof Player player) || player.isCreative()) {
+        if (level.isClientSide || !(entity instanceof Player player)) {
+            return;
+        }
+        if (level.getGameTime() % 20L == 0L && stale(stack, level.getServer())) {
+            // a duplicate (the real hammer was summoned again): it vanishes
+            stack.setCount(0);
+            return;
+        }
+        if (player.isCreative()) {
             return;
         }
         boolean inHand = selected || player.getOffhandItem() == stack;

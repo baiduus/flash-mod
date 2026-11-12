@@ -137,9 +137,11 @@ public final class ThorAbilities {
     }
 
     /** A new weapon item for the current suit. */
+    /** A brand new hammer: a new generation, so any older copy left somewhere vanishes (no duplicates). */
     private static ItemStack newWeapon(ServerPlayer player) {
         ItemStack s = new ItemStack(ModItems.MJOLNIR.get());
         MjolnirItem.setWeapon(s, ThorPowers.weapon(player));
+        MjolnirItem.stamp(s, player.getUUID(), ThorPowers.newHammerGen(player));
         return s;
     }
 
@@ -149,6 +151,9 @@ public final class ThorAbilities {
         for (ItemStack s : player.getInventory().items) {
             if (s.getItem() instanceof MjolnirItem) {
                 MjolnirItem.setWeapon(s, w);
+                if (MjolnirItem.owner(s) == null) {
+                    MjolnirItem.stamp(s, player.getUUID(), ThorPowers.hammerGen(player));
+                }
             }
         }
         for (ItemStack s : player.getInventory().offhand) {
@@ -239,6 +244,9 @@ public final class ThorAbilities {
         ItemStack s = stack.isEmpty() ? newWeapon(player) : stack.copy();
         if (ThorPowers.has(player)) {
             MjolnirItem.setWeapon(s, ThorPowers.weapon(player));
+            if (MjolnirItem.owner(s) == null) {
+                MjolnirItem.stamp(s, player.getUUID(), ThorPowers.hammerGen(player));
+            }
         }
         // to the hand that is empty right now (main hand first)
         if (player.getMainHandItem().isEmpty()) {
