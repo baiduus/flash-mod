@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "33";
+    private static final String PROTOCOL = "34";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -228,6 +228,30 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(LexKeyPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(LexKeyPacket::encode)
                 .decoder(LexKeyPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(YasSyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(YasSyncPacket::encode)
+                .decoder(YasSyncPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(YasFxPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(YasFxPacket::encode)
+                .decoder(YasFxPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(YasDialogPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(YasDialogPacket::encode)
+                .decoder(YasDialogPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(YasAnswerPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(YasAnswerPacket::encode)
+                .decoder(YasAnswerPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
 

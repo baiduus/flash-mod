@@ -41,7 +41,9 @@ public final class HeroPowers {
         FLASH("flash", FlashPowers.ROOT, ModItems.FLASH_ESSENCE_CAPSULE),
         HULK("hulk", HulkPowers.KEY, ModItems.HULK_ESSENCE_CAPSULE),
         SUPERMAN("superman", SupermanPowers.KEY, ModItems.KRYPTONIAN_BLOOD_CAPSULE),
-        THOR("thor", ThorPowers.KEY, ModItems.THOR_ESSENCE_CAPSULE);
+        THOR("thor", ThorPowers.KEY, ModItems.THOR_ESSENCE_CAPSULE),
+        /** Yas (the transcendence): her capsule only answers to the player who transcended. */
+        YAS("yas", com.flash.yas.YasPowers.KEY, ModItems.YAS_ESSENCE_CAPSULE);
 
         private final String id;
         private final String key;
@@ -69,6 +71,7 @@ public final class HeroPowers {
                 case HULK -> HulkPowers.has(p);
                 case SUPERMAN -> SupermanPowers.has(p);
                 case THOR -> ThorPowers.has(p);
+                case YAS -> com.flash.yas.YasPowers.has(p);
             };
         }
 
@@ -78,7 +81,7 @@ public final class HeroPowers {
                 case FLASH -> !FlashPowers.hasPermanentPowers(p) || FlashV9.isActive(p);
                 case HULK -> HulkPowers.isTemporary(p) || HulkPowers.boostTicks(p) > 0;
                 case SUPERMAN -> SupermanPowers.temporaryTicks(p) > 0;
-                case THOR -> false;
+                case THOR, YAS -> false;
             };
         }
 
@@ -88,6 +91,7 @@ public final class HeroPowers {
                 case HULK -> HulkPowers.level(p);
                 case SUPERMAN -> SupermanPowers.level(p);
                 case THOR -> ThorPowers.level(p);
+                case YAS -> 1;
             };
         }
 
@@ -112,6 +116,7 @@ public final class HeroPowers {
                 }
                 case SUPERMAN -> SupermanPowers.revoke(p);
                 case THOR -> ThorPowers.revoke(p);
+                case YAS -> com.flash.yas.YasPowers.revoke(p);
             }
         }
 
@@ -125,6 +130,7 @@ public final class HeroPowers {
                 case HULK -> HulkPowers.grant(p, false);
                 case SUPERMAN -> SupermanPowers.grant(p, false);
                 case THOR -> ThorPowers.grant(p, false);
+                case YAS -> com.flash.yas.YasPowers.grant(p);
             }
         }
 
@@ -141,6 +147,10 @@ public final class HeroPowers {
                 case THOR -> {
                     ThorPowers.setForm(p, false);
                     ThorPowers.sync(p);
+                }
+                case YAS -> {
+                    com.flash.yas.YasHandOfGod.apply(p, true);
+                    com.flash.yas.YasPowers.sync(p);
                 }
             }
         }
@@ -164,6 +174,11 @@ public final class HeroPowers {
     }
 
     private HeroPowers() {
+    }
+
+    /** Takes a power away (Yas taking the place of another hero). */
+    public static void revokeOf(ServerPlayer p, Hero hero) {
+        hero.revoke(p);
     }
 
     /** The power the player has right now (any kind), or null. */
@@ -219,6 +234,12 @@ public final class HeroPowers {
         player.getPersistentData().put(MEMORY, mem);
         hero.revoke(player);
         ItemStack capsule = new ItemStack(red ? ModItems.RED_HULK_ESSENCE_CAPSULE.get() : hero.capsule());
+        if (hero == Hero.YAS) {
+            // bound to whoever transcended
+            capsule.getOrCreateTag().putUUID(com.flash.item.SyringeItem.YAS_OWNER, player.getUUID());
+            capsule.getOrCreateTag().putString(com.flash.item.SyringeItem.YAS_OWNER_NAME,
+                    player.getGameProfile().getName());
+        }
         player.getInventory().placeItemBackInInventory(capsule);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH,
                 SoundSource.PLAYERS, 1.0F, 0.8F);

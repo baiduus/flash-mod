@@ -50,8 +50,12 @@ public final class HeroAdvancements {
     public static final String VILLAGE = "hero_of_the_village";
     public static final String HUNTER = "monster_hunter";
     public static final String WORTHY = "worthy";
+    public static final String YAS = "yas";
+    /** The heroes the transcendence asks for (YasTranscendence). */
+    public static final String[] HEROES = {FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX};
     /** In the order of the bits of the client sync. */
-    public static final String[] ALL = {ROOT, FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX, VILLAGE, HUNTER, WORTHY};
+    public static final String[] ALL = {ROOT, FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX, VILLAGE, HUNTER, WORTHY,
+            YAS};
 
     /** Hostile creatures to kill to be worthy. */
     public static final int KILLS_NEEDED = 100;
@@ -122,6 +126,9 @@ public final class HeroAdvancements {
         }
         if (com.flash.thor.ThorPowers.has(p)) {
             award(p, THOR);
+        }
+        if (com.flash.yas.YasPowers.has(p)) {
+            award(p, YAS);
         }
         if (com.flash.item.LexArmorItem.wearingFull(p)) {
             award(p, LEX);
@@ -213,7 +220,7 @@ public final class HeroAdvancements {
     /** The ids of the command (Portuguese, as the rest of the mod's commands). */
     private static final String[][] COMMAND_IDS = {
             {"flash", FLASH}, {"hulk", HULK}, {"hulk_vermelho", RED_HULK}, {"superman", SUPERMAN}, {"thor", THOR},
-            {"lex", LEX}, {"heroi_da_vila", VILLAGE}, {"cacador", HUNTER}, {"digno", WORTHY}};
+            {"lex", LEX}, {"heroi_da_vila", VILLAGE}, {"cacador", HUNTER}, {"digno", WORTHY}, {"yas", YAS}};
 
     private static java.util.List<String> ids() {
         java.util.List<String> out = new java.util.ArrayList<>();

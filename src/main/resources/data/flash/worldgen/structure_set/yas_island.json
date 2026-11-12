@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "flash:yas_island",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 140,
+    "separation": 70,
+    "salt": 1947320558
+  }
+}

@@ -51,6 +51,10 @@ public final class SyringeContents {
             p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.FLASH)));
     public static final SyringeContent THOR_ESSENCE = register(new SyringeContent(
             "thor_essence", 7, ModItems.THOR_ESSENCE_CAPSULE::get, SyringeContents::injectThor));
+    /** Yas (the transcendence): the syringe checks the owner of the essence before (SyringeItem). */
+    public static final SyringeContent YAS_ESSENCE = register(new SyringeContent(
+            "yas_essence", 9, ModItems.YAS_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.YAS)));
 
     private static boolean injectHulk(net.minecraft.server.level.ServerPlayer p, boolean red) {
         if (!com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.HULK)) {

@@ -49,6 +49,15 @@ public final class ModEntities {
                             .updateInterval(1)
                             .build("lex_missile"));
 
+    public static final RegistryObject<EntityType<com.flash.yas.YasGuardian>> YAS_GUARDIAN =
+            ENTITY_TYPES.register("yas_guardian",
+                    () -> EntityType.Builder.<com.flash.yas.YasGuardian>of(com.flash.yas.YasGuardian::new,
+                                    MobCategory.MISC)
+                            .sized(0.6F, 1.95F)
+                            .fireImmune()
+                            .clientTrackingRange(10)
+                            .build("yas_guardian"));
+
     public static final RegistryObject<EntityType<com.flash.entity.MjolnirEntity>> MJOLNIR =
             ENTITY_TYPES.register("mjolnir",
                     () -> EntityType.Builder.<com.flash.entity.MjolnirEntity>of(

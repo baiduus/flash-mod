@@ -374,10 +374,33 @@ public class FlashProgressScreen extends Screen {
                 : Component.translatable(FlashClientConfig.SCROLL_MODE.get()
                     ? "gui.flash.footer.scroll" : "gui.flash.footer.keys");
         g.fill(PAD, PH - 20, PW - PAD, PH - 19, COLOR_BORDER);
-        g.drawString(this.font, this.font.plainSubstrByWidth(text.getString(), PW - 2 * PAD - 60),
+        int half = (PW - 2 * PAD) / 2;
+        g.drawString(this.font, this.font.plainSubstrByWidth(text.getString(), half - 8),
                 PAD, PH - 13, COLOR_DIM, false);
-        Component esc = Component.literal("ESC");
-        g.drawString(this.font, esc, PW - PAD - this.font.width(esc), PH - 13, COLOR_DIM, false);
+        // the credits of the mods this hero was made with (the hero guide shows the picked hero's in its card)
+        if (FlashClientData.hasPowers() || theme() != PowerTheme.NEUTRAL) {
+            drawCredits(g, creditsKey(theme().id()), PW - PAD, PH - 12, half);
+        }
+    }
+
+    private static String creditsKey(String hero) {
+        return "gui.flash.credits." + switch (hero) {
+            case "negative", "v9" -> "flash";
+            case "red_hulk" -> "hulk";
+            default -> hero;
+        };
+    }
+
+    /** One small line of credits, right-aligned at {@code right}, cut to {@code width}. */
+    private void drawCredits(GuiGraphics g, String key, int right, int y, int width) {
+        float scale = 0.75F;
+        String text = this.font.plainSubstrByWidth(Component.translatable(key).getString(), (int) (width / scale));
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(right - this.font.width(text) * scale, y, 0.0F);
+        pose.scale(scale, scale, 1.0F);
+        g.drawString(this.font, text, 0, 0, COLOR_DIM, false);
+        pose.popPose();
     }
 
     // ------------------------------------------------------------------
@@ -1269,10 +1292,10 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     /** Hero id (its advancement and its texts gui.flash.guide.<id>), number of steps. */
-    private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex"};
-    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4};
+    private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas"};
+    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 4};
     private static final int GUIDE_LIST_W = 168;
-    private static final int GUIDE_ROW_H = 36;
+    private static final int GUIDE_ROW_H = 30;
     private static final int GUIDE_ROW_GAP = 2;
     private static int guideHero;
 
@@ -1283,7 +1306,8 @@ public class FlashProgressScreen extends Screen {
             case 2 -> com.flash.registry.ModItems.RED_HULK_ESSENCE_CAPSULE.get();
             case 3 -> com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get();
             case 4 -> com.flash.registry.ModItems.MJOLNIR.get();
-            default -> com.flash.registry.ModItems.LEX_HELMET.get();
+            case 5 -> com.flash.registry.ModItems.LEX_HELMET.get();
+            default -> net.minecraft.world.item.Items.NETHER_STAR;
         });
     }
 
@@ -1301,13 +1325,13 @@ public class FlashProgressScreen extends Screen {
             if (sel) {
                 g.fill(PAD, y + 5, PAD + 2, y + GUIDE_ROW_H - 5, accent());
             }
-            g.renderItem(guideIcon(i), PAD + 9, y + 10);
-            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 8,
+            g.renderItem(guideIcon(i), PAD + 9, y + 7);
+            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 5,
                     sel ? COLOR_TEXT : COLOR_MUTED, false);
             g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i] + ".sub"), PAD + 32,
-                    y + 20, COLOR_DIM, false);
+                    y + 17, COLOR_DIM, false);
             if (HeroProgressClient.has(GUIDE[i])) {
-                g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + 14, accent(), false);
+                g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + 11, accent(), false);
             }
         }
         // the manual of the hero picked
@@ -1329,12 +1353,19 @@ public class FlashProgressScreen extends Screen {
                 got ? accent() : COLOR_DIM, false);
         g.drawString(this.font, Component.translatable("gui.flash.guide." + id + ".sub"), x + 40, CONTENT_Y + 23,
                 COLOR_DIM, false);
+        drawCredits(g, creditsKey(id), x + w - 8, CONTENT_BOTTOM - 10, w - 16);
         int y = CONTENT_Y + 40;
         int textW = w - 34;
         for (int step = 1; step <= GUIDE_STEPS[guideHero]; step++) {
             y = guideStep(g, x, y, textW, step, Component.translatable("gui.flash.guide." + id + "." + step));
             if ("thor".equals(id) && step == 1) {
                 y = drawWorthyChecklist(g, x + 26, y, w - 36);
+            }
+            if ("yas".equals(id) && step == 1) {
+                y = drawYasHeroes(g, x + 26, y, w - 36);
+            }
+            if ("yas".equals(id) && step == 2) {
+                y = drawYasItems(g, x + 26, y, w - 36);
             }
         }
     }
@@ -1365,6 +1396,56 @@ public class FlashProgressScreen extends Screen {
                 hunter ? accent() : 0xFFB0B8C4);
         checkLine(g, x + 8, y + 39, worthy, Component.translatable("gui.flash.guide.thor.worthy"));
         return y + 60;
+    }
+
+    /** The heroes the transcendence asks for, in two columns. */
+    private int drawYasHeroes(GuiGraphics g, int x, int y, int w) {
+        String[] heroes = com.flash.power.HeroAdvancements.HEROES;
+        int rows = (heroes.length + 1) / 2;
+        card(g, x, y - 2, w, rows * 10 + 6, 0.0F);
+        for (int i = 0; i < heroes.length; i++) {
+            int cx = x + 8 + (i % 2) * (w / 2);
+            int cy = y + 2 + (i / 2) * 10;
+            checkLine(g, cx, cy, HeroProgressClient.has(heroes[i]),
+                    Component.translatable("gui.flash.guide." + heroes[i]));
+        }
+        return y + rows * 10 + 10;
+    }
+
+    /** What must be in the inventory (checked on the player's inventory now). */
+    private int drawYasItems(GuiGraphics g, int x, int y, int w) {
+        net.minecraft.world.entity.player.Player p = Minecraft.getInstance().player;
+        if (p == null) {
+            return y;
+        }
+        net.minecraft.world.item.Item[][] needs = {
+                {com.flash.registry.ModItems.FLASH_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.HULK_ESSENCE_CAPSULE.get(),
+                        com.flash.registry.ModItems.RED_HULK_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get()},
+                {com.flash.registry.ModItems.THOR_ESSENCE_CAPSULE.get()}};
+        int rows = 3;
+        card(g, x, y - 2, w, rows * 10 + 6, 0.0F);
+        for (int i = 0; i < needs.length; i++) {
+            boolean has = false;
+            for (net.minecraft.world.item.Item it : needs[i]) {
+                has |= p.getInventory().countItem(it) > 0;
+            }
+            int cx = x + 8 + (i % 2) * (w / 2);
+            int cy = y + 2 + (i / 2) * 10;
+            String name = this.font.plainSubstrByWidth(needs[i][0].getDescription().getString(), w / 2 - 24);
+            checkLine(g, cx, cy, has, Component.literal(name));
+        }
+        int lex = 0;
+        for (net.minecraft.world.item.Item it : new net.minecraft.world.item.Item[] {
+                com.flash.registry.ModItems.LEX_HELMET.get(), com.flash.registry.ModItems.LEX_CHESTPLATE.get(),
+                com.flash.registry.ModItems.LEX_LEGGINGS.get(), com.flash.registry.ModItems.LEX_BOOTS.get()}) {
+            if (p.getInventory().countItem(it) > 0) {
+                lex++;
+            }
+        }
+        checkLine(g, x + 8, y + 22, lex == 4, Component.translatable("gui.flash.guide.yas.lex", lex));
+        return y + rows * 10 + 10;
     }
 
     private void checkLine(GuiGraphics g, int x, int y, boolean done, Component text) {

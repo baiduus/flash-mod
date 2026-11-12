@@ -1,0 +1,7 @@
+{
+  "type": "flash:yas_island",
+  "biomes": "#flash:has_structure/yas_island",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

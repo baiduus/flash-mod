@@ -38,6 +38,8 @@ CAPSULES = {
     "thor_essence": (0.58, 0.85, 1.15),
     # the Red Hulk's gamma (made in the Processor from the green one): a dark ruby
     "red_hulk_essence": (0.995, 1.0, 0.78),
+    # Yas's essence (the transcendence): pale gold, almost white light
+    "yas_essence": (0.14, 0.45, 1.35),
 }
 
 

@@ -57,6 +57,7 @@ public final class FlashClientEvents {
         event.registerEntityRenderer(com.flash.registry.ModEntities.HULK_BOULDER.get(),
                 HulkBoulderRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.MJOLNIR.get(), MjolnirRenderer::new);
+        event.registerEntityRenderer(com.flash.registry.ModEntities.YAS_GUARDIAN.get(), YasGuardianRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.LEX_MISSILE.get(),
                 LexMissileRenderer::new);
         event.registerBlockEntityRenderer(
@@ -84,6 +85,7 @@ public final class FlashClientEvents {
                 player.addLayer(new HulkClient.Layer(player));
                 player.addLayer(new SupermanSuitLayer(player));
                 player.addLayer(new LexSuitLayer<>(player));
+                player.addLayer(new YasLayer<>(player));
                 player.addLayer(new SupermanAuraLayer(player));
             }
         }

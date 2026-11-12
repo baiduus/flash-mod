@@ -55,6 +55,10 @@ public class SyringeItem extends Item {
         return content == null ? 0.0F : content.modelIndex();
     }
 
+    /** The player a Yas capsule (and the syringe it was loaded in) belongs to. */
+    public static final String YAS_OWNER = "YasOwner";
+    public static final String YAS_OWNER_NAME = "YasOwnerName";
+
     /** Dragging a capsule onto the syringe in the inventory loads it. */
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack other, Slot slot,
@@ -67,6 +71,10 @@ public class SyringeItem extends Item {
             return false;
         }
         stack.getOrCreateTag().putString(TAG_CONTENT, content.id());
+        if (other.hasTag() && other.getTag().hasUUID(YAS_OWNER)) {
+            stack.getOrCreateTag().putUUID(YAS_OWNER, other.getTag().getUUID(YAS_OWNER));
+            stack.getOrCreateTag().putString(YAS_OWNER_NAME, other.getTag().getString(YAS_OWNER_NAME));
+        }
         other.shrink(1);
         player.playSound(SoundEvents.BOTTLE_FILL, 0.8F, 1.2F);
         if (!player.level().isClientSide()) {
@@ -104,11 +112,19 @@ public class SyringeItem extends Item {
             return stack;
         }
         if (content != null && entity instanceof ServerPlayer player) {
+            if (content == SyringeContents.YAS_ESSENCE && !yasOwner(stack, player)) {
+                // only the one who transcended can take Yas back
+                player.displayClientMessage(Component.translatable("message.flash.yas_not_owner",
+                        stack.hasTag() ? stack.getTag().getString(YAS_OWNER_NAME) : "?"), true);
+                return stack;
+            }
             if (content.injector().inject(player)) {
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.PLAYER_HURT_SWEET_BERRY_BUSH, SoundSource.PLAYERS, 0.8F, 0.6F);
                 if (!player.getAbilities().instabuild) {
                     stack.removeTagKey(TAG_CONTENT);
+                    stack.removeTagKey(YAS_OWNER);
+                    stack.removeTagKey(YAS_OWNER_NAME);
                     if (stack.getTag() != null && stack.getTag().isEmpty()) {
                         stack.setTag(null);
                     }
@@ -116,6 +132,11 @@ public class SyringeItem extends Item {
             }
         }
         return stack;
+    }
+
+    private static boolean yasOwner(ItemStack stack, ServerPlayer player) {
+        return com.flash.yas.YasPowers.transcended(player) && stack.hasTag() && stack.getTag().hasUUID(YAS_OWNER)
+                && stack.getTag().getUUID(YAS_OWNER).equals(player.getUUID());
     }
 
     @Override

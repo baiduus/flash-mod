@@ -197,6 +197,10 @@ public final class ModItems {
     public static final RegistryObject<Item> RED_HULK_ESSENCE_CAPSULE = ITEMS.register("red_hulk_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.red_hulk_essence_capsule", "tooltip.flash.power_capsule"));
+    /** Yas's essence: bound to the player who transcended. */
+    public static final RegistryObject<Item> YAS_ESSENCE_CAPSULE = ITEMS.register("yas_essence_capsule",
+            () -> new com.flash.item.YasCapsuleItem(new Item.Properties().stacksTo(1)
+                    .rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
     public static final RegistryObject<Item> FLASH_ESSENCE_CAPSULE = ITEMS.register("flash_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.flash_essence_capsule", "tooltip.flash.power_capsule"));

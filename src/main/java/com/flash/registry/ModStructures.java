@@ -35,6 +35,12 @@ public final class ModStructures {
     public static final RegistryObject<StructurePieceType> THOR_CRATER_PIECE =
             PIECE_TYPES.register("thor_crater", () -> (context, tag) -> new com.flash.worldgen.ThorCraterPiece(tag));
 
+    public static final RegistryObject<StructureType<com.flash.worldgen.YasIslandStructure>> YAS_ISLAND =
+            STRUCTURE_TYPES.register("yas_island", () -> () -> com.flash.worldgen.YasIslandStructure.CODEC);
+
+    public static final RegistryObject<StructurePieceType> YAS_ISLAND_PIECE =
+            PIECE_TYPES.register("yas_island", () -> (context, tag) -> new com.flash.worldgen.YasIslandPiece(tag));
+
     private ModStructures() {
     }
 }
