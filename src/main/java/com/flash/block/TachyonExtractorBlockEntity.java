@@ -44,34 +44,60 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
     }
 
     // ------------------------------------------------------------------
-    // Item rules
+    // Recipes: the Processor works the materials of every hero
     // ------------------------------------------------------------------
+
+    /** What goes in (how many at once) and what comes out. */
+    private record Recipe(java.util.function.Predicate<ItemStack> input, int amount,
+                          java.util.function.Supplier<net.minecraft.world.item.Item> output, int min, int max,
+                          boolean single) {
+        boolean accepts(ItemStack stack) {
+            return !stack.isEmpty() && this.input.test(stack);
+        }
+    }
+
+    private static final java.util.List<Recipe> RECIPES = java.util.List.of(
+            // Flash: a Torn Suit gives 1-3 tachyons; 4 Nether fungi give corrupted matter
+            new Recipe(TachyonExtractorBlock::isSuit, 1, ModItems.TACHYON, 1, 3, true),
+            new Recipe(TachyonExtractorBlockEntity::isFungus, FUNGI_PER_MATTER, ModItems.CORRUPTED_MATTER, 1, 1, false),
+            // Superman: the 5 Kryptonian cells of a crashed ship give the Kryptonian blood
+            new Recipe(s -> s.is(ModItems.KRYPTONIAN_CELL.get()), CELLS_PER_BLOOD, ModItems.KRYPTONIAN_BLOOD_CAPSULE,
+                    1, 1, false));
+
+    /** Kryptonian cells needed for one capsule of Kryptonian blood. */
+    public static final int CELLS_PER_BLOOD = 5;
 
     static boolean isFungus(ItemStack stack) {
         return stack.is(Items.NETHER_WART) || stack.is(Items.CRIMSON_FUNGUS)
                 || stack.is(Items.WARPED_FUNGUS);
     }
 
+    private static Recipe recipeFor(ItemStack stack) {
+        for (Recipe r : RECIPES) {
+            if (r.accepts(stack)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    /** Anything the Processor can work. */
+    static boolean accepts(ItemStack stack) {
+        return recipeFor(stack) != null;
+    }
+
     private boolean hasValidInput() {
-        if (this.input.isEmpty()) {
-            return false;
-        }
-        if (TachyonExtractorBlock.isSuit(this.input)) {
-            return true;
-        }
-        return isFungus(this.input) && this.input.getCount() >= FUNGI_PER_MATTER;
+        Recipe r = recipeFor(this.input);
+        return r != null && this.input.getCount() >= r.amount();
     }
 
     private boolean outputHasRoomFor() {
         if (this.output.isEmpty()) {
             return true;
         }
-        if (TachyonExtractorBlock.isSuit(this.input)) {
-            return this.output.is(ModItems.TACHYON.get())
-                    && this.output.getCount() + 3 <= this.output.getMaxStackSize();
-        }
-        return this.output.is(ModItems.CORRUPTED_MATTER.get())
-                && this.output.getCount() + 1 <= this.output.getMaxStackSize();
+        Recipe r = recipeFor(this.input);
+        return r != null && this.output.is(r.output().get())
+                && this.output.getCount() + r.max() <= this.output.getMaxStackSize();
     }
 
     boolean canProcess() {
@@ -83,18 +109,20 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
     // ------------------------------------------------------------------
 
     void insert(Player player, ItemStack held) {
-        if (TachyonExtractorBlock.isSuit(held)) {
+        Recipe r = recipeFor(held);
+        if (r == null) {
+            player.displayClientMessage(TachyonExtractorBlock.msg("message.flash.extractor_wrong"), true);
+            return;
+        }
+        if (r.single()) {
             if (!this.input.isEmpty()) {
                 player.displayClientMessage(TachyonExtractorBlock.msg("message.flash.extractor_busy"), true);
                 return;
             }
             this.input = held.split(1);
-        } else if (isFungus(held)) {
-            if (!this.input.isEmpty() && !ItemStack.isSameItem(this.input, held)) {
-                player.displayClientMessage(TachyonExtractorBlock.msg("message.flash.extractor_busy"), true);
-                return;
-            }
-            if (!this.input.isEmpty() && this.input.getCount() >= this.input.getMaxStackSize()) {
+        } else {
+            if (!this.input.isEmpty() && (!ItemStack.isSameItem(this.input, held)
+                    || this.input.getCount() >= this.input.getMaxStackSize())) {
                 player.displayClientMessage(TachyonExtractorBlock.msg("message.flash.extractor_busy"), true);
                 return;
             }
@@ -107,12 +135,11 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
             } else {
                 this.input.grow(part.getCount());
             }
-            if (this.input.getCount() < FUNGI_PER_MATTER) {
-                player.displayClientMessage(TachyonExtractorBlock.msg("message.flash.extractor_need"), true);
+            if (this.input.getCount() < r.amount()) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.flash.extractor_need", this.input.getCount(), r.amount(),
+                        this.input.getHoverName()), true);
             }
-        } else {
-            player.displayClientMessage(TachyonExtractorBlock.msg("message.flash.extractor_wrong"), true);
-            return;
         }
         this.level.playSound(null, this.worldPosition, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.5F, 1.3F);
         syncToClients();
@@ -199,14 +226,14 @@ public class TachyonExtractorBlockEntity extends BlockEntity {
     }
 
     private void finish(Level level, BlockPos pos) {
-        if (TachyonExtractorBlock.isSuit(this.input)) {
-            this.input.shrink(1);
-            int count = 1 + level.random.nextInt(3);
-            addOutput(ModItems.TACHYON.get().getDefaultInstance(), count);
-        } else {
-            this.input.shrink(FUNGI_PER_MATTER);
-            addOutput(ModItems.CORRUPTED_MATTER.get().getDefaultInstance(), 1);
+        Recipe r = recipeFor(this.input);
+        if (r == null) {
+            this.progress = 0;
+            return;
         }
+        this.input.shrink(r.amount());
+        int count = r.min() + (r.max() > r.min() ? level.random.nextInt(r.max() - r.min() + 1) : 0);
+        addOutput(new ItemStack(r.output().get()), count);
         if (this.input.isEmpty()) {
             this.input = ItemStack.EMPTY;
         }

@@ -18,6 +18,30 @@
     "flash:content": 3
    },
    "model": "flash:item/syringe_gamma"
+  },
+  {
+   "predicate": {
+    "flash:content": 4
+   },
+   "model": "flash:item/syringe_kryptonian_blood"
+  },
+  {
+   "predicate": {
+    "flash:content": 5
+   },
+   "model": "flash:item/syringe_hulk_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 6
+   },
+   "model": "flash:item/syringe_flash_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 7
+   },
+   "model": "flash:item/syringe_thor_essence"
   }
  ]
 }

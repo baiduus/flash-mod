@@ -80,7 +80,14 @@ public class SyringeItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (content(stack) == null) {
-            return InteractionResultHolder.pass(stack);
+            // empty: a hero takes his power out into a capsule
+            if (!com.flash.power.HeroPowers.hasAny(player)) {
+                return InteractionResultHolder.pass(stack);
+            }
+            if (!level.isClientSide && !com.flash.power.HeroPowers.canExtract(player)) {
+                player.displayClientMessage(Component.translatable("message.flash.extract_temporary"), true);
+                return InteractionResultHolder.fail(stack);
+            }
         }
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
@@ -89,6 +96,13 @@ public class SyringeItem extends Item {
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         SyringeContent content = content(stack);
+        if (content == null && entity instanceof ServerPlayer player) {
+            if (com.flash.power.HeroPowers.extract(player)) {
+                level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.PLAYER_HURT_SWEET_BERRY_BUSH, SoundSource.PLAYERS, 0.8F, 0.6F);
+            }
+            return stack;
+        }
         if (content != null && entity instanceof ServerPlayer player) {
             if (content.injector().inject(player)) {
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),

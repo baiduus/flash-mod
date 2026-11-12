@@ -53,7 +53,7 @@ public final class HulkPowers {
 
     public static final float MAX_RAGE = 100.0F;
     public static final int MAX_LEVEL = 10;
-    public static final int TEMP_LEVEL = 4;
+    public static final int TEMP_LEVEL = 5;
     public static final int TEMP_TICKS = 5 * 60 * 20;
     public static final int FURY_TICKS = 20 * 20;
 
@@ -69,6 +69,11 @@ public final class HulkPowers {
     private static final UUID DAMAGE_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a01");
     private static final UUID SPEED_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a02");
     private static final UUID HEALTH_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a03");
+    private static final UUID SWIM_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a0f");
+    /** Gamma capsule on a Hulk: five levels over his own for five minutes. */
+    public static final int BOOST_LEVELS = 5;
+    public static final int BOOST_TICKS = 5 * 60 * 20;
+    private static final String BOOST_UNTIL = "boostUntil";
     private static final UUID KNOCKBACK_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a04");
     private static final UUID PUNCH_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a05");
     private static final UUID REACH_ID = UUID.fromString("5b0c9a52-6c11-4d43-9b3f-2a6e1f0c7a06");
@@ -111,7 +116,24 @@ public final class HulkPowers {
         if (!has(player)) {
             return 0;
         }
-        return Math.max(1, Math.min(MAX_LEVEL, tag(player).getInt(LEVEL)));
+        int base = Math.max(1, Math.min(MAX_LEVEL, tag(player).getInt(LEVEL)));
+        // the gamma boost: five levels over the one reached (up to 15), every stat follows it
+        return boostTicks(player) > 0 ? base + BOOST_LEVELS : base;
+    }
+
+    /** The level reached for good (without the gamma boost). */
+    public static int baseLevel(Player player) {
+        return has(player) ? Math.max(1, Math.min(MAX_LEVEL, tag(player).getInt(LEVEL))) : 0;
+    }
+
+    /** Ticks left of the gamma boost (0 = none). On the server clock: deaths, dimensions or reconnecting do not
+     * reset it. */
+    public static int boostTicks(Player player) {
+        if (!has(player)) {
+            return 0;
+        }
+        long left = tag(player).getLong(BOOST_UNTIL) - player.level().getGameTime();
+        return left > 0 ? (int) Math.min(Integer.MAX_VALUE, left) : 0;
     }
 
     /** Level picked with the level selector (1..level); 0 stored = always the highest. */
@@ -225,11 +247,31 @@ public final class HulkPowers {
         return true;
     }
 
-    /** Gamma syringe: a temporary Hulk at level 4 for 5 minutes. */
+    /**
+     * Gamma capsule in a syringe. A Hulk gets five levels over the highest one he reached, for 5 minutes
+     * (1 -> 6, 5 -> 10, 10 -> 15). A player without powers is a Hulk at level 5 for 5 minutes, and goes back to
+     * having no powers. Another hero can not take it.
+     */
     public static boolean injectGamma(ServerPlayer player) {
         if (has(player)) {
-            player.displayClientMessage(Component.translatable("message.flash.hulk_already"), true);
-            return false;
+            if (isTemporary(player) || boostTicks(player) > 0) {
+                player.displayClientMessage(Component.translatable("message.flash.hulk_already_boosted"), true);
+                return false;
+            }
+            CompoundTag tag = tag(player).copy();
+            tag.putLong(BOOST_UNTIL, player.level().getGameTime() + BOOST_TICKS);
+            save(player, tag);
+            if (!isTransformed(player)) {
+                setTransformed(player, true);
+            } else {
+                applyAttributes(player);
+                player.refreshDimensions();
+                burst(player);
+                sync(player);
+            }
+            player.displayClientMessage(Component.translatable("message.flash.hulk_boost", level(player),
+                    BOOST_TICKS / 1200), false);
+            return true;
         }
         if (com.flash.power.FlashPowers.hasPowers(player) || com.flash.power.FlashPowers.hasPermanentPowers(player)
                 || com.flash.superman.SupermanPowers.has(player) || com.flash.thor.ThorPowers.has(player)) {
@@ -552,9 +594,26 @@ public final class HulkPowers {
         CompoundTag tag = tag(player);
         long now = player.level().getGameTime();
         if (tag.contains(TEMP_UNTIL) && now >= tag.getLong(TEMP_UNTIL)) {
+            if (isTransformed(player)) {
+                setTransformed(player, false);
+            }
             revoke(player);
             player.displayClientMessage(Component.translatable("message.flash.hulk_temporary_end"), false);
             return;
+        }
+        if (tag.contains(BOOST_UNTIL) && now >= tag.getLong(BOOST_UNTIL)) {
+            // back to the level reached for good
+            CompoundTag t = tag.copy();
+            t.remove(BOOST_UNTIL);
+            save(player, t);
+            if (isTransformed(player)) {
+                applyAttributes(player);
+                player.refreshDimensions();
+            }
+            player.displayClientMessage(Component.translatable("message.flash.hulk_boost_end", baseLevel(player)),
+                    false);
+            sync(player);
+            tag = tag(player);
         }
         if (!isTransformed(player)) {
             return;
@@ -657,6 +716,9 @@ public final class HulkPowers {
                 bonusDamage(level, fury > 1.0D) * (extraTicks(player) > 0 ? 1.5D : 1.0D), AttributeModifier.Operation.ADDITION);
         set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, 0.45D + 0.06D * level, AttributeModifier.Operation.MULTIPLY_BASE);
         set(player, Attributes.MAX_HEALTH, HEALTH_ID, 6.0D + 2.0D * level, AttributeModifier.Operation.ADDITION);
+        // the Hulk swims fast (only him)
+        set(player, net.minecraftforge.common.ForgeMod.SWIM_SPEED.get(), SWIM_ID, 1.2D + 0.08D * level,
+                AttributeModifier.Operation.ADDITION);
         set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0D, AttributeModifier.Operation.ADDITION);
         set(player, Attributes.ATTACK_KNOCKBACK, PUNCH_ID, 1.0D + 0.3D * level, AttributeModifier.Operation.ADDITION);
         set(player, net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(), REACH_ID,
@@ -701,6 +763,7 @@ public final class HulkPowers {
         remove(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID);
         remove(player, Attributes.MOVEMENT_SPEED, SPEED_ID);
         remove(player, Attributes.MAX_HEALTH, HEALTH_ID);
+        remove(player, net.minecraftforge.common.ForgeMod.SWIM_SPEED.get(), SWIM_ID);
         remove(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID);
         remove(player, Attributes.ATTACK_KNOCKBACK, PUNCH_ID);
         remove(player, net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(), REACH_ID);

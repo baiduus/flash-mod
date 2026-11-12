@@ -181,6 +181,25 @@ public final class ModItems {
             () -> new net.minecraft.world.item.BlockItem(ModBlocks.GAMMA_REACTOR.get(),
                     new Item.Properties()));
 
+    /** Five of them lie in every crashed Kryptonian ship; the Processor turns five into Kryptonian blood. */
+    public static final RegistryObject<Item> KRYPTONIAN_CELL = ITEMS.register("kryptonian_cell",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.RARE),
+                    "tooltip.flash.kryptonian_cell", "tooltip.flash.kryptonian_cell.2"));
+
+    /** The power capsules (made in the Processor or taken out of a hero with an empty syringe). */
+    public static final RegistryObject<Item> KRYPTONIAN_BLOOD_CAPSULE = ITEMS.register("kryptonian_blood_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.kryptonian_blood_capsule", "tooltip.flash.power_capsule"));
+    public static final RegistryObject<Item> HULK_ESSENCE_CAPSULE = ITEMS.register("hulk_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.hulk_essence_capsule", "tooltip.flash.power_capsule"));
+    public static final RegistryObject<Item> FLASH_ESSENCE_CAPSULE = ITEMS.register("flash_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.flash_essence_capsule", "tooltip.flash.power_capsule"));
+    public static final RegistryObject<Item> THOR_ESSENCE_CAPSULE = ITEMS.register("thor_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.thor_essence_capsule", "tooltip.flash.power_capsule"));
+
     public static final RegistryObject<Item> GAMMA_CAPSULE = ITEMS.register(
             "gamma_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16),

@@ -60,6 +60,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.ACCELERATION_PHANTOM_SPAWN_EGG.get());
                         output.accept(ModItems.FLASH_RING.get());
                         output.accept(ModItems.TACHYON_AMPLIFIER.get());
+                        output.accept(ModItems.FLASH_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.FLASH_SUIT_STAND.get());
                         output.accept(potion(Potions.SWIFTNESS));
                         output.accept(potion(Potions.REGENERATION));
@@ -84,6 +85,8 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.GAMMA_CHAMBER.get());
                         output.accept(ModItems.GAMMA_REACTOR.get());
                         output.accept(ModItems.GAMMA_CAPSULE.get());
+                        output.accept(ModItems.HULK_ESSENCE_CAPSULE.get());
+                        output.accept(ModItems.TACHYON_EXTRACTOR.get());
                         output.accept(ModItems.SYRINGE.get());
                         output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
                                 com.flash.item.SyringeContents.GAMMA));
@@ -98,7 +101,12 @@ public final class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModItems.KRYPTONIAN_BABY.get()))
                     .withTabsBefore(HULK.getKey())
                     .displayItems((parameters, output) -> {
-                        output.accept(ModItems.KRYPTONIAN_BABY.get());
+                        output.accept(ModItems.KRYPTONIAN_CELL.get());
+                        output.accept(ModItems.KRYPTONIAN_BLOOD_CAPSULE.get());
+                        output.accept(com.flash.item.SyringeItem.filled(ModItems.SYRINGE.get(),
+                                com.flash.item.SyringeContents.KRYPTONIAN_BLOOD));
+                        output.accept(ModItems.SYRINGE.get());
+                        output.accept(ModItems.TACHYON_EXTRACTOR.get());
                         output.accept(ModItems.KRYPTONIAN_DEBRIS.get());
                     })
                     .build());
@@ -112,6 +120,9 @@ public final class ModCreativeTabs {
                     .withTabsBefore(SUPERMAN.getKey())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.MJOLNIR.get());
+                        output.accept(ModItems.THOR_ESSENCE_CAPSULE.get());
+                        output.accept(ModItems.SYRINGE.get());
+                        output.accept(ModItems.TACHYON_EXTRACTOR.get());
                     })
                     .build());
 

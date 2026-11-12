@@ -72,6 +72,17 @@ public class TachyonExtractorBlock extends BaseEntityBlock {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
+    /** The Processor's own outline: plinth, the four pillars and chamber, the crown and its coil. */
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE = net.minecraft.world.phys.shapes.Shapes.or(
+            Block.box(0, 0, 0, 16, 3, 16), Block.box(1, 3, 1, 15, 15, 15), Block.box(5, 15, 5, 11, 17.5, 11));
+
+    @Override
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level,
+                                                               BlockPos pos,
+                                                               net.minecraft.world.phys.shapes.CollisionContext context) {
+        return SHAPE;
+    }
+
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;

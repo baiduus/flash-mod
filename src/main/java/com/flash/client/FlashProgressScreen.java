@@ -140,7 +140,8 @@ public class FlashProgressScreen extends Screen {
     /** Tabs shown for the current state: without a power only the neutral progress tab exists. */
     private static int[] visibleTabs() {
         if (PowerTheme.localHulk() || PowerTheme.localSuperman() || PowerTheme.localThor()) {
-            return new int[] {TAB_PROGRESS, TAB_CONFIG};
+            // every hero has the equipment tab (the Processor works for all of them)
+            return new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG};
         }
         return FlashClientData.hasPowers() ? new int[] {TAB_PROGRESS, TAB_EQUIP, TAB_CONFIG}
                 : new int[] {TAB_PROGRESS};
@@ -1516,7 +1517,63 @@ public class FlashProgressScreen extends Screen {
         return false;
     }
 
+    private static boolean flashEquipment() {
+        return !(PowerTheme.localHulk() || PowerTheme.localSuperman() || PowerTheme.localThor());
+    }
+
+    /** The Processor card: the machine of every hero and what it makes. */
+    private void drawProcessorCard(GuiGraphics g, int x, int y, int w, int h) {
+        card(g, x, y, w, h, 0.0F);
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(x + 10, y + 8, 0.0F);
+        pose.scale(1.5F, 1.5F, 1.0F);
+        g.renderItem(new net.minecraft.world.item.ItemStack(com.flash.registry.ModItems.TACHYON_EXTRACTOR.get()), 0, 0);
+        pose.popPose();
+        g.drawString(this.font, Component.translatable("block.flash.tachyon_extractor"), x + 40, y + 10, COLOR_TEXT,
+                false);
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                Component.translatable("gui.flash.equip.processor_help").getString(), w - 50), x + 40, y + 22,
+                COLOR_DIM, false);
+        Object[][] rows = {
+                {com.flash.registry.ModItems.TORN_SUIT.get(), "gui.flash.equip.processor_suit",
+                        com.flash.registry.ModItems.TACHYON.get()},
+                {net.minecraft.world.item.Items.NETHER_WART, "gui.flash.equip.processor_fungi",
+                        com.flash.registry.ModItems.CORRUPTED_MATTER.get()},
+                {com.flash.registry.ModItems.KRYPTONIAN_CELL.get(), "gui.flash.equip.processor_cells",
+                        com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get()}};
+        int ry = y + 40;
+        for (Object[] r : rows) {
+            if (ry + 18 > y + h) {
+                break;
+            }
+            g.renderItem(new net.minecraft.world.item.ItemStack((net.minecraft.world.item.Item) r[0]), x + 10, ry);
+            g.drawString(this.font, "→", x + 30, ry + 4, accent(), false);
+            g.renderItem(new net.minecraft.world.item.ItemStack((net.minecraft.world.item.Item) r[2]), x + 40, ry);
+            g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable((String) r[1]).getString(),
+                    w - 70), x + 62, ry + 4, COLOR_MUTED, false);
+            ry += 20;
+        }
+    }
+
     private void drawEquipTab(GuiGraphics g, int mx, int my) {
+        if (!flashEquipment()) {
+            // the other heroes: the Processor, next to the preview of the hero
+            drawProcessorCard(g, PAD, CONTENT_Y, EQ_W, CONTENT_BOTTOM - CONTENT_Y);
+            int vx = PAD + EQ_W + 10;
+            int vw = PW - PAD - vx;
+            card(g, vx, CONTENT_Y, vw, CONTENT_BOTTOM - CONTENT_Y, 0.0F);
+            g.fillGradient(vx + 1, CONTENT_Y + 1, vx + vw - 1, CONTENT_BOTTOM - 1,
+                    withAlpha(accentDark(), 0.8F), 0x00000000);
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                int px = vx + vw / 2;
+                int py = CONTENT_BOTTOM - 26;
+                net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
+                        g, px, py, 80, (float) (px - mx), (float) (py - 120 - my), mc.player);
+            }
+            return;
+        }
         boolean ring = FlashClientRing.isLocalEquipped();
         boolean amp = FlashClientRing.isLocalAmplifier();
 
@@ -1551,19 +1608,22 @@ public class FlashProgressScreen extends Screen {
                         Component.translatable("gui.flash.equip.amplifier_help").getString(), EQ_W - 24),
                 PAD + 12, AMP_Y + 74, COLOR_DIM, false);
 
-        // live preview of the player (ring on the hand, amplifier on the chest)
+        // live preview of the player (ring on the hand, amplifier on the chest), the Processor under it
         int vx = PAD + EQ_W + 10;
         int vw = PW - PAD - vx;
-        card(g, vx, CONTENT_Y, vw, CONTENT_BOTTOM - CONTENT_Y, 0.0F);
-        g.fillGradient(vx + 1, CONTENT_Y + 1, vx + vw - 1, CONTENT_BOTTOM - 1,
+        int procH = 112;
+        int previewBottom = CONTENT_BOTTOM - procH - 8;
+        card(g, vx, CONTENT_Y, vw, previewBottom - CONTENT_Y, 0.0F);
+        g.fillGradient(vx + 1, CONTENT_Y + 1, vx + vw - 1, previewBottom - 1,
                 withAlpha(accentDark(), 0.8F), 0x00000000);
-        g.fill(vx + 10, CONTENT_BOTTOM - 26, vx + vw - 10, CONTENT_BOTTOM - 25, withAlpha(accent(), 0.4F));
+        g.fill(vx + 10, previewBottom - 12, vx + vw - 10, previewBottom - 11, withAlpha(accent(), 0.4F));
+        drawProcessorCard(g, vx, previewBottom + 8, vw, procH);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             int px = vx + vw / 2;
-            int py = CONTENT_BOTTOM - 26;
+            int py = previewBottom - 12;
             net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
-                    g, px, py, 80, (float) (px - mx), (float) (py - 120 - my), mc.player);
+                    g, px, py, 45, (float) (px - mx), (float) (py - 70 - my), mc.player);
         }
     }
 
@@ -1607,6 +1667,9 @@ public class FlashProgressScreen extends Screen {
     }
 
     private boolean clickEquip(double mx, double my) {
+        if (!flashEquipment()) {
+            return false;
+        }
         int ix = (int) mx;
         int iy = (int) my;
         if (inside(ix, iy, ringBtnX(), ringBtnY(), BTN_W, BTN_H)) {

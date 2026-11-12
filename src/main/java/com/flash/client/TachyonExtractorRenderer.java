@@ -50,7 +50,7 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
         if (!stack.isEmpty()) {
             poseStack.pushPose();
             float bob = working ? Mth.sin(time * 0.12F) * (1.0F / 16.0F) : 0.0F;
-            poseStack.translate(0.5D, 0.31D + bob * 0.6F, 0.5D);
+            poseStack.translate(0.5D, 0.46D + bob * 0.6F, 0.5D);
             poseStack.scale(0.36F, 0.36F, 0.36F);
             float spin = working ? time * 4.0F : (extractor.isDone() ? time * 2.0F : 0.0F);
             poseStack.mulPose(Axis.YP.rotationDegrees(spin));
@@ -69,21 +69,34 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
     }
 
     private static final net.minecraft.resources.ResourceLocation GLASS =
-            new net.minecraft.resources.ResourceLocation("flash", "textures/block/tachyon_extractor_glass.png");
+            new net.minecraft.resources.ResourceLocation("flash", "textures/block/processor/glass.png");
 
-    /** Translucent glass over the window. It uses a render type that does not write depth, so the item behind it is never hidden. */
+    /** The glass of the chamber, on its four sides (a render type that does not write depth, so the item inside
+     * always shows). */
     private void drawGlass(PoseStack poseStack, MultiBufferSource buffers, int light) {
         VertexConsumer consumer = buffers.getBuffer(RenderType.beaconBeam(GLASS, true));
         PoseStack.Pose pose = poseStack.last();
-        float x0 = 4.0F / 16.0F;
-        float x1 = 12.0F / 16.0F;
-        float y0 = 2.0F / 16.0F;
-        float y1 = 8.0F / 16.0F;
-        float z = -0.25F / 16.0F;
-        glassVertex(consumer, pose, x0, y0, z, 0.0F, 1.0F, light);
-        glassVertex(consumer, pose, x1, y0, z, 1.0F, 1.0F, light);
-        glassVertex(consumer, pose, x1, y1, z, 1.0F, 0.0F, light);
-        glassVertex(consumer, pose, x0, y1, z, 0.0F, 0.0F, light);
+        float a = 3.0F / 16.0F;
+        float b = 13.0F / 16.0F;
+        float y0 = 3.5F / 16.0F;
+        float y1 = 12.6F / 16.0F;
+        // north, south, west, east
+        glassVertex(consumer, pose, a, y0, a, 0.0F, 1.0F, light);
+        glassVertex(consumer, pose, b, y0, a, 1.0F, 1.0F, light);
+        glassVertex(consumer, pose, b, y1, a, 1.0F, 0.0F, light);
+        glassVertex(consumer, pose, a, y1, a, 0.0F, 0.0F, light);
+        glassVertex(consumer, pose, b, y0, b, 0.0F, 1.0F, light);
+        glassVertex(consumer, pose, a, y0, b, 1.0F, 1.0F, light);
+        glassVertex(consumer, pose, a, y1, b, 1.0F, 0.0F, light);
+        glassVertex(consumer, pose, b, y1, b, 0.0F, 0.0F, light);
+        glassVertex(consumer, pose, a, y0, b, 0.0F, 1.0F, light);
+        glassVertex(consumer, pose, a, y0, a, 1.0F, 1.0F, light);
+        glassVertex(consumer, pose, a, y1, a, 1.0F, 0.0F, light);
+        glassVertex(consumer, pose, a, y1, b, 0.0F, 0.0F, light);
+        glassVertex(consumer, pose, b, y0, a, 0.0F, 1.0F, light);
+        glassVertex(consumer, pose, b, y0, b, 1.0F, 1.0F, light);
+        glassVertex(consumer, pose, b, y1, b, 1.0F, 0.0F, light);
+        glassVertex(consumer, pose, b, y1, a, 0.0F, 0.0F, light);
     }
 
     private static void glassVertex(VertexConsumer consumer, PoseStack.Pose pose, float x, float y,
@@ -99,14 +112,12 @@ public class TachyonExtractorRenderer implements BlockEntityRenderer<TachyonExtr
         if (fraction <= 0.0F) {
             return;
         }
-        // Track of the panel: texture row 3 (block y 12..13), columns 7..13.
-        // The emissive overlay shell of the powered model sits at z = -0.02, so
-        // the bar is drawn clearly in front of it.
-        float x0 = 7.0F / 16.0F;
+        // the control screen on the front of the plinth (x 4..12, y 0.5..2.5, its face at z = -0.5 px)
+        float x0 = 5.0F / 16.0F;
         float x1 = x0 + 6.0F / 16.0F * fraction;
-        float y0 = 12.0F / 16.0F;
-        float y1 = 13.0F / 16.0F;
-        float z = -0.035F;
+        float y0 = 1.1F / 16.0F;
+        float y1 = 1.9F / 16.0F;
+        float z = -0.5F / 16.0F - 0.004F;
         VertexConsumer consumer = buffers.getBuffer(RenderType.lightning());
         Matrix4f matrix = poseStack.last().pose();
         int r = 255, g = 150, b = 30, a = 255;

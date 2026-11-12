@@ -37,6 +37,20 @@ public final class SyringeContents {
     public static final SyringeContent GAMMA = register(new SyringeContent(
             "gamma", 3, ModItems.GAMMA_CAPSULE::get, com.flash.hulk.HulkPowers::injectGamma));
 
+    /** The power capsules: Superman, Hulk, Flash and Thor for good (see {@link com.flash.power.HeroPowers}). */
+    public static final SyringeContent KRYPTONIAN_BLOOD = register(new SyringeContent(
+            "kryptonian_blood", 4, ModItems.KRYPTONIAN_BLOOD_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.SUPERMAN)));
+    public static final SyringeContent HULK_ESSENCE = register(new SyringeContent(
+            "hulk_essence", 5, ModItems.HULK_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.HULK)));
+    public static final SyringeContent FLASH_ESSENCE = register(new SyringeContent(
+            "flash_essence", 6, ModItems.FLASH_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.FLASH)));
+    public static final SyringeContent THOR_ESSENCE = register(new SyringeContent(
+            "thor_essence", 7, ModItems.THOR_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.THOR)));
+
     private SyringeContents() {
     }
 
