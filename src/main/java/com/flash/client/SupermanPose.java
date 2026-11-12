@@ -142,6 +142,12 @@ public final class SupermanPose {
         STATES.clear();
     }
 
+    /** One-shot playing on a player (null when none). */
+    public static String shot(UUID player) {
+        State st = STATES.get(player);
+        return st != null ? st.shot : null;
+    }
+
     /** Base flight animation playing on a player (null when none). */
     public static String base(UUID player) {
         State st = STATES.get(player);
@@ -324,31 +330,9 @@ public final class SupermanPose {
         return com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_ON);
     }
 
-    private static String chooseLexBase(AbstractClientPlayer player, State st) {
-        boolean flying = flying(player);
-        double vx = player.getX() - player.xo;
-        double vz = player.getZ() - player.zo;
-        double hs = Math.sqrt(vx * vx + vz * vz);
-        if (!flying && st.wasFlying && player.onGround() && st.shot == null) {
-            shot(player, st, "landing", 0);
-        }
-        st.wasFlying = flying;
-        if (!flying || player.isPassenger() || player.isSwimming()) {
-            return null;
-        }
-        boolean fast = player == Minecraft.getInstance().player ? player.isSprinting()
-                : com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_FAST);
-        if (fast && hs + Math.abs(player.getY() - player.yo) > 0.3D) {
-            return "lex_fly_fast";
-        }
-        return hs > 0.12D ? "lex_fly_cruise" : "lex_fly_hover";
-    }
 
     /** Base animation from the flight state and the motion. */
     private static String chooseBase(AbstractClientPlayer player, State st) {
-        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player)) {
-            return chooseLexBase(player, st);
-        }
         boolean flying = flying(player);
         double vx = player.getX() - player.xo;
         double vy = player.getY() - player.yo;
@@ -398,7 +382,7 @@ public final class SupermanPose {
         }
         if (hs < 0.08D) {
             // high up in the sunlight: basking, arms open to the sun
-            return basking(player) ? "solar_bask" : "hover";
+            return basking(player) && !lex(player) ? "solar_bask" : "hover";
         }
         if (forward < -0.05D && -forward > Math.abs(left)) {
             return "reverse_flight";

@@ -10,8 +10,6 @@ import dev.kosmx.playerAnim.core.util.Vec3f;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationFactory;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
@@ -25,37 +23,28 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * Iron Man's flight of Legends: Superheroes for Lex's suit, on the client.
+ * Lex's suit in flight, on the client. The flight itself is the mod's (Superman's and Thor's aimed flight,
+ * SupermanClient, with their poses and lean), with Iron Man's arms held back ({@link ArmsBack}) and the suit's own
+ * green thrusters:
  * <ul>
- * <li>The fast flight: sprinting in the air the suit flies where the pilot looks, with momentum (the vanilla
- * creative flight stays for hovering and slow moves).</li>
- * <li>The body: upright while hovering, leaning a little into the motion when cruising and banking into turns; in
- * the fast flight it lies along the look (Legends: 90 degrees plus the pitch), the head kept looking ahead. The arm
- * and leg poses are the {@code lex_fly_*} animations (SupermanPose).</li>
- * <li>The thrusters: their start, loop and stop sounds (Legends' jetpack thrust), smoke under the boots and the
- * trail of the fast flight; the flames themselves are drawn by {@link LexSuitLayer}.</li>
- * <li>The moving parts of the Mark 6 (faceplate, back flaps, wrist lasers, wrist launcher, overdrive), eased in and
+ * <li>their start, loop and stop sounds (Legends' jetpack thrust), smoke under the boots and the trail of the fast
+ * flight; the flames themselves are drawn by {@link LexSuitLayer};</li>
+ * <li>the moving parts of the Mark 6 (faceplate, back flaps, wrist lasers, wrist launcher, overdrive), eased in and
  * out for {@link LexSuitLayer}.</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT)
 public final class LexFlight {
 
-    private static final ResourceLocation HEAD_LAYER = new ResourceLocation(FlashMod.MODID, "lex_flight_head");
+    private static final ResourceLocation ARMS_LAYER = new ResourceLocation(FlashMod.MODID, "lex_flight_arms");
 
-    /** Fast flight speed (blocks per tick), and in overdrive. */
-    private static final double FAST = 1.15D;
-    private static final double FAST_OVERDRIVE = 1.6D;
 
     // the parts of the suit that move (progress 0..1)
     public static final int P_FACEPLATE = 0;
@@ -73,26 +62,18 @@ public final class LexFlight {
     private static final class State {
         final float[] part = new float[PARTS];
         final float[] partO = new float[PARTS];
-        float pitch;
-        float roll;
-        long lastNanos;
         boolean flying;
-        boolean pushed;
         ThrustLoop loop;
     }
 
     private static final Map<Integer, State> STATES = new HashMap<>();
-    /** Body pitch drawn this frame per player (for the head layer). */
-    private static final Map<UUID, Float> PITCH = new ConcurrentHashMap<>();
-    private static Vec3 fastVelocity;
 
     private LexFlight() {
     }
 
     public static void reset() {
         STATES.clear();
-        PITCH.clear();
-        fastVelocity = null;
+
     }
 
     private static State state(Entity e) {
@@ -117,7 +98,8 @@ public final class LexFlight {
 
     private static boolean fast(Player p) {
         if (p instanceof LocalPlayer local) {
-            return flying(p) && local.isSprinting();
+            return flying(p) && Minecraft.getInstance().options.keySprint.isDown() && local.input != null
+                    && local.input.forwardImpulse > 0.0F;
         }
         return LexState.flag(p, LexSuit.F_FAST);
     }
@@ -125,33 +107,6 @@ public final class LexFlight {
     // ------------------------------------------------------------------
     // Ticks: the fast flight, the parts, the sounds and the smoke
     // ------------------------------------------------------------------
-
-    /** After the move of the tick: the velocity the next tick will fly with. */
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof LocalPlayer p)) {
-            return;
-        }
-        boolean steer = LexClient.pilot(p) && fast(p) && p.input != null && p.input.forwardImpulse > 0.0F;
-        if (!steer) {
-            fastVelocity = null;
-            return;
-        }
-        Vec3 now = p.getDeltaMovement();
-        if (fastVelocity == null) {
-            fastVelocity = now;
-        }
-        double speed = LexState.flag(p, LexSuit.F_OVERDRIVE) ? FAST_OVERDRIVE : FAST;
-        Vec3 target = p.getLookAngle().scale(speed);
-        fastVelocity = fastVelocity.add(target.subtract(fastVelocity).scale(0.14D));
-        if (p.horizontalCollision) {
-            fastVelocity = new Vec3(fastVelocity.x * 0.4D, fastVelocity.y, fastVelocity.z * 0.4D);
-        }
-        if (p.verticalCollision) {
-            fastVelocity = new Vec3(fastVelocity.x, fastVelocity.y * 0.4D, fastVelocity.z);
-        }
-        p.setDeltaMovement(fastVelocity);
-    }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -183,10 +138,6 @@ public final class LexFlight {
                     s.loop = new ThrustLoop(p);
                     mc.getSoundManager().play(s.loop);
                 }
-                if (fast(p)) {
-                    // the body lies along the flight: the body turns with the look
-                    p.yBodyRot = p.yHeadRot;
-                }
                 smoke(p, s);
             }
         }
@@ -198,17 +149,18 @@ public final class LexFlight {
         if (p == mc.player && mc.options.getCameraType().isFirstPerson() && !fast(p) && p.tickCount % 2 == 0) {
             return;
         }
-        Quaternionf q = bodyRotation(p, s.pitch, s.roll, 1.0F);
         double yaw = Math.toRadians(p.yBodyRot);
         Vector3f left = new Vector3f((float) Math.cos(yaw), 0.0F, (float) Math.sin(yaw));
         boolean fast = fast(p);
+        Vec3 v = p.getDeltaMovement();
+        // the feet: under the body hovering, behind it in a fast (lying) flight
+        Vec3 back = v.lengthSqr() > 1.0E-4D ? v.normalize().scale(-0.9D) : new Vec3(0.0D, -0.9D, 0.0D);
         for (int side = -1; side <= 1; side += 2) {
-            Vector3f foot = new Vector3f(left).mul(0.12F * side).add(0.0F, -0.95F, 0.0F);
-            q.transform(foot);
-            double x = p.getX() + foot.x;
-            double y = p.getY() + 0.9D + foot.y;
-            double z = p.getZ() + foot.z;
-            Vec3 v = p.getDeltaMovement();
+            Vector3f foot = new Vector3f(left).mul(0.12F * side);
+            Vec3 at = fast ? p.position().add(0.0D, 0.9D, 0.0D).add(back) : p.position();
+            double x = at.x + foot.x;
+            double y = at.y + foot.y;
+            double z = at.z + foot.z;
             if (fast) {
                 mc.level.addParticle(ParticleTypes.CLOUD, x - v.x * 0.5D, y - v.y * 0.5D, z - v.z * 0.5D, 0.0D, 0.0D,
                         0.0D);
@@ -263,95 +215,38 @@ public final class LexFlight {
     // The body in flight
     // ------------------------------------------------------------------
 
-    /** Pitch forward (degrees) and bank (degrees, + to the left) of the body, around its middle. */
-    private static Quaternionf bodyRotation(Player p, float pitch, float roll, float partial) {
-        double yaw = Math.toRadians(Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot));
-        float fx = (float) -Math.sin(yaw);
-        float fz = (float) Math.cos(yaw);
-        // up turned toward the front around up x front, and toward the left around up x left
-        Quaternionf q = new Quaternionf().rotateAxis((float) Math.toRadians(pitch), fz, 0.0F, -fx);
-        q.mul(new Quaternionf().rotateAxis((float) Math.toRadians(roll), (float) Math.sin(yaw), 0.0F,
-                (float) -Math.cos(yaw)));
-        return q;
-    }
+    /**
+     * The flight is the mod's own (Superman's and Thor's: SupermanClient moves and leans the body, SupermanPose
+     * picks the poses), with Iron Man's arms: held back along the body, palms behind, while no move of the suit is
+     * playing.
+     */
+    private static final class ArmsBack implements IAnimation {
+        private final AbstractClientPlayer player;
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onRenderPre(RenderPlayerEvent.Pre event) {
-        Player p = event.getEntity();
-        State s = STATES.get(p.getId());
-        if (s == null) {
-            return;
-        }
-        float partial = event.getPartialTick();
-        long nanos = System.nanoTime();
-        float dt = s.lastNanos == 0L ? 0.05F : Math.min(0.1F, (nanos - s.lastNanos) / 1.0E9F);
-        s.lastNanos = nanos;
-        float targetPitch = 0.0F;
-        float targetRoll = 0.0F;
-        if (flying(p) && !p.isPassenger()) {
-            double vx = p.getX() - p.xo;
-            double vy = p.getY() - p.yo;
-            double vz = p.getZ() - p.zo;
-            double yaw = Math.toRadians(p.yBodyRot);
-            double forward = -vx * Math.sin(yaw) + vz * Math.cos(yaw);
-            double left = vx * Math.cos(yaw) + vz * Math.sin(yaw);
-            double speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
-            float turn = Mth.wrapDegrees(p.yHeadRot - p.yHeadRotO);
-            if (fast(p) && speed > 0.3D) {
-                targetPitch = Mth.clamp(90.0F + p.getViewXRot(partial), 0.0F, 180.0F);
-                targetRoll = Mth.clamp(-turn * 2.2F, -45.0F, 45.0F);
-            } else {
-                targetPitch = (float) Mth.clamp(forward * 45.0D, -12.0D, 22.0D);
-                targetRoll = (float) Mth.clamp(left * 55.0D, -22.0D, 22.0D);
-            }
-        }
-        float k = 1.0F - (float) Math.exp(-dt * 7.0F);
-        s.pitch += (targetPitch - s.pitch) * k;
-        s.roll += (targetRoll - s.roll) * k;
-        if (Math.abs(s.pitch) < 0.3F && Math.abs(s.roll) < 0.3F) {
-            s.pitch = 0.0F;
-            s.roll = 0.0F;
-            PITCH.remove(p.getUUID());
-            return;
-        }
-        PITCH.put(p.getUUID(), s.pitch);
-        var pose = event.getPoseStack();
-        pose.pushPose();
-        s.pushed = true;
-        pose.translate(0.0D, 0.9D, 0.0D);
-        pose.mulPose(bodyRotation(p, s.pitch, s.roll, partial));
-        pose.translate(0.0D, -0.9D, 0.0D);
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onRenderPost(RenderPlayerEvent.Post event) {
-        State s = STATES.get(event.getEntity().getId());
-        if (s != null && s.pushed) {
-            s.pushed = false;
-            event.getPoseStack().popPose();
-        }
-    }
-
-    /** Keeps the head looking ahead while the body is tilted (Legends' keepHeadLooking). */
-    private static final class HeadLayer implements IAnimation {
-        private final UUID player;
-
-        HeadLayer(AbstractClientPlayer player) {
-            this.player = player.getUUID();
+        ArmsBack(AbstractClientPlayer player) {
+            this.player = player;
         }
 
         @Override
         public boolean isActive() {
-            return PITCH.containsKey(this.player);
+            return flying(this.player) && !this.player.isPassenger() && SupermanPose.base(this.player.getUUID()) != null
+                    && SupermanPose.shot(this.player.getUUID()) == null;
         }
 
         @Override
         public Vec3f get3DTransform(String modelName, TransformType type, float tickDelta, Vec3f value0) {
-            Float pitch = PITCH.get(this.player);
-            if (pitch == null || type != TransformType.ROTATION || !"head".equals(modelName)) {
+            if (type != TransformType.ROTATION) {
                 return value0;
             }
-            return new Vec3f(value0.getX() - (float) Math.toRadians(pitch), value0.getY(), value0.getZ());
+            float fast = part(this.player, P_THRUSTERS, tickDelta);
+            float sway = (float) Math.sin((this.player.tickCount + tickDelta) * 0.08F) * 0.03F;
+            if ("rightArm".equals(modelName)) {
+                return new Vec3f(0.42F + 0.25F * fast + sway, 0.0F, 0.14F - 0.06F * fast);
+            }
+            if ("leftArm".equals(modelName)) {
+                return new Vec3f(0.42F + 0.25F * fast - sway, 0.0F, -0.14F + 0.06F * fast);
+            }
+            return value0;
         }
 
         @Override
@@ -366,7 +261,7 @@ public final class LexFlight {
 
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(HEAD_LAYER, 1300, HeadLayer::new);
+            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(ARMS_LAYER, 1300, ArmsBack::new);
         }
     }
 }

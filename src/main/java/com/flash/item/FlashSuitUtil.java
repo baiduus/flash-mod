@@ -214,30 +214,24 @@ public final class FlashSuitUtil {
 
     /** Stand: swaps suit pieces between the wearer and the stand. */
     public static boolean swapWithStand(Player player, LivingEntity stand) {
-        // any hero suit / armour of the mod (Flash suits, Lex Luthor's armour...)
-        boolean wearing = countSuit(player) > 0 || countLex(player) > 0;
-        boolean standHas = countSuit(stand) > 0 || countLex(stand) > 0;
-        if (!wearing && !standHas) {
-            return false;
-        }
+        // any armour, of any hero or none: the four slots are swapped between the player and the stand (a piece
+        // with the Curse of Binding stays on the player)
+        boolean any = false;
         for (EquipmentSlot slot : SLOTS) {
             ItemStack mine = player.getItemBySlot(slot);
             ItemStack theirs = stand.getItemBySlot(slot);
-            if (wearing) {
-                if (!isSuit(mine) && !LexArmorItem.isLex(mine)) {
-                    continue;
-                }
-                stand.setItemSlot(slot, mine);
-                player.setItemSlot(slot, ItemStack.EMPTY);
-                giveOrDrop(player, theirs); // whatever the stand held goes to the player
-            } else {
-                if (!isSuit(theirs) && !LexArmorItem.isLex(theirs)) {
-                    continue;
-                }
-                player.setItemSlot(slot, theirs);
-                stand.setItemSlot(slot, ItemStack.EMPTY);
-                giveOrDrop(player, mine);   // the clothes replaced go to the inventory
+            if (mine.isEmpty() && theirs.isEmpty()) {
+                continue;
             }
+            if (!player.isCreative() && net.minecraft.world.item.enchantment.EnchantmentHelper.hasBindingCurse(mine)) {
+                continue;
+            }
+            stand.setItemSlot(slot, mine);
+            player.setItemSlot(slot, theirs);
+            any = true;
+        }
+        if (!any) {
+            return false;
         }
         if (player.level() instanceof ServerLevel level) {
             level.playSound(null, stand.blockPosition(), SoundEvents.ARMOR_EQUIP_NETHERITE,

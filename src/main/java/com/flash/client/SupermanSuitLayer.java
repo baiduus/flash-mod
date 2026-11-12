@@ -113,7 +113,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
     }
 
-    private static ModelPart part(PlayerModel<?> m, String bone) {
+    private static ModelPart part(net.minecraft.client.model.HumanoidModel<?> m, String bone) {
         return switch (bone) {
             case "head" -> m.head;
             case "body" -> m.body;
@@ -193,8 +193,45 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
     }
 
+    /**
+     * A hero suit on display (the mod's armour stand): the same model and layers as worn, standing still, with the
+     * cape hanging at rest.
+     */
+    public static void renderDisplay(net.minecraft.client.model.HumanoidModel<?> parent, String id, PoseStack pose,
+                                     MultiBufferSource buffers, int light, int overlay) {
+        GeoModel model = model(id);
+        if (model == null) {
+            return;
+        }
+        model.reset();
+        RenderType top = RenderType.entityCutoutNoCull(tex(id, "layer_0"));
+        RenderType bottom = RenderType.entityCutoutNoCull(tex(id, "layer_1"));
+        if (thor(id)) {
+            for (GeoModel.Bone root : model.roots()) {
+                drawBone(model, root, partFor(parent, root.name), pose, buffers, bottom, light, overlay);
+            }
+            for (GeoModel.Bone root : model.roots()) {
+                drawBone(model, root, partFor(parent, root.name), pose, buffers, top, light, overlay);
+            }
+        } else {
+            for (String b : new String[] {"right_leg", "left_leg"}) {
+                draw(model, parent, b, pose, buffers, bottom, light, overlay);
+            }
+            for (String b : BONES) {
+                draw(model, parent, b, pose, buffers, top, light, overlay);
+            }
+        }
+        if (SupermanSuits.hasOverlay(id)) {
+            draw(model, parent, "head", pose, buffers, RenderType.entityTranslucent(tex(id, "helmet_overlay")), light,
+                    overlay);
+        }
+        if (thor(id) ? com.flash.thor.ThorSuits.hasCape(id) : SupermanSuits.hasCape(id)) {
+            SupermanCape.renderRest(pose, buffers, light, parent, tex(id, "cape"));
+        }
+    }
+
     /** The vanilla part a top bone follows, from its name (any case, with or without "_"). */
-    private static ModelPart partFor(PlayerModel<?> m, String bone) {
+    private static ModelPart partFor(net.minecraft.client.model.HumanoidModel<?> m, String bone) {
         String n = bone.toLowerCase(java.util.Locale.ROOT).replace("_", "");
         return switch (n) {
             case "head" -> m.head;
@@ -221,7 +258,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         return null;
     }
 
-    private static void draw(GeoModel model, PlayerModel<?> parent, String boneName, PoseStack pose,
+    private static void draw(GeoModel model, net.minecraft.client.model.HumanoidModel<?> parent, String boneName, PoseStack pose,
                              MultiBufferSource buffers, RenderType type, int light, int overlay) {
         GeoModel.Bone bone = rootFor(model, boneName);
         if (bone == null) {

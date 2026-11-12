@@ -1285,8 +1285,23 @@ public class FlashProgressScreen extends Screen {
         card(g, x, y, w, h, 0.0F);
         g.fill(x, y + 6, x + 2, y + h - 6, accent());
         g.drawString(this.font, label, x + 10, y + 7, COLOR_MUTED, false);
-        scaledText(g, value, x + 10, y + 20, 1.3F, COLOR_TEXT);
-        g.drawString(this.font, extra, x + w - 8 - this.font.width(extra), y + 24, accent(), false);
+        // the value shrinks to fit the card; the extra goes beside it when there is room, else on the label line
+        // (cut to the room left there), so the texts never run over each other or out of the card
+        float scale = Math.min(1.3F, (w - 20.0F) / Math.max(1, this.font.width(value)));
+        scaledText(g, value, x + 10, y + 20, scale, COLOR_TEXT);
+        int valueEnd = x + 10 + Math.round(this.font.width(value) * scale);
+        int ew = this.font.width(extra);
+        if (x + w - 8 - ew >= valueEnd + 8) {
+            g.drawString(this.font, extra, x + w - 8 - ew, y + 24, accent(), false);
+        } else {
+            int room = w - 26 - this.font.width(label);
+            String cut = this.font.plainSubstrByWidth(extra.getString(), Math.max(0, room));
+            if (cut.length() < extra.getString().length() && cut.length() > 1) {
+                cut = this.font.plainSubstrByWidth(extra.getString(), Math.max(0, room - this.font.width("…")))
+                        + "…";
+            }
+            g.drawString(this.font, cut, x + w - 8 - this.font.width(cut), y + 7, accent(), false);
+        }
     }
 
     /** Rounded-looking card (corners cut by one pixel), brighter when {@code highlight} > 0. */
@@ -1608,6 +1623,89 @@ public class FlashProgressScreen extends Screen {
                 || theme() == PowerTheme.LEX);
     }
 
+    /**
+     * Lex's suit: the pieces worn, the battery (with the time of normal use it still gives), how to charge it, and the
+     * state of its systems.
+     */
+    private void drawLexSuitCard(GuiGraphics g, int x, int y, int w, int h) {
+        card(g, x, y, w, h, 0.0F);
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.world.entity.player.Player p = mc.player;
+        if (p == null) {
+            return;
+        }
+        net.minecraft.world.item.ItemStack chest = p.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST);
+        float energy = com.flash.item.LexArmorItem.isLex(chest) ? com.flash.item.LexArmorItem.energy(chest) : 0.0F;
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(x + 10, y + 8, 0.0F);
+        pose.scale(1.5F, 1.5F, 1.0F);
+        g.renderItem(new net.minecraft.world.item.ItemStack(com.flash.registry.ModItems.LEX_HELMET.get()), 0, 0);
+        pose.popPose();
+        g.drawString(this.font, Component.translatable("gui.flash.lex.suit_title"), x + 40, y + 10, COLOR_TEXT, false);
+        g.drawString(this.font, this.font.plainSubstrByWidth(
+                Component.translatable("gui.flash.lex.suit_sub").getString(), w - 50), x + 40, y + 22, COLOR_DIM,
+                false);
+        // the four pieces
+        int ry = y + 40;
+        g.drawString(this.font, Component.translatable("gui.flash.lex.pieces"), x + 10, ry, COLOR_MUTED, false);
+        ry += 12;
+        net.minecraft.world.entity.EquipmentSlot[] slots = {net.minecraft.world.entity.EquipmentSlot.HEAD,
+                net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.LEGS,
+                net.minecraft.world.entity.EquipmentSlot.FEET};
+        net.minecraft.world.item.Item[] pieces = {com.flash.registry.ModItems.LEX_HELMET.get(),
+                com.flash.registry.ModItems.LEX_CHESTPLATE.get(), com.flash.registry.ModItems.LEX_LEGGINGS.get(),
+                com.flash.registry.ModItems.LEX_BOOTS.get()};
+        int px = x + 10;
+        for (int i = 0; i < 4; i++) {
+            boolean on = com.flash.item.LexArmorItem.isLex(p.getItemBySlot(slots[i]));
+            g.fill(px - 1, ry - 1, px + 19, ry + 19, on ? withAlpha(accentDark(), 0.9F) : 0x40000000);
+            g.renderItem(new net.minecraft.world.item.ItemStack(pieces[i]), px + 1, ry + 1);
+            g.drawString(this.font, on ? "✔" : "✘", px + 13, ry + 12, on ? accent() : 0xFFFF5A5A, true);
+            px += 24;
+        }
+        ry += 26;
+        // battery
+        g.drawString(this.font, Component.translatable("gui.flash.lex.battery"), x + 10, ry, COLOR_MUTED, false);
+        String pct = Math.round(energy) + "%";
+        g.drawString(this.font, pct, x + w - 10 - this.font.width(pct), ry, energy < 20.0F ? 0xFFFF6060 : accent(),
+                false);
+        ry += 11;
+        drawBar(g, x + 10, ry, w - 20, energy / 100.0F, energy < 20.0F ? 0xFFFF3A3A : 0xFF6CFF6C);
+        ry += 9;
+        int minutes = Math.round(energy / 100.0F * 20.0F);
+        g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable("gui.flash.lex.autonomy",
+                minutes).getString(), w - 20), x + 10, ry, COLOR_DIM, false);
+        ry += 16;
+        // charging
+        g.renderItem(new net.minecraft.world.item.ItemStack(com.flash.registry.ModItems.FLASH_SUIT_STAND.get()), x + 10,
+                ry);
+        g.drawString(this.font, "+", x + 30, ry + 4, accent(), false);
+        g.renderItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.REDSTONE), x + 38, ry);
+        g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable("gui.flash.lex.charge_how")
+                .getString(), w - 70), x + 60, ry + 4, COLOR_MUTED, false);
+        ry += 22;
+        // systems
+        String[][] states = {
+                {"gui.flash.lex.state_power", com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON) ? "on" : "off"},
+                {"gui.flash.lex.state_faceplate", com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OPEN)
+                        ? "open" : "closed"},
+                {"gui.flash.lex.state_overdrive", com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OVERDRIVE)
+                        ? "on" : "off"}};
+        for (String[] st : states) {
+            if (ry + 10 > y + h - 14) {
+                break;
+            }
+            g.drawString(this.font, Component.translatable(st[0]), x + 10, ry, COLOR_MUTED, false);
+            Component v = Component.translatable("gui.flash.lex.state." + st[1]);
+            boolean good = st[1].equals("on") || st[1].equals("closed");
+            g.drawString(this.font, v, x + w - 10 - this.font.width(v), ry, good ? accent() : COLOR_DIM, false);
+            ry += 11;
+        }
+        g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable("gui.flash.lex.indestructible")
+                .getString(), w - 20), x + 10, y + h - 13, 0xFFFFC857, false);
+    }
+
     /** The Processor card: the machine of every hero and what it makes. */
     private void drawProcessorCard(GuiGraphics g, int x, int y, int w, int h) {
         card(g, x, y, w, h, 0.0F);
@@ -1645,8 +1743,12 @@ public class FlashProgressScreen extends Screen {
 
     private void drawEquipTab(GuiGraphics g, int mx, int my) {
         if (!flashEquipment()) {
-            // the other heroes: the Processor, next to the preview of the hero
-            drawProcessorCard(g, PAD, CONTENT_Y, EQ_W, CONTENT_BOTTOM - CONTENT_Y);
+            // the other heroes: the Processor, next to the preview of the hero (Lex: his suit instead)
+            if (theme() == PowerTheme.LEX) {
+                drawLexSuitCard(g, PAD, CONTENT_Y, EQ_W, CONTENT_BOTTOM - CONTENT_Y);
+            } else {
+                drawProcessorCard(g, PAD, CONTENT_Y, EQ_W, CONTENT_BOTTOM - CONTENT_Y);
+            }
             int vx = PAD + EQ_W + 10;
             int vw = PW - PAD - vx;
             card(g, vx, CONTENT_Y, vw, CONTENT_BOTTOM - CONTENT_Y, 0.0F);

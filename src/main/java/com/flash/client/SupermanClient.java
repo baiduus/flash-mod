@@ -334,7 +334,10 @@ public final class SupermanClient {
         boolean thorFlight = com.flash.thor.ThorState.isThor(p)
                 && com.flash.thor.ThorState.flag(p, com.flash.thor.ThorPowers.F_FLIGHT);
         boolean superFlight = SupermanState.isSuperman(p) && SupermanState.flag(p, SupermanPowers.F_FLIGHT);
-        if ((!superFlight && !thorFlight) || !p.getAbilities().flying || p.isPassenger()) {
+        // Lex Luthor's suit flies the same way too (its thrusters: Superman level 5, a little slower)
+        boolean lexFlight = !superFlight && !thorFlight && LexClient.pilot(p)
+                && com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON);
+        if ((!superFlight && !thorFlight && !lexFlight) || !p.getAbilities().flying || p.isPassenger()) {
             flightStage = 0;
             return;
         }
@@ -346,8 +349,12 @@ public final class SupermanClient {
         }
         flightStage = stage;
         // four times the old speeds, growing with the level: about 40 % at level 1, all of it at level 10
-        int heroLevel = thorFlight && !superFlight ? com.flash.thor.ThorState.level() : SupermanState.level();
+        int heroLevel = lexFlight ? 5 : thorFlight && !superFlight ? com.flash.thor.ThorState.level()
+                : SupermanState.level();
         double scale = 4.0D * (0.34D + 0.066D * Math.max(1, heroLevel)) * (thorFlight && !superFlight ? 0.8D : 1.0D);
+        if (lexFlight) {
+            scale *= com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OVERDRIVE) ? 1.0D : 0.8D;
+        }
         Vec3 look = p.getLookAngle();
         Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
@@ -401,7 +408,8 @@ public final class SupermanClient {
     public static void onRenderPlayerPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         String base = SupermanPose.base(p.getUUID());
-        if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p))) {
+        if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p)
+                && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON))) {
             LEANS.remove(p.getUUID());
             return;
         }

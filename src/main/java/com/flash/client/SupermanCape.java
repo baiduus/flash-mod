@@ -263,6 +263,15 @@ public final class SupermanCape {
         draw(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(texture)), light, root);
     }
 
+    /** The cape hanging still (a suit on the armour stand). */
+    public static void renderRest(PoseStack pose, MultiBufferSource buffers, int light,
+                                  net.minecraft.client.model.HumanoidModel<?> parent, ResourceLocation texture) {
+        Matrix4f capeToRoot = partMatrix(parent.body).translate(0.0F, 0.02F, 0.11F);
+        float[] root = new float[N * 3];
+        transform(capeToRoot, REST, root);
+        draw(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(texture)), light, root);
+    }
+
     private static void transform(Matrix4f m, float[] in, float[] out) {
         Vector3f v = new Vector3f();
         for (int i = 0; i < N; i++) {

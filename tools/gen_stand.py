@@ -1,4 +1,8 @@
-"""Texture for the mod's suit stand model (FlashSuitStandModel, 64x64) and its item icon."""
+"""Texture for the mod's armour stand model (FlashSuitStandModel, 64x64) and its item icon.
+
+A generic stand for every hero of the mod: graphite and brushed steel with white display lights, no hero's colours
+or emblem (it used to be the Flash's red and gold with the lightning bolt).
+"""
 import random
 from PIL import Image
 
@@ -7,11 +11,13 @@ random.seed(7)
 
 METAL = [(0x24, 0x27, 0x2e), (0x2e, 0x33, 0x3c), (0x3a, 0x40, 0x4b)]
 METAL_LIGHT = (0x5a, 0x63, 0x72)
-RED = [(0x75, 0x0e, 0x24), (0x83, 0x0d, 0x1f), (0x92, 0x15, 0x1f)]
-RED_DARK = (0x49, 0x08, 0x25)
-GOLD = (0xdd, 0xa9, 0x7a)
-GOLD_LIGHT = (0xe5, 0xc4, 0x8b)
-GOLD_DARK = (0xc7, 0x92, 0x68)
+# (the names stay: "red" is now the dark steel of the plates, "gold" the brushed steel trim, the lights are white)
+RED = [(0x3e, 0x44, 0x4f), (0x44, 0x4b, 0x57), (0x4b, 0x52, 0x5f)]
+RED_DARK = (0x22, 0x26, 0x2d)
+GOLD = (0x9a, 0xa3, 0xb0)
+GOLD_LIGHT = (0xe8, 0xf4, 0xff)
+GOLD_DARK = (0x78, 0x81, 0x8e)
+LIGHT = (0xd8, 0xf0, 0xff)
 
 img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
 px = img.load()
@@ -66,7 +72,7 @@ def cube(u, v, w, h, d, side=metal, front=None, top=None):
 # head: smooth graphite with a thin red visor line
 def head_front(x, y, w, h):
     if y == 2 and 0 < x < w - 1:
-        return (0xb0, 0x18, 0x2a, 255)
+        return LIGHT + (255,)
     if y == 3 and 1 < x < w - 2:
         return RED_DARK + (255,)
     return noisy(METAL)
@@ -83,11 +89,12 @@ def bar(x, y, w, h):
 
 cube(0, 12, 10, 2, 3, side=bar, top=lambda x, y, w, h: noisy(RED))
 # chest frame with the lightning emblem (gold bolt on a white circle, like the suit)
+# a plain display light: a white hexagon (no hero's emblem)
 EMBLEM = ["..WWW..",
-          ".WW.BW.",
-          ".W.BW..",
           ".WBBBW.",
-          "..WBWW."]
+          ".WB.BW.",
+          ".WBBBW.",
+          "..WWW.."]
 
 
 def chest_front(x, y, w, h):
@@ -119,7 +126,7 @@ def dais_top(x, y, w, h):
     if edge:
         return GOLD + (255,)
     if ring:
-        return (0xb0, 0x18, 0x2a, 255)
+        return LIGHT + (255,)
     return noisy(METAL)
 
 
@@ -161,15 +168,13 @@ def rect(x0, y0, x1, y1, col):
 
 
 rect(6, 0, 9, 3, METAL[2])          # head
-ip[6, 1] = ip[7, 1] = ip[8, 1] = ip[9, 1] = (0xb0, 0x18, 0x2a, 255)
+ip[6, 1] = ip[7, 1] = ip[8, 1] = ip[9, 1] = LIGHT + (255,)
 rect(7, 4, 8, 4, METAL[1])          # neck
 rect(3, 5, 12, 5, RED[2])           # shoulder bar
 rect(2, 5, 2, 10, METAL[2])          # arms
 rect(13, 5, 13, 10, METAL[2])
 rect(5, 6, 10, 8, RED[1])            # chest
 ip[7, 7] = ip[8, 7] = GOLD_LIGHT + (255,)
-ip[8, 6] = (0xde, 0xff, 0xff, 255)
-ip[7, 8] = (0xde, 0xff, 0xff, 255)
 rect(7, 9, 8, 12, METAL[1])          # pole
 rect(5, 13, 10, 13, GOLD)            # dais
 rect(3, 14, 12, 14, METAL[2])        # base

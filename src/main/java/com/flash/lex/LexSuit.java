@@ -53,8 +53,8 @@ import net.minecraftforge.network.PacketDistributor;
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
 public final class LexSuit {
 
-    /** 100 % in 15 minutes of normal use. */
-    public static final float DRAIN_PER_TICK = LexArmorItem.MAX_ENERGY / (15.0F * 60.0F * 20.0F);
+    /** 100 % in 20 minutes of normal use. */
+    public static final float DRAIN_PER_TICK = LexArmorItem.MAX_ENERGY / (20.0F * 60.0F * 20.0F);
     /** 2 % a second on a powered stand. */
     public static final float CHARGE_PER_TICK = 2.0F / 20.0F;
 
@@ -86,7 +86,7 @@ public final class LexSuit {
     /** The wrist lasers stay out up to 4 s; a sweep every half second, back and forth. */
     private static final int LASER_MAX = 80;
     private static final int LASER_SWEEP = 10;
-    private static final float LASER_PER_TICK = 0.05F;
+    private static final float LASER_PER_TICK = 0.025F;
 
     private static final class Pilot {
         int flags;
@@ -136,7 +136,7 @@ public final class LexSuit {
         ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
         float e = LexArmorItem.energy(chest);
         if (overdrive(player)) {
-            amount *= 2.0F;
+            amount *= 1.5F;
         }
         if (e < amount) {
             return false;
@@ -622,8 +622,8 @@ public final class LexSuit {
             player.fallDistance = 0.0F;
         }
         // the battery (written to the item in small steps, not every tick)
-        s.pending += DRAIN_PER_TICK * (fast ? 3.0F : flying ? 1.8F : 1.0F)
-                * ((s.flags & F_OVERDRIVE) != 0 ? 2.0F : 1.0F);
+        s.pending += DRAIN_PER_TICK * (fast ? 1.5F : flying ? 1.2F : 1.0F)
+                * ((s.flags & F_OVERDRIVE) != 0 ? 1.5F : 1.0F);
         float now2 = LexArmorItem.energy(chest);
         if (s.pending >= 0.05F) {
             float after = Math.max(0.0F, now2 - s.pending);
@@ -700,7 +700,8 @@ public final class LexSuit {
             if (FLYERS.add(player.getUUID()) || !ab.mayfly) {
                 ab.mayfly = true;
                 if (!creative) {
-                    ab.setFlyingSpeed(overdrive(player) ? 0.1F : 0.07F);
+                    // the aimed flight moves the player itself (SupermanClient), as Superman's
+                    ab.setFlyingSpeed(0.0F);
                 }
                 player.onUpdateAbilities();
             }

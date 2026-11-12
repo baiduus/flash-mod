@@ -66,7 +66,7 @@ public final class FlashSuitStandEvents {
             return;
         }
         player.getPersistentData().putLong(LAST_SWAP, now);
-        boolean swapped = FlashSuitUtil.swapWithStand(player, stand);
+        boolean swapped = stand.standClick(player);
         if (!swapped) {
             player.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("message.flash.stand_nothing"), true);
