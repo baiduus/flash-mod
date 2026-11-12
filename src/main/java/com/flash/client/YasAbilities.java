@@ -169,10 +169,35 @@ public final class YasAbilities {
         }
     }
 
-    /** Alt + scroll: the next / previous power. */
+    private static Method holding;
+
+    /** Hand of God's telekinesis is holding a creature now (client). */
+    private static boolean holding() {
+        try {
+            if (holding == null) {
+                holding = Class.forName("handofgod.client.TelecineseCliente").getMethod("ocupado");
+            }
+            return (Boolean) holding.invoke(null);
+        } catch (ReflectiveOperationException | LinkageError e) {
+            return false;
+        }
+    }
+
+    /**
+     * Scroll: holding a creature by telekinesis, it comes closer (down) or goes farther (up) instead of the hotbar;
+     * Alt + scroll: the next / previous power.
+     */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
-        if (!active() || !Screen.hasAltDown() || event.getScrollDelta() == 0.0D) {
+        if (!active() || event.getScrollDelta() == 0.0D) {
+            return;
+        }
+        if (!Screen.hasAltDown()) {
+            if (holding()) {
+                event.setCanceled(true);
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                        new com.flash.network.YasTelekinesisPacket(event.getScrollDelta() > 0.0D ? 1 : -1));
+            }
             return;
         }
         event.setCanceled(true);

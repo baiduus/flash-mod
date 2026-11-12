@@ -94,6 +94,8 @@ public final class YasPowers {
             if (p.tickCount % 20 == 0) {
                 applyAttributes(p);
             }
+            // diving from Y = 200 or higher she burns like a meteor
+            com.flash.superman.SupermanMeteor.tick(p, METEOR_POWER, true, false);
         }
         boolean flying = yas && p.getAbilities().flying;
         if (flying != WAS_FLYING.contains(p.getUUID())) {
@@ -140,6 +142,9 @@ public final class YasPowers {
         float once = 0.15F + 0.85F * old;
         return (0.05F + 0.85F * once) * 0.4F / 5.0F;
     }
+
+    /** Her meteor dive hits harder than Superman's at level 10 (3.7). */
+    private static final float METEOR_POWER = 5.0F;
 
     /** The punch: half again Superman's at level 10 (43.2 extra). */
     public static final double PUNCH_BONUS = 43.2D * 1.5D;

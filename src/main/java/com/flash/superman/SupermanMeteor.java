@@ -20,18 +20,23 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Meteor dive: Superman up at the sun-bathing altitude who dives straight down catches fire on the way, and when he
- * hits the ground blows a crater the size of three TNTs and sets everything around on fire.
+ * Meteor dive: a flying hero (Superman, Thor, Yas) coming down from Y = 200 or higher catches fire on the way,
+ * however he comes down, and when he hits the ground blows a crater and sets everything around on fire. The higher
+ * the dive started, the harder and wider the impact: three TNTs from Y = 200, up to four times that from Y = 500.
  */
 public final class SupermanMeteor {
 
     /** Explosion power (TNT is 4; 6 is about three TNTs of crater). */
     public static final float POWER = 6.0F;
-    private static final float START_PITCH = 62.0F;
     private static final double START_SPEED = 0.7D;
+
+    /** Where the combustion starts. */
+    public static final double START_Y = 200.0D;
 
     private static final class Dive {
         double lastY;
+        /** The highest point of this dive (the impact grows with it). */
+        double peak;
         boolean active;
         int slow;
         int ticks;
@@ -68,12 +73,14 @@ public final class SupermanMeteor {
         }
         ServerLevel level = player.serverLevel();
         if (!d.active) {
-            boolean up = player.getY() >= SupermanPowers.HIGH_ALTITUDE - 8;
-            boolean down = player.getXRot() >= START_PITCH && dy < -START_SPEED;
+            // from Y = 200 up, coming down fast in any way (diving, falling, flying down) sets him on fire
+            boolean up = player.getY() >= START_Y;
+            boolean down = dy < -START_SPEED;
             if (up && down && !player.onGround()) {
                 d.active = true;
                 d.slow = 0;
                 d.ticks = 0;
+                d.peak = player.getY() - dy;
                 level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIRECHARGE_USE,
                         SoundSource.PLAYERS, 2.0F, 0.6F);
             }
@@ -102,7 +109,7 @@ public final class SupermanMeteor {
                 player.position().add(0.0D, -reach, 0.0D), ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, player));
         if (player.onGround() || player.isInWater() || hit.getType() == HitResult.Type.BLOCK && dy < -0.4D) {
             Vec3 impact = hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : player.position();
-            impact(player, level, impact, heroPower, destroy, thunder);
+            impact(player, level, impact, heroPower, destroy, thunder, scale(d.peak));
             d.active = false;
             return;
         }
@@ -117,12 +124,18 @@ public final class SupermanMeteor {
         }
     }
 
+    /** 1 for a dive from Y = 200, growing with the height: 2 from 300, 4 from 500 (and on). */
+    static float scale(double peak) {
+        return (float) Math.max(1.0D, Math.min(5.0D, 1.0D + (peak - START_Y) / 100.0D));
+    }
+
     private static void impact(ServerPlayer player, ServerLevel level, Vec3 at, float power, boolean destroy,
-                               boolean thunder) {
-        level.explode(player, at.x, at.y + 0.5D, at.z, POWER, destroy,
+                               boolean thunder, float k) {
+        float blast = Math.min(16.0F, POWER * (0.6F + 0.4F * k));
+        level.explode(player, at.x, at.y + 0.5D, at.z, blast, destroy,
                 destroy ? Level.ExplosionInteraction.TNT : Level.ExplosionInteraction.NONE);
         // explosion damage all over the impact area (falls off toward the edge), even behind cover
-        double radius = POWER * 1.6D;
+        double radius = POWER * 1.6D * (0.6D + 0.4D * k);
         if (thunder) {
             com.flash.thor.ThorAbilities.strikeVisual(level, at);
             com.flash.thor.ThorAbilities.fx(level, com.flash.network.ThorFxPacket.IMPACT, at, Vec3.ZERO, (float) radius);
@@ -136,22 +149,27 @@ public final class SupermanMeteor {
             }
             double f = 1.0D - d / radius;
             e.invulnerableTime = 0;
-            e.hurt(level.damageSources().explosion(player, player), (float) (20.0F * power * (0.3D + 0.7D * f)));
+            e.hurt(level.damageSources().explosion(player, player),
+                    (float) (20.0F * power * (0.6F + 0.4F * k) * (0.3D + 0.7D * f)));
             e.setSecondsOnFire(6);
             Vec3 away = e.position().subtract(at);
             away = away.lengthSqr() < 1.0E-4D ? new Vec3(0, 1, 0) : away.normalize();
             e.setDeltaMovement(away.x * (0.6D + 1.6D * f), 0.4D + 0.8D * f, away.z * (0.6D + 1.6D * f));
             e.hurtMarked = true;
         }
+        float wide = 0.6F + 0.4F * k;
         if (destroy) {
-            spreadFire(level, BlockPos.containing(at), player.getRandom());
+            spreadFire(level, BlockPos.containing(at), player.getRandom(), Math.round(9 * wide));
         }
-        level.sendParticles(ParticleTypes.FLAME, at.x, at.y + 0.5D, at.z, 160, 3.0D, 0.6D, 3.0D, 0.25D);
-        level.sendParticles(ParticleTypes.LAVA, at.x, at.y + 0.5D, at.z, 40, 2.5D, 0.5D, 2.5D, 0.0D);
-        level.sendParticles(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, at.x, at.y + 0.5D, at.z, 30, 3.0D, 0.5D, 3.0D, 0.03D);
-        SupermanAbilities.cracks(level, at, 9.0F);
+        level.sendParticles(ParticleTypes.FLAME, at.x, at.y + 0.5D, at.z, (int) (160 * wide), 3.0D * wide, 0.6D,
+                3.0D * wide, 0.25D);
+        level.sendParticles(ParticleTypes.LAVA, at.x, at.y + 0.5D, at.z, (int) (40 * wide), 2.5D * wide, 0.5D,
+                2.5D * wide, 0.0D);
+        level.sendParticles(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, at.x, at.y + 0.5D, at.z, (int) (30 * wide),
+                3.0D * wide, 0.5D, 3.0D * wide, 0.03D);
+        SupermanAbilities.cracks(level, at, 9.0F * wide);
         SupermanAbilities.fxAt(level, com.flash.network.SupermanFxPacket.SHOCKWAVE, at.add(0.0D, 0.1D, 0.0D),
-                new Vec3(0, 1, 0), 9.0F);
+                new Vec3(0, 1, 0), 9.0F * wide);
         player.setDeltaMovement(Vec3.ZERO);
         player.hurtMarked = true;
         player.fallDistance = 0.0F;
@@ -159,9 +177,8 @@ public final class SupermanMeteor {
     }
 
     /** Fire on the ground all around the crater. */
-    private static void spreadFire(ServerLevel level, BlockPos center, RandomSource random) {
-        int radius = 9;
-        for (int i = 0; i < 90; i++) {
+    private static void spreadFire(ServerLevel level, BlockPos center, RandomSource random, int radius) {
+        for (int i = 0; i < 10 * radius; i++) {
             double ang = random.nextDouble() * Math.PI * 2.0D;
             double dist = 2.0D + Math.sqrt(random.nextDouble()) * (radius - 2);
             int x = center.getX() + (int) Math.round(Math.cos(ang) * dist);
