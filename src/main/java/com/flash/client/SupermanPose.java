@@ -259,7 +259,7 @@ public final class SupermanPose {
     private static void update(AbstractClientPlayer player) {
         State st = STATES.get(player.getUUID());
         // the flight poses are Thor's too
-        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player)) {
+        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player) && !lex(player)) {
             if (st != null) {
                 STATES.remove(player.getUUID());
                 set(player, BASE, null, 0, 5, false);
@@ -315,11 +315,40 @@ public final class SupermanPose {
             return player.getAbilities().flying;
         }
         return SupermanState.flag(player, SupermanPowers.F_FLYING)
-                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FLYING);
+                || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FLYING)
+                || com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_FLY);
+    }
+
+    /** Lex's suit on (no powers of his own): his moves play here too, with Iron Man's flight poses. */
+    private static boolean lex(AbstractClientPlayer player) {
+        return com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_ON);
+    }
+
+    private static String chooseLexBase(AbstractClientPlayer player, State st) {
+        boolean flying = flying(player);
+        double vx = player.getX() - player.xo;
+        double vz = player.getZ() - player.zo;
+        double hs = Math.sqrt(vx * vx + vz * vz);
+        if (!flying && st.wasFlying && player.onGround() && st.shot == null) {
+            shot(player, st, "landing", 0);
+        }
+        st.wasFlying = flying;
+        if (!flying || player.isPassenger() || player.isSwimming()) {
+            return null;
+        }
+        boolean fast = player == Minecraft.getInstance().player ? player.isSprinting()
+                : com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_FAST);
+        if (fast && hs + Math.abs(player.getY() - player.yo) > 0.3D) {
+            return "lex_fly_fast";
+        }
+        return hs > 0.12D ? "lex_fly_cruise" : "lex_fly_hover";
     }
 
     /** Base animation from the flight state and the motion. */
     private static String chooseBase(AbstractClientPlayer player, State st) {
+        if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player)) {
+            return chooseLexBase(player, st);
+        }
         boolean flying = flying(player);
         double vx = player.getX() - player.xo;
         double vy = player.getY() - player.yo;

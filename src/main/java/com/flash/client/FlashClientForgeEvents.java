@@ -164,6 +164,7 @@ public final class FlashClientForgeEvents {
         FlashClientRing.reset();
         com.flash.lex.LexState.reset();
         LexFx.reset();
+        LexFlight.reset();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */
@@ -195,7 +196,7 @@ public final class FlashClientForgeEvents {
             // the nested event passes through untouched, so the vanilla hand is drawn
             if (hulk) {
                 // the Hulk's arm replaces the skin arm (drawn below)
-            } else if (suit) {
+            } else if (suit || lex) {
                 // the suit's arm replaces the skin arm (drawn below)
             } else if (right) {
                 player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),

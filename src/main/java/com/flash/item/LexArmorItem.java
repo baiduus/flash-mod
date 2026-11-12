@@ -88,6 +88,37 @@ public class LexArmorItem extends ArmorItem {
         return "flash:textures/models/armor/lex_empty.png";
     }
 
+    /** Indestructible: the pieces never wear out. */
+    @Override
+    public boolean isDamageable(ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public void setDamage(ItemStack stack, int damage) {
+        super.setDamage(stack, 0);
+    }
+
+    @Override
+    public <T extends net.minecraft.world.entity.LivingEntity> int damageItem(ItemStack stack, int amount, T entity,
+                                                                            java.util.function.Consumer<T> onBroken) {
+        return 0;
+    }
+
+    /** Dropped, the piece does not burn, blow up or vanish either. */
+    @Override
+    public boolean onEntityItemUpdate(ItemStack stack, net.minecraft.world.entity.item.ItemEntity entity) {
+        if (!entity.isInvulnerable()) {
+            entity.setInvulnerable(true);
+        }
+        return false;
+    }
+
+    @Override
+    public int getEntityLifespan(ItemStack stack, Level level) {
+        return Integer.MAX_VALUE;
+    }
+
     public static boolean isLex(ItemStack stack) {
         return stack.getItem() instanceof LexArmorItem;
     }
@@ -141,5 +172,6 @@ public class LexArmorItem extends ArmorItem {
                     .withStyle(ChatFormatting.GREEN));
         }
         tooltip.add(Component.translatable("tooltip.flash.lex_armor.2").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.flash.lex_armor.3").withStyle(ChatFormatting.GOLD));
     }
 }

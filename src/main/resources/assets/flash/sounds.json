@@ -754,5 +754,41 @@
       }
     ],
     "subtitle": "subtitles.flash.lex"
+  },
+  "lex.thrust_start": {
+    "sounds": [
+      {
+        "name": "flash:lex/jetpack_thrust_on_1"
+      },
+      {
+        "name": "flash:lex/jetpack_thrust_on_2"
+      },
+      {
+        "name": "flash:lex/jetpack_thrust_on_3"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.thrust_loop": {
+    "sounds": [
+      {
+        "name": "flash:lex/jetpack_thrust_loop"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
+  },
+  "lex.thrust_end": {
+    "sounds": [
+      {
+        "name": "flash:lex/jetpack_thrust_off_1"
+      },
+      {
+        "name": "flash:lex/jetpack_thrust_off_2"
+      },
+      {
+        "name": "flash:lex/jetpack_thrust_off_3"
+      }
+    ],
+    "subtitle": "subtitles.flash.lex"
   }
 }

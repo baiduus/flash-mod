@@ -75,6 +75,9 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> LEX_HELMET_CLOSE = lex("helmet_close");
     public static final RegistryObject<SoundEvent> LEX_POWERDOWN = lex("powerdown");
     public static final RegistryObject<SoundEvent> LEX_RECHARGE = lex("recharge");
+    public static final RegistryObject<SoundEvent> LEX_THRUST_START = lex("thrust_start");
+    public static final RegistryObject<SoundEvent> LEX_THRUST_LOOP = lex("thrust_loop");
+    public static final RegistryObject<SoundEvent> LEX_THRUST_END = lex("thrust_end");
 
     public static final RegistryObject<SoundEvent> THOR_BLAST_START = thor("blast_start");
     public static final RegistryObject<SoundEvent> THOR_BLAST_LOOP = thor("blast_loop");

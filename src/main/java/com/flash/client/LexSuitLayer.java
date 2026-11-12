@@ -7,6 +7,7 @@ import com.flash.lex.LexState;
 import com.flash.lex.LexSuit;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.Locale;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -31,7 +32,9 @@ public class LexSuitLayer<T extends LivingEntity, M extends HumanoidModel<T>> ex
     private static final ResourceLocation GEO = new ResourceLocation(FlashMod.MODID, "geo/lex/mark6.geo.json");
     private static final ResourceLocation TEXTURE = new ResourceLocation(FlashMod.MODID, "textures/lex/mark6.png");
     private static final ResourceLocation GLOW = new ResourceLocation(FlashMod.MODID, "textures/lex/mark6_glow.png");
+    private static final ResourceLocation ANIMS = new ResourceLocation(FlashMod.MODID, "geo/lex/mark6.animation.json");
     private static GeoModel model;
+    private static java.util.Map<String, com.flash.client.geo.GeoAnimation> anims;
 
     public LexSuitLayer(RenderLayerParent<T, M> parent) {
         super(parent);
@@ -39,6 +42,53 @@ public class LexSuitLayer<T extends LivingEntity, M extends HumanoidModel<T>> ex
 
     public static void reset() {
         model = null;
+        anims = null;
+    }
+
+    private static void play(GeoModel m, String name, float seconds) {
+        if (anims == null) {
+            anims = com.flash.client.geo.GeoAnimation.load(ANIMS);
+        }
+        com.flash.client.geo.GeoAnimation a = anims.get(name);
+        if (a != null && seconds > 0.0F) {
+            a.apply(m, seconds);
+        }
+    }
+
+    /**
+     * The moving parts of the Mark 6 with the animations of Legends: the faceplate lifting, the back and calf flaps
+     * of the fast flight, the wrist lasers, the wrist launcher of the missiles and the overdrive (which moves all of
+     * them at once, so the others only add what it does not already give).
+     */
+    private static void animate(GeoModel m, LivingEntity e, float partial) {
+        play(m, "helmet_open", LexFlight.part(e, LexFlight.P_FACEPLATE, partial) * 0.25F);
+        float od = LexFlight.part(e, LexFlight.P_OVERDRIVE, partial);
+        play(m, "overdrive", od * 0.25F);
+        play(m, "thrusters", Math.max(0.0F, LexFlight.part(e, LexFlight.P_THRUSTERS, partial) - od) * 0.125F);
+        play(m, "laser_both", Math.max(0.0F, LexFlight.part(e, LexFlight.P_LASERS, partial) - od) * 0.1667F);
+        play(m, "mini_missiles", Math.max(0.0F, LexFlight.part(e, LexFlight.P_PODS, partial) - od) * 0.25F);
+    }
+
+    /** The skin under the suit is hidden (it showed through the plates); the face only with the faceplate up. */
+    public static void hideSkin(net.minecraft.client.model.PlayerModel<?> m, LivingEntity e, float partial) {
+        if (LexArmorItem.isLex(e.getItemBySlot(EquipmentSlot.HEAD))) {
+            m.hat.visible = false;
+            m.head.visible = LexFlight.part(e, LexFlight.P_FACEPLATE, partial) > 0.02F;
+        }
+        if (LexArmorItem.isLex(e.getItemBySlot(EquipmentSlot.CHEST))) {
+            m.body.visible = false;
+            m.jacket.visible = false;
+            m.rightArm.visible = false;
+            m.rightSleeve.visible = false;
+            m.leftArm.visible = false;
+            m.leftSleeve.visible = false;
+        }
+        if (wears(e, EquipmentSlot.LEGS)) {
+            m.rightLeg.visible = false;
+            m.rightPants.visible = false;
+            m.leftLeg.visible = false;
+            m.leftPants.visible = false;
+        }
     }
 
     private static GeoModel model() {
@@ -96,14 +146,7 @@ public class LexSuitLayer<T extends LivingEntity, M extends HumanoidModel<T>> ex
             return;
         }
         m.reset();
-        boolean open = LexState.flag(entity, LexSuit.F_OPEN);
-        if (open) {
-            for (GeoModel.Bone b : m.allBones()) {
-                if (b.name.equals("HelmetOpenBase")) {
-                    b.visible = false;
-                }
-            }
-        }
+        animate(m, entity, partialTick);
         M parent = this.getParentModel();
         int overlay = LivingEntityRenderer.getOverlayCoords(entity, 0.0F);
         RenderType body = RenderType.entityCutoutNoCull(TEXTURE);
@@ -118,6 +161,63 @@ public class LexSuitLayer<T extends LivingEntity, M extends HumanoidModel<T>> ex
             ModelPart part = partFor(parent, root.name);
             drawBone(m, root, part, pose, buffers, body, light, overlay, 1.0F);
             drawBone(m, root, part, pose, buffers, lights, 0xF000F0, overlay, glow);
+        }
+        float fly = LexFlight.part(entity, LexFlight.P_FLY, partialTick);
+        if (fly > 0.01F && on) {
+            float fast = LexFlight.part(entity, LexFlight.P_THRUSTERS, partialTick);
+            thrusters(parent, pose, buffers, fly, fast, ageInTicks, over);
+        }
+    }
+
+    /**
+     * The thrusters' flames of solid light, green with a white core like the suit's other lights: from the boots
+     * (long in the fast flight) and from the palms, flickering.
+     */
+    private static void thrusters(HumanoidModel<?> parent, PoseStack pose, MultiBufferSource buffers, float fly,
+                                  float fast, float age, boolean over) {
+        com.mojang.blaze3d.vertex.VertexConsumer c = buffers.getBuffer(RenderType.lightning());
+        float flicker = 0.85F + 0.15F * (float) Math.sin(age * 2.7F) * (float) Math.cos(age * 1.3F);
+        float boot = (6.0F + 9.0F * fast) * fly * flicker * (over ? 1.25F : 1.0F);
+        float palm = (3.5F + 2.5F * fast) * fly * flicker;
+        // (in each part: its pivot, then the foot / the palm, in pixels; y grows down the limb)
+        flame(c, pose, parent.rightLeg, 0.0F, 12.0F, boot, 2.0F);
+        flame(c, pose, parent.leftLeg, 0.0F, 12.0F, boot, 2.0F);
+        flame(c, pose, parent.rightArm, -1.0F, 10.2F, palm, 1.4F);
+        flame(c, pose, parent.leftArm, 1.0F, 10.2F, palm, 1.4F);
+    }
+
+    private static void flame(com.mojang.blaze3d.vertex.VertexConsumer c, PoseStack pose, ModelPart part, float x,
+                              float y, float len, float width) {
+        pose.pushPose();
+        part.translateAndRotate(pose);
+        org.joml.Matrix4f m = pose.last().pose();
+        float px = x / 16.0F;
+        float py = y / 16.0F;
+        float l = len / 16.0F;
+        float w = width / 16.0F;
+        // glow, body and white core: each two crossed planes, both faces
+        cross(c, m, px, py, l, w * 1.6F, 0.35F, 1.0F, 0.45F, 0.28F);
+        cross(c, m, px, py, l * 0.75F, w, 0.55F, 1.0F, 0.6F, 0.55F);
+        cross(c, m, px, py, l * 0.45F, w * 0.45F, 1.0F, 1.0F, 1.0F, 0.9F);
+        pose.popPose();
+    }
+
+    private static void cross(com.mojang.blaze3d.vertex.VertexConsumer c, org.joml.Matrix4f m, float x, float y,
+                              float len, float w, float r, float g, float b, float a) {
+        float tip = w * 0.15F;
+        for (int plane = 0; plane < 2; plane++) {
+            float ax = plane == 0 ? 1.0F : 0.0F;
+            float az = plane == 0 ? 0.0F : 1.0F;
+            float[][] v = {
+                    {x - ax * w, y, -az * w}, {x + ax * w, y, az * w},
+                    {x + ax * tip, y + len, az * tip}, {x - ax * tip, y + len, -az * tip}};
+            for (int face = 0; face < 2; face++) {
+                for (int i = 0; i < 4; i++) {
+                    float[] p = v[face == 0 ? i : 3 - i];
+                    float alpha = p[1] > y + 1.0E-4F ? 0.0F : a;
+                    c.vertex(m, p[0], p[1], p[2]).color(r, g, b, alpha).endVertex();
+                }
+            }
         }
     }
 
@@ -149,6 +249,7 @@ public class LexSuitLayer<T extends LivingEntity, M extends HumanoidModel<T>> ex
             return;
         }
         m.reset();
+        animate(m, player, Minecraft.getInstance().getFrameTime());
         parent.attackTime = 0.0F;
         parent.crouching = false;
         parent.swimAmount = 0.0F;

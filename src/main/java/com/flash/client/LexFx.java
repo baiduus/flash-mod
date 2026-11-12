@@ -156,8 +156,13 @@ public final class LexFx {
                     Entity e = level.getEntity(s.entity());
                     Vec3 dir = s.b();
                     double base = Math.atan2(dir.z, dir.x);
+                    // (a direction twice as long: the sweep goes back the other way)
+                    double sweep = 75.0D - 150.0D * Math.min(1.0D, k);
+                    if (dir.length() > 1.5D) {
+                        sweep = -sweep;
+                    }
                     for (int w = 0; w < 2; w++) {
-                        double ang = base + Math.toRadians((w == 0 ? 1 : -1) * (75.0D - 150.0D * Math.min(1.0D, k)));
+                        double ang = base + Math.toRadians((w == 0 ? 1 : -1) * sweep);
                         Vec3 from = e instanceof Player pl ? palm(pl, partial, w == 0) : s.a();
                         Vec3 to = from.add(Math.cos(ang) * 9.0D, 0.0D, Math.sin(ang) * 9.0D);
                         beam(c, m, cam, from, to, 0.035F, RED, 1.0F - k * 0.5F);

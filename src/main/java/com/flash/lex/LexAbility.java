@@ -13,7 +13,7 @@ public enum LexAbility {
     REPULSOR_BLAST("repulsor_blast", Kind.PRESS, FlashAbility.BARRAGE, 0.6F, 12),
     REPULSOR_BEAM("repulsor_beam", Kind.HOLD, FlashAbility.PHASING, 0.04F, 0),
     UNIBEAM("unibeam", Kind.HOLD, FlashAbility.SPEED_TORNADO, 0.12F, 200),
-    LASERS("lasers", Kind.PRESS, FlashAbility.WIND_HANDS, 2.0F, 160),
+    LASERS("lasers", Kind.HOLD, FlashAbility.WIND_HANDS, 2.0F, 160),
     MISSILES("missiles", Kind.PRESS, FlashAbility.MASS_PUNCH, 3.0F, 100),
     POWER_THRUST("power_thrust", Kind.PRESS, FlashAbility.LIGHTNING_STRIKE, 1.0F, 40),
     POWER_DIVE("power_dive", Kind.PRESS, FlashAbility.DASH_PUNCH, 1.5F, 100),

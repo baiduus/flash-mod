@@ -174,6 +174,25 @@ emote("lex_unibeam", [(0, S, REST_POSE), (8, S, UNI), (20, S, {**UNI, "torso": {
 LAS_A = {"rightArm": {"p": -90.0, "y": 60.0}, "leftArm": {"p": -90.0, "y": -60.0}}
 LAS_B = {"rightArm": {"p": -90.0, "y": -40.0}, "leftArm": {"p": -90.0, "y": 40.0}}
 emote("lex_lasers", [(0, S, REST_POSE), (3, S, LAS_A), (13, L, LAS_B), (20, S, REST_POSE)])
+# held: the arms stay up, sweeping in and out while the key is down
+emote("lex_lasers_hold", [(0, S, REST_POSE), (3, S, LAS_A), (13, S, LAS_B), (23, S, LAS_A)], loop=True,
+      return_tick=3)
+# Iron Man's flight (Legends: Superheroes): hovering upright with the palms down and out, cruising with the arms a
+# little back, and the fast flight with the arms along the body (the body itself is tilted by LexFlight)
+HOV_A = {"rightArm": {"p": 8.0, "r": 16.0}, "leftArm": {"p": 8.0, "r": -16.0}, "rightLeg": {"p": 4.0, "r": 2.0},
+         "leftLeg": {"p": -8.0, "r": -2.0}, "head": {"p": 4.0}}
+HOV_B = {"rightArm": {"p": 10.0, "r": 19.0}, "leftArm": {"p": 10.0, "r": -19.0}, "rightLeg": {"p": 6.0, "r": 2.0},
+         "leftLeg": {"p": -6.0, "r": -2.0}, "head": {"p": 4.0}, "torso": {"p": 2.0}}
+emote("lex_fly_hover", [(0, S, REST_POSE), (6, S, HOV_A), (26, S, HOV_B), (46, S, HOV_A)], loop=True, return_tick=6)
+CRU = {"rightArm": {"p": 28.0, "r": 12.0}, "leftArm": {"p": 28.0, "r": -12.0}, "rightLeg": {"p": 10.0},
+       "leftLeg": {"p": 4.0}, "torso": {"p": 4.0}}
+emote("lex_fly_cruise", [(0, S, REST_POSE), (6, S, CRU), (30, S, {**CRU, "rightLeg": {"p": 12.0}}), (54, S, CRU)],
+      loop=True, return_tick=6)
+FAST = {"rightArm": {"p": 14.0, "r": 7.0}, "leftArm": {"p": 14.0, "r": -7.0}, "rightLeg": {"p": 2.0, "r": 1.0},
+        "leftLeg": {"p": 2.0, "r": -1.0}}
+emote("lex_fly_fast", [(0, S, REST_POSE), (5, S, FAST), (25, S, {**FAST, "rightArm": {"p": 16.0, "r": 8.0},
+                                                              "leftArm": {"p": 16.0, "r": -8.0}}), (45, S, FAST)],
+      loop=True, return_tick=5)
 # power thrust: arms back, body leaning into it
 THR = {"rightArm": {"p": 40.0, "r": 12.0}, "leftArm": {"p": 40.0, "r": -12.0}, "torso": {"p": 20.0},
        "rightLeg": {"p": 20.0}, "leftLeg": {"p": 14.0}}

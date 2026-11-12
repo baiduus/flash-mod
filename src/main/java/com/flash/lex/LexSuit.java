@@ -65,6 +65,16 @@ public final class LexSuit {
     public static final int F_OVERDRIVE = 16;
     public static final int F_OPEN = 32;
     public static final int F_DIVE = 64;
+    /** The thrusters are on (flying), and the fast flight (sprinting in the air, the body along the look). */
+    public static final int F_FLY = 128;
+    public static final int F_FAST = 256;
+    /** The wrist lasers held out. */
+    public static final int F_LASER = 512;
+    /** The micro missiles leaving the shoulders. */
+    public static final int F_PODS = 1024;
+
+    /** Player data: the cooldowns of the suit are off (/lex cooldown off). */
+    public static final String NO_COOLDOWNS = "flash_lex_no_cooldowns";
 
     private static final UUID DAMAGE_ID = UUID.fromString("6c1d2e30-9a4b-4f0e-8a11-4c4c55a7e001");
     private static final UUID SPEED_ID = UUID.fromString("6c1d2e30-9a4b-4f0e-8a11-4c4c55a7e002");
@@ -73,6 +83,10 @@ public final class LexSuit {
     private static final int OVERDRIVE_TICKS = 200;
     private static final int UNIBEAM_CHARGE = 20;
     private static final int UNIBEAM_MAX = 100;
+    /** The wrist lasers stay out up to 4 s; a sweep every half second, back and forth. */
+    private static final int LASER_MAX = 80;
+    private static final int LASER_SWEEP = 10;
+    private static final float LASER_PER_TICK = 0.05F;
 
     private static final class Pilot {
         int flags;
@@ -82,6 +96,7 @@ public final class LexSuit {
         long overdriveUntil;
         int unibeamTicks = -1;
         int diveTicks = -1;
+        int laserTicks = -1;
         float pending;
         final List<long[]> missiles = new ArrayList<>();
     }
@@ -155,6 +170,21 @@ public final class LexSuit {
                 if (pressed) {
                     sound(player, ModSounds.LEX_REPULSOR_CHARGE.get(), 0.8F, 1.2F);
                 }
+            } else if (a == LexAbility.LASERS) {
+                if (pressed) {
+                    if (cooling(player, s, a) || s.laserTicks >= 0) {
+                        return;
+                    }
+                    if (!spend(player, a.energy())) {
+                        player.displayClientMessage(Component.translatable("message.flash.lex_no_energy"), true);
+                        return;
+                    }
+                    s.laserTicks = 0;
+                    setFlag(s, F_LASER, true);
+                    SupermanAbilities.anim(player, "lex_lasers_hold");
+                } else if (s.laserTicks >= 0) {
+                    endLasers(player, s);
+                }
             } else if (a == LexAbility.UNIBEAM) {
                 if (pressed) {
                     if (cooling(player, s, a) || s.unibeamTicks >= 0) {
@@ -179,7 +209,6 @@ public final class LexSuit {
         }
         boolean used = switch (a) {
             case REPULSOR_BLAST -> repulsorBlast(player);
-            case LASERS -> lasers(player);
             case MISSILES -> missiles(player, s);
             case POWER_THRUST -> thrust(player);
             case POWER_DIVE -> dive(player, s);
@@ -188,13 +217,32 @@ public final class LexSuit {
             default -> false;
         };
         if (used) {
-            setCooldown(s, a, player.level().getGameTime());
+            setCooldown(player, s, a, player.level().getGameTime());
         } else {
             LexArmorItem.setEnergy(player.getItemBySlot(EquipmentSlot.CHEST), energy(player) + a.energy());
         }
     }
 
+    public static boolean noCooldowns(Player player) {
+        return player.getPersistentData().getBoolean(NO_COOLDOWNS);
+    }
+
+    /** /lex cooldown: reset (null), off (true) or on (false). */
+    public static void resetCooldowns(ServerPlayer player, Boolean disable) {
+        if (disable != null) {
+            player.getPersistentData().putBoolean(NO_COOLDOWNS, disable);
+        }
+        Pilot s = PILOTS.get(player.getUUID());
+        if (s != null) {
+            java.util.Arrays.fill(s.cooldownUntil, 0L);
+            s.cooldownsDirty = true;
+        }
+    }
+
     private static boolean cooling(ServerPlayer player, Pilot s, LexAbility a) {
+        if (noCooldowns(player)) {
+            return false;
+        }
         long left = s.cooldownUntil[a.ordinal()] - player.level().getGameTime();
         if (left > 0) {
             player.displayClientMessage(Component.translatable("message.flash.thor_cooldown", (left + 19) / 20), true);
@@ -203,7 +251,10 @@ public final class LexSuit {
         return false;
     }
 
-    private static void setCooldown(Pilot s, LexAbility a, long now) {
+    private static void setCooldown(ServerPlayer player, Pilot s, LexAbility a, long now) {
+        if (noCooldowns(player)) {
+            return;
+        }
         s.cooldownUntil[a.ordinal()] = now + a.cooldown();
         s.cooldownsDirty = true;
     }
@@ -219,6 +270,9 @@ public final class LexSuit {
         }
         if (s.unibeamTicks >= 0) {
             endUnibeam(player, s);
+        }
+        if (s.laserTicks >= 0) {
+            endLasers(player, s);
         }
     }
 
@@ -327,17 +381,29 @@ public final class LexSuit {
         SupermanAbilities.anim(player, "none");
         if (fired) {
             sound(player, ModSounds.LEX_UNIBEAM_POWERDOWN.get(), 1.0F, 1.0F);
-            setCooldown(s, LexAbility.UNIBEAM, player.level().getGameTime());
+            setCooldown(player, s, LexAbility.UNIBEAM, player.level().getGameTime());
         }
     }
 
-    /** The wrist lasers: a sweep in front that cuts everything within 9 blocks. */
-    private static boolean lasers(ServerPlayer player) {
+    /**
+     * The wrist lasers, held: the arms stay out and the two red lasers sweep the front back and forth, a sweep every
+     * half second cutting everything within 9 blocks, up to 4 s; the cooldown starts when they are put away.
+     */
+    private static void laserTick(ServerPlayer player, Pilot s) {
+        int t = s.laserTicks++;
+        if (t >= LASER_MAX || !spend(player, LASER_PER_TICK)) {
+            endLasers(player, s);
+            return;
+        }
+        if (t < 3 || (t - 3) % LASER_SWEEP != 0) {
+            return;
+        }
+        boolean back = ((t - 3) / LASER_SWEEP) % 2 == 1;
         ServerLevel level = player.serverLevel();
-        SupermanAbilities.anim(player, "lex_lasers");
-        sound(player, ModSounds.LEX_LASER.get(), 1.2F, 1.0F);
+        sound(player, ModSounds.LEX_LASER.get(), 1.0F, back ? 1.1F : 1.0F);
         Vec3 look = player.getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
-        fx(level, LexFxPacket.LASER, player.getId(), palm(player), look);
+        // (a direction twice as long tells the client to sweep the other way)
+        fx(level, LexFxPacket.LASER, player.getId(), palm(player), back ? look.scale(2.0D) : look);
         double cos = Math.cos(Math.toRadians(75.0D));
         for (Entity e : level.getEntities(player, player.getBoundingBox().inflate(9.0D), x -> x instanceof LivingEntity
                 && x.isAlive())) {
@@ -345,10 +411,16 @@ public final class LexSuit {
             if (d.length() > 9.0D || (d.length() > 0.5D && d.normalize().dot(look) < cos)) {
                 continue;
             }
-            hurt(player, (LivingEntity) e, 7.0F * power(player));
+            hurt(player, (LivingEntity) e, 5.0F * power(player));
             e.setSecondsOnFire(3);
         }
-        return true;
+    }
+
+    private static void endLasers(ServerPlayer player, Pilot s) {
+        s.laserTicks = -1;
+        setFlag(s, F_LASER, false);
+        SupermanAbilities.anim(player, "none");
+        setCooldown(player, s, LexAbility.LASERS, player.level().getGameTime());
     }
 
     /** Homing micro missiles: six, shared out between the targets in sight, two at a time from the shoulders. */
@@ -506,6 +578,7 @@ public final class LexSuit {
                 stopBeams(player, s);
                 s.missiles.clear();
                 s.diveTicks = -1;
+                s.laserTicks = -1;
                 int keep = s.flags & F_OPEN;
                 s.flags = keep;
                 if (was && pilotOk) {
@@ -535,17 +608,22 @@ public final class LexSuit {
         if (s.diveTicks >= 0) {
             diveTick(player, s);
         }
+        if (s.laserTicks >= 0) {
+            laserTick(player, s);
+        }
         missileTick(player, s);
-        boolean flying = player.getAbilities().flying;
-        if (flying && player.tickCount % 2 == 0) {
-            ServerLevel level = player.serverLevel();
-            level.sendParticles(ParticleTypes.SMALL_FLAME, player.getX(), player.getY() - 0.1D, player.getZ(), 2, 0.12D,
-                    0.05D, 0.12D, 0.0D);
-            level.sendParticles(ParticleTypes.SMOKE, player.getX(), player.getY() - 0.2D, player.getZ(), 1, 0.1D, 0.05D,
-                    0.1D, 0.0D);
+        setFlag(s, F_PODS, !s.missiles.isEmpty());
+        // the thrusters (the flight itself is steered on the client, see LexFlight)
+        boolean flying = player.getAbilities().flying && !player.isSpectator();
+        boolean fast = flying && player.isSprinting();
+        setFlag(s, F_FLY, flying);
+        setFlag(s, F_FAST, fast);
+        if (flying) {
+            player.fallDistance = 0.0F;
         }
         // the battery (written to the item in small steps, not every tick)
-        s.pending += DRAIN_PER_TICK * (flying ? 1.8F : 1.0F) * ((s.flags & F_OVERDRIVE) != 0 ? 2.0F : 1.0F);
+        s.pending += DRAIN_PER_TICK * (fast ? 3.0F : flying ? 1.8F : 1.0F)
+                * ((s.flags & F_OVERDRIVE) != 0 ? 2.0F : 1.0F);
         float now2 = LexArmorItem.energy(chest);
         if (s.pending >= 0.05F) {
             float after = Math.max(0.0F, now2 - s.pending);
@@ -614,7 +692,7 @@ public final class LexSuit {
         }
     }
 
-    /** Thrusters: double jump flies (as Superman), only while the battery lasts. */
+    /** Thrusters: double jump flies (as Iron Man in Legends: sprint for the fast flight), while the battery lasts. */
     private static void flight(ServerPlayer player, boolean on) {
         var ab = player.getAbilities();
         boolean creative = player.isCreative() || player.isSpectator();

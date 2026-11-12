@@ -71,6 +71,14 @@ public final class LexClient {
         return FlashAbilityKeys.mapping(a.keySlot());
     }
 
+    /** The skin never shows through the suit (the plates sit right on it). */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onRenderPlayer(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        if (!event.isCanceled() && LexSuitLayer.wearsAny(event.getEntity())) {
+            LexSuitLayer.hideSkin(event.getRenderer().getModel(), event.getEntity(), event.getPartialTick());
+        }
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();

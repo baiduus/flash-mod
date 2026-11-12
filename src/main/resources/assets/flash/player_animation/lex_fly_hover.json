@@ -1,0 +1,225 @@
+{
+ "version": 3,
+ "name": "lex_fly_hover",
+ "author": "Herois_baiduu (from the code animations of Legends: Superheroes)",
+ "description": "Thor: lex_fly_hover",
+ "emote": {
+  "beginTick": 0,
+  "endTick": 46,
+  "stopTick": 100000,
+  "isLoop": true,
+  "returnTick": 6,
+  "degrees": true,
+  "easeBeforeKeyframe": true,
+  "moves": [
+   {
+    "tick": 0,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 6,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 4.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": 8.0,
+     "yaw": 0.0,
+     "roll": 16.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": 8.0,
+     "yaw": 0.0,
+     "roll": -16.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 4.0,
+     "yaw": 0.0,
+     "roll": 2.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": -8.0,
+     "yaw": 0.0,
+     "roll": -2.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 26,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 4.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 2.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": 10.0,
+     "yaw": 0.0,
+     "roll": 19.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": 10.0,
+     "yaw": 0.0,
+     "roll": -19.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 6.0,
+     "yaw": 0.0,
+     "roll": 2.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": -6.0,
+     "yaw": 0.0,
+     "roll": -2.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   },
+   {
+    "tick": 46,
+    "easing": "easeInOutSine",
+    "head": {
+     "pitch": 4.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "torso": {
+     "pitch": 0.0,
+     "yaw": 0.0,
+     "roll": 0.0,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "rightArm": {
+     "pitch": 8.0,
+     "yaw": 0.0,
+     "roll": 16.0,
+     "x": -5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "leftArm": {
+     "pitch": 8.0,
+     "yaw": 0.0,
+     "roll": -16.0,
+     "x": 5.0,
+     "y": 2.0,
+     "z": 0.0
+    },
+    "rightLeg": {
+     "pitch": 4.0,
+     "yaw": 0.0,
+     "roll": 2.0,
+     "x": -1.9,
+     "y": 12.0,
+     "z": 0.0
+    },
+    "leftLeg": {
+     "pitch": -8.0,
+     "yaw": 0.0,
+     "roll": -2.0,
+     "x": 1.9,
+     "y": 12.0,
+     "z": 0.0
+    }
+   }
+  ]
+ }
+}

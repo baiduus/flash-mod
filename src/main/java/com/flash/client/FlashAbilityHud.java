@@ -216,6 +216,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
                 case OVERDRIVE -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_OVERDRIVE);
                 case FACEPLATE -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_OPEN);
                 case POWER_DIVE -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_DIVE);
+                case LASERS -> com.flash.lex.LexState.flag(minecraft.player, com.flash.lex.LexSuit.F_LASER);
                 default -> false;
             };
             drawRow(graphics, font, x, y, panelWidth, a.displayName().getString(), keyLabel(LexClient.key(a)), cd,

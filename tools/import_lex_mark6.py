@@ -72,6 +72,8 @@ def main():
     os.makedirs(A + "/textures/gui/lex", exist_ok=True)
     os.makedirs(A + "/sounds/lex", exist_ok=True)
     shutil.copy(SRC + "/geo/item/ironman/mark6.geo.json", A + "/geo/lex/mark6.geo.json")
+    # the bone animations of the suit (faceplate, back thrusters, wrist lasers, overdrive)
+    shutil.copy(SRC + "/animations/item/armor/iron_man/mark6.animation.json", A + "/geo/lex/mark6.animation.json")
     base = Image.open(SRC + "/textures/suits/iron_man_mark6/mark6_skinless.png")
     hsv_map(base, lex_colors).save(A + "/textures/lex/mark6.png")
     glow(base).save(A + "/textures/lex/mark6_glow.png")
@@ -101,7 +103,9 @@ def main():
     sounds = ["repulsor_blast1", "repulsor_blast2", "repulsor_blast3", "repulsor_beam", "repulsor_continuous",
               "repulsor_charge", "repulsor_impact", "unibeam_charge", "unibeam_blast1", "unibeam_powerdown", "laser",
               "missile", "micromissilering", "armor_overdrive", "armor_overdrive_off", "ironman_helmet_open",
-              "ironman_helmet_close", "ironman_powerdown", "ironman_recharge"]
+              "ironman_helmet_close", "ironman_powerdown", "ironman_recharge", "jetpack_thrust_on_1",
+              "jetpack_thrust_on_2", "jetpack_thrust_on_3", "jetpack_thrust_loop", "jetpack_thrust_off_1",
+              "jetpack_thrust_off_2", "jetpack_thrust_off_3"]
     for n in sounds:
         shutil.copy(SRC + f"/sounds/{n}.ogg", A + f"/sounds/lex/{n}.ogg")
     p = A + "/sounds.json"
@@ -116,6 +120,9 @@ def main():
         "micromissiles": ["micromissilering"], "overdrive": ["armor_overdrive"], "overdrive_off": ["armor_overdrive_off"],
         "helmet_open": ["ironman_helmet_open"], "helmet_close": ["ironman_helmet_close"],
         "powerdown": ["ironman_powerdown"], "recharge": ["ironman_recharge"],
+        "thrust_start": ["jetpack_thrust_on_1", "jetpack_thrust_on_2", "jetpack_thrust_on_3"],
+        "thrust_loop": ["jetpack_thrust_loop"],
+        "thrust_end": ["jetpack_thrust_off_1", "jetpack_thrust_off_2", "jetpack_thrust_off_3"],
     }
     for k, names in events.items():
         d["lex." + k] = {"sounds": [{"name": "flash:lex/" + n} for n in names], "subtitle": "subtitles.flash.lex"}
