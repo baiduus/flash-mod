@@ -261,6 +261,28 @@ public final class YasAbilities {
         unbind();
     }
 
+    /**
+     * Hand of God's own ability wheel / menu never opens (Yas uses her modes; nobody else has the powers) and its
+     * ability HUD is replaced by the mode panel.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onScreen(net.minecraftforge.client.event.ScreenEvent.Opening event) {
+        if (event.getNewScreen() != null && event.getNewScreen().getClass().getName()
+                .equals("handofgod.client.PainelTela")) {
+            event.setCanceled(true);
+        }
+    }
+
+    private static final net.minecraft.resources.ResourceLocation HOG_HUD =
+            new net.minecraft.resources.ResourceLocation("hand_of_god", "habilidade_hud");
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onOverlay(net.minecraftforge.client.event.RenderGuiOverlayEvent.Pre event) {
+        if (HOG_HUD.equals(event.getOverlay().id())) {
+            event.setCanceled(true);
+        }
+    }
+
     private static boolean active() {
         Minecraft mc = Minecraft.getInstance();
         return mc.player != null && mc.screen == null && !mc.player.isSpectator() && PowerTheme.localYas()
