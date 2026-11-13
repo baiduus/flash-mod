@@ -219,20 +219,59 @@ public final class YasPowers {
      * server sets the flight and a lift, so the game does not switch it off on the ground).
      */
     public static void toggleFlight(ServerPlayer p) {
+        flightKey(p, p.getAbilities().flying ? 5 : 4);
+    }
+
+    /** Players who asked to take off from the ground: flying as soon as they are in the air (ticks left). */
+    private static final java.util.Map<java.util.UUID, Integer> TAKEOFF = new java.util.HashMap<>();
+
+    /**
+     * The flight key (the client already moves itself): 4 fly, 5 land. From the ground the flight starts once she
+     * is in the air (flying on the ground is switched off by the game at once).
+     */
+    public static void flightKey(ServerPlayer p, int what) {
         var ab = p.getAbilities();
-        if (ab.flying) {
+        com.mojang.logging.LogUtils.getLogger().info("[flash] flight key on the server: {} (ground={}, flying={})",
+                what, p.onGround(), ab.flying);
+        if (what == 5 || (what == 3 && ab.flying)) {
             ab.flying = false;
             p.onUpdateAbilities();
             return;
         }
         ab.mayfly = true;
-        ab.flying = true;
         ab.setFlyingSpeed(0.0F);
-        p.onUpdateAbilities();
         p.fallDistance = 0.0F;
-        p.setDeltaMovement(p.getDeltaMovement().add(0.0D, 0.6D, 0.0D));
-        p.hurtMarked = true;
-        com.flash.superman.SupermanAbilities.groundPuff(p.serverLevel(), p.position(), 1.5D, 16);
+        if (p.onGround()) {
+            ab.flying = false;
+            p.onUpdateAbilities();
+            TAKEOFF.put(p.getUUID(), 30);
+            com.flash.superman.SupermanAbilities.groundPuff(p.serverLevel(), p.position(), 1.5D, 16);
+        } else {
+            ab.flying = true;
+            p.onUpdateAbilities();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onTakeoffTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || TAKEOFF.isEmpty()) {
+            return;
+        }
+        Integer left = TAKEOFF.get(p.getUUID());
+        if (left == null) {
+            return;
+        }
+        if (!p.onGround() && p.getAbilities().mayfly) {
+            TAKEOFF.remove(p.getUUID());
+            if (!p.getAbilities().flying) {
+                p.getAbilities().flying = true;
+                p.onUpdateAbilities();
+            }
+        } else if (left <= 1) {
+            TAKEOFF.remove(p.getUUID());
+        } else {
+            TAKEOFF.put(p.getUUID(), left - 1);
+        }
     }
 
     /**

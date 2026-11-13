@@ -685,20 +685,39 @@ public final class YasAbilities {
                 || !(PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localStorm())) {
             flightHeld = -1;
             flightWas = false;
+            flyPending = 0;
             return;
         }
+        // a takeoff asked: she flies as soon as her feet leave the ground (on the ground the game itself would
+        // switch the flight off at once)
+        if (flyPending > 0) {
+            flyPending--;
+            if (!p.onGround() && p.getAbilities().mayfly && !p.getAbilities().flying) {
+                p.getAbilities().flying = true;
+                p.onUpdateAbilities();
+                flyPending = 0;
+            }
+        }
         KeyMapping k = FlashAbilityKeys.mapping(com.flash.ability.FlashAbility.WIND_HANDS);
-        // the key itself, whatever else shares it: it flies in every mode
-        boolean down = k != null && mc.screen == null && (k.isDown() || (!k.isUnbound()
-                && k.getKey().getType() == InputConstants.Type.KEYSYM
-                && InputConstants.isKeyDown(mc.getWindow().getWindow(), k.getKey().getValue())));
+        // the key itself (the physical key first: whatever else shares it, it flies in every mode)
+        boolean physical = k != null && !k.isUnbound() && k.getKey().getType() == InputConstants.Type.KEYSYM
+                && InputConstants.isKeyDown(mc.getWindow().getWindow(), k.getKey().getValue());
+        boolean down = k != null && mc.screen == null && (physical || k.isDown());
         boolean was = flightWas;
         flightWas = down;
         boolean ground = p.onGround() && !p.getAbilities().flying && !p.isInWater() && !p.isPassenger();
         if (down && !was) {
+            FLIGHT_LOG.info("[flash] flight key down (ground={}, flying={}, mayfly={})", ground,
+                    p.getAbilities().flying, p.getAbilities().mayfly);
             if (!ground) {
-                // in the air: the server toggles the flight (as Superman's and Thor's)
-                com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(3));
+                // in the air: flies / lands at once (the server is told too)
+                boolean fly = !p.getAbilities().flying;
+                if (!fly || p.getAbilities().mayfly) {
+                    p.getAbilities().flying = fly;
+                    p.onUpdateAbilities();
+                }
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                        new com.flash.network.SupermanLaunchPacket(fly ? 4 : 5));
                 return;
             }
             flightHeld = 0;
@@ -720,7 +739,12 @@ public final class YasAbilities {
                 SupermanClient.thorCoiling = false;
                 com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
                 flightLaunched = true;
+                // the leap itself, here (the client moves its own player): Yas ~30 blocks, the others ~20
+                double up = PowerTheme.localYas() ? 2.6D : 2.0D;
+                p.setDeltaMovement(p.getDeltaMovement().x, up, p.getDeltaMovement().z);
+                p.hasImpulse = true;
                 SupermanClient.hoverAtTop();
+                FLIGHT_LOG.info("[flash] flight key: charged takeoff");
             }
             return;
         }
@@ -729,12 +753,20 @@ public final class YasAbilities {
             if (flightHeld >= TAP_TICKS) {
                 com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
             }
-            // a tap (or a takeoff let go too soon): the server takes off, as Thor's
-            com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(3));
+            // a tap on the ground: a hop and the flight from it
+            p.setDeltaMovement(p.getDeltaMovement().x, 0.8D, p.getDeltaMovement().z);
+            p.hasImpulse = true;
+            flyPending = 20;
+            com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(4));
+            FLIGHT_LOG.info("[flash] flight key: takeoff (tap)");
         }
         flightHeld = -1;
         flightLaunched = false;
     }
+
+    private static final org.slf4j.Logger FLIGHT_LOG = com.mojang.logging.LogUtils.getLogger();
+    /** Ticks left to switch the flight on once airborne. */
+    private static int flyPending;
 
     /**
      * Hand of God's own ability wheel / menu never opens (Yas uses her modes; nobody else has the powers) and its

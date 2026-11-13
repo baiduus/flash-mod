@@ -22,8 +22,6 @@ public abstract class LevelChunkGuardMixin {
         LevelChunk self = (LevelChunk) (Object) this;
         if (com.flash.yas.YasDestruction.refuse(self, pos, state)) {
             cir.setReturnValue(null);
-            return;
         }
-        com.flash.yas.RealityJournal.record(self, pos, state);
     }
 }

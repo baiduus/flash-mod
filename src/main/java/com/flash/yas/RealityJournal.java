@@ -1,14 +1,19 @@
 package com.flash.yas;
 
 import com.flash.FlashMod;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -16,121 +21,166 @@ import net.minecraftforge.fml.common.Mod;
 /**
  * Makes the Manipulation of Reality give the land back exactly as it was.
  * <p>
- * Hand of God's wave rewrites the land and later restores what it recorded; the trees it grew can reach past what
- * it restores (their crowns stayed in the air when the trunks went back). So while one of its waves is alive, every
- * tree, leaf and plant its code puts in the world is noted here (where, what was there before, what it put); when
- * no wave is left, whatever of those is still standing is put back as it was.
+ * Hand of God plans each wave as a list of blocks (where, what was there, what it becomes) and, going back, puts
+ * the old block only where the new one is still unchanged (not to undo what a player built meanwhile). But the
+ * leaves it grows change by themselves (their distance to the trunk, as the neighbours change), so going back it
+ * took the trunks and left every crown in the air. Here, when one of its waves is over, its own list is read again
+ * and every block still of the kind the wave put there (whatever its little states) goes back to what was there,
+ * a few thousand a tick, without neighbour updates (no cascade of leaves decaying, no lag).
  * <p>
- * The mod's own wave (the Nether and the End, YasRealityWave) records everything it changes the same way, into
- * the wave being drawn ({@link #into}), and undoes it when its time is over.
+ * Also: no fog at the edge of a rewritten area for those outside it (Hand of God's client option, turned off).
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
 public final class RealityJournal {
 
-    /** Hand of God has a reality wave alive (polled each tick). */
-    private static volatile boolean hogActive;
-    /** One of its waves is going back (what it writes then is the old land, not growth). */
-    private static volatile boolean hogUndoing;
-    private static Thread serverThread;
-    /** Hand of God's growth: pos -> {before, put}. */
-    private static final Long2ObjectOpenHashMap<BlockState[]> GROWN = new Long2ObjectOpenHashMap<>();
-    private static ServerLevel grownLevel;
-    /** The mod's wave being drawn now (its journal), or null. */
-    static Long2ObjectOpenHashMap<BlockState> into;
+    private static final int BUDGET = 4000;
+    private static boolean looked;
+    private static java.lang.reflect.Method actives;
+    private static Field id;
+    private static Field phase;
+    private static Field pos;
+    private static Field orig;
+    private static Field fin;
+
+    /** A wave seen alive: its list (kept when it leaves Hand of God's). */
+    private static final class Seen {
+        long[] pos;
+        BlockState[] orig;
+        BlockState[] fin;
+        ServerLevel level;
+    }
+
+    private static final Map<UUID, Seen> SEEN = new HashMap<>();
+
+    /** A finished wave being put right. */
+    private static final class Fix {
+        final Seen s;
+        int i;
+
+        Fix(Seen s) {
+            this.s = s;
+        }
+    }
+
+    private static final List<Fix> FIXES = new ArrayList<>();
 
     private RealityJournal() {
     }
 
-    /** From the mixin, before every block change of a chunk. */
-    public static void record(LevelChunk chunk, BlockPos pos, BlockState state) {
-        if (Thread.currentThread() != serverThread || !(chunk.getLevel() instanceof ServerLevel level)) {
-            return;
-        }
-        if (into != null) {
-            into.putIfAbsent(pos.asLong(), chunk.getBlockState(pos));
-            return;
-        }
-        if (!hogActive || !grows(state)) {
-            return;
-        }
-        boolean fromReality = StackWalker.getInstance().walk(s -> s.limit(64)
-                .anyMatch(f -> f.getClassName().startsWith("handofgod.realidade")));
-        if (!fromReality) {
-            return;
-        }
-        long key = pos.asLong();
-        BlockState[] seen = GROWN.get(key);
-        if (seen == null) {
-            if (hogUndoing) {
-                return;
+    private static boolean ready() {
+        if (!looked) {
+            looked = true;
+            try {
+                actives = Class.forName("handofgod.realidade.Realidade").getMethod("ativas");
+                Class<?> t = Class.forName("handofgod.realidade.Transformacao");
+                id = t.getField("id");
+                phase = t.getField("fase");
+                pos = t.getDeclaredField("pos");
+                orig = t.getDeclaredField("orig");
+                fin = t.getDeclaredField("fin");
+                pos.setAccessible(true);
+                orig.setAccessible(true);
+                fin.setAccessible(true);
+            } catch (ReflectiveOperationException | LinkageError e) {
+                actives = null;
             }
-            GROWN.put(key, new BlockState[] {chunk.getBlockState(pos), state});
-            grownLevel = level;
-        } else {
-            seen[1] = state;
         }
-    }
-
-    /** What a wave grows: trees, leaves, plants, vines (not the ground itself). */
-    private static boolean grows(BlockState s) {
-        return s.is(BlockTags.LEAVES) || s.is(BlockTags.LOGS) || s.is(BlockTags.FLOWERS) || s.is(BlockTags.SAPLINGS)
-                || s.is(BlockTags.REPLACEABLE_BY_TREES) || s.getBlock() instanceof net.minecraft.world.level.block.VineBlock
-                || s.getBlock() instanceof net.minecraft.world.level.block.HugeMushroomBlock
-                || s.getBlock() instanceof net.minecraft.world.level.block.CocoaBlock
-                || s.getBlock() instanceof net.minecraft.world.level.block.BeehiveBlock
-                || s.is(net.minecraft.world.level.block.Blocks.MANGROVE_ROOTS)
-                || s.is(net.minecraft.world.level.block.Blocks.MOSS_CARPET);
+        return actives != null;
     }
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) {
+        if (event.phase != TickEvent.Phase.END || !ready()) {
             return;
         }
-        serverThread = Thread.currentThread();
-        boolean active = hogWaves();
-        if (hogActive && !active && !GROWN.isEmpty()) {
-            restoreGrown();
-        }
-        hogActive = active;
-    }
-
-    private static boolean hogWaves() {
+        // the waves alive now (and their lists, kept)
+        Set<UUID> alive = new HashSet<>();
         try {
-            Object list = Class.forName("handofgod.realidade.Realidade").getMethod("ativas").invoke(null);
-            if (!(list instanceof List<?> l) || l.isEmpty()) {
-                hogUndoing = false;
-                return false;
-            }
-            boolean undoing = false;
-            for (Object t : l) {
-                Object phase = t.getClass().getField("fase").get(t);
-                if (phase != null && "DESFAZENDO".equals(phase.toString())) {
-                    undoing = true;
+            Object list = actives.invoke(null);
+            if (list instanceof List<?> l) {
+                for (Object t : l) {
+                    UUID key = (UUID) id.get(t);
+                    alive.add(key);
+                    Seen s = SEEN.computeIfAbsent(key, k -> new Seen());
+                    long[] p = (long[]) pos.get(t);
+                    if (p != null) {
+                        s.pos = p;
+                        s.orig = (BlockState[]) orig.get(t);
+                        s.fin = (BlockState[]) fin.get(t);
+                    }
+                    if (s.level == null) {
+                        s.level = levelOf(event.getServer(), t);
+                    }
+                    Object f = phase.get(t);
+                    if (f != null && "FIM".equals(f.toString())) {
+                        alive.remove(key);
+                    }
                 }
             }
-            hogUndoing = undoing;
-            Object permanent = Class.forName("handofgod.Config").getField("REALIDADE_PERMANENTE").get(null);
-            return !(permanent instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get());
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return;
+        }
+        // a wave gone (gone back): its leftovers are put right
+        for (Iterator<Map.Entry<UUID, Seen>> it = SEEN.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<UUID, Seen> en = it.next();
+            if (!alive.contains(en.getKey())) {
+                it.remove();
+                Seen s = en.getValue();
+                if (s.pos != null && s.orig != null && s.fin != null && s.level != null && !permanent()) {
+                    FIXES.add(new Fix(s));
+                }
+            }
+        }
+        if (!FIXES.isEmpty()) {
+            fix(FIXES.get(0));
+            if (FIXES.get(0).i >= FIXES.get(0).s.pos.length) {
+                FIXES.remove(0);
+            }
+        }
+    }
+
+    private static ServerLevel levelOf(net.minecraft.server.MinecraftServer server, Object t) {
+        // the wave's owner's level (its centre is in it); the overworld without him
+        try {
+            UUID owner = (UUID) t.getClass().getField("dono").get(t);
+            var p = owner == null ? null : server.getPlayerList().getPlayer(owner);
+            if (p != null) {
+                return p.serverLevel();
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // the overworld
+        }
+        return server.overworld();
+    }
+
+    private static boolean permanent() {
+        try {
+            Object v = Class.forName("handofgod.Config").getField("REALIDADE_PERMANENTE").get(null);
+            return v instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get();
         } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
             return false;
         }
     }
 
-    /** All waves gone: what they grew and is still there goes back to what was there. */
-    private static void restoreGrown() {
-        ServerLevel level = grownLevel;
-        if (level != null) {
-            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-            for (var en : GROWN.long2ObjectEntrySet()) {
-                pos.set(en.getLongKey());
-                BlockState[] seen = en.getValue();
-                if (level.isLoaded(pos) && level.getBlockState(pos) == seen[1]) {
-                    level.setBlock(pos, seen[0], Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
-                }
+    private static void fix(Fix f) {
+        Seen s = f.s;
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int end = Math.min(s.pos.length, f.i + BUDGET);
+        for (; f.i < end; f.i++) {
+            BlockState was = s.orig[f.i];
+            BlockState put = s.fin[f.i];
+            if (was == null || put == null || was.getBlock() == put.getBlock()) {
+                continue;
+            }
+            at.set(s.pos[f.i]);
+            if (!s.level.isLoaded(at)) {
+                continue;
+            }
+            BlockState now = s.level.getBlockState(at);
+            // still what the wave put (its kind: a leaf whose distance changed is still that leaf)
+            if (now.getBlock() == put.getBlock()) {
+                s.level.setBlock(at, was, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             }
         }
-        GROWN.clear();
-        grownLevel = null;
     }
 }

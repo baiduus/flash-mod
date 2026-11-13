@@ -238,8 +238,66 @@ public final class StormClient {
             return;
         }
         long now = mc.level.getGameTime();
+        if (now % 100 == 0) {
+            noRealityFog();
+        }
+        tornadoes(mc, now);
         BOLTS.removeIf(b -> now - b.born > b.life);
         CASTING.values().removeIf(t -> t < now);
+    }
+
+    /**
+     * Hand of God's fog at the edge of a rewritten area (seen by those outside it): off (its client option, kept
+     * off).
+     */
+    private static void noRealityFog() {
+        try {
+            Object v = Class.forName("handofgod.Config").getField("REALIDADE_NEVOA_CLIENTE").get(null);
+            if (v instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get()) {
+                b.set(false);
+            }
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
+            // no Hand of God
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Her flight: a small tornado under her legs (only a look, it hurts no one)
+    // ------------------------------------------------------------------
+
+    private static void tornadoes(Minecraft mc, long now) {
+        if (mc.isPaused()) {
+            return;
+        }
+        for (Player p : mc.level.players()) {
+            if (!flying(p) || p.isInvisible()) {
+                continue;
+            }
+            double speed = p.getDeltaMovement().length();
+            // the funnel: narrow at her feet, wider below, spinning
+            for (int i = 0; i < 7; i++) {
+                double h = (now * 0.35D + i * 0.37D) % 2.2D;
+                double r = 0.12D + h * 0.33D;
+                double a = now * 0.9D + i * 2.3D + h * 3.0D;
+                double x = p.getX() + Math.cos(a) * r;
+                double y = p.getY() + 0.15D - h;
+                double z = p.getZ() + Math.sin(a) * r;
+                double tx = -Math.sin(a) * 0.12D;
+                double tz = Math.cos(a) * 0.12D;
+                mc.level.addParticle(i % 3 == 0 ? net.minecraft.core.particles.ParticleTypes.POOF
+                        : net.minecraft.core.particles.ParticleTypes.CLOUD, x, y, z,
+                        tx + p.getDeltaMovement().x * 0.5D, 0.02D, tz + p.getDeltaMovement().z * 0.5D);
+            }
+            // a spark of lightning in the funnel now and then
+            if (now % 9 == p.getId() % 9 && speed < 3.0D) {
+                Vec3 top = p.position().add(0.0D, 0.1D, 0.0D);
+                double a = now * 0.7D;
+                Vec3 bottom = p.position().add(Math.cos(a) * 0.6D, -1.8D, Math.sin(a) * 0.6D);
+                long seed = now * 31L + p.getId();
+                BOLTS.add(new Bolt(Bolt42.build(seed, seed * 7L + 1L, top, bottom, 0.025F, 2, 0.3D, 1, 0.3F), seed,
+                        now, 3, 0.7F));
+            }
+        }
     }
 
     @SubscribeEvent

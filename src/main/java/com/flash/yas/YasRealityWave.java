@@ -203,12 +203,7 @@ public final class YasRealityWave {
                 }
                 int from = w.r;
                 w.r = Math.min(RADIUS, w.r + 1);
-                RealityJournal.into = w.journal;
-                try {
-                    ring(w, from, w.r);
-                } finally {
-                    RealityJournal.into = null;
-                }
+                ring(w, from, w.r);
             } else if (w.phase == 1) {
                 if (w.level.getGameTime() >= w.until) {
                     startBack(w);
@@ -233,7 +228,7 @@ public final class YasRealityWave {
                 }
                 int x = w.center.getX() + dx;
                 int z = w.center.getZ() + dz;
-                column(level, rnd, x, z, w.center.getY());
+                column(w, level, rnd, x, z, w.center.getY());
                 if (rnd.nextInt(6) == 0) {
                     level.sendParticles(energy, x + 0.5D, w.center.getY() + 1.0D + rnd.nextDouble() * 3.0D, z + 0.5D,
                             1, 0.2D, 0.4D, 0.2D, 0.02D);
@@ -294,7 +289,7 @@ public final class YasRealityWave {
         for (long key : ring) {
             pos.set(key);
             if (w.level.isLoaded(pos)) {
-                w.level.setBlock(pos, w.journal.get(key), Block.UPDATE_CLIENTS);
+                w.level.setBlock(pos, w.journal.get(key), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             }
         }
         w.back--;
@@ -302,7 +297,7 @@ public final class YasRealityWave {
     }
 
     /** One column of the band around her height: rewritten from the top down. */
-    private static void column(ServerLevel level, RandomSource rnd, int x, int z, int cy) {
+    private static void column(Wave w, ServerLevel level, RandomSource rnd, int x, int z, int cy) {
         int depth = -1; // blocks of ground below the open sky of this column
         for (int y = cy + BAND; y >= cy - BAND; y--) {
             BlockPos pos = new BlockPos(x, y, z);
@@ -316,9 +311,10 @@ public final class YasRealityWave {
                 depth = s.blocksMotion() ? depth + 1 : -1;
                 continue;
             }
+            w.journal.putIfAbsent(pos.asLong(), s);
             level.setBlock(pos, to, Block.UPDATE_CLIENTS);
             if (to.is(Blocks.GRASS_BLOCK) && depth < 0) {
-                grow(level, rnd, pos.above());
+                grow(w, level, rnd, pos.above());
             }
             depth = to.blocksMotion() ? (depth < 0 ? 0 : depth + 1) : -1;
         }
@@ -358,19 +354,25 @@ public final class YasRealityWave {
             Blocks.OXEYE_DAISY, Blocks.ALLIUM, Blocks.BLUE_ORCHID};
 
     /** On fresh grass: grass, flowers, now and then a tree. */
-    private static void grow(ServerLevel level, RandomSource rnd, BlockPos at) {
+    private static void grow(Wave w, ServerLevel level, RandomSource rnd, BlockPos at) {
         if (!level.getBlockState(at).isAir()) {
             return;
         }
         float roll = rnd.nextFloat();
         if (roll < 0.014F) {
+            // what is there now, noted before the tree grows (so it goes back too)
+            for (BlockPos q : BlockPos.betweenClosed(at.offset(-4, 0, -4), at.offset(4, 14, 4))) {
+                w.journal.putIfAbsent(q.asLong(), level.getBlockState(q));
+            }
             ResourceKey<ConfiguredFeature<?, ?>> tree = rnd.nextInt(3) == 0 ? TreeFeatures.BIRCH
                     : rnd.nextInt(4) == 0 ? TreeFeatures.FANCY_OAK : TreeFeatures.OAK;
             level.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).getHolder(tree)
                     .ifPresent(h -> h.value().place(level, level.getChunkSource().getGenerator(), rnd, at));
         } else if (roll < 0.06F) {
+            w.journal.putIfAbsent(at.asLong(), level.getBlockState(at));
             level.setBlock(at, FLOWERS[rnd.nextInt(FLOWERS.length)].defaultBlockState(), Block.UPDATE_CLIENTS);
         } else if (roll < 0.36F) {
+            w.journal.putIfAbsent(at.asLong(), level.getBlockState(at));
             level.setBlock(at, Blocks.GRASS.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
     }

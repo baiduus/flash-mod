@@ -19,10 +19,11 @@ public record SupermanLaunchPacket(int phase) {
     public void handle(NetworkEvent.Context context) {
         ServerPlayer player = context.getSender();
         context.setPacketHandled(true);
-        if (player != null && this.phase == 3) {
+        if (player != null && this.phase >= 3) {
             if (com.flash.yas.YasPowers.has(player) || com.flash.scarlet.ScarletPowers.has(player)
                     || com.flash.storm.StormPowers.has(player)) {
-                com.flash.yas.YasPowers.toggleFlight(player);
+                // 3 toggle, 4 fly (a takeoff), 5 land
+                com.flash.yas.YasPowers.flightKey(player, this.phase);
             }
         } else if (player != null && com.flash.storm.StormPowers.has(player)) {
             com.flash.storm.StormPowers.launch(player, this.phase);
