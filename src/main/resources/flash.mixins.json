@@ -4,7 +4,8 @@
   "package": "com.flash.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "LevelChunkGuardMixin"
+    "LevelChunkGuardMixin",
+    "HandOfGodBossMixin"
   ],
   "injectors": {
     "defaultRequire": 0
