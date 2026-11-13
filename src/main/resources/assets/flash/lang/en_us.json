@@ -1147,5 +1147,7 @@
   "commands.flash.chaos.not_eligible": "%s already has powers: chaos only comes to those without",
   "commands.flash.chaos.offered": "The chaos energy appeared to %s",
   "commands.flash.chaos.debug_on": "You will see every chaos roll (joining and dying)",
-  "commands.flash.chaos.debug_off": "Chaos rolls hidden"
+  "commands.flash.chaos.debug_off": "Chaos rolls hidden",
+  "commands.flash.chaos.debug": "Chaos chance now: %s%% (on joining and on dying without powers)",
+  "commands.flash.chaos.chance_set": "Chaos chance set to %s%%"
 }

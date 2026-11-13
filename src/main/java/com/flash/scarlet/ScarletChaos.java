@@ -42,25 +42,23 @@ import net.minecraftforge.network.PacketDistributor;
  * </ul>
  * The energy asks whether he gives in to chaos: yes, he becomes the Scarlet Witch; no, it fades away.
  * <p>
- * To test: {@code /scarlet chance <join|death> <tries>} rolls the same dice many times and shows how many came out
- * (about 10 %); {@code /scarlet roll <join|death> [player]} rolls once for real (and on a hit, does it);
- * {@code /scarlet offer [player]} brings the energy at once; {@code /scarlet debug on|off} shows each real roll (on
- * joining and dying) to that player.
+ * {@code /scarlet chance <1..100>} sets the chance (percent, kept with the world); {@code /scarlet debug} tells it;
+ * {@code /scarlet roll <join|death> [player]} rolls once for real (and on a hit, does it); {@code /scarlet offer
+ * [player]} brings the energy at once.
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
 public final class ScarletChaos {
 
-    /** Percent. */
-    public static final int CHANCE = 10;
+    /** Percent (10 unless changed with /scarlet chance, kept with the world). */
+    public static int chance = 10;
     private static final Map<UUID, Integer> OFFERED = new HashMap<>();
     /** Offers waiting a moment (after joining or coming back): player -> server tick to show it. */
     private static final Map<UUID, Integer> PENDING = new HashMap<>();
-    private static final Set<UUID> DEBUG = new HashSet<>();
 
     private ScarletChaos() {
     }
 
-    /** The dice: 1..100; a hit is {@link #CHANCE} or less. */
+    /** The dice: 1..100; a hit is {@link #chance} or less. */
     public static int roll(RandomSource random) {
         return 1 + random.nextInt(100);
     }
@@ -71,13 +69,6 @@ public final class ScarletChaos {
                 && !com.flash.yas.YasPowers.has(p) && !ScarletPowers.has(p);
     }
 
-    private static void debug(ServerPlayer p, String way, int roll) {
-        if (DEBUG.contains(p.getUUID())) {
-            p.sendSystemMessage(Component.translatable(roll <= CHANCE ? "message.flash.chaos.debug_hit"
-                    : "message.flash.chaos.debug_miss", Component.translatable("message.flash.chaos.way." + way), roll,
-                    CHANCE));
-        }
-    }
 
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -85,8 +76,7 @@ public final class ScarletChaos {
             return;
         }
         int roll = roll(p.getRandom());
-        debug(p, "join", roll);
-        if (roll <= CHANCE) {
+        if (roll <= chance) {
             PENDING.put(p.getUUID(), p.server.getTickCount() + 80);
         }
     }
@@ -99,8 +89,7 @@ public final class ScarletChaos {
             return;
         }
         int roll = roll(p.getRandom());
-        debug(p, "death", roll);
-        if (roll <= CHANCE) {
+        if (roll <= chance) {
             event.setCanceled(true);
             revive(p);
             PENDING.put(p.getUUID(), p.server.getTickCount() + 25);
@@ -202,11 +191,15 @@ public final class ScarletChaos {
     // ------------------------------------------------------------------
 
     public static LiteralArgumentBuilder<CommandSourceStack> commands(LiteralArgumentBuilder<CommandSourceStack> root) {
+        // /scarlet chance <1..100>: the chance (percent) of both ways
+        root.then(Commands.literal("chance").then(Commands.argument("percent", IntegerArgumentType.integer(1, 100))
+                .executes(c -> setChance(c.getSource(), IntegerArgumentType.getInteger(c, "percent")))));
+        // /scarlet debug: the chance now
+        root.then(Commands.literal("debug").executes(c -> {
+            c.getSource().sendSuccess(() -> Component.translatable("commands.flash.chaos.debug", chance), false);
+            return chance;
+        }));
         for (String way : new String[] {"join", "death"}) {
-            root.then(Commands.literal("chance").then(Commands.literal(way)
-                    .executes(c -> simulate(c.getSource(), way, 1000))
-                    .then(Commands.argument("tries", IntegerArgumentType.integer(1, 1000000))
-                            .executes(c -> simulate(c.getSource(), way, IntegerArgumentType.getInteger(c, "tries"))))));
             root.then(Commands.literal("roll").then(Commands.literal(way)
                     .executes(c -> rollOnce(c.getSource(), c.getSource().getPlayerOrException(), way))
                     .then(Commands.argument("player", EntityArgument.player())
@@ -216,33 +209,22 @@ public final class ScarletChaos {
                 .executes(c -> forceOffer(c.getSource(), c.getSource().getPlayerOrException()))
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(c -> forceOffer(c.getSource(), EntityArgument.getPlayer(c, "player")))));
-        root.then(Commands.literal("debug")
-                .then(Commands.literal("on").executes(c -> debugMode(c.getSource(), true)))
-                .then(Commands.literal("off").executes(c -> debugMode(c.getSource(), false))));
         return root;
     }
 
-    private static int simulate(CommandSourceStack src, String way, int tries) {
-        RandomSource random = src.getLevel().getRandom();
-        int hits = 0;
-        for (int i = 0; i < tries; i++) {
-            if (roll(random) <= CHANCE) {
-                hits++;
-            }
-        }
-        int h = hits;
-        String pct = String.format(java.util.Locale.ROOT, "%.2f", 100.0D * hits / tries);
-        src.sendSuccess(() -> Component.translatable("commands.flash.chaos.simulated",
-                Component.translatable("message.flash.chaos.way." + way), tries, h, pct, CHANCE), false);
-        return hits;
+    private static int setChance(CommandSourceStack src, int percent) {
+        chance = percent;
+        Saved.get(src.getServer()).setDirty();
+        src.sendSuccess(() -> Component.translatable("commands.flash.chaos.chance_set", percent), true);
+        return percent;
     }
 
     private static int rollOnce(CommandSourceStack src, ServerPlayer p, String way) {
         int roll = roll(p.getRandom());
-        boolean hit = roll <= CHANCE;
+        boolean hit = roll <= chance;
         src.sendSuccess(() -> Component.translatable(hit ? "message.flash.chaos.debug_hit"
                 : "message.flash.chaos.debug_miss", Component.translatable("message.flash.chaos.way." + way), roll,
-                CHANCE), false);
+                chance), false);
         if (hit) {
             if (!eligible(p)) {
                 src.sendFailure(Component.translatable("commands.flash.chaos.not_eligible", p.getDisplayName()));
@@ -264,16 +246,31 @@ public final class ScarletChaos {
         return 1;
     }
 
-    private static int debugMode(CommandSourceStack src, boolean on) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        ServerPlayer p = src.getPlayerOrException();
-        if (on) {
-            DEBUG.add(p.getUUID());
-        } else {
-            DEBUG.remove(p.getUUID());
+    /** The chance, kept with the world. */
+    static final class Saved extends net.minecraft.world.level.saveddata.SavedData {
+
+        static Saved get(net.minecraft.server.MinecraftServer server) {
+            return server.overworld().getDataStorage().computeIfAbsent(Saved::load, Saved::new, "flash_scarlet_chaos");
         }
-        src.sendSuccess(() -> Component.translatable(on ? "commands.flash.chaos.debug_on"
-                : "commands.flash.chaos.debug_off"), false);
-        return 1;
+
+        static Saved load(net.minecraft.nbt.CompoundTag tag) {
+            if (tag.contains("Chance")) {
+                chance = Math.max(1, Math.min(100, tag.getInt("Chance")));
+            }
+            return new Saved();
+        }
+
+        @Override
+        public net.minecraft.nbt.CompoundTag save(net.minecraft.nbt.CompoundTag tag) {
+            tag.putInt("Chance", chance);
+            return tag;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) {
+        chance = 10;
+        Saved.get(event.getServer());
     }
 
     static boolean offered(ServerPlayer p) {

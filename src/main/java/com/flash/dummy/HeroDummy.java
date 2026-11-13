@@ -19,6 +19,28 @@ public class HeroDummy extends FakePlayer {
     public HeroDummy(ServerLevel level, GameProfile profile, String power) {
         super(level, profile);
         this.power = power;
+        noSpawnShield();
+    }
+
+    /**
+     * A new player cannot be hurt for 3 s after joining (by other players: always, in single player): the counter
+     * goes down in the tick a dummy does not run, so the dummy stayed unhittable. The counter (an int of the server
+     * player that starts at 60) is set to 0.
+     */
+    private void noSpawnShield() {
+        for (java.lang.reflect.Field f : net.minecraft.server.level.ServerPlayer.class.getDeclaredFields()) {
+            if (f.getType() != int.class || java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                continue;
+            }
+            try {
+                f.setAccessible(true);
+                if (f.getInt(this) == 60) {
+                    f.setInt(this, 0);
+                }
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
+                // not that one
+            }
+        }
     }
 
     @Override

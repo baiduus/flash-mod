@@ -1147,5 +1147,7 @@
   "commands.flash.chaos.not_eligible": "%s já tem poderes: o caos só vem para quem não tem",
   "commands.flash.chaos.offered": "A energia do caos apareceu para %s",
   "commands.flash.chaos.debug_on": "Você verá cada sorteio do caos (ao entrar e ao morrer)",
-  "commands.flash.chaos.debug_off": "Sorteios do caos ocultos"
+  "commands.flash.chaos.debug_off": "Sorteios do caos ocultos",
+  "commands.flash.chaos.debug": "Chance do caos agora: %s%% (ao entrar e ao morrer sem poderes)",
+  "commands.flash.chaos.chance_set": "Chance do caos definida para %s%%"
 }

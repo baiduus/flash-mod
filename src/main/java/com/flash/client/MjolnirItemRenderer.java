@@ -90,18 +90,21 @@ public class MjolnirItemRenderer extends BlockEntityWithoutLevelRenderer {
         model = model.applyTransform(context, pose, left);
         pose.translate(-0.5F, -0.5F, -0.5F);
         float speed = 0.0F;
+        // the Hammer Spin (ability 3) turns the other way round
+        boolean reverse = false;
         if (hand && who != null && who.isUsingItem() && who.getUseItem().getItem() == stack.getItem()
                 && !who.isShiftKeyDown()) {
             speed = Math.min(1.0F, who.getTicksUsingItem() / 12.0F);
         } else if (thor != null && (ThorState.flag(thor, ThorPowers.F_SPIN) || ThorState.flag(thor, ThorPowers.F_TWIRL))) {
             speed = 1.0F;
+            reverse = ThorState.flag(thor, ThorPowers.F_SPIN);
         }
         if (speed > 0.0F && who != null) {
             // whirling by the strap: around the grip, faster and faster
             float angle = (who.tickCount + mc.getFrameTime()) * 50.0F * speed;
             // around the grip, in the plane along the body (the arm stays down at the side)
             pose.translate(0.5F, 0.45F, 0.5F);
-            pose.mulPose(Axis.ZP.rotationDegrees(-angle));
+            pose.mulPose(Axis.ZP.rotationDegrees(reverse ? angle : -angle));
             pose.translate(-0.5F, -0.45F, -0.5F);
         }
         mc.getItemRenderer().renderModelLists(model, stack, light, overlay, pose,

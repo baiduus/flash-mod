@@ -19,8 +19,11 @@ public abstract class LevelChunkGuardMixin {
     @Inject(method = "m_6978_", at = @At("HEAD"), cancellable = true, remap = false)
     private void flash$guard(BlockPos pos, BlockState state, boolean moved,
                              CallbackInfoReturnable<BlockState> cir) {
-        if (com.flash.yas.YasDestruction.refuse((LevelChunk) (Object) this, pos, state)) {
+        LevelChunk self = (LevelChunk) (Object) this;
+        if (com.flash.yas.YasDestruction.refuse(self, pos, state)) {
             cir.setReturnValue(null);
+            return;
         }
+        com.flash.yas.RealityJournal.record(self, pos, state);
     }
 }

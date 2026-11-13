@@ -57,6 +57,14 @@ public final class YasRealityWave {
         final BlockPos center;
         final UUID owner;
         int r;
+        /** What it changed: pos -> the block before (RealityJournal). */
+        final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<BlockState> journal =
+                new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+        /** 0 spreading, 1 the land stays rewritten, 2 going back. */
+        int phase;
+        long until;
+        java.util.List<Long>[] rings;
+        int back;
 
         Wave(ServerLevel level, BlockPos center, UUID owner) {
             this.level = level;
@@ -183,13 +191,31 @@ public final class YasRealityWave {
         }
         for (Iterator<Wave> it = WAVES.iterator(); it.hasNext(); ) {
             Wave w = it.next();
-            if (w.r >= RADIUS) {
+            if (w.phase == 0) {
+                if (w.r >= RADIUS) {
+                    if (permanent()) {
+                        it.remove();
+                        continue;
+                    }
+                    w.phase = 1;
+                    w.until = w.level.getGameTime() + duration();
+                    continue;
+                }
+                int from = w.r;
+                w.r = Math.min(RADIUS, w.r + 1);
+                RealityJournal.into = w.journal;
+                try {
+                    ring(w, from, w.r);
+                } finally {
+                    RealityJournal.into = null;
+                }
+            } else if (w.phase == 1) {
+                if (w.level.getGameTime() >= w.until) {
+                    startBack(w);
+                }
+            } else if (goBack(w)) {
                 it.remove();
-                continue;
             }
-            int from = w.r;
-            w.r = Math.min(RADIUS, w.r + 1);
-            ring(w, from, w.r);
         }
     }
 
@@ -214,6 +240,65 @@ public final class YasRealityWave {
                 }
             }
         }
+    }
+
+    private static boolean permanent() {
+        try {
+            Object v = Class.forName("handofgod.Config").getField("REALIDADE_PERMANENTE").get(null);
+            return v instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get();
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+            return false;
+        }
+    }
+
+    /** As long as Hand of God's own rewritten land lasts (its config), 60 s without it. */
+    private static long duration() {
+        try {
+            Object v = Class.forName("handofgod.Config").getField("REALIDADE_DURACAO").get(null);
+            if (v instanceof net.minecraftforge.common.ForgeConfigSpec.DoubleValue d) {
+                return Math.max(20L, Math.round(d.get() * 20.0D));
+            }
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
+            // no Hand of God
+        }
+        return 60L * 20L;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void startBack(Wave w) {
+        w.phase = 2;
+        w.rings = new java.util.List[RADIUS + 2];
+        for (int i = 0; i < w.rings.length; i++) {
+            w.rings[i] = new ArrayList<>();
+        }
+        for (long key : w.journal.keySet()) {
+            BlockPos p = BlockPos.of(key);
+            int d = (int) Math.ceil(Math.sqrt(Math.pow(p.getX() - w.center.getX(), 2)
+                    + Math.pow(p.getZ() - w.center.getZ(), 2)));
+            w.rings[Math.min(w.rings.length - 1, d)].add(key);
+        }
+        w.back = w.rings.length - 1;
+        YasReality.play(w.level, Vec3.atCenterOf(w.center), "realidade_desfeita", SoundEvents.ILLUSIONER_MIRROR_MOVE,
+                0.8F);
+    }
+
+    /** The land going back, from the edge in (a ring a tick); true when all is as it was. */
+    private static boolean goBack(Wave w) {
+        if (w.back < 0) {
+            return true;
+        }
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        // the trees and plants first (from the top), then the ground
+        java.util.List<Long> ring = w.rings[w.back];
+        ring.sort((a, b) -> Integer.compare(BlockPos.getY(b), BlockPos.getY(a)));
+        for (long key : ring) {
+            pos.set(key);
+            if (w.level.isLoaded(pos)) {
+                w.level.setBlock(pos, w.journal.get(key), Block.UPDATE_CLIENTS);
+            }
+        }
+        w.back--;
+        return w.back < 0;
     }
 
     /** One column of the band around her height: rewritten from the top down. */

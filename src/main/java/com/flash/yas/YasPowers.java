@@ -214,6 +214,27 @@ public final class YasPowers {
     }
 
     /**
+     * The flight key tapped (Yas and the Scarlet Witch), as Thor's: flying stops; not flying, she takes off (the
+     * server sets the flight and a lift, so the game does not switch it off on the ground).
+     */
+    public static void toggleFlight(ServerPlayer p) {
+        var ab = p.getAbilities();
+        if (ab.flying) {
+            ab.flying = false;
+            p.onUpdateAbilities();
+            return;
+        }
+        ab.mayfly = true;
+        ab.flying = true;
+        ab.setFlyingSpeed(0.0F);
+        p.onUpdateAbilities();
+        p.fallDistance = 0.0F;
+        p.setDeltaMovement(p.getDeltaMovement().add(0.0D, 0.6D, 0.0D));
+        p.hurtMarked = true;
+        com.flash.superman.SupermanAbilities.groundPuff(p.serverLevel(), p.position(), 1.5D, 16);
+    }
+
+    /**
      * The charged takeoff (flight key held on the ground): 0 coils, 1 shoots ~30 blocks up in a burst of pale
      * lightning (she flies at the top, SupermanClient), 2 cancels.
      */
