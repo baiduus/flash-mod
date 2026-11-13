@@ -283,6 +283,12 @@ public final class GodWandClient {
 
     private static void placeCamera(Camera cam, Vec3 at, boolean detached) {
         cameraFields(cam);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && cam.getEntity() != null && cam.isDetached() != detached) {
+            // the camera's own setup sets "detached" (so the body is drawn, as in third person); the position and
+            // the angles are put right after
+            cam.setup(mc.level, cam.getEntity(), detached, false, mc.getFrameTime());
+        }
         try {
             if (camPosition != null) {
                 camPosition.set(cam, at);
@@ -290,7 +296,7 @@ public final class GodWandClient {
             if (camBlock != null) {
                 ((net.minecraft.core.BlockPos.MutableBlockPos) camBlock.get(cam)).set(at.x, at.y, at.z);
             }
-            if (camDetached != null) {
+            if (camDetached != null && cam.isDetached() != detached) {
                 camDetached.setBoolean(cam, detached);
             }
         } catch (IllegalAccessException ignored) {

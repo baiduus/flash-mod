@@ -112,10 +112,10 @@ public class SupernovaManager {
       Vec3 corePos = Vec3.atCenterOf(groundCenter).add(0.0, 20.0, 0.0);
       SupernovaManager.SupernovaTask task = new SupernovaManager.SupernovaTask(world, player, groundCenter, corePos);
       CinematicFxPayload castShake = new CinematicFxPayload(0, corePos.x, corePos.y, corePos.z, 0.18F, 8);
-      GodWandNet.near(world, corePos, 120.0, castShake);
+      GodWandNet.near(world, corePos, 600.0, castShake);
       ACTIVE_TASKS.add(task);
       ImpactFxPayload blackHolePayload = new ImpactFxPayload(corePos.x, corePos.y, corePos.z, 4, 344, 1.0F);
-      GodWandNet.near(world, corePos, 250.0, blackHolePayload);
+      GodWandNet.near(world, corePos, 600.0, blackHolePayload);
       if (player.isAlive()) {
          GodWandNet.to(player, blackHolePayload);
       }
@@ -175,7 +175,7 @@ public class SupernovaManager {
                   world.playSound(null, task.corePos.x, task.corePos.y, task.corePos.z, GodWandSounds.ev(SoundEvents.RESPAWN_ANCHOR_DEPLETE), SoundSource.PLAYERS, 2.0F, 0.7F);
                   world.sendParticles(ParticleTypes.SONIC_BOOM, task.corePos.x, task.corePos.y, task.corePos.z, 1, 0.0, 0.0, 0.0, 0.0);
                   world.sendParticles(ParticleTypes.ELECTRIC_SPARK, task.corePos.x, task.corePos.y, task.corePos.z, 32, 2.5, 1.0, 2.5, 0.35);
-                  GodWandNet.near(world, task.corePos, 200.0, new CinematicFxPayload(0, task.corePos.x, task.corePos.y, task.corePos.z, 0.22F, 8));
+                  GodWandNet.near(world, task.corePos, 600.0, new CinematicFxPayload(0, task.corePos.x, task.corePos.y, task.corePos.z, 0.22F, 8));
                }
 
                double currentPeelRadius = 2.5;
@@ -357,7 +357,7 @@ public class SupernovaManager {
                }
             } else if (task.ageTicks == 344) {
                ImpactFxPayload impact = new ImpactFxPayload(task.corePos.x, task.corePos.y, task.corePos.z, 8, 4, 1.0F);
-               GodWandNet.near(world, task.corePos, 250.0, impact);
+               GodWandNet.near(world, task.corePos, 600.0, impact);
                if (task.caster != null && task.caster.isAlive() && task.caster.level() == world) {
                   GodWandNet.to(task.caster, impact);
                }
@@ -440,7 +440,7 @@ public class SupernovaManager {
                }
             } else if (task.ageTicks > 348) {
                if (task.ageTicks <= 360 && task.ageTicks % 4 == 0) {
-                  GodWandNet.near(world, task.corePos, 160.0, new CinematicFxPayload(0, task.corePos.x, task.corePos.y, task.corePos.z, 0.16F, 8));
+                  GodWandNet.near(world, task.corePos, 600.0, new CinematicFxPayload(0, task.corePos.x, task.corePos.y, task.corePos.z, 0.16F, 8));
                }
 
                if (task.ageTicks == 396) {
@@ -462,8 +462,8 @@ public class SupernovaManager {
    private static void broadcastDetonation(SupernovaManager.SupernovaTask task) {
       ImpactFxPayload novaPayload = new ImpactFxPayload(task.corePos.x, task.corePos.y, task.corePos.z, 3, 280, 3.5F);
       CinematicFxPayload burstCinematic = new CinematicFxPayload(6, task.corePos.x, task.corePos.y, task.corePos.z, 1.0F, 110);
-      GodWandNet.near(task.world, task.corePos, 250.0, novaPayload);
-      GodWandNet.near(task.world, task.corePos, 250.0, burstCinematic);
+      GodWandNet.near(task.world, task.corePos, 600.0, novaPayload);
+      GodWandNet.near(task.world, task.corePos, 600.0, burstCinematic);
       if (task.caster != null && task.caster.isAlive() && task.caster.level() == task.world) {
          GodWandNet.to(task.caster, novaPayload);
          GodWandNet.to(task.caster, burstCinematic);

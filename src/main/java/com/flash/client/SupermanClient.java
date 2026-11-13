@@ -123,10 +123,10 @@ public final class SupermanClient {
 
     /** Flight speeds in blocks per tick: hover, walking, sprint, double sprint (scaled by the level). */
     private static final double[] STAGE_SPEED = {0.0D, 0.45D, 1.1D, 2.4D};
-    /** The server rejects moves above ~10 blocks per tick: the fastest stage stays under it. */
-    private static final double MAX_SPEED = 9.0D;
-    /** Yas: seven times her old top speed (12.5; the server lets her through, ServerMoveMixin). */
-    private static final double YAS_MAX_SPEED = 12.5D * 7.0D;
+    /** Top flight speed of the heroes: 137 blocks a second (6.85 a tick). */
+    private static final double MAX_SPEED = 137.0D / 20.0D;
+    /** Yas: 200 blocks a second (10 a tick; YasSpeedPacket lets her through the server's check). */
+    private static final double YAS_MAX_SPEED = 200.0D / 20.0D;
     private static int flightStage;
     private static boolean sprintWasDown;
     private static long lastSprintPress = -100L;
@@ -384,8 +384,7 @@ public final class SupermanClient {
             scale *= com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OVERDRIVE) ? 1.0D : 0.8D;
         }
         if (yasFlight) {
-            // seven times her old flight (5.4)
-            scale = 5.4D * 7.0D;
+            scale = 5.4D;
         }
         if (scarletFlight) {
             scale = 4.0D;
@@ -400,7 +399,8 @@ public final class SupermanClient {
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
         Vec3 target = Vec3.ZERO;
         if (forward > 0.0F) {
-            target = look.scale(Math.min(maxSpeed, STAGE_SPEED[stage] * scale));
+            // the boost is everyone's top speed (Yas 200 blocks a second, the others 137), whatever the level
+            target = look.scale(stage == 3 ? maxSpeed : Math.min(maxSpeed, STAGE_SPEED[stage] * scale));
         } else if (forward < 0.0F) {
             target = look.scale(-0.3D * scale);
         }

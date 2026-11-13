@@ -66,26 +66,47 @@ public final class SupernovaAccretionRenderer {
       }
 
       previousChargeTicks = chargeTicks;
-      if (client.player != null && client.level != null && true) {
-         if (GodWandClient.charging(client.player, 3)) {
-            if (!charging || GodWandClient.chargeTicks(client.player) < chargeTicks) {
-               BlockPos target = SupernovaManager.findTarget(client.player);
-               if (target == null) {
-                  chargeTicks = Math.max(0.0F, chargeTicks - 8.0F);
-                  return;
-               }
-
-               chargeCenter = Vec3.atCenterOf(target).add(0.0, 20.0, 0.0);
-               charging = true;
+      // whoever charges it is seen charging (the sky tearing above the target): her, or the nearest other Yas
+      net.minecraft.world.entity.player.Player who = chargingPlayer(client);
+      if (who != null) {
+         if (!charging || GodWandClient.chargeTicks(who) < chargeTicks) {
+            BlockPos target = SupernovaManager.findTarget(who);
+            if (target == null) {
+               chargeTicks = Math.max(0.0F, chargeTicks - 8.0F);
+               return;
             }
 
-            chargeTicks = Mth.clamp(GodWandClient.chargeTicks(client.player), 0, 140);
-            return;
+            chargeCenter = Vec3.atCenterOf(target).add(0.0, 20.0, 0.0);
+            charging = true;
          }
+
+         chargeTicks = Mth.clamp(GodWandClient.chargeTicks(who), 0, 140);
+         return;
       }
 
       charging = false;
       chargeTicks = Math.max(0.0F, chargeTicks - 8.0F);
+   }
+
+   private static net.minecraft.world.entity.player.Player chargingPlayer(Minecraft client) {
+      if (client.player == null || client.level == null) {
+         return null;
+      }
+      if (GodWandClient.charging(client.player, 3)) {
+         return client.player;
+      }
+      net.minecraft.world.entity.player.Player best = null;
+      double bestD = Double.MAX_VALUE;
+      for (net.minecraft.world.entity.player.Player p : client.level.players()) {
+         if (p != client.player && GodWandClient.charging(p, 3)) {
+            double d = p.distanceToSqr(client.player);
+            if (d < bestD) {
+               bestD = d;
+               best = p;
+            }
+         }
+      }
+      return best;
    }
 
    public static SupernovaAccretionRenderer.SkyFrame skyFrame(float delta) {
