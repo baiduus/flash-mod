@@ -471,9 +471,15 @@ public final class YasAbilities {
         boolean down = on && FlashKeys.YAS_USE.isDown() && mc.screen == null;
         boolean pressed = down && !rlWas;
         rlWas = down;
+        boolean overworld = mc.level != null && mc.level.dimension() == net.minecraft.world.level.Level.OVERWORLD;
         if (pressed) {
             net.minecraft.world.entity.Entity target = creatureAimed(mc, 64.0D);
             rlOnCreature = target != null;
+            if (target == null && !overworld) {
+                // where Hand of God cannot rewrite the land, the mod's own wave does
+                rlOnCreature = true;
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.YasRealityPacket(-2));
+            }
             if (target != null && scarlet() && ScarletClient.coolingDown("reality_mob")) {
                 ScarletClient.denied("reality_mob");
             } else if (target != null) {

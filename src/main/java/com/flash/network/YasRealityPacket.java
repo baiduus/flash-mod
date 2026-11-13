@@ -18,7 +18,9 @@ public record YasRealityPacket(int entity) {
     public void handle(NetworkEvent.Context context) {
         context.setPacketHandled(true);
         ServerPlayer p = context.getSender();
-        if (p != null) {
+        if (p != null && this.entity == -2) {
+            com.flash.yas.YasRealityWave.start(p);
+        } else if (p != null) {
             com.flash.yas.YasReality.start(p, this.entity);
         }
     }

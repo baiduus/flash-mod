@@ -164,10 +164,8 @@ public class BlackHole extends Entity {
     /** Its maker's block destruction switch (Yas' K menu): off, it pulls and crushes but breaks no block. */
     private boolean ownerDestroys(ServerLevel level) {
         UUID owner = owner();
-        if (owner == null || !(level.getPlayerByUUID(owner) instanceof net.minecraft.world.entity.player.Player p)) {
-            return true;
-        }
-        return com.flash.yas.YasDestruction.destroys(p);
+        net.minecraft.world.entity.player.Player p = owner == null ? null : level.getPlayerByUUID(owner);
+        return p == null || com.flash.yas.YasDestruction.destroys(p);
     }
 
     /** Ids of the blocks it tore loose, flying into it (imploded when it collapses). */
