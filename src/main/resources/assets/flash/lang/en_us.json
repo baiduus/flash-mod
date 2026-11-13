@@ -1039,5 +1039,10 @@
   "key.flash.yas.variant": "Yas: variant of the mode (speed up time)",
   "message.flash.yas_mode": "Mode: %s",
   "ability.flash.yas.regen": "Divine Regeneration",
-  "ability.flash.yas.regen.description": "Regeneration I all the time; near death (2 hearts or less) Regeneration III."
+  "ability.flash.yas.regen.description": "Regeneration I all the time; near death (2 hearts or less) Regeneration III.",
+  "entity.flash.human": "Human",
+  "entity.flash.black_hole": "Black Hole",
+  "hud.flash.yas.extra.celeste": "Z: black hole (Z again: collapse)",
+  "hud.flash.yas.extra.realidade": "R aimed at a creature: transform it",
+  "hud.flash.yas.extra.telecinese": "R: lift · R again: release · hold R: throw (up to ~200 blocks)"
 }

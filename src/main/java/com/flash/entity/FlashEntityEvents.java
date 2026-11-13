@@ -18,5 +18,6 @@ public final class FlashEntityEvents {
         event.put(ModEntities.FLASH_SUIT_STAND.get(), LivingEntity.createLivingAttributes().build());
         event.put(ModEntities.ACCELERATION_PHANTOM.get(), AccelerationPhantom.createAttributes().build());
         event.put(ModEntities.YAS_GUARDIAN.get(), com.flash.yas.YasGuardian.createAttributes().build());
+        event.put(ModEntities.HUMAN.get(), HumanNpc.createAttributes().build());
     }
 }

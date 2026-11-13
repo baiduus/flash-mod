@@ -67,6 +67,24 @@ public final class ModEntities {
                             .updateInterval(1)
                             .build("mjolnir"));
 
+    public static final RegistryObject<EntityType<com.flash.entity.HumanNpc>> HUMAN =
+            ENTITY_TYPES.register("human",
+                    () -> EntityType.Builder.<com.flash.entity.HumanNpc>of(com.flash.entity.HumanNpc::new,
+                                    MobCategory.CREATURE)
+                            .sized(0.6F, 1.8F)
+                            .clientTrackingRange(10)
+                            .build("human"));
+
+    public static final RegistryObject<EntityType<com.flash.entity.BlackHole>> BLACK_HOLE =
+            ENTITY_TYPES.register("black_hole",
+                    () -> EntityType.Builder.<com.flash.entity.BlackHole>of(com.flash.entity.BlackHole::new,
+                                    MobCategory.MISC)
+                            .sized(1.0F, 1.0F)
+                            .fireImmune()
+                            .clientTrackingRange(16)
+                            .updateInterval(2)
+                            .build("black_hole"));
+
     private ModEntities() {
     }
 }

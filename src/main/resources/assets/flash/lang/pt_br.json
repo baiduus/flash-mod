@@ -1039,5 +1039,10 @@
   "key.flash.yas.variant": "Yas: variante do modo (acelerar o tempo)",
   "message.flash.yas_mode": "Modo: %s",
   "ability.flash.yas.regen": "Regeneração Divina",
-  "ability.flash.yas.regen.description": "Regeneração I o tempo todo; perto da morte (2 corações ou menos) Regeneração III."
+  "ability.flash.yas.regen.description": "Regeneração I o tempo todo; perto da morte (2 corações ou menos) Regeneração III.",
+  "entity.flash.human": "Humano",
+  "entity.flash.black_hole": "Buraco Negro",
+  "hud.flash.yas.extra.celeste": "Z: buraco negro (Z de novo: colapsa)",
+  "hud.flash.yas.extra.realidade": "R mirando numa criatura: transforma a criatura",
+  "hud.flash.yas.extra.telecinese": "R: levanta · R de novo: solta · segure R: arremessa (até ~200 blocos)"
 }

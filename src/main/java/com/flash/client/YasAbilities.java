@@ -142,11 +142,17 @@ public final class YasAbilities {
         if (!ready() || i < 0) {
             return List.of();
         }
+        List<Component> out = new ArrayList<>();
         try {
-            return (List<Component>) linhas.invoke(null, poderes[i]);
+            out.addAll((List<Component>) linhas.invoke(null, poderes[i]));
         } catch (ReflectiveOperationException | ClassCastException e) {
-            return List.of();
+            // only ours
         }
+        String extra = "hud.flash.yas.extra." + POWERS[i].toLowerCase(java.util.Locale.ROOT);
+        if (net.minecraft.client.resources.language.I18n.exists(extra)) {
+            out.add(Component.translatable(extra).withStyle(net.minecraft.ChatFormatting.GOLD));
+        }
+        return out;
     }
 
     public static int color(int i) {
@@ -211,7 +217,9 @@ public final class YasAbilities {
             }
             ORIGINAL.putIfAbsent(n, k.getKey());
             InputConstants.Key to = InputConstants.UNKNOWN;
-            if (mode >= 0 && n.equals(MAIN_KEY[mode])) {
+            if (mode >= 0 && n.equals(MAIN_KEY[mode]) && !"TELECINESE".equals(POWERS[mode])
+                    && !"REALIDADE".equals(POWERS[mode])) {
+                // (the telekinesis and the reality are held by hand below, not by the key)
                 to = FlashKeys.YAS_USE.getKey();
             } else if (mode >= 0 && "TEMPORAL".equals(POWERS[mode]) && n.equals(VARIANT_KEY)) {
                 to = FlashKeys.YAS_VARIANT.getKey();
@@ -254,6 +262,141 @@ public final class YasAbilities {
         } else {
             bind(mode);
         }
+        telekinesis(mc, mode >= 0 && "TELECINESE".equals(POWERS[mode]));
+        reality(mc, mode >= 0 && "REALIDADE".equals(POWERS[mode]));
+        boolean variant = false;
+        while (FlashKeys.YAS_VARIANT.consumeClick()) {
+            variant = true;
+        }
+        if (variant && mode >= 0 && "CELESTE".equals(POWERS[mode]) && mc.screen == null) {
+            com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.YasBlackHolePacket());
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // The reality: on the ground as Hand of God, on a creature a change
+    // ------------------------------------------------------------------
+
+    private static boolean rlWas;
+    /** The press started on a creature: Hand of God does not see it until the key is let go. */
+    private static boolean rlOnCreature;
+
+    private static void reality(Minecraft mc, boolean on) {
+        KeyMapping k = hogKey("realidade");
+        if (k == null) {
+            return;
+        }
+        boolean down = on && FlashKeys.YAS_USE.isDown() && mc.screen == null;
+        boolean pressed = down && !rlWas;
+        rlWas = down;
+        if (pressed) {
+            net.minecraft.world.entity.Entity target = creatureAimed(mc, 64.0D);
+            rlOnCreature = target != null;
+            if (target != null) {
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                        new com.flash.network.YasRealityPacket(target.getId()));
+            }
+        }
+        if (!down) {
+            rlOnCreature = false;
+        }
+        if (on || k.isDown()) {
+            k.setDown(down && !rlOnCreature);
+        }
+    }
+
+    /** The creature (not a player) under the crosshair, up to {@code range} blocks, walls in the way. */
+    public static net.minecraft.world.entity.Entity creatureAimed(Minecraft mc, double range) {
+        var p = mc.player;
+        if (p == null) {
+            return null;
+        }
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        net.minecraft.world.phys.Vec3 end = eye.add(p.getLookAngle().scale(range));
+        var block = p.level().clip(new net.minecraft.world.level.ClipContext(eye, end,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE,
+                p));
+        if (block.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+            end = block.getLocation();
+        }
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, end,
+                p.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0D),
+                e -> e instanceof net.minecraft.world.entity.Mob && e.isAlive(), eye.distanceToSqr(end));
+        return hit == null ? null : hit.getEntity();
+    }
+
+    // ------------------------------------------------------------------
+    // The telekinesis: a toggle and a charged throw
+    // ------------------------------------------------------------------
+
+    /** Ticks the key must be held (while holding a creature) for a throw instead of a plain release. */
+    private static final int THROW_AFTER = 6;
+    /** Ticks to the full throw (~200 blocks). */
+    private static final int THROW_FULL = 40;
+    /** Hand of God's telekinesis key, held down by hand (not by the keyboard) for the toggle. */
+    private static boolean tkDown;
+    private static boolean tkWas;
+    private static boolean tkGrabbed;
+    private static int tkWait;
+    /** Ticks the key is held while holding a creature (-1: not). */
+    private static int tkHeld = -1;
+
+    /** 0..1 of the throw being charged, or -1. */
+    public static float throwCharge() {
+        return tkHeld >= THROW_AFTER ? Math.min(1.0F, (tkHeld - THROW_AFTER) / (float) THROW_FULL) : -1.0F;
+    }
+
+    private static void telekinesis(Minecraft mc, boolean on) {
+        KeyMapping k = hogKey("telecinese");
+        if (k == null) {
+            return;
+        }
+        if (!on) {
+            if (tkDown) {
+                tkDown = false;
+                k.setDown(false);
+            }
+            tkHeld = -1;
+            tkWas = false;
+            return;
+        }
+        boolean down = FlashKeys.YAS_USE.isDown() && mc.screen == null;
+        boolean pressed = down && !tkWas;
+        tkWas = down;
+        boolean holding = holding();
+        if (!tkDown) {
+            if (pressed) {
+                // first press: lift the creature aimed at (kept until the next press)
+                tkDown = true;
+                tkGrabbed = false;
+                tkWait = 0;
+                tkHeld = -1;
+            }
+        } else if (!tkGrabbed) {
+            if (holding) {
+                tkGrabbed = true;
+            } else if (++tkWait > 30) {
+                tkDown = false; // nothing was caught
+            }
+        } else if (!holding) {
+            tkDown = false; // it got away (died, refused...)
+            tkHeld = -1;
+        } else if (pressed) {
+            tkHeld = 0;
+        } else if (tkHeld >= 0) {
+            if (down) {
+                tkHeld++;
+            } else {
+                if (tkHeld >= THROW_AFTER) {
+                    int charge = Math.round(throwCharge() * 100.0F);
+                    com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                            new com.flash.network.YasTelekinesisPacket(1, charge));
+                }
+                tkHeld = -1;
+                tkDown = false; // the second press lets it go (thrown when charged)
+            }
+        }
+        k.setDown(tkDown);
     }
 
     @SubscribeEvent

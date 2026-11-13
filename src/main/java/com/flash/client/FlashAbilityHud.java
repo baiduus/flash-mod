@@ -32,6 +32,11 @@ public final class FlashAbilityHud implements IGuiOverlay {
                     && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
                 renderYas(graphics, minecraft, width, height);
             }
+            float toss = YasAbilities.throwCharge();
+            if (toss >= 0.0F && minecraft.screen == null && !minecraft.options.hideGui) {
+                drawChargeBar(graphics, minecraft.font, width, height, toss, "hud.flash.superman_throw",
+                        "hud.flash.superman_throw_full");
+            }
             return;
         }
         if (minecraft.player != null && PowerTheme.localLex()) {
