@@ -341,7 +341,9 @@ public final class SupermanClient {
                 && com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON);
         // Yas flies faster than Superman at level 10
         boolean yasFlight = !superFlight && !thorFlight && !lexFlight && YasClient.isYas(p);
-        if ((!superFlight && !thorFlight && !lexFlight && !yasFlight) || !p.getAbilities().flying
+        // the Scarlet Witch as fast as Superman at level 10
+        boolean scarletFlight = !superFlight && !thorFlight && !lexFlight && !yasFlight && ScarletClient.isScarlet(p);
+        if ((!superFlight && !thorFlight && !lexFlight && !yasFlight && !scarletFlight) || !p.getAbilities().flying
                 || p.isPassenger()) {
             flightStage = 0;
             return;
@@ -362,6 +364,9 @@ public final class SupermanClient {
         }
         if (yasFlight) {
             scale = 5.4D;
+        }
+        if (scarletFlight) {
+            scale = 4.0D;
         }
         double maxSpeed = yasFlight ? YAS_MAX_SPEED : MAX_SPEED;
         Vec3 look = p.getLookAngle();
@@ -418,7 +423,8 @@ public final class SupermanClient {
         Player p = event.getEntity();
         String base = SupermanPose.base(p.getUUID());
         if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p)
-                && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON) && !YasClient.isYas(p))) {
+                && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON) && !YasClient.isYas(p)
+                && !ScarletClient.isScarlet(p))) {
             LEANS.remove(p.getUUID());
             return;
         }

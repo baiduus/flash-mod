@@ -142,6 +142,9 @@ public class FlashProgressScreen extends Screen {
         if (PowerTheme.localYas()) {
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
+        if (PowerTheme.localScarlet()) {
+            return new int[] {TAB_PROGRESS};
+        }
         if (PowerTheme.localLex() && !FlashClientData.hasPowers()) {
             return new int[] {TAB_PROGRESS, TAB_EQUIP};
         }
@@ -300,8 +303,9 @@ public class FlashProgressScreen extends Screen {
         boolean superForm = superPower && com.flash.superman.SupermanState.isSuperman(Minecraft.getInstance().player);
         boolean thorPower = PowerTheme.localThor();
         boolean thorForm = thorPower && com.flash.thor.ThorState.isThor(Minecraft.getInstance().player);
-        boolean yasPower = PowerTheme.localYas();
-        Component badge = yasPower ? Component.translatable("gui.flash.yas.badge") : thorPower
+        boolean yasPower = PowerTheme.localYas() || PowerTheme.localScarlet();
+        Component badge = yasPower ? Component.translatable(PowerTheme.localScarlet() ? "gui.flash.scarlet.badge"
+                : "gui.flash.yas.badge") : thorPower
                 ? Component.translatable(thorForm ? "gui.flash.thor.badge_thor" : "gui.flash.thor.badge_civil")
                 : superPower
                 ? Component.translatable(superForm ? "gui.flash.superman.badge_superman" : "gui.flash.superman.badge_clark")
@@ -414,7 +418,7 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
-        if (PowerTheme.localYas()) {
+        if (PowerTheme.localYas() || PowerTheme.localScarlet()) {
             drawYasTab(g, mx, my);
             return;
         }
@@ -899,11 +903,25 @@ public class FlashProgressScreen extends Screen {
     /** Her powers: those of Hand of God (its keys and its ability wheel), in its own words. */
     private static final String[] YAS_POWERS = {"celeste", "temporal", "realidade", "materia", "telecinese",
             "supervelocidade", "visao_termica", "void", "eletrocinese"};
-    private static final String[] YAS_PASSIVES = {"flight", "toughness", "punch", "regen"};
+    private static final String[] YAS_PASSIVES_OF_YAS = {"flight", "toughness", "punch", "regen"};
+    private static final String[] SCARLET_PASSIVES = {"flight", "toughness"};
+
+    /** Yas or the Scarlet Witch (the same tab, their own passives and modes). */
+    private static boolean scarletTab() {
+        return PowerTheme.localScarlet();
+    }
+
+    private static String[] yasPassives() {
+        return scarletTab() ? SCARLET_PASSIVES : YAS_PASSIVES_OF_YAS;
+    }
+
+    private static String passivePrefix() {
+        return scarletTab() ? "ability.flash.scarlet." : "ability.flash.yas.";
+    }
 
     private static Component yasKey(int i) {
         Component use = FlashKeys.YAS_USE.getTranslatedKeyMessage();
-        return "TEMPORAL".equals(YasAbilities.POWERS[i])
+        return YasAbilities.usesVariant(i)
                 ? use.copy().append(" / ").append(FlashKeys.YAS_VARIANT.getTranslatedKeyMessage()) : use;
     }
 
@@ -912,15 +930,15 @@ public class FlashProgressScreen extends Screen {
     }
 
     private static int yasRowStep() {
-        int total = YAS_PASSIVES.length + YAS_POWERS.length;
+        int total = yasPassives().length + YasAbilities.count();
         return Math.min(SKILL_ROW, (PH - 22 - yasRowTop()) / total);
     }
 
     /** A click on a mode in the K menu picks it. */
     private boolean clickYasTab(int mx, int my) {
         int step = yasRowStep();
-        for (int i = 0; i < YAS_POWERS.length; i++) {
-            int ry = yasRowTop() + (YAS_PASSIVES.length + i) * step;
+        for (int i = 0; i < YasAbilities.count(); i++) {
+            int ry = yasRowTop() + (yasPassives().length + i) * step;
             if (inside(mx, my, RIGHT_X, ry, RIGHT_W, step - 1)) {
                 if (YasAbilities.selected() != i) {
                     YasAbilities.select(i);
@@ -934,19 +952,24 @@ public class FlashProgressScreen extends Screen {
 
     private void drawYasTab(GuiGraphics g, int mx, int my) {
         int half = (LEFT_W - 8) / 2;
-        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.yas.stat_toughness"),
-                Component.translatable("gui.flash.yas.stat_toughness_value"),
-                Component.translatable("gui.flash.yas.stat_toughness_hint"));
-        statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.yas.stat_punch"),
-                Component.literal("+" + Math.round(com.flash.yas.YasPowers.PUNCH_BONUS)),
-                Component.translatable("gui.flash.yas.stat_punch_hint"));
+        String h = scarletTab() ? "gui.flash.scarlet." : "gui.flash.yas.";
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable(h + "stat_toughness"),
+                Component.translatable(h + "stat_toughness_value"),
+                Component.translatable(h + "stat_toughness_hint"));
+        if (scarletTab()) {
+            statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable(h + "stat_flight"),
+                    Component.translatable(h + "stat_flight_value"), Component.translatable(h + "stat_flight_hint"));
+        } else {
+            statCard(g, PAD + half + 8, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.yas.stat_punch"),
+                    Component.literal("+" + Math.round(com.flash.yas.YasPowers.PUNCH_BONUS)),
+                    Component.translatable("gui.flash.yas.stat_punch_hint"));
+        }
         int sy = GRID_Y - 13;
-        sectionTitle(g, Component.translatable("gui.flash.yas.about"), PAD, sy);
+        sectionTitle(g, Component.translatable(h + "about"), PAD, sy);
         int cy = sy + 14;
         card(g, PAD, cy, LEFT_W, CONTENT_BOTTOM - cy, 0.0F);
         int ty = cy + 8;
-        for (String k : new String[] {"gui.flash.yas.about1", "gui.flash.yas.about2", "gui.flash.yas.about3",
-                "gui.flash.yas.about4"}) {
+        for (String k : new String[] {h + "about1", h + "about2", h + "about3", h + "about4"}) {
             for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.translatable(k),
                     LEFT_W - 20)) {
                 if (ty > CONTENT_BOTTOM - 22) {
@@ -957,11 +980,12 @@ public class FlashProgressScreen extends Screen {
             }
             ty += 3;
         }
-        drawCredits(g, "gui.flash.credits.yas", PAD + LEFT_W - 8, CONTENT_BOTTOM - 12, LEFT_W - 16);
+        drawCredits(g, scarletTab() ? "gui.flash.credits.scarlet" : "gui.flash.credits.yas", PAD + LEFT_W - 8,
+                CONTENT_BOTTOM - 12, LEFT_W - 16);
 
         sectionTitle(g, Component.translatable("gui.flash.progress.skills"), RIGHT_X, CONTENT_Y);
         int top = CONTENT_Y + 14;
-        int total = YAS_PASSIVES.length + YAS_POWERS.length;
+        int total = yasPassives().length + YasAbilities.count();
         int rowStep = Math.min(SKILL_ROW, (PH - 22 - top) / total);
         int rh = rowStep - 1;
         int textY = (rh - 8) / 2;
@@ -971,18 +995,18 @@ public class FlashProgressScreen extends Screen {
             Component name;
             Component desc;
             Component right;
-            if (k < YAS_PASSIVES.length) {
-                name = Component.translatable("ability.flash.yas." + YAS_PASSIVES[k]);
-                desc = Component.translatable("ability.flash.yas." + YAS_PASSIVES[k] + ".description");
+            if (k < yasPassives().length) {
+                name = Component.translatable(passivePrefix() + yasPassives()[k]);
+                desc = Component.translatable(passivePrefix() + yasPassives()[k] + ".description");
                 right = Component.translatable("gui.flash.hulk.passive");
             } else {
-                int i = k - YAS_PASSIVES.length;
-                name = Component.translatable("poder.hand_of_god." + YAS_POWERS[i]);
-                desc = Component.translatable("poder.hand_of_god." + YAS_POWERS[i] + ".desc");
+                int i = k - yasPassives().length;
+                name = YasAbilities.name(i);
+                desc = YasAbilities.desc(i);
                 right = yasKey(i);
             }
             boolean hovered = inside(mx, my, RIGHT_X, ry, RIGHT_W, rh);
-            boolean chosen = k >= YAS_PASSIVES.length && YasAbilities.selected() == k - YAS_PASSIVES.length;
+            boolean chosen = k >= yasPassives().length && YasAbilities.selected() == k - yasPassives().length;
             float hv = hover("ysk" + k, hovered);
             card(g, RIGHT_X, ry, RIGHT_W, rh, chosen ? 1.0F : hv);
             if (chosen) {
@@ -2325,7 +2349,8 @@ public class FlashProgressScreen extends Screen {
         if (activeTab() == TAB_EQUIP) {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
         }
-        if (activeTab() == TAB_PROGRESS && PowerTheme.localYas() && clickYasTab(ix, iy)) {
+        if (activeTab() == TAB_PROGRESS && (PowerTheme.localYas() || PowerTheme.localScarlet())
+                && clickYasTab(ix, iy)) {
             return true;
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localYas()) {
@@ -2385,7 +2410,7 @@ public class FlashProgressScreen extends Screen {
         }
 
         if (activeTab() == TAB_PROGRESS && !FlashClientData.hasPowers() && theme() != PowerTheme.LEX
-                && !PowerTheme.localYas()
+                && !PowerTheme.localYas() && !PowerTheme.localScarlet()
                 && !PowerTheme.localThor() && !PowerTheme.localSuperman() && !PowerTheme.localHulk()
                 && clickHeroGuide(ix, iy)) {
             return true;

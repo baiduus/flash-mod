@@ -72,6 +72,7 @@ public final class YasPowers {
                 com.flash.power.HeroPowers.revokeOf(p, h);
             }
         }
+        com.flash.scarlet.ScarletPowers.revoke(p);
     }
 
     public static void sync(ServerPlayer p) {
@@ -87,7 +88,7 @@ public final class YasPowers {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) {
             return;
         }
-        YasHandOfGod.guard(p, has(p));
+        YasHandOfGod.guard(p, has(p) || com.flash.scarlet.ScarletPowers.has(p));
         boolean yas = has(p);
         if (yas) {
             flight(p);
@@ -284,7 +285,9 @@ public final class YasPowers {
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer p) {
             sync(p);
-            YasHandOfGod.apply(p, has(p));
+            if (!com.flash.scarlet.ScarletPowers.has(p)) {
+                YasHandOfGod.apply(p, has(p));
+            }
         }
     }
 

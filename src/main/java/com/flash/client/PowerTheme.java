@@ -56,6 +56,17 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFFFFE89A, 0xFF3A3010, 0xFF17130A,
             "gui.flash.theme.yas.title", "gui.flash.theme.yas.subtitle", Icon.BOLT, true);
 
+    /** The Scarlet Witch: chaos red on deep crimson. */
+    public static final PowerTheme SCARLET = new PowerTheme("scarlet",
+            0xFFE0263A, 0xFF3D0A12, 0xFF1C060A,
+            "gui.flash.theme.scarlet.title", "gui.flash.theme.scarlet.subtitle", Icon.BOLT, true);
+
+    /** True when the local player is the Scarlet Witch. */
+    public static boolean localScarlet() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && ScarletClient.isScarlet(player);
+    }
+
     /** True when the local player is Yas. */
     public static boolean localYas() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
@@ -100,6 +111,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
     public static PowerTheme current() {
         if (localYas()) {
             return YAS;
+        }
+        if (localScarlet()) {
+            return SCARLET;
         }
         if (localThor()) {
             return THOR;

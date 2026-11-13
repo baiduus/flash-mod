@@ -98,12 +98,12 @@ public final class YasAbilities {
         return ready();
     }
 
-    public static Component name(int i) {
+    private static Component hogName(int i) {
         return Component.translatable("poder.hand_of_god." + POWERS[i].toLowerCase(java.util.Locale.ROOT));
     }
 
-    /** The mode now (-1 none chosen yet). */
-    public static int selected() {
+    /** Hand of God's power now (-1 none chosen yet). */
+    private static int hogSelected() {
         if (!ready()) {
             return -1;
         }
@@ -120,12 +120,11 @@ public final class YasAbilities {
         return -1;
     }
 
-    /** Picks a mode (Alt + scroll, the K menu). */
-    public static void select(int i) {
+    private static void hogSelect(int i) {
         if (!ready() || i < 0 || i >= POWERS.length) {
             return;
         }
-        if (i != selected()) {
+        if (i != hogSelected()) {
             try {
                 escolher.invoke(null, poderes[i]);
                 avisar.invoke(null);
@@ -138,7 +137,7 @@ public final class YasAbilities {
 
     /** What the mode does, key by key (Hand of God's own lines, with the keys now on R / Z). */
     @SuppressWarnings("unchecked")
-    public static List<Component> lines(int i) {
+    private static List<Component> hogLines(int i) {
         if (!ready() || i < 0) {
             return List.of();
         }
@@ -155,7 +154,7 @@ public final class YasAbilities {
         return out;
     }
 
-    public static int color(int i) {
+    private static int hogColor(int i) {
         try {
             return 0xFF000000 | cor.getInt(poderes[i]);
         } catch (ReflectiveOperationException | RuntimeException e) {
@@ -164,7 +163,7 @@ public final class YasAbilities {
     }
 
     /** The pixel-art icon of the mode (Hand of God's: '#' the colour, '+' lighter), {@code px} pixels a dot. */
-    public static void drawIcon(GuiGraphics g, int i, int x, int y, int px) {
+    private static void hogDrawIcon(GuiGraphics g, int i, int c, int x, int y, int px) {
         String[] rows = null;
         if (icone != null && i >= 0) {
             try {
@@ -173,7 +172,6 @@ public final class YasAbilities {
                 rows = null;
             }
         }
-        int c = i >= 0 ? color(i) : 0xFFFFE89A;
         if (rows == null) {
             g.fill(x + px * 3, y + px * 3, x + px * 9, y + px * 9, c);
             return;
@@ -188,6 +186,127 @@ public final class YasAbilities {
                 }
             }
         }
+    }
+
+    // ------------------------------------------------------------------
+    // The modes of the hero now (Yas: the nine of Hand of God; the Scarlet Witch: Reality and Telekinesis of
+    // Hand of God, then her own three, ScarletClient)
+    // ------------------------------------------------------------------
+
+    public static final String[] SCARLET_MODES = {"realidade", "telecinese", "mind", "energy", "necro"};
+    private static final int[] SCARLET_COLORS = {0xFFE0263A, 0xFFFF3B5C, 0xFFB0306F, 0xFFFF2A2A, 0xFF8E1B2E};
+    /** Her own modes' icons (12 x 12, '#' the colour, '+' lighter). */
+    private static final String[][] SCARLET_ICONS = {
+            null, null,
+            {"....####....", "..##++++##..", ".#+......+#.", "#+..####..+#", "#..#....#..#", "#..#.##.#..#",
+                    "#..#.##.#..#", "#..#....#..#", "#+..####..+#", ".#+......+#.", "..##++++##..", "....####...."},
+            {".....#......", "....##......", "...###......", "..####++....", ".#####++++..", "######+++++#",
+                    "#+++++######", "..++++#####.", "....++####..", "......###...", "......##....", "......#....."},
+            {"...######...", "..#++++++#..", ".#+######+#.", ".#+#.##.#+#.", ".#+#.##.#+#.", ".#++####++#.",
+                    "..#++##++#..", "...#+##+#...", "...#.##.#...", "...#....#...", "....####....", "............"}};
+
+    public static boolean scarlet() {
+        return PowerTheme.localScarlet();
+    }
+
+    public static int count() {
+        return scarlet() ? SCARLET_MODES.length : POWERS.length;
+    }
+
+    /** Hand of God's power of a mode (-1: one of the Scarlet Witch's own). */
+    public static int hogOf(int i) {
+        if (!scarlet()) {
+            return i;
+        }
+        return i == 0 ? 2 : i == 1 ? 4 : -1;
+    }
+
+    public static String modeId(int i) {
+        return scarlet() ? SCARLET_MODES[i] : POWERS[i].toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private static int scarletMode;
+
+    /** The mode now (-1 none chosen yet). */
+    public static int selected() {
+        return scarlet() ? scarletMode : hogSelected();
+    }
+
+    /** Picks a mode (Alt + scroll, the K menu). */
+    public static void select(int i) {
+        if (i < 0 || i >= count()) {
+            return;
+        }
+        if (scarlet()) {
+            scarletMode = i;
+        }
+        int h = hogOf(i);
+        if (h >= 0) {
+            hogSelect(h);
+        }
+        bind(h);
+    }
+
+    public static Component name(int i) {
+        int h = hogOf(i);
+        return h >= 0 ? hogName(h) : Component.translatable("scarlet.flash.mode." + SCARLET_MODES[i]);
+    }
+
+    public static Component desc(int i) {
+        int h = hogOf(i);
+        return h >= 0 ? Component.translatable("poder.hand_of_god." + POWERS[h].toLowerCase(java.util.Locale.ROOT)
+                + ".desc") : Component.translatable("scarlet.flash.mode." + SCARLET_MODES[i] + ".desc");
+    }
+
+    /** The mode has a second key (Z). */
+    public static boolean usesVariant(int i) {
+        if (scarlet()) {
+            return hogOf(i) < 0;
+        }
+        return "TEMPORAL".equals(POWERS[i]) || "CELESTE".equals(POWERS[i]);
+    }
+
+    public static List<Component> lines(int i) {
+        if (i < 0 || i >= count()) {
+            return List.of();
+        }
+        int h = hogOf(i);
+        List<Component> out = new ArrayList<>(h >= 0 ? hogLines(h) : List.of());
+        String base = scarlet() ? "hud.flash.scarlet." + SCARLET_MODES[i] : null;
+        if (base != null) {
+            for (int n = 1; n <= 8 && net.minecraft.client.resources.language.I18n.exists(base + "." + n); n++) {
+                out.add(Component.translatable(base + "." + n).withStyle(h >= 0 ? net.minecraft.ChatFormatting.RED
+                        : net.minecraft.ChatFormatting.GRAY));
+            }
+        }
+        return out;
+    }
+
+    public static int color(int i) {
+        if (scarlet()) {
+            return i >= 0 && i < SCARLET_COLORS.length ? SCARLET_COLORS[i] : 0xFFE0263A;
+        }
+        return i >= 0 ? hogColor(i) : 0xFFFFE89A;
+    }
+
+    /** The pixel-art icon of the mode ('#' the colour, '+' lighter), {@code px} pixels a dot. */
+    public static void drawIcon(GuiGraphics g, int i, int x, int y, int px) {
+        int c = color(i);
+        if (scarlet() && i >= 0 && i < SCARLET_ICONS.length && SCARLET_ICONS[i] != null) {
+            int light = 0xFF000000 | ((((c >> 16) & 255) + 255) / 2 << 16) | ((((c >> 8) & 255) + 255) / 2 << 8)
+                    | (((c & 255) + 255) / 2);
+            String[] rows = SCARLET_ICONS[i];
+            for (int r = 0; r < rows.length; r++) {
+                for (int k = 0; k < rows[r].length(); k++) {
+                    char ch = rows[r].charAt(k);
+                    if (ch == '#' || ch == '+') {
+                        g.fill(x + k * px, y + r * px, x + (k + 1) * px, y + (r + 1) * px, ch == '#' ? c : light);
+                    }
+                }
+            }
+            return;
+        }
+        hogDrawIcon(g, hogOf(i), c, x, y, px);
     }
 
     // ------------------------------------------------------------------
@@ -206,7 +325,7 @@ public final class YasAbilities {
 
     /** Hand of God's keys pointed at R / Z for the mode, the others unbound. */
     private static void bind(int mode) {
-        String want = mode + ":" + FlashKeys.YAS_USE.saveString() + ":" + FlashKeys.YAS_VARIANT.saveString();
+        String want = mode + ":" + scarlet() + ":" + FlashKeys.YAS_USE.saveString() + ":" + FlashKeys.YAS_VARIANT.saveString();
         if (want.equals(applied)) {
             return;
         }
@@ -252,24 +371,48 @@ public final class YasAbilities {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || !PowerTheme.localYas() || !ready()) {
+        if (mc.player == null || !(PowerTheme.localYas() || PowerTheme.localScarlet()) || !ready()) {
             unbind();
+            ScarletClient.tickMode(mc, null, false);
             return;
         }
         int mode = selected();
         if (mode < 0) {
             select(0);
-        } else {
-            bind(mode);
+            mode = 0;
         }
-        telekinesis(mc, mode >= 0 && "TELECINESE".equals(POWERS[mode]));
-        reality(mc, mode >= 0 && "REALIDADE".equals(POWERS[mode]));
+        int h = hogOf(mode);
+        if (h >= 0 && hogSelected() != h) {
+            hogSelect(h);
+        }
+        bind(h);
+        telekinesis(mc, h >= 0 && "TELECINESE".equals(POWERS[h]));
+        reality(mc, h >= 0 && "REALIDADE".equals(POWERS[h]));
         boolean variant = false;
         while (FlashKeys.YAS_VARIANT.consumeClick()) {
             variant = true;
         }
-        if (variant && mode >= 0 && "CELESTE".equals(POWERS[mode]) && mc.screen == null) {
+        if (scarlet()) {
+            ScarletClient.tickMode(mc, h < 0 ? SCARLET_MODES[mode] : null, variant && mc.screen == null);
+        } else if (variant && "CELESTE".equals(POWERS[mode]) && mc.screen == null) {
             com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.YasBlackHolePacket());
+        }
+    }
+
+    /**
+     * The Scarlet Witch's telekinesis: no implosion (the attack click does nothing while she holds a creature),
+     * and the use click tears it apart only for five seconds (ScarletAbilities.dismember).
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onClick(InputEvent.InteractionKeyMappingTriggered event) {
+        if (!scarlet() || !holding()) {
+            return;
+        }
+        event.setCanceled(true);
+        event.setSwingHand(false);
+        if (event.isUseItem()) {
+            com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                    new com.flash.network.ScarletActionPacket(com.flash.network.ScarletActionPacket.DISMEMBER, -1, 0));
         }
     }
 
@@ -422,7 +565,7 @@ public final class YasAbilities {
     public static void onFlightTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         var p = mc.player;
-        if (event.phase != TickEvent.Phase.END || p == null || !PowerTheme.localYas()) {
+        if (event.phase != TickEvent.Phase.END || p == null || !(PowerTheme.localYas() || PowerTheme.localScarlet())) {
             flightHeld = -1;
             flightWas = false;
             return;
@@ -500,8 +643,8 @@ public final class YasAbilities {
 
     private static boolean active() {
         Minecraft mc = Minecraft.getInstance();
-        return mc.player != null && mc.screen == null && !mc.player.isSpectator() && PowerTheme.localYas()
-                && ready();
+        return mc.player != null && mc.screen == null && !mc.player.isSpectator()
+                && (PowerTheme.localYas() || PowerTheme.localScarlet()) && ready();
     }
 
     private static Method holding;
@@ -538,7 +681,7 @@ public final class YasAbilities {
         event.setCanceled(true);
         int cur = selected();
         int dir = event.getScrollDelta() > 0.0D ? 1 : -1; // up: the next mode, down: back
-        int next = cur < 0 ? 0 : Math.floorMod(cur + dir, POWERS.length);
+        int next = cur < 0 ? 0 : Math.floorMod(cur + dir, count());
         select(next);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {

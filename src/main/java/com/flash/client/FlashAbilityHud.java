@@ -27,13 +27,17 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null && PowerTheme.localYas()) {
+        if (minecraft.player != null && (PowerTheme.localYas() || PowerTheme.localScarlet())) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
                 renderYas(graphics, minecraft, width, height);
             }
             float toss = YasAbilities.throwCharge();
-            if (toss >= 0.0F && minecraft.screen == null && !minecraft.options.hideGui) {
+            float blast = ScarletClient.blastCharge();
+            if (blast >= 0.0F && minecraft.screen == null && !minecraft.options.hideGui) {
+                drawChargeBar(graphics, minecraft.font, width, height, blast, "hud.flash.scarlet_blast",
+                        "hud.flash.scarlet_blast_full");
+            } else if (toss >= 0.0F && minecraft.screen == null && !minecraft.options.hideGui) {
                 drawChargeBar(graphics, minecraft.font, width, height, toss, "hud.flash.superman_throw",
                         "hud.flash.superman_throw_full");
             }
@@ -247,7 +251,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         }
         Font font = minecraft.font;
         int mode = Math.max(0, YasAbilities.selected());
-        int n = YasAbilities.POWERS.length;
+        int n = YasAbilities.count();
         String title = YasAbilities.name(mode).getString();
         String count = (mode + 1) + "/" + n;
         String hint = Component.translatable("hud.flash.yas_pick").getString();

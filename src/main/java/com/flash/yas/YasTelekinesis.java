@@ -112,6 +112,19 @@ public final class YasTelekinesis {
         }
     }
 
+    /** The creature the player holds by telekinesis now, or null. */
+    public static LivingEntity held(ServerPlayer p) {
+        if (!ready()) {
+            return null;
+        }
+        try {
+            Object hold = hold(p);
+            return hold != null && target.get(hold) instanceof LivingEntity e ? e : null;
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            return null;
+        }
+    }
+
     /** The charged throw: the held creature goes 20 (no charge) to 200 blocks (full) once it is let go. */
     public static void charge(ServerPlayer p, int charge) {
         if (!allowed(p) || !ready()) {

@@ -88,6 +88,7 @@ public final class FlashClientEvents {
                 player.addLayer(new SupermanSuitLayer(player));
                 player.addLayer(new LexSuitLayer<>(player));
                 player.addLayer(new YasLayer<>(player));
+                player.addLayer(new ScarletLayer(player));
                 player.addLayer(new SupermanAuraLayer(player));
             }
         }
