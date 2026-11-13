@@ -1274,5 +1274,7 @@
   "hud.flash.scarlet.row.gw_atomic": "I am Atomic",
   "hud.flash.scarlet.row.gw_fuga": "Fuga",
   "entity.flash.arcane_orb": "Arcane Orb",
-  "entity.flash.stone_cannon": "Stone Cannon"
+  "entity.flash.stone_cannon": "Stone Cannon",
+  "gui.godwand.atomic_release": "Release your button",
+  "gui.godwand.atomic_skip": "Esc / F5 - Skip camera"
 }

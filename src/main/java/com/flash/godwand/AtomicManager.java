@@ -39,6 +39,12 @@ public final class AtomicManager {
          && AtomicSequence.movementLocked(AtomicSequence.castAge(task.world.getGameTime(), task.started, task.releasedAt));
    }
 
+   /** The caster skipped the cutscene (after the detonation): she may move again. */
+   public static boolean releaseMovement(ServerPlayer player) {
+      AtomicManager.Task task = TASKS.get(player.getUUID());
+      return task != null && releaseMovement(player, task.started);
+   }
+
    public static boolean releaseMovement(ServerPlayer player, long startedAt) {
       AtomicManager.Task task = TASKS.get(player.getUUID());
       if (task != null && task.started == startedAt && task.world == player.level() && player.isAlive() && !player.isSpectator() && task.releasedAt >= 0L) {
@@ -123,9 +129,6 @@ public final class AtomicManager {
                broadcast(task, 3);
                iterator.remove();
             } else {
-               if (task.exploded && age >= 430L) {
-                  task.movementReleased = true;
-               }
                if (movementLocked(task.caster)) {
                   task.caster.setDeltaMovement(Vec3.ZERO);
                   task.caster.fallDistance = 0.0F;

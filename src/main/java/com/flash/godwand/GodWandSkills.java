@@ -54,6 +54,8 @@ public final class GodWandSkills {
     public static final int PRESS = 0;
     public static final int RELEASE = 1;
     public static final int CANCEL = 2;
+    /** I am Atomic's cutscene was skipped (Esc / F5): she may move again. */
+    public static final int SKIP = 3;
 
     private record Charge(int skill, long started) {
     }
@@ -92,6 +94,7 @@ public final class GodWandSkills {
             switch (action) {
                 case PRESS -> press(p, skill, value == 1);
                 case RELEASE -> release(p, skill);
+                case SKIP -> AtomicManager.releaseMovement(p);
                 default -> cancel(p);
             }
         } finally {

@@ -1,6 +1,6 @@
 package com.flash.client.godwand;
 
-/** God Wand's client settings (its defaults; the cutscenes and the post shaders are not part of this port). */
+/** God Wand's client settings (its defaults). */
 public final class GodWandConfig {
 
     public static final Client CLIENT = new Client();
@@ -9,14 +9,15 @@ public final class GodWandConfig {
     }
 
     public static final class Client {
-        public boolean postEffects = false;
+        public boolean postEffects = true;
         public boolean impactFrames = true;
         public boolean cameraFov = true;
         public boolean skyBlackout = true;
         public boolean targetMarker = true;
-        public boolean atomicCutscene = false;
-        public boolean fugaCutscene = false;
+        public boolean atomicCutscene = true;
+        public boolean fugaCutscene = true;
         public float cameraShake = 1.0F;
         public float bloomStrength = 0.85F;
+        public int bloomDownsample = 4;
     }
 }

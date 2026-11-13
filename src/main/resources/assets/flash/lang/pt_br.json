@@ -1274,5 +1274,7 @@
   "hud.flash.scarlet.row.gw_atomic": "I am Atomic",
   "hud.flash.scarlet.row.gw_fuga": "Fuga",
   "entity.flash.arcane_orb": "Esfera Arcana",
-  "entity.flash.stone_cannon": "Canhão de Pedra"
+  "entity.flash.stone_cannon": "Canhão de Pedra",
+  "gui.godwand.atomic_release": "Solte o botão",
+  "gui.godwand.atomic_skip": "Esc / F5 - Pular câmera"
 }
