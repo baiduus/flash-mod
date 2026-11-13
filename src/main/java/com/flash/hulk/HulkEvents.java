@@ -131,6 +131,34 @@ public final class HulkEvents {
         HulkPowers.addRage(player, 4.0F);
     }
 
+    /**
+     * No single blow of the Hulk (punch, ability, thrown creature, rock, blast) takes more than 30 % of a creature's
+     * health, or 20 for the small ones: weak creatures still fall in one punch, the strong ones (Iron Golem, Warden,
+     * bosses, big modded mobs) take several. Heroes are left to HeroBalance.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onHulkBlow(LivingHurtEvent event) {
+        LivingEntity victim = event.getEntity();
+        if (victim.level().isClientSide) {
+            return;
+        }
+        net.minecraft.world.entity.Entity source = event.getSource().getEntity();
+        if (source == null && event.getSource().getDirectEntity()
+                instanceof net.minecraft.world.entity.projectile.Projectile pr) {
+            source = pr.getOwner();
+        }
+        if (!(source instanceof ServerPlayer hulk) || hulk == victim || !HulkPowers.isTransformed(hulk)) {
+            return;
+        }
+        if (victim instanceof net.minecraft.world.entity.player.Player pv && com.flash.power.HeroBalance.isHero(pv)) {
+            return;
+        }
+        float cap = Math.max(20.0F, victim.getMaxHealth() * 0.3F);
+        if (event.getAmount() > cap) {
+            event.setAmount(cap);
+        }
+    }
+
     /** Resistance (grows with rage), immunity to fire and falls; fights feed the rage. */
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onHurt(LivingHurtEvent event) {

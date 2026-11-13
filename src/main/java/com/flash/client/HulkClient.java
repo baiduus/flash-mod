@@ -112,6 +112,49 @@ public final class HulkClient {
         }
     }
 
+    /**
+     * The Hulk swims hard: in the water he goes where he looks (under it, up and down too), fast and faster with the
+     * level, quicker still sprinting; jump rises and sneak dives. Standing still, the water does as always.
+     */
+    @SubscribeEvent
+    public static void onSwim(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.START || !event.player.level().isClientSide
+                || event.player != Minecraft.getInstance().player
+                || !(event.player instanceof net.minecraft.client.player.LocalPlayer p)) {
+            return;
+        }
+        if (!HulkState.isTransformed(p) || !p.isInWater() || p.getAbilities().flying || p.isPassenger()) {
+            return;
+        }
+        float forward = p.input.forwardImpulse;
+        float strafe = p.input.leftImpulse;
+        boolean up = p.input.jumping;
+        boolean down = p.input.shiftKeyDown;
+        if (forward == 0.0F && strafe == 0.0F && !up && !down) {
+            return;
+        }
+        int level = Math.max(1, HulkState.level());
+        // 0.6 blocks a tick at level 1 up to 1.0 at level 10 (12 to 20 blocks a second), half again sprinting
+        double speed = (0.555D + 0.045D * level) * (p.isSprinting() ? 1.5D : 1.0D);
+        net.minecraft.world.phys.Vec3 look = p.getLookAngle();
+        boolean under = p.isUnderWater() || p.isSwimming();
+        net.minecraft.world.phys.Vec3 flat = new net.minecraft.world.phys.Vec3(look.x, 0.0D, look.z);
+        flat = flat.lengthSqr() < 1.0E-6D ? new net.minecraft.world.phys.Vec3(0.0D, 0.0D, 1.0D) : flat.normalize();
+        net.minecraft.world.phys.Vec3 dir = under ? look : flat;
+        net.minecraft.world.phys.Vec3 right = new net.minecraft.world.phys.Vec3(-flat.z, 0.0D, flat.x);
+        net.minecraft.world.phys.Vec3 target = dir.scale(forward * speed).add(right.scale(-strafe * speed * 0.6D));
+        net.minecraft.world.phys.Vec3 cur = p.getDeltaMovement();
+        double vy = under ? target.y : cur.y;
+        if (up) {
+            vy = Math.max(vy, 0.4D);
+        }
+        if (down) {
+            vy = Math.min(vy, -0.4D);
+        }
+        target = new net.minecraft.world.phys.Vec3(target.x, vy, target.z);
+        p.setDeltaMovement(cur.add(target.subtract(cur).scale(0.3D)));
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END || Minecraft.getInstance().player == null) {

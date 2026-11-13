@@ -16,6 +16,8 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build --no-daemon
+      - name: Nomes SRG
+        run: grep -h "ServerGamePacketListenerImpl" $(find build ~/.gradle -name "*.srg" -o -name "*.tsrg" 2>/dev/null | head -5) | grep -i "isSingleplayerOwner\|handleMovePlayer\|m_9956_" | head -20 || true
       - name: Conferir jarjar
         run: for j in build/libs/*.jar; do echo "== $j"; unzip -l "$j" | grep -i "jarjar\|bendy" || true; done
       - uses: actions/upload-artifact@v4

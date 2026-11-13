@@ -70,10 +70,36 @@ public final class YasHandOfGod {
                     b.set(true);
                 }
             }
+            anySize();
             // creative mode does not hand out its powers: they are Yas's alone
             Object creative = c.getField("CRIATIVO_LIBERA_TUDO").get(null);
             if (creative instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get()) {
                 b.set(false);
+            }
+        } catch (ReflectiveOperationException | LinkageError | IllegalStateException e) {
+            // Hand of God missing or its config not loaded
+        }
+    }
+
+    private static java.lang.reflect.Field cached;
+
+    /**
+     * The telekinesis lifts a creature or player of any size: its option (largest side, 16 at most in the file) at
+     * the top and the value the game reads (the cached one) far above any creature. Renewed now and then, as a reload
+     * of the config clears it.
+     */
+    public static void anySize() {
+        try {
+            Object v = Class.forName("handofgod.Config").getField("TK_TAMANHO_MAXIMO").get(null);
+            if (v instanceof net.minecraftforge.common.ForgeConfigSpec.DoubleValue d) {
+                if (d.get() < 16.0D) {
+                    d.set(16.0D);
+                }
+                if (cached == null) {
+                    cached = net.minecraftforge.common.ForgeConfigSpec.ConfigValue.class.getDeclaredField("cachedValue");
+                    cached.setAccessible(true);
+                }
+                cached.set(d, 1.0E9D);
             }
         } catch (ReflectiveOperationException | LinkageError | IllegalStateException e) {
             // Hand of God missing or its config not loaded

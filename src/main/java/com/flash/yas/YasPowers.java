@@ -91,6 +91,9 @@ public final class YasPowers {
         }
         YasHandOfGod.guard(p, has(p) || com.flash.scarlet.ScarletPowers.has(p));
         boolean yas = has(p);
+        if (p.tickCount % 100 == 0 && (yas || com.flash.scarlet.ScarletPowers.has(p))) {
+            YasHandOfGod.anySize();
+        }
         if (yas) {
             flight(p);
             if (p.tickCount % 20 == 0) {
@@ -307,10 +310,15 @@ public final class YasPowers {
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.6F);
     }
 
-    /** Regeneration I always; near death (2 hearts or less) Regeneration III. */
+    /** Regeneration IV always; from Y = 100 up, Regeneration X (half a heart every tick). */
     private static void regeneration(ServerPlayer p) {
-        int amp = p.getHealth() <= 4.0F ? 2 : 0;
+        int amp = p.getY() >= 100.0D ? 9 : 3;
         var regen = p.getEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+        if (regen != null && regen.getAmplifier() > amp && regen.getAmplifier() <= 9) {
+            // coming down below 100: back to IV now, not when the X runs out
+            p.removeEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+            regen = null;
+        }
         // renewed while it still has a few seconds (renewing every tick would break the healing rhythm)
         if (regen == null || regen.getAmplifier() < amp || regen.getDuration() < 40) {
             p.addEffect(new net.minecraft.world.effect.MobEffectInstance(

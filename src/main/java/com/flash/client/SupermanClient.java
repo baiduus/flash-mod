@@ -125,8 +125,8 @@ public final class SupermanClient {
     private static final double[] STAGE_SPEED = {0.0D, 0.45D, 1.1D, 2.4D};
     /** The server rejects moves above ~10 blocks per tick: the fastest stage stays under it. */
     private static final double MAX_SPEED = 9.0D;
-    /** Yas: a third faster than Superman at level 10 (who reaches MAX_SPEED). */
-    private static final double YAS_MAX_SPEED = 12.5D;
+    /** Yas: seven times her old top speed (12.5; the server lets her through, ServerMoveMixin). */
+    private static final double YAS_MAX_SPEED = 12.5D * 7.0D;
     private static int flightStage;
     private static boolean sprintWasDown;
     private static long lastSprintPress = -100L;
@@ -384,7 +384,8 @@ public final class SupermanClient {
             scale *= com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OVERDRIVE) ? 1.0D : 0.8D;
         }
         if (yasFlight) {
-            scale = 5.4D;
+            // seven times her old flight (5.4)
+            scale = 5.4D * 7.0D;
         }
         if (scarletFlight) {
             scale = 4.0D;
