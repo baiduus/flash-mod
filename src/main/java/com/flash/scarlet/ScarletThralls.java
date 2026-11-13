@@ -14,6 +14,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -141,7 +143,8 @@ public final class ScarletThralls {
 
     private static void tickAlly(Mob mob, ServerPlayer owner, Ally a) {
         LivingEntity target = mob.getTarget();
-        if (target == owner || (target != null && isAllyOf(target, a.owner))) {
+        // in fury they turn on everything but her, her other servants included (the hysteria: on each other)
+        if (target == owner || (!a.fury && target != null && isAllyOf(target, a.owner) && !isFury(target))) {
             mob.setTarget(null);
             target = null;
         }
@@ -151,7 +154,9 @@ public final class ScarletThralls {
                 double best = 16.0D * 16.0D;
                 for (LivingEntity o : mob.level().getEntitiesOfClass(LivingEntity.class,
                         mob.getBoundingBox().inflate(16.0D), o -> o != mob && o != owner && o.isAlive()
-                                && !isAllyOf(o, a.owner) && !(o instanceof net.minecraft.world.entity.decoration.ArmorStand))) {
+                                && (isFury(o) || !isAllyOf(o, a.owner))
+                                && !(o instanceof Player p && (p.isCreative() || p.isSpectator()))
+                                && !(o instanceof net.minecraft.world.entity.decoration.ArmorStand))) {
                     double d = o.distanceToSqr(mob);
                     if (d < best) {
                         best = d;
@@ -182,11 +187,46 @@ public final class ScarletThralls {
                 mob.teleportTo(owner.getX(), owner.getY(), owner.getZ());
             }
         }
+        strike(mob, a);
         if (mob.tickCount % 12 == 0 && mob.level() instanceof ServerLevel level) {
             level.sendParticles(ScarletPowers.RED, mob.getX(), mob.getEyeY() + 0.2D, mob.getZ(), 2, 0.15D, 0.1D,
                     0.15D, 0.0D);
         }
     }
+
+    private static boolean isFury(Entity e) {
+        Ally a = ALLIES.get(e.getUUID());
+        return a != null && a.fury;
+    }
+
+    /**
+     * Creatures that cannot fight by themselves (a sheep, a cow, a villager...) still go for whom she points at:
+     * they run to it and hit it (a hit a second, a little stronger the bigger they are).
+     */
+    private static void strike(Mob mob, Ally a) {
+        LivingEntity t = mob.getTarget();
+        if (t == null || !t.isAlive() || mob.getAttribute(Attributes.ATTACK_DAMAGE) != null) {
+            return;
+        }
+        if (mob.tickCount % 10 == 0) {
+            mob.getNavigation().moveTo(t, 1.35D);
+            mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+        }
+        double reach = mob.getBbWidth() * 2.0F * mob.getBbWidth() * 2.0F + t.getBbWidth() + 1.5D;
+        long now = mob.level().getGameTime();
+        Long last = LAST_HIT.get(mob.getUUID());
+        if (mob.distanceToSqr(t) <= reach && (last == null || now - last >= 20L)) {
+            LAST_HIT.put(mob.getUUID(), now);
+            mob.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            float dmg = 2.0F + mob.getMaxHealth() * 0.12F;
+            t.hurt(mob.damageSources().mobAttack(mob), Math.min(10.0F, dmg));
+            Vec3 push = t.position().subtract(mob.position()).normalize().scale(0.4D);
+            t.setDeltaMovement(t.getDeltaMovement().add(push.x, 0.2D, push.z));
+            t.hurtMarked = true;
+        }
+    }
+
+    private static final Map<UUID, Long> LAST_HIT = new HashMap<>();
 
     private static Mob find(net.minecraft.server.MinecraftServer server, UUID id) {
         for (ServerLevel level : server.getAllLevels()) {
@@ -205,7 +245,7 @@ public final class ScarletThralls {
         if (a == null || t == null) {
             return;
         }
-        if (t.getUUID().equals(a.owner) || isAllyOf(t, a.owner)) {
+        if (t.getUUID().equals(a.owner) || (!a.fury && isAllyOf(t, a.owner) && !isFury(t))) {
             event.setCanceled(true);
         }
     }

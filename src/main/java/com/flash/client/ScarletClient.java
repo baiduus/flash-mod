@@ -37,6 +37,9 @@ public final class ScarletClient {
 
     private static final Set<Integer> SCARLET = new HashSet<>();
     private static final Set<Integer> FLYING = new HashSet<>();
+    private static final Set<Integer> NO_AURA = new HashSet<>();
+    /** Her cooldowns: id -> game time it ends, and its length. */
+    private static final Map<String, long[]> COOLDOWNS = new HashMap<>();
     /** Entity id -> game time until which her aura burns (she cast something). */
     private static final Map<Integer, Long> CASTING = new HashMap<>();
     private static final DustParticleOptions RED = new DustParticleOptions(new Vector3f(0.92F, 0.06F, 0.16F), 1.4F);
@@ -49,10 +52,17 @@ public final class ScarletClient {
     public static void reset() {
         SCARLET.clear();
         FLYING.clear();
+        NO_AURA.clear();
+        COOLDOWNS.clear();
         CASTING.clear();
     }
 
-    public static void set(int entity, boolean scarlet, boolean flying) {
+    public static void set(int entity, boolean scarlet, boolean flying, boolean aura) {
+        if (aura) {
+            NO_AURA.remove(entity);
+        } else {
+            NO_AURA.add(entity);
+        }
         if (scarlet) {
             SCARLET.add(entity);
         } else {
@@ -78,11 +88,66 @@ public final class ScarletClient {
 
     /** The red aura shows: flying, or a moment after casting. */
     public static boolean aura(Player p) {
-        if (!isScarlet(p)) {
+        if (!isScarlet(p) || NO_AURA.contains(p.getId())) {
             return false;
         }
         Long until = CASTING.get(p.getId());
         return flying(p) || (until != null && p.level().getGameTime() < until);
+    }
+
+    /** The local player's own setting of the flight aura. */
+    public static boolean localAura() {
+        Player p = Minecraft.getInstance().player;
+        return p == null || !NO_AURA.contains(p.getId());
+    }
+
+    // ------------------------------------------------------------------
+    // Her cooldowns
+    // ------------------------------------------------------------------
+
+    private static long now() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null ? mc.level.getGameTime() : 0L;
+    }
+
+    public static int cd(String id) {
+        return com.flash.scarlet.ScarletCooldowns.ticks(id);
+    }
+
+    public static void startLocal(String id, int ticks) {
+        if (ticks <= 0) {
+            COOLDOWNS.remove(id);
+        } else {
+            COOLDOWNS.put(id, new long[] {now() + ticks, ticks});
+        }
+    }
+
+    /** Ticks left of a cooldown (0: ready). */
+    public static int remaining(String id) {
+        long[] c = COOLDOWNS.get(id);
+        return c == null ? 0 : (int) Math.max(0L, c[0] - now());
+    }
+
+    public static int length(String id) {
+        long[] c = COOLDOWNS.get(id);
+        return c == null ? cd(id) : (int) c[1];
+    }
+
+    public static boolean coolingDown(String id) {
+        return remaining(id) > 0;
+    }
+
+    private static long deniedAt;
+
+    /** Pressed while cooling down: a short note (not every tick). */
+    public static void denied(String id) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && now() - deniedAt > 10) {
+            deniedAt = now();
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("hud.flash.scarlet.wait",
+                    net.minecraft.network.chat.Component.translatable("hud.flash.scarlet.row." + id),
+                    String.format(java.util.Locale.ROOT, "%.1f", remaining(id) / 20.0F)), true);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -94,6 +159,9 @@ public final class ScarletClient {
     private static int blastHeld = -1;
     private static final int BEAM_AFTER = 6;
     private static final int BLAST_FULL = 40;
+    /** The beam overheats after 4 s. */
+    private static final int BEAM_MAX = 80;
+    private static int beamTicks;
 
     /** 0..1 of the chaos blast being charged (Z held in Energy), or -1. */
     public static float blastCharge() {
@@ -113,29 +181,54 @@ public final class ScarletClient {
         useWas = down;
         switch (mode) {
             case "mind" -> {
-                if (pressed) {
-                    send(ScarletActionPacket.MIND, aimed(mc, false), 0);
-                }
-                if (variant) {
-                    send(ScarletActionPacket.MIND_VARIANT, aimed(mc, false), 0);
+                if (pressed || variant) {
+                    Entity t = aimedEntity(mc, false);
+                    String id = pressed ? (t instanceof Player ? "read" : t != null ? "ally" : "wave")
+                            : (t instanceof Player ? "puppet" : t != null ? "fury" : "hysteria");
+                    if (coolingDown(id)) {
+                        denied(id);
+                    } else {
+                        send(pressed ? ScarletActionPacket.MIND : ScarletActionPacket.MIND_VARIANT,
+                                t == null ? -1 : t.getId(), 0);
+                    }
                 }
             }
             case "energy" -> {
                 if (pressed) {
                     useHeld = 0;
+                    beamTicks = 0;
                 } else if (down && useHeld >= 0) {
                     useHeld++;
-                    if (useHeld >= BEAM_AFTER && useHeld % 3 == 0) {
-                        send(ScarletActionPacket.BEAM, -1, 0);
+                    if (useHeld >= BEAM_AFTER) {
+                        if (coolingDown("beam")) {
+                            if (useHeld == BEAM_AFTER) {
+                                denied("beam");
+                            }
+                        } else if (++beamTicks > BEAM_MAX) {
+                            // overheated: the beam stops and cools down
+                            startLocal("beam", cd("beam"));
+                        } else if (useHeld % 3 == 0) {
+                            send(ScarletActionPacket.BEAM, -1, 0);
+                        }
                     }
                 } else if (!down && useHeld >= 0) {
                     if (useHeld < BEAM_AFTER) {
-                        send(ScarletActionPacket.BOLT, -1, 0);
+                        if (coolingDown("bolt")) {
+                            denied("bolt");
+                        } else {
+                            send(ScarletActionPacket.BOLT, -1, 0);
+                        }
+                    } else if (beamTicks > 20 && !coolingDown("beam")) {
+                        startLocal("beam", cd("beam") * Math.min(beamTicks, BEAM_MAX) / BEAM_MAX);
                     }
                     useHeld = -1;
                 }
                 boolean z = FlashKeys.YAS_VARIANT.isDown() && mc.screen == null;
-                if (z) {
+                if (z && blastHeld < 0 && coolingDown("blast")) {
+                    if (variant) {
+                        denied("blast");
+                    }
+                } else if (z) {
                     blastHeld = blastHeld < 0 ? 0 : blastHeld + 1;
                     if (blastHeld % 4 == 0) {
                         Player p = mc.player;
@@ -149,10 +242,18 @@ public final class ScarletClient {
             }
             case "necro" -> {
                 if (pressed) {
-                    send(ScarletActionPacket.HEAL, aimed(mc, true), 0);
+                    if (coolingDown("heal")) {
+                        denied("heal");
+                    } else {
+                        send(ScarletActionPacket.HEAL, aimed(mc, true), 0);
+                    }
                 }
                 if (variant) {
-                    send(ScarletActionPacket.RAISE, -1, 0);
+                    if (coolingDown("raise")) {
+                        denied("raise");
+                    } else {
+                        send(ScarletActionPacket.RAISE, -1, 0);
+                    }
                 }
             }
             default -> {
@@ -164,8 +265,13 @@ public final class ScarletClient {
         FlashNetwork.CHANNEL.sendToServer(new ScarletActionPacket(action, entity, value));
     }
 
-    /** The living thing under the crosshair (up to 64 blocks), or -1. */
     private static int aimed(Minecraft mc, boolean anyLiving) {
+        Entity e = aimedEntity(mc, anyLiving);
+        return e == null ? -1 : e.getId();
+    }
+
+    /** The living thing under the crosshair (up to 64 blocks), or null. */
+    private static Entity aimedEntity(Minecraft mc, boolean anyLiving) {
         Player p = mc.player;
         Vec3 eye = p.getEyePosition();
         Vec3 end = eye.add(p.getLookAngle().scale(64.0D));
@@ -178,7 +284,7 @@ public final class ScarletClient {
                 p.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0D),
                 e -> e instanceof LivingEntity && e.isAlive() && e != p
                         && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand), eye.distanceToSqr(end));
-        return hit == null ? -1 : hit.getEntity().getId();
+        return hit == null ? null : hit.getEntity();
     }
 
     // ------------------------------------------------------------------

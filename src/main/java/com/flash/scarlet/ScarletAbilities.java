@@ -73,19 +73,34 @@ public final class ScarletAbilities {
 
     private static final double RANGE = 64.0D;
     private static final Map<String, Long> COOLDOWNS = new HashMap<>();
+    /** The beam held on: when it started and the last hit. */
+    private static final Map<UUID, long[]> BEAM = new HashMap<>();
 
     private ScarletAbilities() {
     }
 
-    private static boolean ready(ServerPlayer p, String what, int ticks) {
-        String k = p.getUUID() + what;
-        long now = p.level().getGameTime();
-        Long until = COOLDOWNS.get(k);
-        if (until != null && now < until) {
-            return false;
+    /** Off cooldown: true, and the cooldown starts (and is shown to her). */
+    public static boolean ready(ServerPlayer p, String id) {
+        return ready(p, id, ScarletCooldowns.ticks(id));
+    }
+
+    public static boolean ready(ServerPlayer p, String id, int ticks) {
+        if (!cooling(p, id)) {
+            start(p, id, ticks);
+            return true;
         }
-        COOLDOWNS.put(k, now + ticks);
-        return true;
+        return false;
+    }
+
+    public static boolean cooling(ServerPlayer p, String id) {
+        Long until = COOLDOWNS.get(p.getUUID() + id);
+        return until != null && p.level().getGameTime() < until;
+    }
+
+    public static void start(ServerPlayer p, String id, int ticks) {
+        COOLDOWNS.put(p.getUUID() + id, p.level().getGameTime() + ticks);
+        FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p),
+                new com.flash.network.ScarletCooldownPacket(id, ticks));
     }
 
     public static void act(ServerPlayer p, int action, int entity, int value) {
@@ -126,7 +141,7 @@ public final class ScarletAbilities {
 
     private static void mind(ServerPlayer p, Entity aimed) {
         if (aimed instanceof ServerPlayer target) {
-            if (!ready(p, "read", 20)) {
+            if (!ready(p, "read")) {
                 return;
             }
             readMind(p, target);
@@ -136,7 +151,7 @@ public final class ScarletAbilities {
             return;
         }
         if (aimed instanceof Mob mob && !immune(mob)) {
-            if (!ready(p, "ally", 10)) {
+            if (!ready(p, "ally")) {
                 return;
             }
             ScarletThralls.ally(p, mob, 90 * 20, false);
@@ -145,7 +160,7 @@ public final class ScarletAbilities {
                     1.0F);
             return;
         }
-        if (!ready(p, "wave", 100)) {
+        if (!ready(p, "wave")) {
             return;
         }
         // the red wave: nothing broken, every creature around hers
@@ -171,7 +186,7 @@ public final class ScarletAbilities {
 
     private static void mindVariant(ServerPlayer p, Entity aimed) {
         if (aimed instanceof ServerPlayer target) {
-            if (!ready(p, "puppet", 200)) {
+            if (!ready(p, "puppet")) {
                 return;
             }
             ScarletThralls.puppet(p, target, 8 * 20);
@@ -181,7 +196,7 @@ public final class ScarletAbilities {
             return;
         }
         if (aimed instanceof Mob mob && !immune(mob)) {
-            if (!ready(p, "fury", 10)) {
+            if (!ready(p, "fury")) {
                 return;
             }
             ScarletThralls.ally(p, mob, 20 * 20, true);
@@ -190,7 +205,7 @@ public final class ScarletAbilities {
                     0.7F);
             return;
         }
-        if (!ready(p, "hysteria", 200)) {
+        if (!ready(p, "hysteria")) {
             return;
         }
         ServerLevel level = p.serverLevel();
@@ -252,7 +267,24 @@ public final class ScarletAbilities {
     }
 
     private static void bolt(ServerPlayer p, boolean beam) {
-        if (!ready(p, beam ? "beam" : "bolt", beam ? 3 : 8)) {
+        if (beam) {
+            // the beam: a hit every 3 ticks at most, 4 s on end, then it cools down
+            if (cooling(p, "beam") || cooling(p, "beam_tick")) {
+                return;
+            }
+            COOLDOWNS.put(p.getUUID() + "beam_tick", p.level().getGameTime() + 2L);
+            long now = p.level().getGameTime();
+            long[] streak = BEAM.computeIfAbsent(p.getUUID(), k -> new long[] {now, now});
+            if (now - streak[1] > 10L) {
+                streak[0] = now;
+            }
+            streak[1] = now;
+            if (now - streak[0] > 80L) {
+                start(p, "beam", ScarletCooldowns.ticks("beam"));
+                BEAM.remove(p.getUUID());
+                return;
+            }
+        } else if (!ready(p, "bolt")) {
             return;
         }
         HitResult hit = aim(p, RANGE);
@@ -265,7 +297,7 @@ public final class ScarletAbilities {
         }
         if (hit instanceof EntityHitResult eh && eh.getEntity() instanceof LivingEntity e) {
             e.invulnerableTime = 0;
-            e.hurt(p.damageSources().indirectMagic(p, p), beam ? 5.0F : 14.0F);
+            e.hurt(p.damageSources().indirectMagic(p, p), (beam ? 1.2F : 5.0F) * ScarletPowers.POWER);
             Vec3 push = p.getLookAngle().scale(beam ? 0.25D : 1.1D);
             e.setDeltaMovement(e.getDeltaMovement().add(push.x, beam ? 0.02D : 0.25D, push.z));
             e.hurtMarked = true;
@@ -273,13 +305,13 @@ public final class ScarletAbilities {
     }
 
     private static void blast(ServerPlayer p, float charge) {
-        if (!ready(p, "blast", 30)) {
+        if (!ready(p, "blast")) {
             return;
         }
         HitResult hit = aim(p, RANGE);
         Vec3 at = hit.getLocation();
         float radius = 2.0F + 4.0F * charge;
-        float damage = 10.0F + 30.0F * charge;
+        float damage = (10.0F + 20.0F * charge) * ScarletPowers.POWER;
         ServerLevel level = p.serverLevel();
         fx(p, ScarletFxPacket.BLAST, p.getEyePosition().add(0.0D, -0.25D, 0.0D), at, radius);
         ScarletPowers.play(level, at, "energia_impacto", SoundEvents.GENERIC_EXPLODE, 0.7F);
@@ -305,7 +337,7 @@ public final class ScarletAbilities {
 
     private static void heal(ServerPlayer p, Entity aimed) {
         LivingEntity t = aimed instanceof LivingEntity l ? l : p;
-        if (!ready(p, "heal" + t.getUUID(), 200)) {
+        if (!ready(p, "heal")) {
             p.displayClientMessage(Component.translatable("message.flash.scarlet_heal_wait"), true);
             return;
         }
@@ -361,7 +393,7 @@ public final class ScarletAbilities {
     }
 
     private static void raise(ServerPlayer p) {
-        if (!ready(p, "raise", 30 * 20)) {
+        if (!ready(p, "raise")) {
             p.displayClientMessage(Component.translatable("message.flash.scarlet_raise_wait"), true);
             return;
         }
@@ -415,7 +447,7 @@ public final class ScarletAbilities {
     }
 
     // ------------------------------------------------------------------
-    // The dismemberment of five seconds
+    // The dismemberment of five seconds (and no implosion)
     // ------------------------------------------------------------------
 
     private record Torn(ResourceKey<Level> dim, CompoundTag tag, Vec3 at, long back, UUID player) {
@@ -424,67 +456,174 @@ public final class ScarletAbilities {
     private static final List<Torn> TORN = new ArrayList<>();
     /** Players torn apart now: they do not die of it. */
     private static final Set<UUID> SPARED = new HashSet<>();
+    /** What the Scarlet Witch holds by telekinesis: target UUID -> game time last seen held. */
+    private static final Map<UUID, Long> HELD = new HashMap<>();
     private static Method open;
+    private static java.lang.reflect.Field holds;
+    private static java.lang.reflect.Field owner;
+    private static java.lang.reflect.Field target;
+    private static java.lang.reflect.Field phase;
+    private static java.lang.reflect.Field phaseTicks;
+    private static Object holding;
+    private static Object imploding;
+    private static boolean looked;
 
+    private static boolean ready() {
+        if (!looked) {
+            looked = true;
+            try {
+                Class<?> t = Class.forName("handofgod.telecinese.Telecinese");
+                holds = t.getDeclaredField("PEGADAS");
+                holds.setAccessible(true);
+                Class<?> pegada = Class.forName("handofgod.telecinese.Telecinese$Pegada");
+                owner = pegada.getDeclaredField("dono");
+                owner.setAccessible(true);
+                target = pegada.getDeclaredField("alvo");
+                target.setAccessible(true);
+                phase = pegada.getDeclaredField("fase");
+                phase.setAccessible(true);
+                phaseTicks = pegada.getDeclaredField("ticksFase");
+                phaseTicks.setAccessible(true);
+                Class<?> fase = Class.forName("handofgod.telecinese.Telecinese$Fase");
+                for (Object o : fase.getEnumConstants()) {
+                    if ("SEGURANDO".equals(o.toString())) {
+                        holding = o;
+                    } else if ("IMPLODINDO".equals(o.toString())) {
+                        imploding = o;
+                    }
+                }
+                open = t.getDeclaredMethod("abrir", ServerPlayer.class);
+                open.setAccessible(true);
+            } catch (ReflectiveOperationException | LinkageError e) {
+                holds = null;
+            }
+        }
+        return holds != null;
+    }
+
+    /** Her R-click on what she holds: Hand of God's tearing apart (its pieces), and whole again in 5 s. */
     private static void dismember(ServerPlayer p) {
         LivingEntity e = com.flash.yas.YasTelekinesis.held(p);
-        if (e == null || !ready(p, "dismember", 20)) {
+        if (e == null || !ready() || !ready(p, "dismember")) {
             return;
         }
-        ServerLevel level = p.serverLevel();
-        long back = level.getGameTime() + 100L;
-        CompoundTag tag = null;
+        HELD.put(e.getUUID(), p.level().getGameTime());
         if (e instanceof ServerPlayer victim) {
             SPARED.add(victim.getUUID());
-        } else {
-            tag = new CompoundTag();
-            if (!e.saveAsPassenger(tag)) {
-                return;
-            }
-            tag.remove("Passengers");
         }
-        // Hand of God's own tearing apart (its pieces), with no drops: the creature comes back whole
         Object drops = null;
+        boolean before = false;
         try {
-            if (open == null) {
-                open = Class.forName("handofgod.telecinese.Telecinese").getDeclaredMethod("abrir", ServerPlayer.class);
-                open.setAccessible(true);
-            }
             drops = Class.forName("handofgod.Config").getField("TK_DROPS_DESMEMBRAR").get(null);
-            boolean before = drops instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get();
+            before = drops instanceof net.minecraftforge.common.ForgeConfigSpec.BooleanValue b && b.get();
             if (before) {
                 ((net.minecraftforge.common.ForgeConfigSpec.BooleanValue) drops).set(false);
             }
-            try {
-                open.invoke(null, p);
-            } finally {
-                if (before) {
-                    ((net.minecraftforge.common.ForgeConfigSpec.BooleanValue) drops).set(true);
-                }
-            }
+            open.invoke(null, p);
         } catch (ReflectiveOperationException | LinkageError | IllegalStateException ex) {
-            SPARED.remove(e.getUUID());
-            return;
-        }
-        if (e instanceof ServerPlayer victim) {
-            victim.setHealth(Math.max(1.0F, victim.getHealth()));
-            victim.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 100, 0, false, false));
-            victim.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 255, false, false));
-            victim.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0, false, false));
-            victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 255, false, false));
-            TORN.add(new Torn(level.dimension(), null, victim.position(), back, victim.getUUID()));
-        } else {
-            TORN.add(new Torn(level.dimension(), tag, e.position(), back, null));
+            // Hand of God changed: nothing torn
+        } finally {
+            if (before) {
+                ((net.minecraftforge.common.ForgeConfigSpec.BooleanValue) drops).set(true);
+            }
         }
     }
 
-    /** A player being torn apart by her does not die of it (Hand of God kills what it tears). */
+    /**
+     * Every tick, what she holds: an implosion is turned back into a plain hold (she cannot crush), and the targets
+     * are remembered, so that whatever Hand of God does to them (torn apart by its own click too) is undone.
+     */
+    @SubscribeEvent
+    public static void onGuardTick(TickEvent.ServerTickEvent event) {
+        if (!ready()) {
+            return;
+        }
+        Map<?, ?> all;
+        try {
+            all = (Map<?, ?>) holds.get(null);
+        } catch (ReflectiveOperationException e) {
+            return;
+        }
+        long now = event.getServer().overworld().getGameTime();
+        for (Object hold : all.values()) {
+            try {
+                if (!(owner.get(hold) instanceof ServerPlayer p) || !ScarletPowers.has(p)) {
+                    continue;
+                }
+                if (target.get(hold) instanceof LivingEntity e) {
+                    HELD.put(e.getUUID(), now);
+                }
+                if (phase.get(hold) == imploding && holding != null) {
+                    phase.set(hold, holding);
+                    phaseTicks.setInt(hold, 0);
+                }
+            } catch (ReflectiveOperationException ignored) {
+                // next
+            }
+        }
+        HELD.values().removeIf(t -> now - t > 40L);
+    }
+
+    private static boolean heldByHer(Entity e) {
+        return HELD.containsKey(e.getUUID());
+    }
+
+    /** A creature she held was taken away (torn apart): it comes back whole in five seconds, its drops gone. */
+    @SubscribeEvent
+    public static void onLeave(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+        Entity e = event.getEntity();
+        if (!(e instanceof LivingEntity) || e instanceof Player || !(event.getLevel() instanceof ServerLevel level)
+                || !heldByHer(e)) {
+            return;
+        }
+        Entity.RemovalReason why = e.getRemovalReason();
+        if (why != Entity.RemovalReason.DISCARDED && why != Entity.RemovalReason.KILLED) {
+            return;
+        }
+        HELD.remove(e.getUUID());
+        CompoundTag tag = new CompoundTag();
+        e.saveWithoutId(tag);
+        String type = EntityType.getKey(e.getType()).toString();
+        tag.putString("id", type);
+        tag.remove("Passengers");
+        tag.remove("DeathTime");
+        tag.putShort("HurtTime", (short) 0);
+        TORN.add(new Torn(level.dimension(), tag, e.position(), level.getGameTime() + 100L, null));
+        // what it dropped right now goes back with it
+        for (Entity drop : level.getEntities(e, e.getBoundingBox().inflate(2.5D),
+                d -> (d instanceof net.minecraft.world.entity.item.ItemEntity
+                        || d instanceof net.minecraft.world.entity.ExperienceOrb) && d.tickCount <= 1)) {
+            drop.discard();
+        }
+    }
+
+    /** A player she holds does not die of it: torn apart for five seconds instead (Hand of God kills what it tears). */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttack(LivingAttackEvent event) {
-        if (SPARED.contains(event.getEntity().getUUID()) && event.getSource().is(
+        LivingEntity e = event.getEntity();
+        if (!(e instanceof ServerPlayer victim) || !event.getSource().is(
                 net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            event.setCanceled(true);
+            return;
         }
+        if (SPARED.contains(victim.getUUID()) || heldByHer(victim)) {
+            event.setCanceled(true);
+            tearPlayer(victim);
+        }
+    }
+
+    private static void tearPlayer(ServerPlayer victim) {
+        if (TORN.stream().anyMatch(t -> victim.getUUID().equals(t.player()))) {
+            return;
+        }
+        SPARED.add(victim.getUUID());
+        HELD.remove(victim.getUUID());
+        victim.setHealth(Math.max(1.0F, victim.getHealth()));
+        victim.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 100, 0, false, false));
+        victim.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 255, false, false));
+        victim.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0, false, false));
+        victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 255, false, false));
+        TORN.add(new Torn(victim.level().dimension(), null, victim.position(), victim.level().getGameTime() + 100L,
+                victim.getUUID()));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -501,11 +640,11 @@ public final class ScarletAbilities {
             return;
         }
         var server = event.getServer();
-        for (Iterator<Torn> it = TORN.iterator(); it.hasNext(); ) {
+        for (Iterator<Torn> it = new ArrayList<>(TORN).iterator(); it.hasNext(); ) {
             Torn t = it.next();
             ServerLevel level = server.getLevel(t.dim());
             if (level == null) {
-                it.remove();
+                TORN.remove(t);
                 continue;
             }
             if (level.getGameTime() < t.back()) {
@@ -515,7 +654,7 @@ public final class ScarletAbilities {
                 }
                 continue;
             }
-            it.remove();
+            TORN.remove(t);
             // whole again
             if (t.player() != null) {
                 SPARED.remove(t.player());
@@ -534,6 +673,7 @@ public final class ScarletAbilities {
                 if (made instanceof LivingEntity le && level.getEntity(le.getUUID()) == null) {
                     le.setHealth(le.getMaxHealth());
                     le.deathTime = 0;
+                    le.setDeltaMovement(Vec3.ZERO);
                     level.addFreshEntity(le);
                 }
             }

@@ -252,6 +252,10 @@ public final class FlashAbilityHud implements IGuiOverlay {
         Font font = minecraft.font;
         int mode = Math.max(0, YasAbilities.selected());
         int n = YasAbilities.count();
+        if (YasAbilities.scarlet()) {
+            renderScarlet(graphics, minecraft, font, mode, n, width, height);
+            return;
+        }
         String title = YasAbilities.name(mode).getString();
         String count = (mode + 1) + "/" + n;
         String hint = Component.translatable("hud.flash.yas_pick").getString();
@@ -285,6 +289,64 @@ public final class FlashAbilityHud implements IGuiOverlay {
         }
         ly += 2;
         graphics.drawString(font, hint, x + panelWidth - font.width(hint), ly, 0xFFB8B0A0, true);
+    }
+
+    /** The Scarlet Witch: her mode and its abilities as rows with their cooldowns. */
+    private static void renderScarlet(GuiGraphics graphics, Minecraft minecraft, Font font, int mode, int n, int width,
+                                      int height) {
+        String id = YasAbilities.SCARLET_MODES[mode];
+        String[][] rows = com.flash.scarlet.ScarletCooldowns.rows(id);
+        String title = YasAbilities.name(mode).getString();
+        String count = (mode + 1) + "/" + n;
+        String hint = Component.translatable("hud.flash.yas_pick").getString();
+        KeyMapping flyKey = FlashAbilityKeys.mapping(com.flash.ability.FlashAbility.WIND_HANDS);
+        String flyName = Component.translatable("hud.flash.scarlet.row.flight").getString();
+        int panelWidth = Math.max(MIN_WIDTH + 20, Math.max(font.width(title) + font.width(count) + 40,
+                font.width(hint) + 12));
+        String[] names = new String[rows.length];
+        String[] keys = new String[rows.length];
+        for (int i = 0; i < rows.length; i++) {
+            names[i] = Component.translatable("hud.flash.scarlet.row." + rows[i][1]).getString();
+            keys[i] = scarletKey(minecraft, rows[i][2]);
+            panelWidth = Math.max(panelWidth, rowWidth(font, names[i], keys[i]));
+        }
+        panelWidth = Math.max(panelWidth, rowWidth(font, flyName, keyLabel(flyKey)));
+        int headH = 22;
+        int total = headH + 2 + (rows.length + 1) * (ROW_HEIGHT + ROW_GAP) + 11;
+        int x = width - panelWidth - MARGIN;
+        int y = height - 26 - total;
+        if (x < 4 || y < 4) {
+            return;
+        }
+        int accent = YasAbilities.color(mode);
+        graphics.fill(x, y, x + panelWidth, y + headH, FlashHudStyle.PANEL);
+        graphics.fill(x, y, x + 2, y + headH, accent);
+        YasAbilities.drawIcon(graphics, mode, x + 6, y + 4, 1);
+        graphics.drawString(font, title, x + 22, y + 7, 0xFFFFFFFF, true);
+        graphics.drawString(font, count, x + panelWidth - 6 - font.width(count), y + 7, accent, false);
+        int ry = y + headH + 2;
+        for (int i = 0; i < rows.length; i++) {
+            String cdId = rows[i][0];
+            int cd = cdId.isEmpty() ? 0 : ScarletClient.remaining(cdId);
+            int max = cdId.isEmpty() ? 1 : Math.max(1, ScarletClient.length(cdId));
+            drawRow(graphics, font, x, ry, panelWidth, names[i], keys[i], cd, max, false);
+            ry += ROW_HEIGHT + ROW_GAP;
+        }
+        drawRow(graphics, font, x, ry, panelWidth, flyName, keyLabel(flyKey), 0, 1,
+                minecraft.player != null && minecraft.player.getAbilities().flying);
+        ry += ROW_HEIGHT + ROW_GAP;
+        graphics.drawString(font, hint, x + panelWidth - font.width(hint), ry, 0xFFB8B0A0, true);
+    }
+
+    private static String scarletKey(Minecraft mc, String code) {
+        return switch (code) {
+            case "R" -> keyLabel(FlashKeys.YAS_USE);
+            case "R+" -> keyLabel(FlashKeys.YAS_USE) + "+";
+            case "Z" -> keyLabel(FlashKeys.YAS_VARIANT);
+            case "Z+" -> keyLabel(FlashKeys.YAS_VARIANT) + "+";
+            case "RMB" -> keyLabel(mc.options.keyUse);
+            default -> code;
+        };
     }
 
     private static void renderThor(GuiGraphics graphics, Minecraft minecraft, int width, int height) {

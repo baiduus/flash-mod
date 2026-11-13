@@ -154,45 +154,167 @@ public class BlackHole extends Entity {
                 }
             }
         }
-        // the ground torn away
-        if (size > 0.6F && !collapsing()) {
-            for (int i = 0; i < 3; i++) {
-                BlockPos pos = BlockPos.containing(c.x + (this.random.nextDouble() - 0.5D) * 20.0D,
-                        c.y + (this.random.nextDouble() - 0.5D) * 20.0D, c.z + (this.random.nextDouble() - 0.5D) * 20.0D);
-                BlockState state = level.getBlockState(pos);
-                float hard = state.getDestroySpeed(level, pos);
-                if (state.isAir() || hard < 0.0F || hard > 50.0F || level.getBlockEntity(pos) != null
-                        || !state.getFluidState().isEmpty()) {
-                    continue;
+        // the ground torn away: a sphere as wide as the crater of Hand of God's sun, growing with it
+        if (size > 0.3F && !collapsing()) {
+            eat(level, c, age);
+        }
+        this.pulled.removeIf(id -> !(level.getEntity(id) instanceof FallingBlockEntity f) || !f.isAlive());
+    }
+
+    /** Ids of the blocks it tore loose, flying into it (imploded when it collapses). */
+    private final java.util.Set<Integer> pulled = new java.util.HashSet<>();
+    /** How far through the sphere of offsets it has eaten. */
+    private int eaten;
+    private static int[] OFFSETS;
+    private static int offsetsRadius;
+
+    /** The radius of Hand of God's sun crater (its config), within 12..40. */
+    private static int craterRadius() {
+        try {
+            Object v = Class.forName("handofgod.Config").getField("RAIO_CRATERA").get(null);
+            if (v instanceof net.minecraftforge.common.ForgeConfigSpec.DoubleValue d) {
+                return (int) Math.round(Mth.clamp(d.get(), 12.0D, 40.0D));
+            }
+        } catch (ReflectiveOperationException | LinkageError | IllegalStateException ignored) {
+            // no Hand of God config: its default
+        }
+        return 32;
+    }
+
+    /** Every block offset of a sphere, nearest first (packed 8 bits a coordinate). */
+    private static int[] offsets(int r) {
+        if (OFFSETS != null && offsetsRadius == r) {
+            return OFFSETS;
+        }
+        java.util.List<int[]> all = new java.util.ArrayList<>();
+        for (int x = -r; x <= r; x++) {
+            for (int y = -r; y <= r; y++) {
+                for (int z = -r; z <= r; z++) {
+                    int d = x * x + y * y + z * z;
+                    if (d <= r * r) {
+                        all.add(new int[] {d, x, y, z});
+                    }
                 }
+            }
+        }
+        all.sort(java.util.Comparator.comparingInt(a -> a[0]));
+        int[] out = new int[all.size()];
+        for (int i = 0; i < out.length; i++) {
+            int[] a = all.get(i);
+            out[i] = ((a[1] + 128) << 16) | ((a[2] + 128) << 8) | (a[3] + 128);
+        }
+        OFFSETS = out;
+        offsetsRadius = r;
+        return out;
+    }
+
+    private void eat(ServerLevel level, Vec3 c, int age) {
+        int r = craterRadius();
+        int[] all = offsets(r);
+        // the reach grows over the first two thirds of its life
+        float grow = Mth.clamp((age - GROW * 0.5F) / (LIFE * 0.66F), 0.0F, 1.0F);
+        double reach = r * grow;
+        double reach2 = reach * reach;
+        BlockPos center = BlockPos.containing(c);
+        int budget = 2500;
+        int changed = 0;
+        while (this.eaten < all.length && budget-- > 0 && changed < 900) {
+            int o = all[this.eaten];
+            int dx = (o >> 16 & 255) - 128;
+            int dy = (o >> 8 & 255) - 128;
+            int dz = (o & 255) - 128;
+            if (dx * dx + dy * dy + dz * dz > reach2) {
+                break;
+            }
+            this.eaten++;
+            BlockPos pos = center.offset(dx, dy, dz);
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) {
+                continue;
+            }
+            float hard = state.getDestroySpeed(level, pos);
+            if (hard < 0.0F) {
+                continue; // bedrock, barriers...
+            }
+            changed++;
+            boolean fly = this.pulled.size() < 260 && state.getFluidState().isEmpty()
+                    && level.getBlockEntity(pos) == null && this.random.nextInt(4) == 0;
+            if (fly) {
                 FallingBlockEntity fall = FallingBlockEntity.fall(level, pos, state);
                 fall.dropItem = false;
                 fall.setNoGravity(true);
-                fall.setDeltaMovement(c.subtract(Vec3.atCenterOf(pos)).normalize().scale(0.4D));
+                fall.time = -2000;
+                fall.setDeltaMovement(c.subtract(Vec3.atCenterOf(pos)).normalize().scale(0.35D));
+                this.pulled.add(fall.getId());
+            } else {
+                level.removeBlockEntity(pos);
+                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2 | 16);
+                if (this.random.nextInt(40) == 0) {
+                    level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(
+                            ParticleTypes.BLOCK, state), pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 4,
+                            0.3D, 0.3D, 0.3D, 0.1D);
+                }
             }
         }
     }
 
+    /**
+     * The collapse: everything it pulled is crushed into its heart (the blocks still flying gone, the creatures in
+     * its reach torn in), and it ends in a flash, turned inward.
+     */
     private void burst(ServerLevel level) {
         Vec3 c = this.position();
+        play(level, "lua_impacto_sugar", SoundEvents.WARDEN_SONIC_BOOM, 3.0F, 0.5F);
         play(level, "lua_impacto_estalo", SoundEvents.GENERIC_EXPLODE, 3.0F, 0.6F);
-        level.sendParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 2, 0.0D, 0.0D, 0.0D, 0.0D);
-        level.sendParticles(ParticleTypes.SONIC_BOOM, c.x, c.y, c.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-        level.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 120, 0.3D, 0.3D, 0.3D, 0.8D);
+        for (int id : this.pulled) {
+            if (level.getEntity(id) instanceof FallingBlockEntity f) {
+                level.sendParticles(ParticleTypes.REVERSE_PORTAL, f.getX(), f.getY(), f.getZ(), 3, 0.2D, 0.2D, 0.2D,
+                        0.3D);
+                f.discard();
+            }
+        }
+        this.pulled.clear();
         UUID owner = owner();
-        for (Entity e : level.getEntities(this, new AABB(c, c).inflate(16.0D), e -> !(e instanceof BlackHole))) {
+        double reach = PULL;
+        for (Entity e : level.getEntities(this, new AABB(c, c).inflate(reach), e -> !(e instanceof BlackHole))) {
             if (owner != null && owner.equals(e.getUUID())) {
                 continue;
             }
-            Vec3 away = e.position().subtract(c);
-            double d = Math.max(1.0D, away.length());
-            e.setDeltaMovement(e.getDeltaMovement().add(away.normalize().scale(3.0D / Math.sqrt(d)))
-                    .add(0.0D, 0.5D, 0.0D));
-            e.hurtMarked = true;
-            if (e instanceof FallingBlockEntity fall) {
-                fall.setNoGravity(false);
+            if (e instanceof Player p && (p.isCreative() || p.isSpectator())) {
+                continue;
+            }
+            double d = e.position().distanceTo(c);
+            if (d > reach) {
+                continue;
+            }
+            if (e instanceof FallingBlockEntity || e instanceof ItemEntity || e instanceof ExperienceOrb) {
+                e.discard();
+                continue;
+            }
+            if (e instanceof LivingEntity living) {
+                living.invulnerableTime = 0;
+                float f = (float) (1.0D - d / reach);
+                // the heart crushes everything; the edge still hurts a lot
+                living.hurt(level.damageSources().fellOutOfWorld(), d < 10.0D ? 1000.0F : 20.0F + 80.0F * f);
+                Vec3 in = c.subtract(e.position()).normalize().scale(1.5D * f + 0.3D);
+                e.setDeltaMovement(in);
+                e.hurtMarked = true;
             }
         }
+        // the light of the implosion, falling inward
+        for (int i = 0; i < 160; i++) {
+            double a = this.random.nextDouble() * Math.PI * 2.0D;
+            double u = this.random.nextDouble() * 2.0D - 1.0D;
+            double s = Math.sqrt(1.0D - u * u);
+            double r = 6.0D + this.random.nextDouble() * 10.0D;
+            double x = s * Math.cos(a) * r;
+            double y = u * r;
+            double z = s * Math.sin(a) * r;
+            level.sendParticles(ParticleTypes.END_ROD, c.x + x, c.y + y, c.z + z, 0, -x * 0.08D, -y * 0.08D,
+                    -z * 0.08D, 1.0D);
+        }
+        level.sendParticles(ParticleTypes.FLASH, c.x, c.y, c.z, 3, 0.0D, 0.0D, 0.0D, 0.0D);
+        level.sendParticles(ParticleTypes.SONIC_BOOM, c.x, c.y, c.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
     }
 
     private void play(ServerLevel level, String hog, SoundEvent fallback, float volume, float pitch) {

@@ -90,7 +90,22 @@ public final class ScarletPowers {
 
     public static void sync(ServerPlayer p) {
         FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p),
-                new ScarletSyncPacket(p.getId(), has(p), has(p) && p.getAbilities().flying));
+                new ScarletSyncPacket(p.getId(), has(p), has(p) && p.getAbilities().flying, aura(p)));
+    }
+
+    /** Her flight aura shown (her setting, seen by everyone). */
+    public static boolean aura(Player p) {
+        return !p.getPersistentData().getCompound(KEY).getBoolean("NoAura");
+    }
+
+    public static void setAura(ServerPlayer p, boolean on) {
+        if (!has(p)) {
+            return;
+        }
+        CompoundTag tag = p.getPersistentData().getCompound(KEY);
+        tag.putBoolean("NoAura", !on);
+        p.getPersistentData().put(KEY, tag);
+        sync(p);
     }
 
     private static final java.util.Set<java.util.UUID> WAS_FLYING = new java.util.HashSet<>();
@@ -106,6 +121,7 @@ public final class ScarletPowers {
             revoke(p);
             sw = false;
         }
+        punch(p, sw);
         if (sw) {
             flight(p);
             if (p.getAbilities().flying && p.tickCount % 2 == 0) {
@@ -120,6 +136,23 @@ public final class ScarletPowers {
                 WAS_FLYING.remove(p.getUUID());
             }
             sync(p);
+        }
+    }
+
+    private static final java.util.UUID PUNCH_ID = java.util.UUID.fromString("5c4a9f2e-6b1d-4e8a-9d33-2f7a1c0b5e61");
+
+    private static void punch(ServerPlayer p, boolean on) {
+        var atk = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        if (atk == null) {
+            return;
+        }
+        boolean has = atk.getModifier(PUNCH_ID) != null;
+        if (on && !has) {
+            atk.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(PUNCH_ID,
+                    "Scarlet Witch punch", PUNCH_BONUS,
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+        } else if (!on && has) {
+            atk.removeModifier(PUNCH_ID);
         }
     }
 
@@ -148,6 +181,14 @@ public final class ScarletPowers {
      * life): 20 / 87.
      */
     public static final float DAMAGE_FACTOR = 0.23F;
+
+    /**
+     * The strength of her magic, as the other heroes' (their abilities are twelfths of a punch times their power):
+     * about a Superman of level 5 (bolt 11, beam ~17 a second, chaos blast 22 to 66).
+     */
+    public static final float POWER = 2.2F;
+    /** Her own punch: a little more than a plain hand (her magic, not her arms, is her strength). */
+    public static final double PUNCH_BONUS = 2.0D;
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
     public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
@@ -223,7 +264,7 @@ public final class ScarletPowers {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer
                 && has(target)) {
             FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
-                    new ScarletSyncPacket(target.getId(), true, target.getAbilities().flying));
+                    new ScarletSyncPacket(target.getId(), true, target.getAbilities().flying, aura(target)));
         }
     }
 

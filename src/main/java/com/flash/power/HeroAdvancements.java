@@ -109,7 +109,8 @@ public final class HeroAdvancements {
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0
+                || p instanceof net.minecraftforge.common.util.FakePlayer) {
             return;
         }
         if (HeroPowers.Hero.FLASH.has(p) && com.flash.power.FlashPowers.hasPermanentPowers(p)) {

@@ -143,7 +143,7 @@ public class FlashProgressScreen extends Screen {
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         if (PowerTheme.localScarlet()) {
-            return new int[] {TAB_PROGRESS};
+            return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         if (PowerTheme.localLex() && !FlashClientData.hasPowers()) {
             return new int[] {TAB_PROGRESS, TAB_EQUIP};
@@ -259,6 +259,9 @@ public class FlashProgressScreen extends Screen {
             drawEquipTab(graphics, mx, my);
         } else if (PowerTheme.localYas()) {
             drawYasConfig(graphics, mx, my);
+        } else if (PowerTheme.localScarlet()) {
+            configRow(graphics, 0, "gui.flash.scarlet.cfg.aura", "gui.flash.scarlet.cfg.aura.desc", mx, my);
+            drawSwitch(graphics, "ssw0", switchX(), cfgY(0) + 8, ScarletClient.localAura());
         } else if (PowerTheme.localThor()) {
             drawThorConfig(graphics, mx, my);
         } else if (PowerTheme.localSuperman()) {
@@ -2355,6 +2358,15 @@ public class FlashProgressScreen extends Screen {
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localYas()) {
             return clickYasConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localScarlet()) {
+            if (inRow(ix, iy, 0)) {
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.ScarletSettingsPacket(
+                        !ScarletClient.localAura()));
+                click();
+                return true;
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localThor()) {
             return clickThorConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);

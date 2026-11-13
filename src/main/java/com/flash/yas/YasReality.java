@@ -166,6 +166,9 @@ public final class YasReality {
         if (until != null && now < until) {
             return;
         }
+        if (com.flash.scarlet.ScarletPowers.has(p) && !com.flash.scarlet.ScarletAbilities.ready(p, "reality_mob")) {
+            return;
+        }
         for (Change c : CHANGES) {
             if (c.e == mob) {
                 return;
