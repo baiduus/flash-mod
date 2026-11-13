@@ -72,7 +72,7 @@ public class SupernovaManager {
    }
 
    public static BlockPos findTarget(Player player) {
-      Level world = player.serverLevel();
+      Level world = player.level();
       HitResult hit = player.pick(180.0, 1.0F, false);
       BlockPos groundCenter;
       if (hit.getType() == Type.BLOCK && hit instanceof BlockHitResult bHit) {
@@ -103,7 +103,7 @@ public class SupernovaManager {
    }
 
    public static void cast(ServerPlayer player) {
-      ServerLevel world = player.serverLevel();
+      ServerLevel world = player.level();
       BlockPos groundCenter = CHARGE_TARGETS.remove(player);
       if (groundCenter == null) {
          groundCenter = findTarget(player);

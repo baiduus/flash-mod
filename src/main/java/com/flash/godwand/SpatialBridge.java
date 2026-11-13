@@ -265,9 +265,7 @@ public final class SpatialBridge {
             if (age == 2L) {
                GodWandDisplays.delay(f.display(), 0);
                GodWandDisplays.duration(f.display(), 4);
-               f.display()
-                  .setTransformation(
-                     SpatialMath.createPivotTransform(Vec3.atLowerCornerOf(f.target()).subtract(f.display().position()), new Quaternionf(), 0.95F)
+               GodWandDisplays.transform(f.display(), SpatialMath.createPivotTransform(Vec3.atLowerCornerOf(f.target()).subtract(f.display().position()), new Quaternionf(), 0.95F)
                   );
             }
 

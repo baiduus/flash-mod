@@ -136,7 +136,7 @@ public final class EarthDrillSoundscape {
    }
 
    private static void play(SoundEvent event, float volume, float pitch) {
-      play(event.location(), volume, pitch);
+      play(event.getLocation(), volume, pitch);
    }
 
    private static void play(ResourceLocation id, float volume, float pitch) {
