@@ -232,22 +232,59 @@ public final class YasAbilities {
         return scarlet() || storm();
     }
 
-    public static int count() {
-        return storm() ? STORM_MODES.length : scarlet() ? SCARLET_MODES.length : POWERS.length;
+    /**
+     * Yas' God Wand modes, after Hand of God's nine (God Wand by HyIsNoob): their ids and God Wand's skill numbers
+     * (Spatial Path, skill 0, is on its own key in the Reality mode).
+     */
+    public static final String[] WAND_MODES = {"singularity", "earth_drill", "supernova", "stone_cannon", "atomic",
+            "fuga"};
+    private static final int[] WAND_SKILLS = {1, 2, 3, 4, 5, 6};
+    private static final int[] WAND_COLORS = {0xFF35E6FF, 0xFFFF5A3A, 0xFFFF3B8E, 0xFFD8B070, 0xFFB46BFF,
+            0xFFFF8A1E};
+    private static final String[][] WAND_ICONS = {
+            {"....####....", "..##++++##..", ".#+..##..+#.", ".#..#++#..#.", "#..#+##+#..#", "#.#+#..#+#.#",
+                    "#.#+#..#+#.#", "#..#+##+#..#", ".#..#++#..#.", ".#+..##..+#.", "..##++++##..", "....####...."},
+            {"............", "..########..", "...######...", "....####....", "....#++#....", ".....##.....",
+                    ".....##.....", "....#..#....", "...#....#...", "..#..##..#..", ".#.######.#.", "############"},
+            {".....##.....", "..#..##..#..", "...#.##.#...", "....####....", "##########++", "..++####++..",
+                    "....####....", "...#.##.#...", "..#..##..#..", ".....##.....", "............", "............"},
+            {"............", "....####....", "...#++++#...", "..#++##++#..", "..#+####+#..", "..#+####+#..",
+                    "..#++##++#..", "...#++++#...", "....####....", "...+.++.+...", "..+..++..+..", "............"},
+            {".....++.....", ".....##.....", ".....##.....", "....####....", "....#++#....", "...##++##...",
+                    "...#.++.#...", "..##.##.##..", "..#..##..#..", ".##..##..##.", "##...##...##", "+....##....+"},
+            {"....#.......", "...#+#......", "..#+.+#.....", ".#+...+#....", "#+.....+####", "#+......++++",
+                    "#+.....+####", ".#+...+#....", "..#+.+#.....", "...#+#......", "....#.......", "............"}};
+    private static int wandMode = -1;
+
+    /** A God Wand mode (Yas only). */
+    public static boolean wand(int i) {
+        return !custom() && i >= POWERS.length && i < POWERS.length + WAND_MODES.length;
     }
 
-    /** Hand of God's power of a mode (-1: one of the Scarlet Witch's own). */
+    /** God Wand's skill number of the mode now (-1: not one of them). */
+    public static int wandSkill() {
+        return !custom() && wandMode >= 0 && wandMode < WAND_SKILLS.length ? WAND_SKILLS[wandMode] : -1;
+    }
+
+    public static int count() {
+        return storm() ? STORM_MODES.length : scarlet() ? SCARLET_MODES.length : POWERS.length + WAND_MODES.length;
+    }
+
+    /** Hand of God's power of a mode (-1: one of the Scarlet Witch's own, or God Wand's). */
     public static int hogOf(int i) {
         if (storm()) {
             return -1;
         }
         if (!scarlet()) {
-            return i;
+            return i < POWERS.length ? i : -1;
         }
         return i == 0 ? 2 : i == 1 ? 4 : -1;
     }
 
     public static String modeId(int i) {
+        if (wand(i)) {
+            return WAND_MODES[i - POWERS.length];
+        }
         return storm() ? STORM_MODES[i] : scarlet() ? SCARLET_MODES[i] : POWERS[i].toLowerCase(java.util.Locale.ROOT);
     }
 
@@ -255,6 +292,9 @@ public final class YasAbilities {
 
     /** The mode now (-1 none chosen yet). */
     public static int selected() {
+        if (!custom() && wandMode >= 0) {
+            return POWERS.length + wandMode;
+        }
         return storm() ? stormMode : scarlet() ? scarletMode : hogSelected();
     }
 
@@ -269,6 +309,8 @@ public final class YasAbilities {
         }
         if (scarlet()) {
             scarletMode = i;
+        } else {
+            wandMode = wand(i) ? i - POWERS.length : -1;
         }
         int h = hogOf(i);
         if (h >= 0) {
@@ -279,6 +321,9 @@ public final class YasAbilities {
 
     public static Component name(int i) {
         int h = hogOf(i);
+        if (wand(i)) {
+            return Component.translatable("yas.flash.mode." + modeId(i));
+        }
         if (storm()) {
             return Component.translatable("storm.flash.mode." + STORM_MODES[i]);
         }
@@ -287,6 +332,9 @@ public final class YasAbilities {
 
     public static Component desc(int i) {
         int h = hogOf(i);
+        if (wand(i)) {
+            return Component.translatable("yas.flash.mode." + modeId(i) + ".desc");
+        }
         if (storm()) {
             return Component.translatable("storm.flash.mode." + STORM_MODES[i] + ".desc");
         }
@@ -302,7 +350,7 @@ public final class YasAbilities {
         if (scarlet()) {
             return hogOf(i) < 0;
         }
-        return "TEMPORAL".equals(POWERS[i]) || "CELESTE".equals(POWERS[i]);
+        return i < POWERS.length && ("TEMPORAL".equals(POWERS[i]) || "CELESTE".equals(POWERS[i]));
     }
 
     public static List<Component> lines(int i) {
@@ -316,7 +364,11 @@ public final class YasAbilities {
             out.add(Component.translatable("hud.flash.yas.flight_key", fly.getTranslatedKeyMessage())
                     .withStyle(net.minecraft.ChatFormatting.AQUA));
         }
-        String base = storm() ? "hud.flash.storm." + STORM_MODES[i]
+        if (!custom() && h >= 0 && "REALIDADE".equals(POWERS[h])) {
+            out.add(Component.translatable("hud.flash.yas.path_key", FlashKeys.YAS_PATH.getTranslatedKeyMessage())
+                    .withStyle(net.minecraft.ChatFormatting.AQUA));
+        }
+        String base = wand(i) ? "hud.flash.yas." + modeId(i) : storm() ? "hud.flash.storm." + STORM_MODES[i]
                 : scarlet() ? "hud.flash.scarlet." + SCARLET_MODES[i] : null;
         if (base != null) {
             for (int n = 1; n <= 8 && net.minecraft.client.resources.language.I18n.exists(base + "." + n); n++) {
@@ -334,6 +386,9 @@ public final class YasAbilities {
         if (scarlet()) {
             return i >= 0 && i < SCARLET_COLORS.length ? SCARLET_COLORS[i] : 0xFFE0263A;
         }
+        if (wand(i)) {
+            return WAND_COLORS[i - POWERS.length];
+        }
         return i >= 0 ? hogColor(i) : 0xFFFFE89A;
     }
 
@@ -341,7 +396,13 @@ public final class YasAbilities {
     public static void drawIcon(GuiGraphics g, int i, int x, int y, int px) {
         int c = color(i);
         String[][] own = storm() ? STORM_ICONS : scarlet() ? SCARLET_ICONS : null;
-        if (own != null && i >= 0 && i < own.length && own[i] != null) {
+        int oi = i;
+        if (wand(i)) {
+            own = WAND_ICONS;
+            oi = i - POWERS.length;
+        }
+        if (own != null && oi >= 0 && oi < own.length && own[oi] != null) {
+            i = oi;
             int light = 0xFF000000 | ((((c >> 16) & 255) + 255) / 2 << 16) | ((((c >> 8) & 255) + 255) / 2 << 8)
                     | (((c & 255) + 255) / 2);
             String[] rows = own[i];
@@ -430,12 +491,17 @@ public final class YasAbilities {
             }
             int m = Math.max(0, Math.min(STORM_MODES.length - 1, stormMode));
             StormClient.tickMode(mc, STORM_MODES[m], variant && mc.screen == null);
+            com.flash.client.godwand.GodWandClient.tickMode(mc, -1);
+            com.flash.client.godwand.GodWandClient.tickPath(mc, false);
             return;
         }
         StormClient.tickMode(mc, null, false);
         if (mc.player == null || !(PowerTheme.localYas() || PowerTheme.localScarlet()) || !ready()) {
             unbind();
             ScarletClient.tickMode(mc, null, false);
+            com.flash.client.godwand.GodWandClient.tickMode(mc, -1);
+            com.flash.client.godwand.GodWandClient.tickPath(mc, false);
+            wandMode = -1;
             return;
         }
         int mode = selected();
@@ -456,13 +522,16 @@ public final class YasAbilities {
         soundWas = useDown;
         telekinesis(mc, h >= 0 && "TELECINESE".equals(POWERS[h]));
         reality(mc, h >= 0 && "REALIDADE".equals(POWERS[h]));
+        // God Wand (Yas): R in its modes, the Spatial Path key in the Reality mode
+        com.flash.client.godwand.GodWandClient.tickMode(mc, scarlet() ? -1 : wandSkill());
+        com.flash.client.godwand.GodWandClient.tickPath(mc, !scarlet() && h >= 0 && "REALIDADE".equals(POWERS[h]));
         boolean variant = false;
         while (FlashKeys.YAS_VARIANT.consumeClick()) {
             variant = true;
         }
         if (scarlet()) {
             ScarletClient.tickMode(mc, h < 0 ? SCARLET_MODES[mode] : null, variant && mc.screen == null);
-        } else if (variant && "CELESTE".equals(POWERS[mode]) && mc.screen == null) {
+        } else if (variant && mode < POWERS.length && "CELESTE".equals(POWERS[mode]) && mc.screen == null) {
             com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.YasBlackHolePacket());
         }
     }

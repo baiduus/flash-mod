@@ -49,6 +49,13 @@ public final class ScarletCooldowns {
             case "wind" -> new String[][] {{"gust", "gust", "R"}, {"tornado", "tornado", "Z"}};
             case "weather" -> new String[][] {{"weather", "weather", "R"}, {"fury_storm", "fury_storm", "Z"}};
             case "ice" -> new String[][] {{"hail", "hail", "R"}, {"frost", "frost", "Z"}};
+            // Yas' God Wand modes (cooldowns sent by the server with their own length, by charge level)
+            case "singularity" -> new String[][] {{"gw_1", "gw_singularity", "R+"}, {"", "gw_collapse", "R"}};
+            case "earth_drill" -> new String[][] {{"gw_2", "gw_earth_drill", "R+"}};
+            case "supernova" -> new String[][] {{"gw_3", "gw_supernova", "R+"}};
+            case "stone_cannon" -> new String[][] {{"gw_4", "gw_stone_cannon", "R+"}};
+            case "atomic" -> new String[][] {{"gw_5", "gw_atomic", "R+"}};
+            case "fuga" -> new String[][] {{"gw_6", "gw_fuga", "R+"}};
             default -> new String[0][];
         };
     }

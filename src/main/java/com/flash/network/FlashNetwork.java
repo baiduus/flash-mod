@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "43";
+    private static final String PROTOCOL = "44";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -354,6 +354,66 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(StormAnswerPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(StormAnswerPacket::encode)
                 .decoder(StormAnswerPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(YasWandPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(YasWandPacket::encode)
+                .decoder(YasWandPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(YasWandChargePacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(YasWandChargePacket::encode)
+                .decoder(YasWandChargePacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.ImpactFxPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.ImpactFxPayload::encode)
+                .decoder(com.flash.godwand.ImpactFxPayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.CinematicFxPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.CinematicFxPayload::encode)
+                .decoder(com.flash.godwand.CinematicFxPayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.DrillWindPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.DrillWindPayload::encode)
+                .decoder(com.flash.godwand.DrillWindPayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.CannonPressurePayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.CannonPressurePayload::encode)
+                .decoder(com.flash.godwand.CannonPressurePayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.AtomicFxPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.AtomicFxPayload::encode)
+                .decoder(com.flash.godwand.AtomicFxPayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.FugaFxPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.FugaFxPayload::encode)
+                .decoder(com.flash.godwand.FugaFxPayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.SpatialAuraPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.SpatialAuraPayload::encode)
+                .decoder(com.flash.godwand.SpatialAuraPayload::decode)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(com.flash.godwand.SingularityThreadsPayload.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(com.flash.godwand.SingularityThreadsPayload::encode)
+                .decoder(com.flash.godwand.SingularityThreadsPayload::decode)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
 

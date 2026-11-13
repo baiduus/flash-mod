@@ -94,6 +94,25 @@ public final class ModEntities {
                             .clientTrackingRange(8)
                             .build("chaos_energy"));
 
+    /** God Wand's Singularity orb and Stone Cannon boulder (Yas). */
+    public static final RegistryObject<EntityType<com.flash.godwand.ArcaneOrbEntity>> ARCANE_ORB =
+            ENTITY_TYPES.register("arcane_orb",
+                    () -> EntityType.Builder.<com.flash.godwand.ArcaneOrbEntity>of(
+                                    com.flash.godwand.ArcaneOrbEntity::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(10)
+                            .updateInterval(1)
+                            .build("arcane_orb"));
+
+    public static final RegistryObject<EntityType<com.flash.godwand.StoneCannonProjectileEntity>> STONE_CANNON =
+            ENTITY_TYPES.register("stone_cannon",
+                    () -> EntityType.Builder.<com.flash.godwand.StoneCannonProjectileEntity>of(
+                                    com.flash.godwand.StoneCannonProjectileEntity::new, MobCategory.MISC)
+                            .sized(0.6F, 0.6F)
+                            .clientTrackingRange(10)
+                            .updateInterval(1)
+                            .build("stone_cannon"));
+
     private ModEntities() {
     }
 }

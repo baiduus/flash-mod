@@ -253,7 +253,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         Font font = minecraft.font;
         int mode = Math.max(0, YasAbilities.selected());
         int n = YasAbilities.count();
-        if (YasAbilities.custom()) {
+        if (YasAbilities.custom() || YasAbilities.wand(mode)) {
             renderScarlet(graphics, minecraft, font, mode, n, width, height);
             return;
         }

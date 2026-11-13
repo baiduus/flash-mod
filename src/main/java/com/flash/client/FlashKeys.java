@@ -89,6 +89,14 @@ public final class FlashKeys {
             CATEGORY
     );
 
+    /** Yas, Reality mode: God Wand's Spatial Path on / off (Shift: the bridge under her feet; default C). */
+    public static final KeyMapping YAS_PATH = new KeyMapping(
+            "key.flash.yas.path",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_C,
+            CATEGORY
+    );
+
     private FlashKeys() {
     }
 
@@ -102,5 +110,6 @@ public final class FlashKeys {
         event.register(HULK_TRANSFORM);
         event.register(YAS_USE);
         event.register(YAS_VARIANT);
+        event.register(YAS_PATH);
     }
 }
