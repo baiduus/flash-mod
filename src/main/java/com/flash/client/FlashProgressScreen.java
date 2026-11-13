@@ -1034,6 +1034,8 @@ public class FlashProgressScreen extends Screen {
         drawSwitch(g, "ysw0", switchX(), cfgY(0) + 8, YasClient.localLightning());
         configRow(g, 1, "gui.flash.yas.cfg.eyes", "gui.flash.yas.cfg.eyes.desc", mx, my);
         drawSwitch(g, "ysw1", switchX(), cfgY(1) + 8, YasClient.localEyes());
+        configRow(g, 2, "gui.flash.yas.cfg.destroy", "gui.flash.yas.cfg.destroy.desc", mx, my);
+        drawSwitch(g, "ysw2", switchX(), cfgY(2) + 8, YasClient.localDestroy);
     }
 
     private boolean clickYasConfig(int mx, int my) {
@@ -1043,6 +1045,11 @@ public class FlashProgressScreen extends Screen {
             lightning = !lightning;
         } else if (inRow(mx, my, 1)) {
             eyes = !eyes;
+        } else if (inRow(mx, my, 2)) {
+            YasClient.localDestroy = !YasClient.localDestroy;
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.YasDestroyPacket(YasClient.localDestroy));
+            click();
+            return true;
         } else {
             return false;
         }

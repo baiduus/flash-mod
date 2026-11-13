@@ -656,6 +656,11 @@ public final class YasAbilities {
                 SupermanClient.thorCoiling = false;
                 com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
                 flightLaunched = true;
+                // the client moves its player: the leap itself here (Yas ~30 blocks, the Scarlet Witch ~20), the
+                // server adds the cracks, the burst and the sound
+                double up = PowerTheme.localScarlet() ? 2.0D : 2.6D;
+                p.setDeltaMovement(p.getDeltaMovement().x, up, p.getDeltaMovement().z);
+                p.hasImpulse = true;
                 SupermanClient.hoverAtTop();
             }
             return;
@@ -665,10 +670,11 @@ public final class YasAbilities {
             if (flightHeld >= TAP_TICKS) {
                 com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
             } else {
-                // a tap on the ground: up and flying
-                p.getAbilities().flying = true;
-                p.onUpdateAbilities();
-                p.setDeltaMovement(p.getDeltaMovement().x, 0.5D, p.getDeltaMovement().z);
+                // a tap on the ground: a hop, and she flies from its top (flying while still on the ground would
+                // be switched off at once by the game)
+                p.setDeltaMovement(p.getDeltaMovement().x, 0.75D, p.getDeltaMovement().z);
+                p.hasImpulse = true;
+                SupermanClient.hoverAtTop();
             }
         }
         flightHeld = -1;

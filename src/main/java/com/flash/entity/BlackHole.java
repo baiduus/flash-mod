@@ -155,10 +155,19 @@ public class BlackHole extends Entity {
             }
         }
         // the ground torn away: a sphere as wide as the crater of Hand of God's sun, growing with it
-        if (size > 0.3F && !collapsing()) {
+        if (size > 0.3F && !collapsing() && ownerDestroys(level)) {
             eat(level, c, age);
         }
         this.pulled.removeIf(id -> !(level.getEntity(id) instanceof FallingBlockEntity f) || !f.isAlive());
+    }
+
+    /** Its maker's block destruction switch (Yas' K menu): off, it pulls and crushes but breaks no block. */
+    private boolean ownerDestroys(ServerLevel level) {
+        UUID owner = owner();
+        if (owner == null || !(level.getPlayerByUUID(owner) instanceof net.minecraft.world.entity.player.Player p)) {
+            return true;
+        }
+        return com.flash.yas.YasDestruction.destroys(p);
     }
 
     /** Ids of the blocks it tore loose, flying into it (imploded when it collapses). */

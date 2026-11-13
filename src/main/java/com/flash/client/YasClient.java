@@ -104,6 +104,9 @@ public final class YasClient {
         return !NO_EYES.contains(e.getId());
     }
 
+    /** Her block destruction switch (YasDestruction), as the server told. */
+    public static boolean localDestroy = true;
+
     public static boolean localLightning() {
         var p = Minecraft.getInstance().player;
         return p == null || showLightning(p);

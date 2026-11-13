@@ -231,7 +231,7 @@ public final class YasPowers {
         }
         flight(p);
         // ~30 blocks (Superman and Thor: 2.0, ~20 blocks)
-        p.setDeltaMovement(p.getDeltaMovement().x, 2.45D, p.getDeltaMovement().z);
+        p.setDeltaMovement(p.getDeltaMovement().x, 2.6D, p.getDeltaMovement().z);
         p.hurtMarked = true;
         var level = p.serverLevel();
         com.flash.superman.SupermanAbilities.cracks(level, p.position(), 4.0F);
