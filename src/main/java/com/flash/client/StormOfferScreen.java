@@ -18,6 +18,11 @@ public class StormOfferScreen extends Screen {
     private boolean answered;
     private int ticks;
 
+    /** Opened by StormOfferPacket (here, so the packet never names a client class on a server). */
+    public static void open() {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new StormOfferScreen());
+    }
+
     public StormOfferScreen() {
         super(Component.translatable("gui.flash.storm_offer.title"));
     }

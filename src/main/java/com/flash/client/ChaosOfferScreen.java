@@ -16,6 +16,11 @@ public class ChaosOfferScreen extends Screen {
     private static final int H = 150;
     private boolean answered;
 
+    /** Opened by ScarletOfferPacket (here, so the packet never names a client class on a server). */
+    public static void open() {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new ChaosOfferScreen());
+    }
+
     public ChaosOfferScreen() {
         super(Component.translatable("gui.flash.chaos.title"));
     }

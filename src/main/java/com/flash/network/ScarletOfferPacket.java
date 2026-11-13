@@ -17,7 +17,6 @@ public record ScarletOfferPacket(int entity) {
     public void handle(NetworkEvent.Context context) {
         context.setPacketHandled(true);
         net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
-                () -> () -> net.minecraft.client.Minecraft.getInstance()
-                        .setScreen(new com.flash.client.ChaosOfferScreen()));
+                () -> com.flash.client.ChaosOfferScreen::open);
     }
 }

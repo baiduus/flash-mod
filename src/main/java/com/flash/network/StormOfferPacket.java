@@ -16,7 +16,6 @@ public record StormOfferPacket() {
     public void handle(NetworkEvent.Context context) {
         context.setPacketHandled(true);
         net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
-                () -> () -> net.minecraft.client.Minecraft.getInstance()
-                        .setScreen(new com.flash.client.StormOfferScreen()));
+                () -> com.flash.client.StormOfferScreen::open);
     }
 }
