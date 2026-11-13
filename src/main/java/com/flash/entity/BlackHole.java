@@ -108,6 +108,7 @@ public class BlackHole extends Entity {
         int end = this.entityData.get(END);
         if (age >= end) {
             burst(level);
+            com.flash.yas.BlackHoleTime.closed(this);
             this.discard();
             return;
         }
@@ -244,18 +245,30 @@ public class BlackHole extends Entity {
                 continue; // bedrock, barriers...
             }
             changed++;
+            // noted before it goes (time turned back by Hand of God puts it back: BlackHoleTime)
+            com.flash.yas.BlackHoleTime.note(this, level, pos, state);
             boolean fly = this.pulled.size() < 260 && state.getFluidState().isEmpty()
                     && level.getBlockEntity(pos) == null && this.random.nextInt(4) == 0;
+            // the block goes without waking its neighbours (no sand falling around, no water rushing in)
+            level.removeBlockEntity(pos);
+            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2 | 16);
             if (fly) {
-                FallingBlockEntity fall = FallingBlockEntity.fall(level, pos, state);
-                fall.dropItem = false;
-                fall.setNoGravity(true);
-                fall.time = -2000;
-                fall.setDeltaMovement(c.subtract(Vec3.atCenterOf(pos)).normalize().scale(0.35D));
-                this.pulled.add(fall.getId());
+                FallingBlockEntity fall = EntityType.FALLING_BLOCK.create(level);
+                if (fall != null) {
+                    CompoundTag tag = new CompoundTag();
+                    tag.put("BlockState", net.minecraft.nbt.NbtUtils.writeBlockState(state));
+                    tag.putInt("Time", 1);
+                    tag.putBoolean("DropItem", false);
+                    fall.load(tag);
+                    fall.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+                    fall.dropItem = false;
+                    fall.setNoGravity(true);
+                    fall.time = -2000;
+                    fall.setDeltaMovement(c.subtract(Vec3.atCenterOf(pos)).normalize().scale(0.35D));
+                    level.addFreshEntity(fall);
+                    this.pulled.add(fall.getId());
+                }
             } else {
-                level.removeBlockEntity(pos);
-                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2 | 16);
                 if (this.random.nextInt(40) == 0) {
                     level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(
                             ParticleTypes.BLOCK, state), pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 4,

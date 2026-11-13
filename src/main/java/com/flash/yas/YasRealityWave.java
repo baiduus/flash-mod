@@ -36,11 +36,10 @@ import net.minecraftforge.registries.ForgeRegistries;
 /**
  * The Manipulation of Reality on any land:
  * <ul>
- * <li>in the Overworld Hand of God's wave rewrites the land into another biome; the biome it becomes is chosen from
- * where the hero stands (the desert gets a forest, the snow flowers, the savanna a dark forest, the plains a field
- * of flowers...), set on Hand of God's config as she walks;</li>
+ * <li>in the Overworld Hand of God's wave, as Hand of God makes it (the land becomes desert), but standing on sand
+ * the other way round: earth and grass;</li>
  * <li>where Hand of God cannot (the Nether, the End...) this wave of the mod does it: the dead ground turns to grass
- * and earth, lava to water, the fungi to trees and leaves, and grass, flowers and trees grow on it.</li>
+ * and earth, lava to water, grass and flowers on it; it goes back by itself, or at once with the same gesture.</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
@@ -80,57 +79,17 @@ public final class YasRealityWave {
     // The Overworld: the biome Hand of God writes, chosen from where she stands
     // ------------------------------------------------------------------
 
-    /** The biome the land under her becomes. */
+    /**
+     * The biome the land under her becomes: Hand of God's own (the desert); on sand, the other way round (plains:
+     * earth and grass).
+     */
     public static String target(Holder<Biome> here) {
         ResourceKey<Biome> k = here.unwrapKey().orElse(Biomes.PLAINS);
         String id = k.location().getPath();
-        if (id.contains("badlands")) {
-            return "minecraft:jungle";
-        }
-        if (id.contains("desert")) {
-            return "minecraft:forest";
-        }
-        if (id.contains("savanna")) {
-            return "minecraft:dark_forest";
-        }
-        if (id.contains("snowy") || id.contains("frozen") || id.contains("ice") || id.contains("grove")
-                || id.contains("jagged")) {
-            return "minecraft:flower_forest";
-        }
-        if (id.contains("peaks") || id.contains("windswept") || id.contains("stony")) {
-            return "minecraft:meadow";
-        }
-        if (id.contains("taiga")) {
-            return "minecraft:meadow";
-        }
-        if (id.equals("dark_forest")) {
-            return "minecraft:mushroom_fields";
-        }
-        if (id.contains("birch") || id.equals("meadow")) {
-            return "minecraft:cherry_grove";
-        }
-        if (id.equals("flower_forest") || id.equals("cherry_grove")) {
-            return "minecraft:forest";
-        }
-        if (id.equals("forest")) {
-            return "minecraft:cherry_grove";
-        }
-        if (id.contains("jungle")) {
-            return "minecraft:flower_forest";
-        }
-        if (id.contains("swamp")) {
-            return "minecraft:jungle";
-        }
-        if (id.contains("mushroom")) {
+        if (id.contains("desert") || id.contains("beach") || id.contains("badlands")) {
             return "minecraft:plains";
         }
-        if (id.contains("plains")) {
-            return "minecraft:flower_forest";
-        }
-        if (id.contains("ocean") || id.contains("river") || id.contains("beach") || id.contains("shore")) {
-            return "minecraft:plains";
-        }
-        return "minecraft:flower_forest";
+        return "minecraft:desert";
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -160,12 +119,16 @@ public final class YasRealityWave {
         }
         long now = p.level().getGameTime();
         Long last = LAST.get(p.getUUID());
-        if (last != null && now - last < 40L) {
+        if (last != null && now - last < 20L) {
             return;
         }
         for (Wave w : WAVES) {
             if (w.owner.equals(p.getUUID())) {
-                return; // one at a time
+                // the same gesture again undoes it (as Hand of God's)
+                if (w.phase != 2) {
+                    startBack(w);
+                }
+                return;
             }
         }
         LAST.put(p.getUUID(), now);
@@ -330,14 +293,6 @@ public final class YasRealityWave {
             return depth == 0 ? Blocks.GRASS_BLOCK.defaultBlockState()
                     : depth <= 3 ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState();
         }
-        if (b == Blocks.CRIMSON_STEM || b == Blocks.WARPED_STEM || b == Blocks.CRIMSON_HYPHAE
-                || b == Blocks.WARPED_HYPHAE) {
-            return Blocks.OAK_LOG.defaultBlockState();
-        }
-        if (b == Blocks.NETHER_WART_BLOCK || b == Blocks.WARPED_WART_BLOCK) {
-            return Blocks.OAK_LEAVES.defaultBlockState()
-                    .setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true);
-        }
         if (b == Blocks.LAVA) {
             return Blocks.WATER.defaultBlockState();
         }
@@ -359,19 +314,10 @@ public final class YasRealityWave {
             return;
         }
         float roll = rnd.nextFloat();
-        if (roll < 0.014F) {
-            // what is there now, noted before the tree grows (so it goes back too)
-            for (BlockPos q : BlockPos.betweenClosed(at.offset(-4, 0, -4), at.offset(4, 14, 4))) {
-                w.journal.putIfAbsent(q.asLong(), level.getBlockState(q));
-            }
-            ResourceKey<ConfiguredFeature<?, ?>> tree = rnd.nextInt(3) == 0 ? TreeFeatures.BIRCH
-                    : rnd.nextInt(4) == 0 ? TreeFeatures.FANCY_OAK : TreeFeatures.OAK;
-            level.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).getHolder(tree)
-                    .ifPresent(h -> h.value().place(level, level.getChunkSource().getGenerator(), rnd, at));
-        } else if (roll < 0.06F) {
+        if (roll < 0.05F) {
             w.journal.putIfAbsent(at.asLong(), level.getBlockState(at));
             level.setBlock(at, FLOWERS[rnd.nextInt(FLOWERS.length)].defaultBlockState(), Block.UPDATE_CLIENTS);
-        } else if (roll < 0.36F) {
+        } else if (roll < 0.33F) {
             w.journal.putIfAbsent(at.asLong(), level.getBlockState(at));
             level.setBlock(at, Blocks.GRASS.defaultBlockState(), Block.UPDATE_CLIENTS);
         }

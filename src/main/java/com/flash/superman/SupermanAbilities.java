@@ -1739,10 +1739,7 @@ public final class SupermanAbilities {
                 x -> x.isAlive())) {
             Vec3 away = e.position().subtract(player.position());
             double d = Math.max(0.5D, away.length());
-            if (e instanceof LivingEntity living) {
-                living.hurt(level.damageSources().playerAttack(player),
-                        (float) ((4.0F + Math.min(10.0F, distance * 0.25F)) * power * (1.0D - Math.min(0.8D, d / (radius + 1.0D)))));
-            }
+            // (the landing hurts no one: only the impact, the push and the pose)
             Vec3 push = new Vec3(away.x, 0.0D, away.z).normalize().scale(1.5D);
             e.setDeltaMovement(push.x, 0.6D, push.z);
             e.hurtMarked = true;

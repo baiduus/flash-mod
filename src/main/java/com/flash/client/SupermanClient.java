@@ -234,11 +234,12 @@ public final class SupermanClient {
     private static boolean flightKey(Minecraft mc, int index, boolean down) {
         net.minecraft.client.player.LocalPlayer p = mc.player;
         boolean ground = p.onGround() && !p.getAbilities().flying && !p.isInWater() && !p.isPassenger();
+        boolean superman = SupermanState.isSuperman(p);
         boolean was = KEY_DOWN[index];
         KEY_DOWN[index] = down;
         if (down && !was) {
             if (!ground) {
-                FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(index, true));
+                toggleFlight(index, superman);
                 return true;
             }
             flightHeld = 0;
@@ -254,8 +255,13 @@ public final class SupermanClient {
             }
             flightHeld++;
             if (flightHeld == TAP_TICKS) {
+                if (!superman) {
+                    // (Superman's feet are planted by the jump input; the others' by the coil)
+                    thorCoiling = true;
+                }
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
             } else if (flightHeld >= LAUNCH_AT) {
+                thorCoiling = false;
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
                 flightLaunched = true;
                 launchedFor = 0;
@@ -263,16 +269,28 @@ public final class SupermanClient {
             return true;
         }
         // released
+        if (!superman) {
+            thorCoiling = false;
+        }
         if (!flightLaunched) {
             if (flightHeld >= TAP_TICKS) {
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
             }
             // a short press (or let go before the launch): the normal takeoff
-            FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(index, true));
+            toggleFlight(index, superman);
         }
         flightHeld = -1;
         flightLaunched = false;
         return true;
+    }
+
+    /** The flight switched on / off by the server: Superman's own ability, the others' (Yas...) packet. */
+    private static void toggleFlight(int index, boolean superman) {
+        if (superman) {
+            FlashNetwork.CHANNEL.sendToServer(new SupermanAbilityPacket(index, true));
+        } else {
+            FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(3));
+        }
     }
 
     /** Set by ThorClient while Thor coils for his charged takeoff. */
@@ -509,13 +527,20 @@ public final class SupermanClient {
             xray = false;
             chargeStart = -1L;
         }
-        boolean active = superman && mc.screen == null && !mc.player.isSpectator();
+        // Yas, the Scarlet Witch and Storm fly with this very flight key too (only it: their other keys are theirs)
+        boolean otherFlyer = !superman && (YasClient.isYas(mc.player) || ScarletClient.isScarlet(mc.player)
+                || StormClient.isStorm(mc.player));
+        boolean active = (superman || otherFlyer) && mc.screen == null && !mc.player.isSpectator();
         SupermanAbility[] abilities = SupermanAbility.values();
         for (int i = 0; i < abilities.length; i++) {
             SupermanAbility a = abilities[i];
             KeyMapping key = key(a);
             boolean down = active && key != null && key.isDown();
             if (a == SupermanAbility.FLIGHT && flightKey(mc, i, down)) {
+                continue;
+            }
+            if (!superman) {
+                KEY_DOWN[i] = false;
                 continue;
             }
             if (down == KEY_DOWN[i]) {

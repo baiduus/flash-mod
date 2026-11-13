@@ -46,6 +46,7 @@ public final class YasBlackHoles {
         hole.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
         hole.setOwner(p.getUUID());
         level.addFreshEntity(hole);
+        com.flash.yas.BlackHoleTime.opened(hole, p, 44.0D);
         YasReality.play(level, at, "lua_impacto_sugar", net.minecraft.sounds.SoundEvents.WARDEN_SONIC_CHARGE, 0.5F);
     }
 }

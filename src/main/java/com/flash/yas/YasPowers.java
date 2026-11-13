@@ -238,17 +238,18 @@ public final class YasPowers {
             p.onUpdateAbilities();
             return;
         }
+        // as Thor's and Superman's takeoff: flying, a lift off the ground
         ab.mayfly = true;
+        ab.flying = true;
         ab.setFlyingSpeed(0.0F);
+        p.onUpdateAbilities();
         p.fallDistance = 0.0F;
         if (p.onGround()) {
-            ab.flying = false;
-            p.onUpdateAbilities();
+            p.setDeltaMovement(p.getDeltaMovement().add(0.0D, 0.6D, 0.0D));
+            p.hurtMarked = true;
+            // (if the game switched it off while still on the ground, it comes back once in the air)
             TAKEOFF.put(p.getUUID(), 30);
             com.flash.superman.SupermanAbilities.groundPuff(p.serverLevel(), p.position(), 1.5D, 16);
-        } else {
-            ab.flying = true;
-            p.onUpdateAbilities();
         }
     }
 
