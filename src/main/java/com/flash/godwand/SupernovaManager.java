@@ -103,7 +103,7 @@ public class SupernovaManager {
    }
 
    public static void cast(ServerPlayer player) {
-      ServerLevel world = player.level();
+      ServerLevel world = player.serverLevel();
       BlockPos groundCenter = CHARGE_TARGETS.remove(player);
       if (groundCenter == null) {
          groundCenter = findTarget(player);
