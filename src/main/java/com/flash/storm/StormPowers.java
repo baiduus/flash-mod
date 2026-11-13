@@ -23,7 +23,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 
 /**
- * Storm (Ororo Munroe), the mistress of the weather (only by {@code /storm give} for now):
+ * Storm (Ororo Munroe), the mistress of the weather (struck by lightning without powers, StormCalling; or
+ * {@code /storm give}):
  * <ul>
  * <li>flies on the winds (a little slower than Superman at level 10), the flight key as the other heroes';</li>
  * <li>lightning cannot hurt her: it heals her; no fall damage; tougher than the Scarlet Witch;</li>

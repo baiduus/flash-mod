@@ -12,7 +12,11 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/** {@code /storm give [player]} makes him Storm; {@code /storm remove [player]} takes it away. */
+/**
+ * {@code /storm give [player]} makes him Storm; {@code /storm remove [player]} takes it away; {@code /storm strike
+ * [player]} drops a real lightning bolt on him (without powers, it asks him); {@code /storm offer [player]} asks
+ * him at once.
+ */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
 public final class StormCommands {
 
@@ -24,7 +28,10 @@ public final class StormCommands {
         event.getDispatcher().register(Commands.literal("storm")
                 .requires(source -> source.hasPermission(2))
                 .then(sub("give", StormPowers::grant, "commands.flash.storm.given"))
-                .then(sub("remove", StormPowers::revoke, "commands.flash.storm.removed")));
+                .then(sub("remove", StormPowers::revoke, "commands.flash.storm.removed"))
+                // the way to her: a real lightning bolt on him (it asks), or the question at once
+                .then(sub("strike", StormCommands::strike, "commands.flash.storm.struck"))
+                .then(sub("offer", StormCalling::offer, "commands.flash.storm.offered")));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> sub(String name, Consumer<ServerPlayer> action,
@@ -33,6 +40,10 @@ public final class StormCommands {
                 .executes(c -> run(c.getSource().getPlayerOrException(), c.getSource(), action, key))
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(c -> run(EntityArgument.getPlayer(c, "player"), c.getSource(), action, key)));
+    }
+
+    private static void strike(ServerPlayer p) {
+        StormCalling.strike(p);
     }
 
     private static int run(ServerPlayer p, CommandSourceStack src, Consumer<ServerPlayer> action, String key) {

@@ -1478,11 +1478,12 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     /** Hero id (its advancement and its texts gui.flash.guide.<id>), number of steps. */
-    private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas"};
-    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 4};
+    private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas", "scarlet",
+            "storm"};
+    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 4, 4, 4};
     private static final int GUIDE_LIST_W = 168;
-    private static final int GUIDE_ROW_H = 30;
-    private static final int GUIDE_ROW_GAP = 2;
+    private static final int GUIDE_ROW_H = 24;
+    private static final int GUIDE_ROW_GAP = 1;
     private static int guideHero;
 
     private static net.minecraft.world.item.ItemStack guideIcon(int i) {
@@ -1493,6 +1494,8 @@ public class FlashProgressScreen extends Screen {
             case 3 -> com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get();
             case 4 -> com.flash.registry.ModItems.MJOLNIR.get();
             case 5 -> com.flash.registry.ModItems.LEX_HELMET.get();
+            case 7 -> net.minecraft.world.item.Items.REDSTONE;
+            case 8 -> net.minecraft.world.item.Items.LIGHTNING_ROD;
             default -> net.minecraft.world.item.Items.NETHER_STAR;
         });
     }
@@ -1509,15 +1512,15 @@ public class FlashProgressScreen extends Screen {
             boolean sel = i == guideHero;
             card(g, PAD, y, GUIDE_LIST_W, GUIDE_ROW_H, sel ? 1.0F : hover ? 0.5F : 0.0F);
             if (sel) {
-                g.fill(PAD, y + 5, PAD + 2, y + GUIDE_ROW_H - 5, accent());
+                g.fill(PAD, y + 4, PAD + 2, y + GUIDE_ROW_H - 4, accent());
             }
-            g.renderItem(guideIcon(i), PAD + 9, y + 7);
-            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 5,
+            g.renderItem(guideIcon(i), PAD + 9, y + (GUIDE_ROW_H - 16) / 2);
+            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 3,
                     sel ? COLOR_TEXT : COLOR_MUTED, false);
             g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i] + ".sub"), PAD + 32,
-                    y + 17, COLOR_DIM, false);
+                    y + 13, COLOR_DIM, false);
             if (HeroProgressClient.has(GUIDE[i])) {
-                g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + 11, accent(), false);
+                g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + (GUIDE_ROW_H - 8) / 2, accent(), false);
             }
         }
         // the manual of the hero picked
@@ -1543,7 +1546,8 @@ public class FlashProgressScreen extends Screen {
         int y = CONTENT_Y + 40;
         int textW = w - 34;
         for (int step = 1; step <= GUIDE_STEPS[guideHero]; step++) {
-            y = guideStep(g, x, y, textW, step, Component.translatable("gui.flash.guide." + id + "." + step));
+            y = guideStep(g, x, y, textW, step, Component.translatable("gui.flash.guide." + id + "." + step,
+                    HeroProgressClient.chaosChance()));
             if ("thor".equals(id) && step == 1) {
                 y = drawWorthyChecklist(g, x + 26, y, w - 36);
             }
@@ -1552,6 +1556,16 @@ public class FlashProgressScreen extends Screen {
             }
             if ("yas".equals(id) && step == 2) {
                 y = drawYasItems(g, x + 26, y, w - 36);
+            }
+            if ("scarlet".equals(id) && step == 1) {
+                y = drawNowCard(g, x + 26, y, w - 36, true,
+                        Component.translatable("gui.flash.guide.scarlet.now", HeroProgressClient.chaosChance()));
+            }
+            if ("storm".equals(id) && step == 2) {
+                Minecraft mc = Minecraft.getInstance();
+                boolean thunder = mc.level != null && mc.level.isThundering();
+                y = drawNowCard(g, x + 26, y, w - 36, thunder, Component.translatable(thunder
+                        ? "gui.flash.guide.storm.thunder" : "gui.flash.guide.storm.no_thunder"));
             }
         }
     }
@@ -1632,6 +1646,13 @@ public class FlashProgressScreen extends Screen {
         }
         checkLine(g, x + 8, y + 22, lex == 4, Component.translatable("gui.flash.guide.yas.lex", lex));
         return y + rows * 10 + 10;
+    }
+
+    /** One line about now (the chance of the chaos, the weather), in a small card. */
+    private int drawNowCard(GuiGraphics g, int x, int y, int w, boolean good, Component text) {
+        card(g, x, y - 2, w, 14, 0.0F);
+        checkLine(g, x + 8, y + 1, good, text);
+        return y + 18;
     }
 
     private void checkLine(GuiGraphics g, int x, int y, boolean done, Component text) {

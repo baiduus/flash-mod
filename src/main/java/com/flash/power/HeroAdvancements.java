@@ -51,11 +51,13 @@ public final class HeroAdvancements {
     public static final String HUNTER = "monster_hunter";
     public static final String WORTHY = "worthy";
     public static final String YAS = "yas";
+    public static final String SCARLET = "scarlet";
+    public static final String STORM = "storm";
     /** The heroes the transcendence asks for (YasTranscendence). */
     public static final String[] HEROES = {FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX};
     /** In the order of the bits of the client sync. */
     public static final String[] ALL = {ROOT, FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX, VILLAGE, HUNTER, WORTHY,
-            YAS};
+            YAS, SCARLET, STORM};
 
     /** Hostile creatures to kill to be worthy. */
     public static final int KILLS_NEEDED = 100;
@@ -131,6 +133,12 @@ public final class HeroAdvancements {
         if (com.flash.yas.YasPowers.has(p)) {
             award(p, YAS);
         }
+        if (com.flash.scarlet.ScarletPowers.has(p)) {
+            award(p, SCARLET);
+        }
+        if (com.flash.storm.StormPowers.has(p)) {
+            award(p, STORM);
+        }
         if (com.flash.item.LexArmorItem.wearingFull(p)) {
             award(p, LEX);
         }
@@ -192,13 +200,14 @@ public final class HeroAdvancements {
             }
         }
         int kills = Math.min(kills(p), 100000);
-        long key = ((long) kills << 32) | (mask & 0xFFFFFFFFL);
+        int chance = com.flash.scarlet.ScarletChaos.chance;
+        long key = ((long) kills << 40) | ((long) chance << 32) | (mask & 0xFFFFFFFFL);
         Long last = SENT.get(p.getUUID());
         if (!force && last != null && last == key) {
             return;
         }
         SENT.put(p.getUUID(), key);
-        FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new HeroProgressPacket(kills, mask));
+        FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new HeroProgressPacket(kills, mask, chance));
     }
 
     // ------------------------------------------------------------------
@@ -221,7 +230,8 @@ public final class HeroAdvancements {
     /** The ids of the command (Portuguese, as the rest of the mod's commands). */
     private static final String[][] COMMAND_IDS = {
             {"flash", FLASH}, {"hulk", HULK}, {"hulk_vermelho", RED_HULK}, {"superman", SUPERMAN}, {"thor", THOR},
-            {"lex", LEX}, {"heroi_da_vila", VILLAGE}, {"cacador", HUNTER}, {"digno", WORTHY}, {"yas", YAS}};
+            {"lex", LEX}, {"heroi_da_vila", VILLAGE}, {"cacador", HUNTER}, {"digno", WORTHY}, {"yas", YAS},
+            {"feiticeira_escarlate", SCARLET}, {"tempestade", STORM}};
 
     private static java.util.List<String> ids() {
         java.util.List<String> out = new java.util.ArrayList<>();

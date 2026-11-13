@@ -215,6 +215,9 @@ public final class ScarletChaos {
     private static int setChance(CommandSourceStack src, int percent) {
         chance = percent;
         Saved.get(src.getServer()).setDirty();
+        for (ServerPlayer p : src.getServer().getPlayerList().getPlayers()) {
+            com.flash.power.HeroAdvancements.sync(p, true);
+        }
         src.sendSuccess(() -> Component.translatable("commands.flash.chaos.chance_set", percent), true);
         return percent;
     }

@@ -7,13 +7,20 @@ public final class HeroProgressClient {
 
     private static int kills;
     private static int mask;
+    private static int chaosChance = 10;
 
     private HeroProgressClient() {
     }
 
-    public static void set(int k, int m) {
+    public static void set(int k, int m, int chance) {
         kills = k;
         mask = m;
+        chaosChance = chance;
+    }
+
+    /** The chance (percent) of the energy of chaos on this server (/scarlet chance). */
+    public static int chaosChance() {
+        return chaosChance;
     }
 
     public static void reset() {
