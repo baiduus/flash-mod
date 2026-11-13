@@ -59,6 +59,8 @@ public final class GodWandSkills {
     }
 
     private static final Map<UUID, Charge> CHARGING = new HashMap<>();
+    /** God Wand's own code is changing blocks now (Yas' destruction guard need not look: it is not Hand of God). */
+    public static volatile boolean busy;
 
     private GodWandSkills() {
     }
@@ -85,10 +87,15 @@ public final class GodWandSkills {
         if (!com.flash.yas.YasPowers.has(p) || p.isSpectator() || skill < 0 || skill > 6) {
             return;
         }
-        switch (action) {
-            case PRESS -> press(p, skill, value == 1);
-            case RELEASE -> release(p, skill);
-            default -> cancel(p);
+        busy = true;
+        try {
+            switch (action) {
+                case PRESS -> press(p, skill, value == 1);
+                case RELEASE -> release(p, skill);
+                default -> cancel(p);
+            }
+        } finally {
+            busy = false;
         }
     }
 
@@ -354,6 +361,15 @@ public final class GodWandSkills {
             return;
         }
         MinecraftServer server = event.getServer();
+        busy = true;
+        try {
+            tickAll(server);
+        } finally {
+            busy = false;
+        }
+    }
+
+    private static void tickAll(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             SpatialPathWalker.tickPlayer(player);
         }

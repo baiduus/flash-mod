@@ -151,6 +151,9 @@ public final class SupernovaAccretionRenderer {
                if (built != null) {
                   GodWandGeometry.draw(built);
                }
+               if (!marker && age >= 0.0) {
+                  drawCore(matrices.last().pose(), age);
+               }
             } finally {
                matrices.popPose();
                GodWandGeometry.depthMask(true);
@@ -160,6 +163,54 @@ public final class SupernovaAccretionRenderer {
             }
          }
       }
+   }
+
+   /**
+    * The black hole itself (God Wand draws it with its post shaders, not part of this port): an opaque black
+    * sphere of the core's radius and a glowing photon ring around it, facing the camera.
+    */
+   private static void drawCore(Matrix4f m, double age) {
+      float r = SupernovaSequence.coreRadius(age);
+      if (r <= 0.05F) {
+         return;
+      }
+      GodWandGeometry.defaultBlendFunc();
+      GodWandGeometry.depthMask(true);
+      int rings = 16;
+      int segments = 32;
+      for (int i = 0; i < rings; i++) {
+         double t1 = -Math.PI / 2 + Math.PI * i / rings;
+         double t2 = -Math.PI / 2 + Math.PI * (i + 1) / rings;
+         BufferBuilder strip = GodWandGeometry.begin(PrimitiveTopology.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+         for (int j = 0; j <= segments; j++) {
+            double phi = Math.PI * 2 * j / segments;
+            strip.vertex(m, (float)(r * Math.cos(t1) * Math.cos(phi)), (float)(r * Math.sin(t1)), (float)(r * Math.cos(t1) * Math.sin(phi))).color(0, 0, 0, 255).endVertex();
+            strip.vertex(m, (float)(r * Math.cos(t2) * Math.cos(phi)), (float)(r * Math.sin(t2)), (float)(r * Math.cos(t2) * Math.sin(phi))).color(0, 0, 0, 255).endVertex();
+         }
+         GodWandGeometry.draw(strip.end());
+      }
+      Vec3 dir = currentCameraRel.lengthSqr() < 1.0E-4 ? new Vec3(0.0, 0.0, 1.0) : currentCameraRel.normalize();
+      Vec3 u = dir.cross(Math.abs(dir.y) < 0.95 ? new Vec3(0.0, 1.0, 0.0) : new Vec3(1.0, 0.0, 0.0)).normalize();
+      Vec3 w = dir.cross(u).normalize();
+      GodWandGeometry.additiveBlend();
+      GodWandGeometry.depthMask(false);
+      float pulse = 0.85F + 0.15F * (float)Math.sin(age * 0.35);
+      for (int layer = 0; layer < 2; layer++) {
+         float inner = r * (layer == 0 ? 1.0F : 1.02F);
+         float outer = r * (layer == 0 ? 1.75F : 1.18F);
+         int alpha = (int)((layer == 0 ? 150 : 235) * pulse * SupernovaSequence.ribbonVisibility(age));
+         BufferBuilder ring = GodWandGeometry.begin(PrimitiveTopology.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+         for (int j = 0; j <= 48; j++) {
+            double a = Math.PI * 2 * j / 48.0;
+            Vec3 o = u.scale(Math.cos(a)).add(w.scale(Math.sin(a)));
+            Vec3 in = o.scale(inner).add(dir.scale(r * 0.05));
+            Vec3 out = o.scale(outer).add(dir.scale(r * 0.05));
+            ring.vertex(m, (float)in.x, (float)in.y, (float)in.z).color(255, layer == 0 ? 120 : 220, 235, alpha).endVertex();
+            ring.vertex(m, (float)out.x, (float)out.y, (float)out.z).color(180, 40, 200, 0).endVertex();
+         }
+         GodWandGeometry.draw(ring.end());
+      }
+      GodWandGeometry.defaultBlendFunc();
    }
 
    static void emitChargeMarker(VertexConsumer v, Matrix4f m, float charge) {

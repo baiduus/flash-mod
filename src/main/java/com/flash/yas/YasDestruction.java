@@ -114,7 +114,8 @@ public final class YasDestruction {
 
     /** From the mixin: refuse this block change? (Hand of God's code, a Yas with the destruction off near.) */
     public static boolean refuse(LevelChunk chunk, BlockPos pos, BlockState state) {
-        if (!anyOff || Thread.currentThread() != serverThread || !(chunk.getLevel() instanceof ServerLevel level)) {
+        if (!anyOff || com.flash.godwand.GodWandSkills.busy || Thread.currentThread() != serverThread
+                || !(chunk.getLevel() instanceof ServerLevel level)) {
             return false;
         }
         String from = StackWalker.getInstance().walk(s -> s.limit(48)
