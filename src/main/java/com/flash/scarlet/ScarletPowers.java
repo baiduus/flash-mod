@@ -64,6 +64,7 @@ public final class ScarletPowers {
         if (com.flash.yas.YasPowers.has(p)) {
             com.flash.yas.YasPowers.revoke(p);
         }
+        com.flash.storm.StormPowers.revoke(p);
         p.getPersistentData().put(KEY, new CompoundTag());
         com.flash.yas.YasHandOfGod.apply(p, true);
         sync(p);
@@ -116,7 +117,8 @@ public final class ScarletPowers {
             return;
         }
         boolean sw = has(p);
-        if (sw && (com.flash.power.HeroPowers.hasAny(p) || com.flash.yas.YasPowers.has(p))) {
+        if (sw && (com.flash.power.HeroPowers.hasAny(p) || com.flash.yas.YasPowers.has(p)
+                || com.flash.storm.StormPowers.has(p))) {
             // another power came after her: it wins
             revoke(p);
             sw = false;

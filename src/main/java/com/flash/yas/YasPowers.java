@@ -73,6 +73,7 @@ public final class YasPowers {
             }
         }
         com.flash.scarlet.ScarletPowers.revoke(p);
+        com.flash.storm.StormPowers.revoke(p);
     }
 
     public static void sync(ServerPlayer p) {

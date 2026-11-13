@@ -139,6 +139,9 @@ dependencies {
     // playerAnimator: plays the Superman animations (the mod must be installed alongside)
     implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:1.0.2-rc1+1.20")
 
+    // Man of Tomorrow's Shazam bolt renderer (relocated to com.flash.mot; its classes ship in the resources)
+    compileOnly files('libs/mot-bolt.jar')
+
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")

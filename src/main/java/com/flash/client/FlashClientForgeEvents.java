@@ -168,6 +168,7 @@ public final class FlashClientForgeEvents {
         HeroProgressClient.reset();
         YasClient.reset();
         ScarletClient.reset();
+        StormClient.reset();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */

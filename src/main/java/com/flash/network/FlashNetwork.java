@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "41";
+    private static final String PROTOCOL = "42";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -324,6 +324,24 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(ScarletAnswerPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ScarletAnswerPacket::encode)
                 .decoder(ScarletAnswerPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(StormActionPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(StormActionPacket::encode)
+                .decoder(StormActionPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(StormFxPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(StormFxPacket::encode)
+                .decoder(StormFxPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(StormSyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(StormSyncPacket::encode)
+                .decoder(StormSyncPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
 

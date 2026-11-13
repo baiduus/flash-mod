@@ -66,7 +66,7 @@ public final class ScarletChaos {
     /** Without any power (and not a test dummy). */
     public static boolean eligible(ServerPlayer p) {
         return !(p instanceof net.minecraftforge.common.util.FakePlayer) && !com.flash.power.HeroPowers.hasAny(p)
-                && !com.flash.yas.YasPowers.has(p) && !ScarletPowers.has(p);
+                && !com.flash.yas.YasPowers.has(p) && !ScarletPowers.has(p) && !com.flash.storm.StormPowers.has(p);
     }
 
 

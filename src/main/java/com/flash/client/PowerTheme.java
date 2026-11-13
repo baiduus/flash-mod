@@ -61,6 +61,16 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFFE0263A, 0xFF3D0A12, 0xFF1C060A,
             "gui.flash.theme.scarlet.title", "gui.flash.theme.scarlet.subtitle", Icon.BOLT, true);
 
+    /** Storm: lightning white-blue on storm grey. */
+    public static final PowerTheme STORM = new PowerTheme("storm",
+            0xFFBFE6FF, 0xFF1E2A38, 0xFF0C121A,
+            "gui.flash.theme.storm.title", "gui.flash.theme.storm.subtitle", Icon.BOLT, true);
+
+    public static boolean localStorm() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && StormClient.isStorm(player);
+    }
+
     /** True when the local player is the Scarlet Witch. */
     public static boolean localScarlet() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
@@ -114,6 +124,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
         }
         if (localScarlet()) {
             return SCARLET;
+        }
+        if (localStorm()) {
+            return STORM;
         }
         if (localThor()) {
             return THOR;

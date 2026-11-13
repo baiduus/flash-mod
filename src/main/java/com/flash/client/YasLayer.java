@@ -18,6 +18,9 @@ import org.joml.Matrix4f;
  */
 public class YasLayer<T extends LivingEntity, M extends HumanoidModel<T>> extends RenderLayer<T, M> {
 
+    private static final float[] STORM_BLUE = {0.62F, 0.85F, 1.0F};
+    private static float[] tint = YasClient.PALE_YELLOW;
+
     /** Each part: its box in model pixels (x0, y0, z0, x1, y1, z1), from the part's pivot. */
     private static final float[][] BOXES = {
             {-4, -8, -4, 4, 0, 4}, {-4, 0, -2, 4, 12, 2}, {-3, -2, -2, 1, 10, 2}, {-1, -2, -2, 3, 10, 2},
@@ -30,14 +33,17 @@ public class YasLayer<T extends LivingEntity, M extends HumanoidModel<T>> extend
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, T entity, float limbSwing,
                        float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (entity.isInvisible() || !(YasClient.isYas(entity) || YasClient.ascending(entity))) {
+        boolean storm = StormClient.isStorm(entity);
+        if (entity.isInvisible() || !(YasClient.isYas(entity) || YasClient.ascending(entity) || storm)) {
             return;
         }
         M m = this.getParentModel();
         VertexConsumer c = buffers.getBuffer(RenderType.lightning());
         boolean ascending = YasClient.ascending(entity);
-        boolean showLightning = ascending || YasClient.showLightning(entity);
-        boolean showEyes = ascending || YasClient.showEyes(entity);
+        // Storm: her eyes white and lightning on her while she flies or calls the storm (white and ice blue)
+        boolean showLightning = storm ? StormClient.charged(entity) : ascending || YasClient.showLightning(entity);
+        boolean showEyes = storm ? StormClient.charged(entity) : ascending || YasClient.showEyes(entity);
+        tint = storm ? STORM_BLUE : YasClient.PALE_YELLOW;
         ModelPart[] parts = {m.head, m.body, m.rightArm, m.leftArm, m.rightLeg, m.leftLeg};
         Random r = new Random((long) (ageInTicks / 3.0F) * 31337L + entity.getId());
         for (int i = 0; i < parts.length && showLightning; i++) {
@@ -64,7 +70,7 @@ public class YasLayer<T extends LivingEntity, M extends HumanoidModel<T>> extend
         float[] p0 = point(r, b, face, inflate);
         float[] p1 = point(r, b, face, inflate);
         boolean white = r.nextBoolean();
-        float[] col = white ? new float[] {1.0F, 1.0F, 1.0F} : YasClient.PALE_YELLOW;
+        float[] col = white ? new float[] {1.0F, 1.0F, 1.0F} : tint;
         float px = p0[0];
         float py = p0[1];
         float pz = p0[2];

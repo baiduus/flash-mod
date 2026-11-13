@@ -27,7 +27,8 @@ public final class FlashAbilityHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick,
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null && (PowerTheme.localYas() || PowerTheme.localScarlet())) {
+        if (minecraft.player != null && (PowerTheme.localYas() || PowerTheme.localScarlet()
+                || PowerTheme.localStorm())) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
                 renderYas(graphics, minecraft, width, height);
@@ -252,7 +253,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         Font font = minecraft.font;
         int mode = Math.max(0, YasAbilities.selected());
         int n = YasAbilities.count();
-        if (YasAbilities.scarlet()) {
+        if (YasAbilities.custom()) {
             renderScarlet(graphics, minecraft, font, mode, n, width, height);
             return;
         }
@@ -294,7 +295,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
     /** The Scarlet Witch: her mode and its abilities as rows with their cooldowns. */
     private static void renderScarlet(GuiGraphics graphics, Minecraft minecraft, Font font, int mode, int n, int width,
                                       int height) {
-        String id = YasAbilities.SCARLET_MODES[mode];
+        String id = YasAbilities.modeId(mode);
         String[][] rows = com.flash.scarlet.ScarletCooldowns.rows(id);
         String title = YasAbilities.name(mode).getString();
         String count = (mode + 1) + "/" + n;
