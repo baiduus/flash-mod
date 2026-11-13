@@ -134,6 +134,13 @@ public class BlackHoleRenderer extends EntityRenderer<BlackHole> {
         }
     }
 
+    /** Its disk is much wider than its box: drawn whenever it is near enough. */
+    @Override
+    public boolean shouldRender(BlackHole e, net.minecraft.client.renderer.culling.Frustum frustum, double x,
+                                double y, double z) {
+        return frustum.isVisible(e.getBoundingBox().inflate(8.0D));
+    }
+
     @Override
     public ResourceLocation getTextureLocation(BlackHole e) {
         return WHITE;
