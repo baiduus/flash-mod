@@ -212,6 +212,38 @@ public final class YasPowers {
         }
     }
 
+    /**
+     * The charged takeoff (flight key held on the ground): 0 coils, 1 shoots ~30 blocks up in a burst of pale
+     * lightning (she flies at the top, SupermanClient), 2 cancels.
+     */
+    public static void launch(ServerPlayer p, int phase) {
+        if (!has(p) || p.getAbilities().flying) {
+            return;
+        }
+        if (phase == 0) {
+            com.flash.superman.SupermanAbilities.anim(p, "charge_takeoff9");
+            return;
+        }
+        if (phase != 1) {
+            com.flash.superman.SupermanAbilities.anim(p, "none");
+            return;
+        }
+        flight(p);
+        // ~30 blocks (Superman and Thor: 2.0, ~20 blocks)
+        p.setDeltaMovement(p.getDeltaMovement().x, 2.45D, p.getDeltaMovement().z);
+        p.hurtMarked = true;
+        var level = p.serverLevel();
+        com.flash.superman.SupermanAbilities.cracks(level, p.position(), 4.0F);
+        com.flash.superman.SupermanAbilities.anim(p, "charged_launch9");
+        com.flash.superman.SupermanAbilities.groundPuff(level, p.position(), 3.0D, 40);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, p.getX(), p.getY() + 0.5D, p.getZ(),
+                40, 0.6D, 0.3D, 0.6D, 0.25D);
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 0.5D,
+                p.getZ(), 40, 0.8D, 0.3D, 0.8D, 0.4D);
+        level.playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER,
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.6F);
+    }
+
     /** Regeneration I always; near death (2 hearts or less) Regeneration III. */
     private static void regeneration(ServerPlayer p) {
         int amp = p.getHealth() <= 4.0F ? 2 : 0;

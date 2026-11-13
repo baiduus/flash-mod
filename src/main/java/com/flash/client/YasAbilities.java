@@ -261,6 +261,78 @@ public final class YasAbilities {
         unbind();
     }
 
+    // ------------------------------------------------------------------
+    // The flight key (as Superman's and Thor's, the same key)
+    // ------------------------------------------------------------------
+
+    private static final int TAP_TICKS = 5;
+    private static final int LAUNCH_AT = TAP_TICKS + 20;
+    private static int flightHeld = -1;
+    private static boolean flightWas;
+    private static boolean flightLaunched;
+
+    /**
+     * The flight key: a tap toggles the flight (on the ground she lifts off); held on the ground she coils and
+     * after about a second shoots ~30 blocks up and flies at the top.
+     */
+    @SubscribeEvent
+    public static void onFlightTick(TickEvent.ClientTickEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        var p = mc.player;
+        if (event.phase != TickEvent.Phase.END || p == null || !PowerTheme.localYas()) {
+            flightHeld = -1;
+            flightWas = false;
+            return;
+        }
+        KeyMapping k = FlashAbilityKeys.mapping(com.flash.ability.FlashAbility.WIND_HANDS);
+        boolean down = k != null && k.isDown() && mc.screen == null;
+        boolean was = flightWas;
+        flightWas = down;
+        boolean ground = p.onGround() && !p.getAbilities().flying && !p.isInWater() && !p.isPassenger();
+        if (down && !was) {
+            if (!ground) {
+                p.getAbilities().flying = !p.getAbilities().flying;
+                p.onUpdateAbilities();
+                return;
+            }
+            flightHeld = 0;
+            flightLaunched = false;
+            return;
+        }
+        if (flightHeld < 0) {
+            return;
+        }
+        if (down) {
+            if (flightLaunched) {
+                return;
+            }
+            flightHeld++;
+            if (flightHeld == TAP_TICKS) {
+                SupermanClient.thorCoiling = true;
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(0));
+            } else if (flightHeld >= LAUNCH_AT) {
+                SupermanClient.thorCoiling = false;
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(1));
+                flightLaunched = true;
+                SupermanClient.hoverAtTop();
+            }
+            return;
+        }
+        SupermanClient.thorCoiling = false;
+        if (!flightLaunched) {
+            if (flightHeld >= TAP_TICKS) {
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanLaunchPacket(2));
+            } else {
+                // a tap on the ground: up and flying
+                p.getAbilities().flying = true;
+                p.onUpdateAbilities();
+                p.setDeltaMovement(p.getDeltaMovement().x, 0.5D, p.getDeltaMovement().z);
+            }
+        }
+        flightHeld = -1;
+        flightLaunched = false;
+    }
+
     /**
      * Hand of God's own ability wheel / menu never opens (Yas uses her modes; nobody else has the powers) and its
      * ability HUD is replaced by the mode panel.
@@ -322,7 +394,7 @@ public final class YasAbilities {
         }
         event.setCanceled(true);
         int cur = selected();
-        int dir = event.getScrollDelta() > 0.0D ? -1 : 1;
+        int dir = event.getScrollDelta() > 0.0D ? 1 : -1; // up: the next mode, down: back
         int next = cur < 0 ? 0 : Math.floorMod(cur + dir, POWERS.length);
         select(next);
         Minecraft mc = Minecraft.getInstance();

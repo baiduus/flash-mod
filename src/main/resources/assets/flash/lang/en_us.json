@@ -1002,7 +1002,7 @@
   "gui.flash.guide.yas.sub": "Transcendence",
   "gui.flash.guide.yas.1": "Conquer every hero of the mod (list below).",
   "gui.flash.guide.yas.2": "Carry a capsule of each power and the 4 pieces of Lex's suit:",
-  "gui.flash.guide.yas.3": "Find the Island of the Transcendence, floating at Y=500 (very rare), and talk to the Guardian.",
+  "gui.flash.guide.yas.3": "Find the Island of the Transcendence, floating at Y=200 (very rare), and talk to the Guardian.",
   "gui.flash.guide.yas.4": "Accept to transcend. If anything is missing, you die in 3 seconds.",
   "gui.flash.guide.yas.items": "Items in the inventory",
   "gui.flash.guide.yas.lex": "Lex's suit (%s/4 pieces)",

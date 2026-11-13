@@ -10,16 +10,16 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 
 /**
- * The floating island of the transcendence, with its top at Y = 500 (the overworld goes up to 575 in this mod).
- * Very rare; {@code /locate structure flash:yas_island}.
+ * The floating island of the transcendence, with its top at Y = 200. Very rare;
+ * {@code /locate structure flash:yas_island}.
  */
 public class YasIslandStructure extends Structure {
 
     public static final Codec<YasIslandStructure> CODEC = simpleCodec(YasIslandStructure::new);
     public static final int SIZE = 49;
     public static final int HEIGHT = 40;
-    /** The grass of the island is at Y = 500. */
-    public static final int TOP_Y = 500;
+    /** The grass of the island is at Y = 200. */
+    public static final int TOP_Y = 200;
 
     public YasIslandStructure(StructureSettings settings) {
         super(settings);

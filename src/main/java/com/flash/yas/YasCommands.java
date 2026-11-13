@@ -13,9 +13,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * {@code /yas dar [player]}: makes him Yas at once (marked as having transcended, so he owns his essence);
- * {@code /yas transcender [player]}: plays the whole transcendence and gives Yas, asking nothing;
- * {@code /yas remover [player]}: takes Yas away (the mark stays). {@code /locate structure flash:yas_island}
+ * {@code /yas give [player]}: makes him Yas at once (marked as having transcended, so he owns his essence);
+ * {@code /yas transcend [player]}: plays the whole transcendence and gives Yas, asking nothing;
+ * {@code /yas remove [player]}: takes Yas away (the mark stays). {@code /locate structure flash:yas_island}
  * finds the floating island.
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
@@ -28,15 +28,15 @@ public final class YasCommands {
     public static void onCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("yas")
                 .requires(source -> source.hasPermission(2))
-                .then(sub("dar", (p, src) -> {
+                .then(sub("give", (p, src) -> {
                     YasPowers.grant(p);
                     return "commands.flash.yas.given";
                 }))
-                .then(sub("transcender", (p, src) -> {
+                .then(sub("transcend", (p, src) -> {
                     YasTranscendence.begin(p, null, true);
                     return "commands.flash.yas.transcend";
                 }))
-                .then(sub("remover", (p, src) -> {
+                .then(sub("remove", (p, src) -> {
                     YasPowers.revoke(p);
                     return "commands.flash.yas.removed";
                 })));
