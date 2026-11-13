@@ -21,10 +21,10 @@ public final class ScarletCommands {
 
     @SubscribeEvent
     public static void onCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("scarlet")
+        event.getDispatcher().register(ScarletChaos.commands(Commands.literal("scarlet")
                 .requires(source -> source.hasPermission(2))
                 .then(sub("give", ScarletPowers::grant, "commands.flash.scarlet.given"))
-                .then(sub("remove", ScarletPowers::revoke, "commands.flash.scarlet.removed")));
+                .then(sub("remove", ScarletPowers::revoke, "commands.flash.scarlet.removed"))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> sub(String name, Consumer<ServerPlayer> action,

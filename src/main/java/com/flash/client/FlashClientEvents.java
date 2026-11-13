@@ -60,6 +60,7 @@ public final class FlashClientEvents {
         event.registerEntityRenderer(com.flash.registry.ModEntities.YAS_GUARDIAN.get(), YasGuardianRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.HUMAN.get(), HumanNpcRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.BLACK_HOLE.get(), BlackHoleRenderer::new);
+        event.registerEntityRenderer(com.flash.registry.ModEntities.CHAOS_ENERGY.get(), ChaosEnergyRenderer::new);
         event.registerEntityRenderer(com.flash.registry.ModEntities.LEX_MISSILE.get(),
                 LexMissileRenderer::new);
         event.registerBlockEntityRenderer(

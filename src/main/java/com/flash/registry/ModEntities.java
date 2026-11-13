@@ -85,6 +85,15 @@ public final class ModEntities {
                             .updateInterval(2)
                             .build("black_hole"));
 
+    public static final RegistryObject<EntityType<com.flash.entity.ChaosEnergy>> CHAOS_ENERGY =
+            ENTITY_TYPES.register("chaos_energy",
+                    () -> EntityType.Builder.<com.flash.entity.ChaosEnergy>of(com.flash.entity.ChaosEnergy::new,
+                                    MobCategory.MISC)
+                            .sized(0.8F, 0.8F)
+                            .fireImmune()
+                            .clientTrackingRange(8)
+                            .build("chaos_energy"));
+
     private ModEntities() {
     }
 }
