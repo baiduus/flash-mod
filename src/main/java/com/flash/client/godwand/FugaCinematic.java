@@ -1,5 +1,6 @@
 package com.flash.client.godwand;
 
+import com.flash.godwand.FugaSequence;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.util.Optional;
 import net.minecraft.client.Camera;

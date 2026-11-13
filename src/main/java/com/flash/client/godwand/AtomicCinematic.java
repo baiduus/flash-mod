@@ -1,5 +1,6 @@
 package com.flash.client.godwand;
 
+import com.flash.godwand.AtomicSequence;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
