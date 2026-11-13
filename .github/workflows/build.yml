@@ -16,11 +16,6 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build --no-daemon
-      - name: Nomes SRG
-        run: |
-          find build ~/.gradle/caches -iname "*srg*" -o -iname "*mcp*.zip" -o -iname "*mappings*.zip" 2>/dev/null | head -30
-          for f in $(find build ~/.gradle/caches \( -iname "*.srg" -o -iname "*.tsrg" -o -iname "*.csv" \) 2>/dev/null | head -40); do grep -H -i "isSingleplayerOwner" "$f" | head -3; done || true
-          for z in $(find ~/.gradle/caches -iname "*.zip" -path "*mcp*" 2>/dev/null | head -5); do unzip -l "$z" | head -20; done || true
       - name: Conferir jarjar
         run: for j in build/libs/*.jar; do echo "== $j"; unzip -l "$j" | grep -i "jarjar\|bendy" || true; done
       - uses: actions/upload-artifact@v4

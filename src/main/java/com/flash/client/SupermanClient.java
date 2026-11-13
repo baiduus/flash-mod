@@ -417,6 +417,12 @@ public final class SupermanClient {
         double k = target.lengthSqr() > cur.lengthSqr() ? 0.16D : 0.3D;
         p.setDeltaMovement(cur.add(target.subtract(cur).scale(k)));
         p.fallDistance = 0.0F;
+        // Yas' seven-times flight goes past the server's speed check: it is told her speed before her move
+        if (yasFlight && p.getDeltaMovement().lengthSqr() > 64.0D) {
+            Vec3 v = p.getDeltaMovement();
+            com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                    new com.flash.network.YasSpeedPacket((float) v.x, (float) v.y, (float) v.z));
+        }
     }
 
     // ------------------------------------------------------------------
