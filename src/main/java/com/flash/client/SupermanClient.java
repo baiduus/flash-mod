@@ -454,6 +454,14 @@ public final class SupermanClient {
     public static void onRenderPlayerPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         String base = SupermanPose.base(p.getUUID());
+        if (SupermanPose.LANTERN.equals(base)) {
+            // the Lanterns' flight turns the whole body itself
+            LEANS.remove(p.getUUID());
+            if (LanternFlight.rotateBody(p, event.getPoseStack(), event.getPartialTick())) {
+                TILTED.add(p.getId());
+            }
+            return;
+        }
         if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p)
                 && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON) && !YasClient.isYas(p)
                 && !ScarletClient.isScarlet(p) && !StormClient.isStorm(p))) {

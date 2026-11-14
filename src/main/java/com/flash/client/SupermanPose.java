@@ -79,9 +79,12 @@ public final class SupermanPose {
         if (layer == null) {
             return;
         }
-        KeyframeAnimation a = name != null ? anim(name) : null;
+        KeyframeAnimation a = name != null && !LANTERN.equals(name) ? anim(name) : null;
         IAnimation next = null;
-        if (a != null) {
+        if (LANTERN.equals(name)) {
+            // the Lanterns' flight and free fall (procedural, LanternFlight)
+            next = new LanternFlight(player);
+        } else if (a != null) {
             next = frozen ? new Frozen(a, startTick) : new KeyframeAnimationPlayer(a, startTick);
         }
         if (fade > 0) {
@@ -180,6 +183,9 @@ public final class SupermanPose {
         shot(player, st, animation, offset);
     }
 
+    /** Base "animation" name of the Lanterns' procedural flight and free fall (LanternFlight). */
+    public static final String LANTERN = "lantern";
+
     /** Whole-body moves: they keep their own legs even on the move. */
     private static final java.util.Set<String> WHOLE_BODY = java.util.Set.of("takeoff", "takeoff8", "flight_launch",
             "landing", "landing8", "hero_landing9", "brake", "brake_boost", "charge_takeoff9", "charged_launch9",
@@ -267,6 +273,7 @@ public final class SupermanPose {
         // the flight poses are Thor's too
         if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player) && !lex(player)
                 && !YasClient.isYas(player) && !ScarletClient.isScarlet(player) && !StormClient.isStorm(player)) {
+            LanternFlight.forget(player);
             if (st != null) {
                 STATES.remove(player.getUUID());
                 set(player, BASE, null, 0, 5, false);
@@ -279,6 +286,7 @@ public final class SupermanPose {
             st = new State();
             STATES.put(player.getUUID(), st);
         }
+        LanternFlight.tick(player, flying(player) && !player.isPassenger() && !player.isSwimming());
         // base, with a short delay so it does not flicker on the thresholds
         String want = chooseBase(player, st);
         if (same(want, st.base)) {
@@ -288,7 +296,7 @@ public final class SupermanPose {
                 st.candidate = want;
                 st.candidateSince = player.tickCount;
             }
-            boolean instant = st.base == null || want == null || "dive9".equals(want)
+            boolean instant = st.base == null || want == null || "dive9".equals(want) || LANTERN.equals(want)
                     || "solar_charge".equals(want) || "solar_charge".equals(st.base);
             if (instant || player.tickCount - st.candidateSince >= SWITCH_DELAY) {
                 st.base = want;
@@ -356,9 +364,10 @@ public final class SupermanPose {
             return null;
         }
         if (!flying) {
-            // on foot: the normal Minecraft motion
+            // on foot: the normal Minecraft motion; dropping through the air: the Lanterns' free fall
             st.wasDiving = false;
-            return null;
+            return LanternFlight.falling(player, false) || LanternFlight.active(player) && !player.onGround()
+                    ? LANTERN : null;
         }
         // braking out of a fast flight
         if (lastSpeed > 0.7D && speed < lastSpeed - 0.15D && speed < 0.45D && st.shot == null) {
@@ -369,42 +378,12 @@ public final class SupermanPose {
             player.playSound(com.flash.registry.ModSounds.DIVE.get(), 0.8F, 1.0F);
         }
         st.wasDiving = diving;
-        if (diving) {
-            return "dive9";
+        // high up in the sunlight and still: basking, arms open to the sun (the recharge spot)
+        if (hs < 0.08D && Math.abs(vy) < 0.15D && basking(player) && !lex(player)) {
+            return "solar_bask";
         }
-        if (vy > 0.8D && vy > hs * 1.5D) {
-            // straight up toward the sun, fists overhead
-            return "solar_vertical";
-        }
-        if (vy > 0.45D && vy > hs) {
-            return "upright_flight9";
-        }
-        if (vy < -0.15D && hs < 0.25D) {
-            return "descend";
-        }
-        if (hs < 0.08D) {
-            // high up in the sunlight: basking, arms open to the sun
-            return basking(player) && !lex(player) ? "solar_bask" : "hover";
-        }
-        if (forward < -0.05D && -forward > Math.abs(left)) {
-            return "reverse_flight";
-        }
-        if (Math.abs(left) > Math.abs(forward)) {
-            if (hs < 0.35D) {
-                return left > 0.0D ? "upright_left9" : "upright_right9";
-            }
-            return left > 0.0D ? "strafe_left" : "strafe_right";
-        }
-        if (speed > 1.8D) {
-            return "prone_flight12";
-        }
-        if (speed > 0.8D) {
-            return "boost";
-        }
-        if (Math.abs(left) > 0.35D * forward) {
-            return left > 0.0D ? "bank_left" : "bank_right";
-        }
-        return "cruise";
+        // every other flight: the Lanterns' (LanternFlight: upright and leaning slow, a dart fast)
+        return LANTERN;
     }
 
     /** Hovering high in daylight (the solar recharge spot). */
