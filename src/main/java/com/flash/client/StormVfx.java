@@ -175,7 +175,8 @@ public final class StormVfx {
             }
             for (Player p : mc.level.players()) {
                 if (StormClient.flying(p) && !p.isInvisible()) {
-                    funnel(buf, m, p.getPosition(pt).add(0.0D, 0.15D, 0.0D), -2.2D, 0.12D, 0.85D, t, 0.45F);
+                    // a tornado carrying her: the narrow tip below, wide under her feet
+                    funnel(buf, m, p.getPosition(pt).add(0.0D, 0.15D - 2.2D, 0.0D), 2.2D, 0.12D, 0.85D, t, 0.45F);
                 }
             }
         } finally {

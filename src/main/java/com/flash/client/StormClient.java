@@ -276,11 +276,11 @@ public final class StormClient {
                 continue;
             }
             double speed = p.getDeltaMovement().length();
-            // the funnel: narrow at her feet, wider below, spinning
+            // the funnel: a tornado carrying her (narrow tip below, wide at her feet), spinning
             // (the funnel itself is drawn in light by StormVfx; a little cloud with it)
             for (int i = 0; i < 2; i++) {
                 double h = (now * 0.35D + i * 1.1D) % 2.2D;
-                double r = 0.12D + h * 0.33D;
+                double r = 0.12D + (2.2D - h) * 0.33D;
                 double a = now * 0.9D + i * 2.3D + h * 3.0D;
                 double x = p.getX() + Math.cos(a) * r;
                 double y = p.getY() + 0.15D - h;
