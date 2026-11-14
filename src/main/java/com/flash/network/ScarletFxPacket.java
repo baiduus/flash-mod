@@ -14,6 +14,8 @@ public record ScarletFxPacket(int caster, int type, Vec3 from, Vec3 to, float po
     public static final int HEAL = 4;
     public static final int RAISE = 5;
     public static final int LINK = 6;
+    /** A player raised from the dead appearing (ScarletReviveFx). */
+    public static final int REVIVE = 7;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeVarInt(this.caster);

@@ -337,6 +337,7 @@ public final class ScarletClient {
                             (RND.nextDouble() - 0.5D) * 0.2D, 0.05D, (RND.nextDouble() - 0.5D) * 0.2D);
                 }
             }
+            case ScarletFxPacket.REVIVE -> ScarletReviveFx.start(b, p.caster());
             default -> {
             }
         }

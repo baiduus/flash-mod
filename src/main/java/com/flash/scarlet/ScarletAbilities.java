@@ -22,6 +22,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -487,6 +488,14 @@ public final class ScarletAbilities {
                 back.setHealth(back.getMaxHealth());
                 back.fallDistance = 0.0F;
                 back.displayClientMessage(Component.translatable("message.flash.scarlet_raised", r.by()), false);
+                // his coming back, seen by everyone around (ScarletReviveFx)
+                Vec3 at = back.position();
+                FlashNetwork.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(at.x, at.y,
+                        at.z, 160.0D, to.dimension())), new ScarletFxPacket(back.getId(), ScarletFxPacket.REVIVE, at, at,
+                        1.8F));
+                to.playSound(null, back.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0F, 0.8F);
+                to.playSound(null, back.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.5F, 0.6F);
+                back.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.REGENERATION, 100, 1));
             }
             return true;
         });
