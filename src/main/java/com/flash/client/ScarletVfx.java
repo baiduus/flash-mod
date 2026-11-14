@@ -247,12 +247,7 @@ public final class ScarletVfx {
                 return true;
             }
         }
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (e instanceof com.flash.entity.ChaosEnergy) {
-                return true;
-            }
-        }
-        return false;
+        return !ClientEntityIndex.CHAOS.isEmpty();
     }
 
     @SubscribeEvent
@@ -571,8 +566,8 @@ public final class ScarletVfx {
     /** The Chaos energy that comes to offer her power: a sphere of chaos ringed round. */
     private static void chaos(BufferBuilder buf, Matrix4f m, Minecraft mc, float pt, float t, Vec3 cam, Vec3 left,
                               Vec3 up) {
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof com.flash.entity.ChaosEnergy)) {
+        for (Entity e : ClientEntityIndex.CHAOS) {
+            if (e.isRemoved()) {
                 continue;
             }
             float age = e.tickCount + pt;

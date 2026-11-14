@@ -36,8 +36,8 @@ public class ArcaneOrbEntityRenderer extends EntityRenderer<ArcaneOrbEntity> {
             return;
         }
         Vec3 cam = camera.getPosition();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof ArcaneOrbEntity orb) || e.distanceToSqr(cam) > 16384.0) {
+        for (Entity e : com.flash.client.ClientEntityIndex.ARCANE_ORBS) {
+            if (!(e instanceof ArcaneOrbEntity orb) || e.isRemoved() || e.distanceToSqr(cam) > 16384.0) {
                 continue;
             }
             Vec3 at = orb.getPosition(partial);

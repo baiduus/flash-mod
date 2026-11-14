@@ -117,26 +117,52 @@ public final class SupermanShaders {
         return ready() && scene != null && extract != null && down != null && up != null && composite != null;
     }
 
-    private static Boolean irisPresent;
+    // what to ask about a shader pack, looked up once (a missing class threw an exception every frame before)
+    private static boolean lookedPack;
+    private static Object irisApi;
+    private static java.lang.reflect.Method irisInUse;
+    private static java.lang.reflect.Field optifineLoaded;
+    private static boolean packCached;
+    private static long packCheckedAt = Long.MIN_VALUE;
 
     private static boolean shaderPack() {
-        try {
-            if (irisPresent == null) {
-                irisPresent = Class.forName("net.irisshaders.iris.api.v0.IrisApi") != null;
+        if (!lookedPack) {
+            lookedPack = true;
+            try {
+                Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+                irisApi = api.getMethod("getInstance").invoke(null);
+                irisInUse = irisApi.getClass().getMethod("isShaderPackInUse");
+            } catch (Throwable ignored) {
+                irisApi = null;
             }
-            if (irisPresent) {
-                Object api = Class.forName("net.irisshaders.iris.api.v0.IrisApi").getMethod("getInstance").invoke(null);
-                return (Boolean) api.getClass().getMethod("isShaderPackInUse").invoke(api);
+            try {
+                optifineLoaded = Class.forName("net.optifine.shaders.Shaders").getField("shaderPackLoaded");
+            } catch (Throwable ignored) {
+                optifineLoaded = null;
             }
-        } catch (Throwable ignored) {
-            irisPresent = false;
         }
-        try {
-            Class<?> of = Class.forName("net.optifine.shaders.Shaders");
-            return of.getField("shaderPackLoaded").getBoolean(null);
-        } catch (Throwable ignored) {
+        if (irisApi == null && optifineLoaded == null) {
             return false;
         }
+        // asked again twice a second at most
+        long now = System.currentTimeMillis();
+        if (now - packCheckedAt < 500L) {
+            return packCached;
+        }
+        packCheckedAt = now;
+        boolean in = false;
+        try {
+            if (irisApi != null) {
+                in = (Boolean) irisInUse.invoke(irisApi);
+            }
+            if (!in && optifineLoaded != null) {
+                in = optifineLoaded.getBoolean(null);
+            }
+        } catch (Throwable ignored) {
+            in = false;
+        }
+        packCached = in;
+        return in;
     }
 
     // ------------------------------------------------------------------

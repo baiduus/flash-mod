@@ -39,8 +39,8 @@ public class StoneCannonEntityRenderer extends EntityRenderer<StoneCannonProject
             return;
         }
         Vec3 cam = camera.getPosition();
-        for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof StoneCannonProjectileEntity cannon) || e.distanceToSqr(cam) > 16384.0) {
+        for (Entity e : com.flash.client.ClientEntityIndex.STONE_CANNONS) {
+            if (!(e instanceof StoneCannonProjectileEntity cannon) || e.isRemoved() || e.distanceToSqr(cam) > 16384.0) {
                 continue;
             }
             Vec3 vel = cannon.getDeltaMovement();
