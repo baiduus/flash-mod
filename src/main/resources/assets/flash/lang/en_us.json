@@ -1276,5 +1276,6 @@
   "entity.flash.arcane_orb": "Arcane Orb",
   "entity.flash.stone_cannon": "Stone Cannon",
   "gui.godwand.atomic_release": "Release your button",
-  "gui.godwand.atomic_skip": "Esc / F5 - Skip camera"
+  "gui.godwand.atomic_skip": "Esc / F5 - Skip camera",
+  "message.flash.combustion": "§6Combustion! Hit the ground to blast a crater."
 }

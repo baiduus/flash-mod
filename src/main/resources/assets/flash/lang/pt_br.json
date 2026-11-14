@@ -1276,5 +1276,6 @@
   "entity.flash.arcane_orb": "Esfera Arcana",
   "entity.flash.stone_cannon": "Canhão de Pedra",
   "gui.godwand.atomic_release": "Solte o botão",
-  "gui.godwand.atomic_skip": "Esc / F5 - Pular câmera"
+  "gui.godwand.atomic_skip": "Esc / F5 - Pular câmera",
+  "message.flash.combustion": "§6Combustão! Desça até o chão para abrir uma cratera."
 }
