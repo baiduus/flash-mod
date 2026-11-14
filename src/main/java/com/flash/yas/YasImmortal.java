@@ -25,9 +25,9 @@ import net.minecraftforge.fml.common.Mod;
  * <ul>
  * <li>she never dies: whatever would kill her (/kill and the void too) leaves her whole; fallen into the void, she
  * is put back on the ground above it;</li>
- * <li>the Lanterns' ring forces its damage through every other mod's defence (its DanoAnel): not through hers, her
- * steel body (YasPowers.damageFactor) holds against the ring as against anything;</li>
- * <li>as the ring does to the others, her blows go through a ring bearer's defences (ring, suit, shield bubble):
+ * <li>the Lanterns' ring forces its damage through every other mod's defence (its DanoAnel): not through the
+ * heroes' of this mod (all of them, hero()): their own defences hold against the ring as against anything;</li>
+ * <li>as the ring does to the others, every hero's blows go through a ring bearer's defences (ring, suit, shield bubble):
  * what the Lanterns take off is put back, armour can take half of it at most, and against a player of more life
  * than a common one it grows as the ring's does (life / 20 to the 0.6, five times at most).</li>
  * </ul>
@@ -128,10 +128,16 @@ public final class YasImmortal {
         }
     }
 
-    /** The ring's forcing of its damage, taken off Yas (it is noted there by its HIGHEST handler). */
+    /** Any hero of the mod (Yas, Superman, the Hulk, Thor, the Flash, the Scarlet Witch, Storm, Lex in his suit). */
+    public static boolean hero(Player p) {
+        return YasPowers.has(p) || com.flash.power.HeroBalance.isHero(p) || com.flash.scarlet.ScarletPowers.has(p)
+                || com.flash.storm.StormPowers.has(p) || com.flash.lex.LexSuit.active(p);
+    }
+
+    /** The ring's forcing of its damage, taken off the heroes (it is noted there by its HIGHEST handler). */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onRingHit(LivingHurtEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer p) || !YasPowers.has(p)) {
+        if (!(event.getEntity() instanceof ServerPlayer p) || !hero(p)) {
             return;
         }
         lookRing();
@@ -149,12 +155,14 @@ public final class YasImmortal {
         if (e == null && s.getDirectEntity() instanceof Projectile pr) {
             e = pr.getOwner();
         }
-        return e instanceof ServerPlayer p && YasPowers.has(p) ? p : null;
+        return e instanceof ServerPlayer p && hero(p) ? p : null;
     }
 
     private static boolean yasOnRing(LivingEntity victim, DamageSource s) {
-        ServerPlayer yas = yasAttacker(s);
-        return yas != null && yas != victim && !victim.level().isClientSide && ringBearer(victim);
+        ServerPlayer hero = yasAttacker(s);
+        // a ring bearer who is a hero himself is left to HeroBalance
+        return hero != null && hero != victim && !victim.level().isClientSide && ringBearer(victim)
+                && !(victim instanceof Player pv && hero(pv));
     }
 
     /** Through the bubble and whatever else a ring bearer has against a blow. */
