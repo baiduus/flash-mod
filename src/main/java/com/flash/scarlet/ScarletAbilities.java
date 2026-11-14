@@ -660,8 +660,8 @@ public final class ScarletAbilities {
                 continue;
             }
             if (level.getGameTime() < t.back()) {
-                if (t.player() != null && server.getPlayerList().getPlayer(t.player()) instanceof ServerPlayer v
-                        && v.level() == level && v.position().distanceToSqr(t.at()) > 0.04D) {
+                ServerPlayer v = t.player() != null ? server.getPlayerList().getPlayer(t.player()) : null;
+                if (v != null && v.level() == level && v.position().distanceToSqr(t.at()) > 0.04D) {
                     // torn apart, he stays where his pieces are
                     v.teleportTo(level, t.at().x, t.at().y, t.at().z, v.getYRot(), v.getXRot());
                     v.setDeltaMovement(Vec3.ZERO);
