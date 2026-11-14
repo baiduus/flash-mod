@@ -182,8 +182,9 @@ public final class SupermanFx {
     private static void renderFrozen(MultiBufferSource buffers, Matrix4f m, ClientLevel level, Vec3 cam,
                                      Vector3f left, Vector3f up, float partial) {
         VertexConsumer c = null;
-        for (net.minecraft.world.entity.LivingEntity e : ClientEntityIndex.FROZEN) {
-            if (!(e instanceof net.minecraft.world.entity.LivingEntity living) || e.isRemoved() || living.getTicksFrozen() <= 20
+        for (net.minecraft.world.entity.LivingEntity living : ClientEntityIndex.FROZEN) {
+            net.minecraft.world.entity.Entity e = living;
+            if (e.isRemoved() || living.getTicksFrozen() <= 20
                     || e.distanceToSqr(cam) > 48.0D * 48.0D || e.isInvisible() || !e.isAlive()) {
                 continue;
             }
