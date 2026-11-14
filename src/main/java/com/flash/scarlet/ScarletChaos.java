@@ -104,8 +104,8 @@ public final class ScarletChaos {
         p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 100, 1));
         p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 800, 0));
         p.level().broadcastEntityEvent(p, (byte) 35);
-        p.serverLevel().sendParticles(ScarletPowers.RED, p.getX(), p.getY() + 1.0D, p.getZ(), 60, 0.5D, 0.8D, 0.5D,
-                0.1D);
+        ScarletPowers.vfx(p.serverLevel(), p.getId(), com.flash.network.ScarletFxPacket.SAVED, p.position(),
+                p.position(), 1.0F);
         p.displayClientMessage(Component.translatable("message.flash.chaos.revived"), true);
     }
 
@@ -145,13 +145,13 @@ public final class ScarletChaos {
         }
         if (accept && eligible(p)) {
             ScarletPowers.grant(p);
-            level.sendParticles(ScarletPowers.RED, p.getX(), p.getY() + 1.0D, p.getZ(), 120, 0.6D, 1.0D, 0.6D, 0.2D);
-            level.sendParticles(ScarletPowers.energy(), p.getX(), p.getY() + 1.0D, p.getZ(), 60, 0.6D, 1.0D, 0.6D,
-                    0.3D);
+            ScarletPowers.vfx(level, p.getId(), com.flash.network.ScarletFxPacket.GRANT, p.position(), p.position(),
+                    1.0F);
             ScarletPowers.play(level, p.position(), "realidade_onda", SoundEvents.EVOKER_CAST_SPELL, 0.6F);
             p.sendSystemMessage(Component.translatable("message.flash.chaos.accepted"));
         } else {
-            level.sendParticles(ScarletPowers.RED, at.x, at.y + 0.3D, at.z, 40, 0.3D, 0.3D, 0.3D, 0.05D);
+            ScarletPowers.vfx(level, p.getId(), com.flash.network.ScarletFxPacket.REFUSE, at, at.add(0.0D, 0.25D, 0.0D),
+                    1.0F);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.FIRE_EXTINGUISH,
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 0.6F);
             p.displayClientMessage(Component.translatable("message.flash.chaos.refused"), true);

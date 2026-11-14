@@ -68,7 +68,10 @@ public final class ScarletThralls {
         }
         mob.setPersistenceRequired();
         ServerLevel level = owner.serverLevel();
-        level.sendParticles(ScarletPowers.RED, mob.getX(), mob.getEyeY(), mob.getZ(), 20, 0.3D, 0.3D, 0.3D, 0.0D);
+        ScarletPowers.vfx(level, mob.getId(), com.flash.network.ScarletFxPacket.THRALL, mob.getEyePosition(),
+                mob.getEyePosition(), 1.0F);
+        ScarletPowers.vfx(level, owner.getId(), com.flash.network.ScarletFxPacket.LINK, owner.getEyePosition(),
+                mob.getEyePosition(), 1.0F);
     }
 
     public static void puppet(ServerPlayer owner, ServerPlayer victim, int ticks) {
@@ -135,8 +138,8 @@ public final class ScarletThralls {
                 victim.lookAt(EntityAnchorArgument.Anchor.EYES, goal);
             }
             if (victim.tickCount % 5 == 0) {
-                victim.serverLevel().sendParticles(ScarletPowers.RED, victim.getX(), victim.getEyeY() + 0.3D,
-                        victim.getZ(), 4, 0.25D, 0.15D, 0.25D, 0.0D);
+                ScarletPowers.vfx(victim.serverLevel(), victim.getId(), com.flash.network.ScarletFxPacket.PUPPET,
+                        victim.getEyePosition(), victim.getEyePosition(), 1.0F);
             }
         }
     }
@@ -189,8 +192,8 @@ public final class ScarletThralls {
         }
         strike(mob, a);
         if (mob.tickCount % 12 == 0 && mob.level() instanceof ServerLevel level) {
-            level.sendParticles(ScarletPowers.RED, mob.getX(), mob.getEyeY() + 0.2D, mob.getZ(), 2, 0.15D, 0.1D,
-                    0.15D, 0.0D);
+            ScarletPowers.vfx(level, mob.getId(), com.flash.network.ScarletFxPacket.THRALL, mob.getEyePosition(),
+                    mob.getEyePosition(), 1.0F);
         }
     }
 

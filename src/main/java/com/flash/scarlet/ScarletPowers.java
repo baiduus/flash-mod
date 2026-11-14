@@ -126,9 +126,6 @@ public final class ScarletPowers {
         punch(p, sw);
         if (sw) {
             flight(p);
-            if (p.getAbilities().flying && p.tickCount % 2 == 0) {
-                p.serverLevel().sendParticles(RED, p.getX(), p.getY() + 0.9D, p.getZ(), 2, 0.3D, 0.5D, 0.3D, 0.0D);
-            }
         }
         boolean flying = sw && p.getAbilities().flying;
         if (flying != WAS_FLYING.contains(p.getUUID())) {
@@ -228,14 +225,8 @@ public final class ScarletPowers {
         p.hurtMarked = true;
         com.flash.superman.SupermanAbilities.anim(p, "charged_launch9");
         com.flash.superman.SupermanAbilities.groundPuff(level, p.position(), 3.0D, 30);
-        // a ring of red energy and a column of it
-        for (int i = 0; i < 48; i++) {
-            double a = i * Math.PI * 2.0D / 48.0D;
-            level.sendParticles(RED, p.getX() + Math.cos(a) * 2.2D, p.getY() + 0.1D, p.getZ() + Math.sin(a) * 2.2D,
-                    1, 0.0D, 0.0D, 0.0D, 0.0D);
-        }
-        level.sendParticles(energy(), p.getX(), p.getY() + 0.8D, p.getZ(), 50, 0.5D, 0.8D, 0.5D, 0.2D);
-        level.sendParticles(DARK, p.getX(), p.getY() + 0.5D, p.getZ(), 40, 0.6D, 1.2D, 0.6D, 0.0D);
+        // a ring of force on the ground and a column of light (ScarletVfx)
+        vfx(level, p.getId(), com.flash.network.ScarletFxPacket.TAKEOFF, p.position(), p.position(), 1.0F);
         play(level, p.position(), "telecinese_arremesso", SoundEvents.ILLUSIONER_CAST_SPELL, 0.8F);
     }
 
@@ -243,6 +234,13 @@ public final class ScarletPowers {
     public static ParticleOptions energy() {
         var t = ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation("hand_of_god", "telecinese"));
         return t instanceof ParticleOptions o ? o : RED;
+    }
+
+    /** One of her visuals (ScarletVfx) for the players around that spot. */
+    public static void vfx(ServerLevel level, int id, int type, Vec3 a, Vec3 b, float power) {
+        com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.NEAR.with(
+                () -> new net.minecraftforge.network.PacketDistributor.TargetPoint(b.x, b.y, b.z, 96.0D,
+                        level.dimension())), new com.flash.network.ScarletFxPacket(id, type, a, b, power));
     }
 
     public static void play(ServerLevel level, Vec3 at, String hog, SoundEvent fallback, float pitch) {

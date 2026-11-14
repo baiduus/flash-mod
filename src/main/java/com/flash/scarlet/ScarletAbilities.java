@@ -719,8 +719,7 @@ public final class ScarletAbilities {
                     v.setDeltaMovement(Vec3.ZERO);
                 }
                 if (level.getGameTime() % 4 == 0) {
-                    level.sendParticles(ScarletPowers.RED, t.at().x, t.at().y + 0.8D, t.at().z, 3, 0.4D, 0.5D, 0.4D,
-                            0.0D);
+                    ScarletPowers.vfx(level, t.at().hashCode(), ScarletFxPacket.TORN, t.at(), t.at(), 1.0F);
                 }
                 continue;
             }
@@ -748,9 +747,7 @@ public final class ScarletAbilities {
                     level.addFreshEntity(le);
                 }
             }
-            level.sendParticles(ScarletPowers.energy(), t.at().x, t.at().y + 0.9D, t.at().z, 40, 0.4D, 0.6D, 0.4D,
-                    0.05D);
-            level.sendParticles(ScarletPowers.RED, t.at().x, t.at().y + 0.9D, t.at().z, 30, 0.4D, 0.6D, 0.4D, 0.0D);
+            ScarletPowers.vfx(level, t.at().hashCode(), ScarletFxPacket.WHOLE, t.at(), t.at(), 1.0F);
             ScarletPowers.play(level, t.at(), "poeira_volta", SoundEvents.ZOMBIE_VILLAGER_CURE, 1.6F);
         }
     }

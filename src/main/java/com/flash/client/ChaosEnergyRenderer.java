@@ -58,11 +58,6 @@ public class ChaosEnergyRenderer extends EntityRenderer<ChaosEnergy> {
             pose.popPose();
         }
         pose.popPose();
-        if (e.tickCount % 2 == 0 && e.level().random.nextInt(2) == 0) {
-            double a = e.level().random.nextDouble() * Math.PI * 2.0D;
-            e.level().addParticle(RED, e.getX() + Math.cos(a) * 0.5D, e.getY() + 0.25D, e.getZ() + Math.sin(a) * 0.5D,
-                    0.0D, 0.03D, 0.0D);
-        }
         super.render(e, yaw, partial, pose, buffers, light);
     }
 

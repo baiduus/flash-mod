@@ -302,88 +302,17 @@ public final class ScarletClient {
         if (level == null) {
             return;
         }
-        CASTING.put(p.caster(), level.getGameTime() + 30L);
-        Vec3 a = p.from();
+        if (p.type() <= ScarletFxPacket.LINK) {
+            // she cast it: her aura for a moment
+            CASTING.put(p.caster(), level.getGameTime() + 30L);
+        }
         Vec3 b = p.to();
-        switch (p.type()) {
-            case ScarletFxPacket.BOLT, ScarletFxPacket.BEAM, ScarletFxPacket.LINK, ScarletFxPacket.BLAST -> {
-                line(level, a, b, p.type());
-                if (p.type() == ScarletFxPacket.BLAST) {
-                    sphere(level, b, p.power());
-                } else if (p.type() == ScarletFxPacket.BOLT) {
-                    sphere(level, b, 0.8F);
-                }
-            }
-            case ScarletFxPacket.WAVE -> wave(level, a, p.power());
-            case ScarletFxPacket.HEAL -> {
-                for (int i = 0; i < 50; i++) {
-                    double ang = i * 0.5D;
-                    double h = i / 50.0D * Math.max(1.0D, p.power());
-                    level.addParticle(RED, b.x + Math.cos(ang) * 0.7D, b.y + h, b.z + Math.sin(ang) * 0.7D, 0.0D,
-                            0.02D, 0.0D);
-                    level.addParticle(ParticleTypes.HEART, b.x + (RND.nextDouble() - 0.5D), b.y + h,
-                            b.z + (RND.nextDouble() - 0.5D), 0.0D, 0.05D, 0.0D);
-                }
-                line(level, a, b.add(0.0D, 1.0D, 0.0D), ScarletFxPacket.LINK);
-            }
-            case ScarletFxPacket.RAISE -> {
-                for (int i = 0; i < 80; i++) {
-                    double ang = RND.nextDouble() * Math.PI * 2.0D;
-                    double r = RND.nextDouble() * 1.2D;
-                    level.addParticle(i % 2 == 0 ? DARK : ParticleTypes.SOUL, b.x + Math.cos(ang) * r,
-                            b.y + RND.nextDouble() * 0.3D, b.z + Math.sin(ang) * r, 0.0D, 0.08D + RND.nextDouble() * 0.15D,
-                            0.0D);
-                    level.addParticle(energy(), b.x, b.y + RND.nextDouble() * Math.max(1.0D, p.power()), b.z,
-                            (RND.nextDouble() - 0.5D) * 0.2D, 0.05D, (RND.nextDouble() - 0.5D) * 0.2D);
-                }
-            }
-            case ScarletFxPacket.REVIVE -> ScarletReviveFx.start(b, p.caster());
-            default -> {
-            }
+        if (p.type() == ScarletFxPacket.REVIVE) {
+            ScarletReviveFx.start(b, p.caster());
+        } else {
+            // every other one is drawn in light (ScarletVfx)
+            ScarletVfx.spawn(p);
         }
-    }
-
-    private static void line(ClientLevel level, Vec3 a, Vec3 b, int type) {
-        Vec3 d = b.subtract(a);
-        double len = d.length();
-        int n = (int) Math.min(240, len * (type == ScarletFxPacket.BEAM ? 3.0D : 4.0D));
-        for (int i = 0; i <= n; i++) {
-            double t = n == 0 ? 0.0D : (double) i / n;
-            // a little hex twist around the line
-            double wob = type == ScarletFxPacket.LINK ? 0.0D : 0.15D;
-            Vec3 at = a.add(d.scale(t)).add((RND.nextDouble() - 0.5D) * wob, (RND.nextDouble() - 0.5D) * wob,
-                    (RND.nextDouble() - 0.5D) * wob);
-            level.addParticle(type == ScarletFxPacket.LINK ? DARK : RED, at.x, at.y, at.z, 0.0D, 0.0D, 0.0D);
-            if (i % 3 == 0 && type != ScarletFxPacket.LINK) {
-                level.addParticle(energy(), at.x, at.y, at.z, 0.0D, 0.0D, 0.0D);
-            }
-        }
-    }
-
-    private static void sphere(ClientLevel level, Vec3 c, float radius) {
-        int n = (int) (40 + radius * 30);
-        for (int i = 0; i < n; i++) {
-            double u = RND.nextDouble() * 2.0D - 1.0D;
-            double ang = RND.nextDouble() * Math.PI * 2.0D;
-            double s = Math.sqrt(1.0D - u * u);
-            Vec3 dir = new Vec3(s * Math.cos(ang), u, s * Math.sin(ang));
-            double v = 0.1D + radius * 0.08D;
-            level.addParticle(i % 3 == 0 ? energy() : RED, c.x, c.y, c.z, dir.x * v, dir.y * v, dir.z * v);
-        }
-        level.addParticle(ParticleTypes.FLASH, c.x, c.y, c.z, 0.0D, 0.0D, 0.0D);
-    }
-
-    private static void wave(ClientLevel level, Vec3 c, float radius) {
-        for (int ring = 1; ring <= 4; ring++) {
-            double r = radius * ring / 4.0D;
-            int n = (int) (r * 10);
-            for (int i = 0; i < n; i++) {
-                double ang = i * Math.PI * 2.0D / n;
-                level.addParticle(ring % 2 == 0 ? RED : energy(), c.x + Math.cos(ang) * r * 0.25D, c.y + 0.3D,
-                        c.z + Math.sin(ang) * r * 0.25D, Math.cos(ang) * r * 0.06D, 0.01D, Math.sin(ang) * r * 0.06D);
-            }
-        }
-        level.addParticle(ParticleTypes.FLASH, c.x, c.y + 1.0D, c.z, 0.0D, 0.0D, 0.0D);
     }
 
     @SubscribeEvent
@@ -394,16 +323,5 @@ public final class ScarletClient {
         }
         long now = mc.level.getGameTime();
         CASTING.values().removeIf(t -> t < now);
-        // the red mist around her hands while she flies or casts
-        for (Player p : mc.level.players()) {
-            if (aura(p) && now % 2 == 0 && !p.isInvisible()) {
-                double yaw = Math.toRadians(p.yBodyRot);
-                for (int side = -1; side <= 1; side += 2) {
-                    double hx = p.getX() - Math.cos(yaw) * 0.38D * side;
-                    double hz = p.getZ() - Math.sin(yaw) * 0.38D * side;
-                    mc.level.addParticle(RED, hx, p.getY() + (flying(p) ? 1.3D : 0.8D), hz, 0.0D, 0.01D, 0.0D);
-                }
-            }
-        }
     }
 }

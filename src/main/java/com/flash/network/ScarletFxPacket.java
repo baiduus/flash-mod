@@ -16,6 +16,22 @@ public record ScarletFxPacket(int caster, int type, Vec3 from, Vec3 to, float po
     public static final int LINK = 6;
     /** A player raised from the dead appearing (ScarletReviveFx). */
     public static final int REVIVE = 7;
+    /** Her taking off (a ring of force on the ground and a column of light). */
+    public static final int TAKEOFF = 8;
+    /** The Chaos power accepted. */
+    public static final int GRANT = 9;
+    /** Chaos saving her from death. */
+    public static final int SAVED = 10;
+    /** A creature serving her (caster = the creature: a halo over its head, renewed while it serves). */
+    public static final int THRALL = 11;
+    /** A player as her puppet (caster = him: the halo and the strings). */
+    public static final int PUPPET = 12;
+    /** Torn apart (at a, renewed while it lasts). */
+    public static final int TORN = 13;
+    /** Whole again (at a). */
+    public static final int WHOLE = 14;
+    /** The Chaos power refused (at b). */
+    public static final int REFUSE = 15;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeVarInt(this.caster);
