@@ -155,6 +155,7 @@ public final class YasClient {
             case YasFxPacket.ASCEND_END -> {
                 if (e != null) {
                     burst(mc.level, e, true);
+                    TranscendVfx.end(e.position(), true, now);
                 }
                 if (mc.player != null && p.entity() == mc.player.getId()) {
                     flashStart = now;
@@ -164,6 +165,7 @@ public final class YasClient {
             case YasFxPacket.DOOM_END -> {
                 if (e != null) {
                     burst(mc.level, e, false);
+                    TranscendVfx.end(e.position(), false, now);
                 }
             }
             default -> {
@@ -173,7 +175,7 @@ public final class YasClient {
 
     private static void burst(ClientLevel level, Entity e, boolean light) {
         Random r = new Random();
-        for (int i = 0; i < 80; i++) {
+        for (int i = 0; i < 40; i++) {
             double a = r.nextDouble() * Math.PI * 2.0D;
             double v = 0.1D + r.nextDouble() * 0.4D;
             double vy = (r.nextDouble() - 0.3D) * 0.4D;
@@ -208,7 +210,10 @@ public final class YasClient {
                 continue;
             }
             boolean ascend = f.kind() == YasFxPacket.ASCEND;
-            for (int i = 0; i < 3; i++) {
+            if (ascend && now - f.start() == f.ticks() / 2) {
+                TranscendVfx.beamLands(e.position());
+            }
+            for (int i = 0; i < 2; i++) {
                 double a = r.nextDouble() * Math.PI * 2.0D;
                 double rad = 0.6D + r.nextDouble() * 0.6D;
                 if (ascend) {
@@ -237,7 +242,7 @@ public final class YasClient {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || FX.isEmpty()) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || FX.isEmpty() && !TranscendVfx.busy()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -247,13 +252,14 @@ public final class YasClient {
         }
         float partial = event.getPartialTick();
         float time = level.getGameTime() + partial;
-        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
         PoseStack pose = event.getPoseStack();
-        Vec3 cam = event.getCamera().getPosition();
+        var camera = event.getCamera();
+        Vec3 cam = camera.getPosition();
         pose.pushPose();
         pose.translate(-cam.x, -cam.y, -cam.z);
         Matrix4f m = pose.last().pose();
-        VertexConsumer glow = buffers.getBuffer(RenderType.lightning());
+        // the light (TranscendVfx)
+        var buf = TranscendVfx.begin();
         for (Fx f : FX) {
             Entity e = level.getEntity(f.entity());
             if (e == null) {
@@ -262,60 +268,37 @@ public final class YasClient {
             float age = time - f.start();
             Vec3 at = e.getPosition(partial);
             if (f.kind() == YasFxPacket.ASCEND) {
-                ascend(glow, m, cam, at, age, f.ticks());
+                TranscendVfx.ascend(buf, m, camera, at, age, f.ticks(), e.getId());
             } else {
-                doomGlow(glow, m, cam, level, f, e, at, age, partial);
+                Vec3 chest = at.add(0.0D, e.getBbHeight() * 0.6D, 0.0D);
+                TranscendVfx.doom(buf, m, camera, at, chest, eyeOf(level, f, at, partial), age, f.ticks(), e.getId());
             }
         }
-        buffers.endBatch(RenderType.lightning());
-        // the black parts: drawn dark over the world (not added as light)
-        VertexConsumer dark = buffers.getBuffer(RenderType.entityTranslucent(WHITE));
+        TranscendVfx.ends(buf, m, camera, time);
+        TranscendVfx.finish(buf);
+        // the black parts of the doom: drawn dark over the world (not added as light)
+        boolean doom = false;
         for (Fx f : FX) {
-            Entity e = level.getEntity(f.entity());
-            if (e == null || f.kind() != YasFxPacket.DOOM) {
-                continue;
+            doom |= f.kind() == YasFxPacket.DOOM;
+        }
+        if (doom) {
+            MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+            VertexConsumer dark = buffers.getBuffer(RenderType.entityTranslucent(WHITE));
+            for (Fx f : FX) {
+                Entity e = level.getEntity(f.entity());
+                if (e == null || f.kind() != YasFxPacket.DOOM) {
+                    continue;
+                }
+                doomDark(dark, m, cam, level, f, e, e.getPosition(partial), time - f.start(), partial);
             }
-            doomDark(dark, m, cam, level, f, e, e.getPosition(partial), time - f.start(), partial);
+            buffers.endBatch(RenderType.entityTranslucent(WHITE));
         }
-        buffers.endBatch(RenderType.entityTranslucent(WHITE));
         pose.popPose();
-    }
-
-    private static void ascend(VertexConsumer c, Matrix4f m, Vec3 cam, Vec3 at, float age, int ticks) {
-        float k = Math.min(1.0F, age / ticks);
-        Random r = new Random((long) (age / 2.0F) * 7919L + (long) (at.x * 13.0D));
-        int bolts = 3 + (int) (k * 9.0F);
-        for (int i = 0; i < bolts; i++) {
-            double a0 = r.nextDouble() * Math.PI * 2.0D;
-            double a1 = a0 + (r.nextDouble() - 0.5D) * 2.2D;
-            double rad = 0.45D + r.nextDouble() * 0.5D + k * 0.4D;
-            Vec3 from = at.add(Math.cos(a0) * rad, r.nextDouble() * 2.0D, Math.sin(a0) * rad);
-            Vec3 to = at.add(Math.cos(a1) * rad * 0.8D, r.nextDouble() * 2.0D, Math.sin(a1) * rad * 0.8D);
-            bolt(c, m, cam, r, from, to, 0.035F + k * 0.02F, PALE_YELLOW, 0.9F);
-        }
-        if (age >= ticks * 0.5F) {
-            // the white beam through the middle of the body
-            float in = Math.min(1.0F, (age - ticks * 0.5F) / 10.0F);
-            float pulse = 0.85F + 0.15F * (float) Math.sin(age * 0.9F);
-            Vec3 top = at.add(0.0D, 90.0D, 0.0D);
-            Vec3 bottom = at.add(0.0D, -8.0D, 0.0D);
-            LexFx.beam(c, m, cam, top, bottom, 0.55F * in * pulse, WHITE_C, in);
-            LexFx.beam(c, m, cam, top, bottom, 1.6F * in, PALE_YELLOW, 0.25F * in);
-        }
     }
 
     private static Vec3 eyeOf(ClientLevel level, Fx f, Vec3 fallback, float partial) {
         Entity g = f.source() >= 0 ? level.getEntity(f.source()) : null;
         return g != null ? g.getEyePosition(partial) : fallback.add(0.0D, 12.0D, 0.0D);
-    }
-
-    /** The violet edge of the black beam and of the black lightning (light). */
-    private static void doomGlow(VertexConsumer c, Matrix4f m, Vec3 cam, ClientLevel level, Fx f, Entity e, Vec3 at,
-                                 float age, float partial) {
-        Vec3 chest = at.add(0.0D, e.getBbHeight() * 0.6D, 0.0D);
-        Vec3 eye = eyeOf(level, f, at, partial);
-        float in = Math.min(1.0F, age / 6.0F);
-        LexFx.beam(c, m, cam, eye, chest, 0.5F * in, new float[] {0.45F, 0.0F, 0.7F}, 0.35F);
     }
 
     /** The black beam and the black lightning (drawn dark). */
