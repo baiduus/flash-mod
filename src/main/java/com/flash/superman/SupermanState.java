@@ -33,12 +33,18 @@ public final class SupermanState {
         return player.level().isClientSide ? CLIENT.containsKey(player.getUUID()) : SupermanPowers.has(player);
     }
 
+    /** His powers work, suit or no suit (see SupermanPowers.isSuperman). */
     public static boolean isSuperman(Player player) {
+        return has(player);
+    }
+
+    /** Wearing the suit (only the looks depend on it). */
+    public static boolean suited(Player player) {
         if (player.level().isClientSide) {
             Integer f = CLIENT.get(player.getUUID());
             return f != null && (f & FORM_BIT) != 0;
         }
-        return SupermanPowers.isSuperman(player);
+        return SupermanPowers.suited(player);
     }
 
     public static boolean flag(Player player, int flag) {

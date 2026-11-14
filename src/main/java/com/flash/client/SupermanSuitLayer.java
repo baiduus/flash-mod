@@ -82,7 +82,7 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         if (com.flash.thor.ThorState.isThor(player)) {
             return com.flash.thor.ThorSuits.id(com.flash.thor.ThorState.suit(player));
         }
-        if (!SupermanState.isSuperman(player)) {
+        if (!SupermanState.suited(player)) {
             return null;
         }
         return SupermanSuits.id(SupermanState.suit(player));

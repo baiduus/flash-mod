@@ -64,7 +64,7 @@ public class FlashSuitStand extends ArmorStand {
         if (com.flash.thor.ThorPowers.isThor(player)) {
             return com.flash.thor.ThorSuits.id(com.flash.thor.ThorPowers.suit(player));
         }
-        if (com.flash.superman.SupermanPowers.isSuperman(player)) {
+        if (com.flash.superman.SupermanPowers.suited(player)) {
             return com.flash.superman.SupermanSuits.id(com.flash.superman.SupermanPowers.suit(player));
         }
         return null;

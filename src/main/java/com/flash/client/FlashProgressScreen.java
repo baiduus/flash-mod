@@ -306,7 +306,7 @@ public class FlashProgressScreen extends Screen {
         boolean hulkPower = PowerTheme.localHulk();
         boolean hulkForm = hulkPower && com.flash.hulk.HulkState.isTransformed(Minecraft.getInstance().player);
         boolean superPower = PowerTheme.localSuperman();
-        boolean superForm = superPower && com.flash.superman.SupermanState.isSuperman(Minecraft.getInstance().player);
+        boolean superForm = superPower && com.flash.superman.SupermanState.suited(Minecraft.getInstance().player);
         boolean thorPower = PowerTheme.localThor();
         boolean thorForm = thorPower && com.flash.thor.ThorState.isThor(Minecraft.getInstance().player);
         boolean yasPower = PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localStorm();
@@ -620,7 +620,7 @@ public class FlashProgressScreen extends Screen {
     private void drawSupermanTab(GuiGraphics g, int mx, int my) {
         Minecraft mc = Minecraft.getInstance();
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
-        boolean form = mc.player != null && com.flash.superman.SupermanState.isSuperman(mc.player);
+        boolean form = mc.player != null && com.flash.superman.SupermanState.suited(mc.player);
         int level = Math.max(1, com.flash.superman.SupermanState.level());
         float xp = Math.max(0.0F, Math.min(1.0F, com.flash.superman.SupermanState.xp()
                 / com.flash.superman.SupermanPowers.MAX_XP));

@@ -96,8 +96,16 @@ public final class SupermanPowers {
         return player.getPersistentData().contains(KEY);
     }
 
-    /** True in the Superman form (false = Clark Kent). */
+    /**
+     * His powers work (all of them: flight, abilities, resistance, regeneration) whether he wears the suit or not:
+     * true whenever he has the power. Only the suit changes with the form (suited).
+     */
     public static boolean isSuperman(Player player) {
+        return has(player);
+    }
+
+    /** Wearing the suit (the Superman form; false = Clark Kent's clothes). Only the looks depend on it. */
+    public static boolean suited(Player player) {
         return has(player) && tag(player).getBoolean(FORM);
     }
 
@@ -164,7 +172,7 @@ public final class SupermanPowers {
                 tag.remove(TEMP_UNTIL);
                 save(player, tag);
             }
-            if (!isSuperman(player)) {
+            if (!suited(player)) {
                 setForm(player, true);
             } else {
                 sync(player);
@@ -249,7 +257,7 @@ public final class SupermanPowers {
 
     public static boolean grant(ServerPlayer player, boolean transform) {
         if (has(player)) {
-            if (transform && !isSuperman(player)) {
+            if (transform && !suited(player)) {
                 setForm(player, true);
             }
             return false;
@@ -312,18 +320,16 @@ public final class SupermanPowers {
             player.displayClientMessage(Component.translatable("message.flash.superman_none"), true);
             return;
         }
-        setForm(player, !isSuperman(player));
+        setForm(player, !suited(player));
     }
 
+    /** Puts the suit on or takes it off: only the looks change, his powers stay as they are. */
     public static void setForm(ServerPlayer player, boolean superman) {
-        SupermanAbilities.stopAll(player);
         CompoundTag tag = tag(player).copy();
         tag.putBoolean(FORM, superman);
-        tag.putInt(FLAGS, superman ? tag.getInt(FLAGS) & ~TRANSIENT & ~F_SPEED & ~F_SLOW : 0);
         save(player, tag);
+        applyAttributes(player);
         if (superman) {
-            applyAttributes(player);
-            player.setHealth(player.getMaxHealth());
             if (player.level() instanceof ServerLevel level) {
                 level.sendParticles(com.flash.registry.ModParticles.SM_SPARKLE.get(), player.getX(),
                         player.getY() + 1.0D, player.getZ(), 40, 0.5D, 1.0D, 0.5D, 0.1D);
@@ -339,8 +345,6 @@ public final class SupermanPowers {
                     com.flash.registry.ModSounds.CLARK_REVEAL.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             player.displayClientMessage(Component.translatable("message.flash.superman_form"), true);
         } else {
-            stopFlight(player);
-            removeAttributes(player);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                     com.flash.registry.ModSounds.CLARK_SPIN.get(), SoundSource.PLAYERS, 0.8F, 1.0F);
             player.displayClientMessage(Component.translatable("message.flash.superman_clark"), true);
