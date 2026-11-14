@@ -428,8 +428,12 @@ public final class ScarletAbilities {
                 }
             } else {
                 ServerPlayer dead = p.server.getPlayerList().getPlayer(d.player());
-                if (dead != null && dead.isDeadOrDying() && !dead.isRemoved() && dead.getHealth() <= 0.0F) {
+                // dead and still on the death screen (his body leaves the world a second after he falls)
+                if (dead != null && dead != p && dead.getHealth() <= 0.0F) {
                     ServerPlayer back = p.server.getPlayerList().respawn(dead, false);
+                    com.flash.network.FlashNetwork.CHANNEL.send(
+                            net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> back),
+                            new com.flash.network.ScarletRaisedPacket(0));
                     back.teleportTo(level, d.at().x, d.at().y, d.at().z, back.getYRot(), back.getXRot());
                     back.setHealth(back.getMaxHealth());
                     back.displayClientMessage(Component.translatable("message.flash.scarlet_raised",
@@ -624,6 +628,14 @@ public final class ScarletAbilities {
         victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 255, false, false));
         TORN.add(new Torn(victim.level().dimension(), null, victim.position(), victim.level().getGameTime() + 100L,
                 victim.getUUID()));
+        torn(victim, 100);
+    }
+
+    /** Tells the players around (and him) that he is torn apart (ticks) or whole again (0). */
+    private static void torn(ServerPlayer victim, int ticks) {
+        com.flash.network.FlashNetwork.CHANNEL.send(
+                net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> victim),
+                new com.flash.network.ScarletTornPacket(victim.getId(), ticks));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -648,6 +660,12 @@ public final class ScarletAbilities {
                 continue;
             }
             if (level.getGameTime() < t.back()) {
+                if (t.player() != null && server.getPlayerList().getPlayer(t.player()) instanceof ServerPlayer v
+                        && v.level() == level && v.position().distanceToSqr(t.at()) > 0.04D) {
+                    // torn apart, he stays where his pieces are
+                    v.teleportTo(level, t.at().x, t.at().y, t.at().z, v.getYRot(), v.getXRot());
+                    v.setDeltaMovement(Vec3.ZERO);
+                }
                 if (level.getGameTime() % 4 == 0) {
                     level.sendParticles(ScarletPowers.RED, t.at().x, t.at().y + 0.8D, t.at().z, 3, 0.4D, 0.5D, 0.4D,
                             0.0D);
@@ -664,6 +682,7 @@ public final class ScarletAbilities {
                     v.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
                     v.removeEffect(MobEffects.BLINDNESS);
                     v.removeEffect(MobEffects.WEAKNESS);
+                    torn(v, 0);
                 }
             } else {
                 Entity made = EntityType.loadEntityRecursive(t.tag(), level, e -> {

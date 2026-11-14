@@ -7,6 +7,9 @@
     "LevelChunkGuardMixin",
     "HandOfGodBossMixin"
   ],
+  "client": [
+    "PedacosMixin"
+  ],
   "injectors": {
     "defaultRequire": 0
   }
