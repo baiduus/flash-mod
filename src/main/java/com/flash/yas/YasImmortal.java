@@ -173,6 +173,32 @@ public final class YasImmortal {
         }
     }
 
+    /** The Lanterns' punch with the suit on (1 + the ring's strength of 10): the top of their common blows. */
+    private static final float LANTERN_PUNCH = 11.0F;
+
+    /**
+     * A hero's blow on the Lanterns' scale: up to a Lantern's punch as it is, above it growing as the square root
+     * (Superman's 44 becomes 22, two Lantern punches; a 445 of a hero's strongest blow, 70 as the Lanterns'
+     * heaviest weapon), so every hero hits as hard as a ring does, the stronger still stronger.
+     */
+    public static float lanternScale(float amount) {
+        return amount <= LANTERN_PUNCH ? amount : LANTERN_PUNCH * (float) Math.sqrt(amount / LANTERN_PUNCH);
+    }
+
+    /**
+     * Every hero's damage on the Lanterns' scale (lanternScale), on anything; against a ring bearer below
+     * (onHurtRingFirst), and between heroes HeroBalance sets it as before.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onHeroBlow(LivingHurtEvent event) {
+        LivingEntity victim = event.getEntity();
+        if (victim.level().isClientSide || yasAttacker(event.getSource()) == null
+                || victim instanceof Player pv && (hero(pv) || ringBearer(pv))) {
+            return;
+        }
+        event.setAmount(lanternScale(event.getAmount()));
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onHurtRingFirst(LivingHurtEvent event) {
         LivingEntity victim = event.getEntity();
@@ -180,7 +206,7 @@ public final class YasImmortal {
         if (yasOnRing(victim, event.getSource())) {
             double life = victim.getMaxHealth();
             float mult = life <= 20.0D ? 1.0F : (float) Math.min(5.0D, Math.pow(life / 20.0D, 0.6D));
-            float v = event.getAmount() * mult;
+            float v = lanternScale(event.getAmount()) * mult;
             event.setAmount(v);
             RAW.put(victim.getId(), v);
         }
