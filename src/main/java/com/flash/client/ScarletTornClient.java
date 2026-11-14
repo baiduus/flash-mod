@@ -38,8 +38,12 @@ public final class ScarletTornClient {
         }
     }
 
+    /** Raised by the Scarlet Witch: respawns as the death screen's button does (the server puts him back). */
     public static void raised() {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.isDeadOrDying()) {
+            mc.player.respawn();
+        }
         if (mc.screen instanceof DeathScreen) {
             mc.setScreen(null);
         }

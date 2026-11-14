@@ -430,14 +430,13 @@ public final class ScarletAbilities {
                 ServerPlayer dead = p.server.getPlayerList().getPlayer(d.player());
                 // dead and still on the death screen (his body leaves the world a second after he falls)
                 if (dead != null && dead != p && dead.getHealth() <= 0.0F) {
-                    ServerPlayer back = p.server.getPlayerList().respawn(dead, false);
+                    // his own game respawns him (as the button would: no body left apart from him), and the
+                    // respawn puts him back where he fell (onRespawn)
+                    RAISING.put(dead.getUUID(), new Raising(level.dimension(), d.at(), p.getDisplayName(),
+                            level.getGameTime() + 600L));
                     com.flash.network.FlashNetwork.CHANNEL.send(
-                            net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> back),
+                            net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> dead),
                             new com.flash.network.ScarletRaisedPacket(0));
-                    back.teleportTo(level, d.at().x, d.at().y, d.at().z, back.getYRot(), back.getXRot());
-                    back.setHealth(back.getMaxHealth());
-                    back.displayClientMessage(Component.translatable("message.flash.scarlet_raised",
-                            p.getDisplayName()), false);
                     fx(p, ScarletFxPacket.RAISE, d.at(), d.at(), 1.8F);
                     it.remove();
                     count++;
@@ -448,6 +447,50 @@ public final class ScarletAbilities {
         fx(p, ScarletFxPacket.WAVE, center, center, 6.0F);
         p.displayClientMessage(Component.translatable(count > 0 ? "message.flash.scarlet_raise"
                 : "message.flash.scarlet_raise_none", count), true);
+    }
+
+    private record Raising(ResourceKey<Level> dim, Vec3 at, Component by, long until) {
+    }
+
+    /** Players the Scarlet Witch is raising: on their respawn, back where they fell. */
+    private static final Map<UUID, Raising> RAISING = new HashMap<>();
+    /** Raised players to put in place a couple of ticks after the respawn (game time due). */
+    private static final Map<UUID, Long> PLACE = new HashMap<>();
+
+    @SubscribeEvent
+    public static void onRespawn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent event) {
+        if (!event.isEndConquered() && event.getEntity() instanceof ServerPlayer back
+                && RAISING.containsKey(back.getUUID())) {
+            PLACE.put(back.getUUID(), back.serverLevel().getGameTime() + 2L);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRaiseTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || RAISING.isEmpty() && PLACE.isEmpty()) {
+            return;
+        }
+        net.minecraft.server.MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return;
+        }
+        long now = server.overworld().getGameTime();
+        PLACE.entrySet().removeIf(en -> {
+            if (now < en.getValue()) {
+                return false;
+            }
+            Raising r = RAISING.remove(en.getKey());
+            ServerPlayer back = server.getPlayerList().getPlayer(en.getKey());
+            ServerLevel to = r != null ? server.getLevel(r.dim()) : null;
+            if (back != null && to != null && back.isAlive()) {
+                back.teleportTo(to, r.at().x, r.at().y, r.at().z, back.getYRot(), back.getXRot());
+                back.setHealth(back.getMaxHealth());
+                back.fallDistance = 0.0F;
+                back.displayClientMessage(Component.translatable("message.flash.scarlet_raised", r.by()), false);
+            }
+            return true;
+        });
+        RAISING.entrySet().removeIf(en -> now > en.getValue().until() && !PLACE.containsKey(en.getKey()));
     }
 
     // ------------------------------------------------------------------
