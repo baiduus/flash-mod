@@ -375,9 +375,21 @@ public class TransformationChamberBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
+    /** The transformation's light for the players around (MachineVfx). */
+    private static void fx(ServerLevel level, BlockPos pos, BlockState state, int stage, int progress) {
+        Vec3 c = cabinCenter(pos, state);
+        com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.NEAR.with(
+                () -> new net.minecraftforge.network.PacketDistributor.TargetPoint(c.x, c.y, c.z, 128.0D,
+                        level.dimension())), new com.flash.network.MachineFxPacket(c.x, c.y, c.z,
+                pos.getY() + TransformationChamberBlock.MODEL_HEIGHT, stage, progress));
+    }
+
     private void tickSequence(ServerLevel level, BlockPos pos, BlockState state) {
         this.progress++;
         Vec3 center = cabinCenter(pos, state);
+        if (this.progress == 1 || this.progress % 20 == 0) {
+            fx(level, pos, state, com.flash.network.MachineFxPacket.RUNNING, this.progress);
+        }
 
         if (this.progress % 4 == 0) {
             TransformationSequence.spawnAmbientParticles(level, center, this.progress);
@@ -389,6 +401,7 @@ public class TransformationChamberBlockEntity extends BlockEntity {
             ServerPlayer occupant = this.getOccupantPlayer(level);
             if (occupant != null) {
                 TransformationSequence.strikeLightning(level, occupant);
+                fx(level, pos, state, com.flash.network.MachineFxPacket.STRIKE, this.progress);
                 this.lightningApplied = true;
                 this.setChanged();
             }
@@ -418,8 +431,10 @@ public class TransformationChamberBlockEntity extends BlockEntity {
             player.displayClientMessage(Component.translatable("message.flash.start_level"), false);
             container.consumePotions();
             TransformationSequence.spawnFinishParticles(level, center);
+            fx(level, pos, state, com.flash.network.MachineFxPacket.DONE, this.progress);
             TransformationSequence.playFinishSound(level, pos);
         } else {
+            fx(level, pos, state, com.flash.network.MachineFxPacket.STOP, this.progress);
             notifyNearby(level, pos, Component.translatable("message.flash.transformation_failed"));
         }
 
@@ -535,6 +550,9 @@ public class TransformationChamberBlockEntity extends BlockEntity {
     }
 
     private void abort(ServerLevel level, BlockPos pos, BlockState state, boolean resetState) {
+        if (this.active && state.getBlock() instanceof TransformationChamberBlock) {
+            fx(level, pos, state, com.flash.network.MachineFxPacket.STOP, this.progress);
+        }
         this.restoreWeather(level);
         this.active = false;
         this.progress = 0;

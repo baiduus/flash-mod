@@ -59,7 +59,7 @@ public final class TransformationSequence {
         double y = center.y;
         double z = center.z;
 
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 8, 0.45D, 0.55D, 0.45D, 0.02D);
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 3, 0.45D, 0.55D, 0.45D, 0.02D);
         if (progress % 10 == 0) {
             level.sendParticles(ParticleTypes.END_ROD, x, y + 0.4D, z, 3, 0.35D, 0.45D, 0.35D, 0.01D);
         }
