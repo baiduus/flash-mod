@@ -97,10 +97,6 @@ public final class StormPowers {
         }
         if (st) {
             flight(p);
-            if (p.getAbilities().flying && p.tickCount % 2 == 0) {
-                p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.2D, p.getZ(), 1, 0.25D, 0.1D,
-                        0.25D, 0.01D);
-            }
         }
         boolean flying = st && p.getAbilities().flying;
         if (flying != WAS_FLYING.contains(p.getUUID())) {
@@ -172,7 +168,8 @@ public final class StormPowers {
         p.hurtMarked = true;
         com.flash.superman.SupermanAbilities.anim(p, "charged_launch9");
         com.flash.superman.SupermanAbilities.groundPuff(level, p.position(), 3.5D, 40);
-        level.sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.3D, p.getZ(), 60, 1.2D, 0.2D, 1.2D, 0.25D);
+        level.sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.3D, p.getZ(), 20, 1.2D, 0.2D, 1.2D, 0.25D);
+        StormAbilities.fx(p, com.flash.network.StormFxPacket.TAKEOFF, p.position(), p.position(), 1.0F);
         StormAbilities.fx(p, com.flash.network.StormFxPacket.ARC, p.position().add(0.0D, 1.0D, 0.0D),
                 p.position().add(0.0D, -0.1D, 0.0D), 1.0F);
         level.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.8F, 1.6F);

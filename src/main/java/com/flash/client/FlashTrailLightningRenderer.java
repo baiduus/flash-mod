@@ -100,8 +100,42 @@ public final class FlashTrailLightningRenderer {
         }
 
         FlashLightningRibbon.blue = false;
-        poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
+        // the light under the lightning (FlashVfx): a soft glow along the middle stream, a flare at the runner
+        var buf = VfxDraw.begin();
+        try {
+            for (FlashTrailTracker.TrailState state : FlashTrailTracker.states()) {
+                float[] c = FlashVfx.color(state.negative, state.v9);
+                FlashTrailTracker.TrailStream main = null;
+                for (FlashTrailTracker.TrailStream stream : state.streams) {
+                    if (main == null || stream.points.size() > main.points.size()) {
+                        main = stream;
+                    }
+                }
+                if (main == null || main.points.size() < 2) {
+                    continue;
+                }
+                List<FlashTrailTracker.TrailPoint> points = clipToPlayer(level, state, new ArrayList<>(main.points),
+                        event.getPartialTick());
+                for (int i = 1; i < points.size(); i++) {
+                    FlashTrailTracker.TrailPoint older = points.get(i - 1);
+                    float fade = Mth.clamp(1.0F - (now - older.createdAt()) / FlashTrailTracker.LIFETIME_TICKS, 0.0F,
+                            1.0F);
+                    if (fade > 0.01F) {
+                        FlashVfx.trail(buf, matrix, older.base().add(0.0D, 1.0D, 0.0D),
+                                points.get(i).base().add(0.0D, 1.0D, 0.0D), fade, c);
+                    }
+                }
+                net.minecraft.world.entity.player.Player runner = level.getPlayerByUUID(state.id);
+                if (runner != null && !(runner == minecraft.player && minecraft.options.getCameraType().isFirstPerson())
+                        && now - points.get(points.size() - 1).createdAt() < 3.0F) {
+                    FlashVfx.runner(buf, matrix, runner, event.getPartialTick(), camera, c, now);
+                }
+            }
+        } finally {
+            VfxDraw.end(buf);
+        }
+        poseStack.popPose();
     }
 
     /**

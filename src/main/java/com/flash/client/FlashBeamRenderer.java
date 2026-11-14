@@ -81,8 +81,21 @@ public final class FlashBeamRenderer {
             renderBeam(consumer, matrix, cameraPos, beam, now, fade);
         }
 
-        poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
+        // the light along the beams (FlashVfx)
+        if (!BEAMS.isEmpty()) {
+            var buf = VfxDraw.begin();
+            try {
+                for (Beam beam : BEAMS) {
+                    float fade = Mth.clamp(1.0F - (now - beam.createdAt) / beam.duration, 0.0F, 1.0F);
+                    FlashVfx.beam(buf, matrix, beam.start, beam.end, beam.width, fade, now, camera,
+                            FlashVfx.color(beam.negative, beam.v9));
+                }
+            } finally {
+                VfxDraw.end(buf);
+            }
+        }
+        poseStack.popPose();
     }
 
     private static void renderBeam(VertexConsumer consumer, Matrix4f matrix,

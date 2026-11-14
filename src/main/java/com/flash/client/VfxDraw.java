@@ -16,6 +16,60 @@ public final class VfxDraw {
     private VfxDraw() {
     }
 
+    /** Starts an additive batch of light (after translating the pose to the camera). */
+    public static BufferBuilder begin() {
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.blendFunc(
+                com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA,
+                com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE);
+        com.mojang.blaze3d.systems.RenderSystem.disableCull();
+        com.mojang.blaze3d.systems.RenderSystem.depthMask(false);
+        com.mojang.blaze3d.systems.RenderSystem.setShader(
+                net.minecraft.client.renderer.GameRenderer::getPositionColorShader);
+        BufferBuilder buf = com.mojang.blaze3d.vertex.Tesselator.getInstance().getBuilder();
+        buf.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR);
+        return buf;
+    }
+
+    /** Draws the batch and puts the render state back. */
+    public static void end(BufferBuilder buf) {
+        try {
+            com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(buf.end());
+        } finally {
+            com.mojang.blaze3d.systems.RenderSystem.depthMask(true);
+            com.mojang.blaze3d.systems.RenderSystem.enableCull();
+            com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+            com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+        }
+    }
+
+    /** A few points of a polyline drawn as soft energy. */
+    public static void path(BufferBuilder buf, Matrix4f m, java.util.List<Vec3> pts, float w, float r, float g, float b,
+                            float alpha) {
+        for (int i = 0; i + 1 < pts.size(); i++) {
+            beam(buf, m, pts.get(i), pts.get(i + 1), w, r, g, b, alpha);
+        }
+    }
+
+    /** Norse-looking runes on the ground in a ring (a circle of rune strokes and two rings). */
+    public static void runeRing(BufferBuilder buf, Matrix4f m, Vec3 c, double radius, int runes, float rot, float r,
+                                float g, float b, float a) {
+        if (a <= 0.002F) {
+            return;
+        }
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        double y = c.y + 0.05D;
+        Vec3 at = new Vec3(c.x, y, c.z);
+        ring(buf, m, at, up, radius * 1.12D, 0.05D, rot, r, g, b, 0.8F * a);
+        ring(buf, m, at, up, radius * 0.88D, 0.04D, -rot, r, g, b, 0.7F * a);
+        for (int k = 0; k < runes; k++) {
+            double ang = rot + Math.PI * 2.0D * k / runes;
+            rune(buf, m, c.x + Math.cos(ang) * radius, y + 0.01D, c.z + Math.sin(ang) * radius, radius * 0.06D + 0.05D,
+                    ang + Math.PI / 2.0D, k * 7 + 3, mix(r, 0.4F), mix(g, 0.4F), mix(b, 0.4F), a);
+        }
+    }
+
     public static void vert(BufferBuilder buf, Matrix4f m, double x, double y, double z, float r, float g, float b,
                             float a) {
         buf.vertex(m, (float) x, (float) y, (float) z).color(r, g, b, Mth.clamp(a, 0.0F, 1.0F)).endVertex();

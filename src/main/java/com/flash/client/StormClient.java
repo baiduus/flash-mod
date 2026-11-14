@@ -205,6 +205,8 @@ public final class StormClient {
         long now = mc.level.getGameTime();
         CASTING.put(p.caster(), now + 40L);
         long seed = p.seed();
+        // the light around everything she does (StormVfx)
+        StormVfx.spawn(p);
         switch (p.type()) {
             case StormFxPacket.SKY -> {
                 // the Shazam bolt: wide, forked, from the sky to the ground
@@ -275,8 +277,9 @@ public final class StormClient {
             }
             double speed = p.getDeltaMovement().length();
             // the funnel: narrow at her feet, wider below, spinning
-            for (int i = 0; i < 7; i++) {
-                double h = (now * 0.35D + i * 0.37D) % 2.2D;
+            // (the funnel itself is drawn in light by StormVfx; a little cloud with it)
+            for (int i = 0; i < 2; i++) {
+                double h = (now * 0.35D + i * 1.1D) % 2.2D;
                 double r = 0.12D + h * 0.33D;
                 double a = now * 0.9D + i * 2.3D + h * 3.0D;
                 double x = p.getX() + Math.cos(a) * r;

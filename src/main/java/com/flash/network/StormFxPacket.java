@@ -15,6 +15,18 @@ public record StormFxPacket(int caster, int type, Vec3 from, Vec3 to, float powe
     public static final int BEAM = 2;
     /** Nothing drawn: her eyes and body light up. */
     public static final int CAST = 3;
+    /** A gust (from the eyes along "to" as a direction). */
+    public static final int GUST = 4;
+    /** Her tornado standing at "from" (renewed while it lasts). */
+    public static final int TORNADO = 5;
+    /** The hail falling on "from" (power: ticks). */
+    public static final int HAIL = 6;
+    /** The frost running out of her (power: radius). */
+    public static final int FROST = 7;
+    /** Her taking off. */
+    public static final int TAKEOFF = 8;
+    /** The power of the storms coming into her (accepted). */
+    public static final int CALL = 9;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeVarInt(this.caster);

@@ -417,8 +417,179 @@ public final class ThorFx {
                         RANDOM.nextGaussian() * 0.1D, 0.1D, RANDOM.nextGaussian() * 0.1D);
             }
         }
-        pose.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
+        // the light around the lightning (VfxDraw: the Lanterns' glows, rays and spheres, rune rings)
+        glowPass(event, m, level, partial, time, blasting);
+        pose.popPose();
+    }
+
+    private static float[] tone(boolean cosmic) {
+        return cosmic ? new float[] {0.6F, 0.25F, 1.0F} : new float[] {0.35F, 0.65F, 1.0F};
+    }
+
+    private static void glowPass(RenderLevelStageEvent event, Matrix4f m, ClientLevel level, float partial, float time,
+                                 List<Player> blasting) {
+        var camera = event.getCamera();
+        Vec3 cam = camera.getPosition();
+        Vec3 left = new Vec3(camera.getLeftVector());
+        Vec3 up = new Vec3(camera.getUpVector());
+        Vec3 yUp = new Vec3(0.0D, 1.0D, 0.0D);
+        var buf = VfxDraw.begin();
+        try {
+            // every bolt: a soft wide glow along it, a flare where it ends
+            for (Bolt b : BOLTS) {
+                float age = time - b.start();
+                float alpha = Math.max(0.0F, 1.0F - age / b.life());
+                float[] c = tone(b.cosmic());
+                VfxDraw.path(buf, m, b.points(), 0.35F * b.scale(), c[0], c[1], c[2], 0.12F * alpha);
+                if (b.scale() >= 1.0F) {
+                    VfxDraw.burst(buf, m, b.points().get(b.points().size() - 1), left, up, 0.9F * b.scale(), c[0], c[1],
+                            c[2], 0.6F * alpha, time * 0.3F);
+                }
+            }
+            for (Fx f : EFFECTS) {
+                float age = time - f.start();
+                float k = Math.max(0.0F, Math.min(1.0F, age / f.life()));
+                float fade = 1.0F - k;
+                float[] c = tone(f.cosmic());
+                Vec3 a = f.a();
+                switch (f.kind()) {
+                    case ThorFxPacket.RING -> {
+                        double r = f.scale() * (1.0D - Math.pow(1.0D - k, 3.0D));
+                        VfxDraw.ring(buf, m, a.add(0.0D, 0.15D, 0.0D), yUp, Math.max(0.3D, r), 0.3D, 0.0F, c[0], c[1],
+                                c[2], 0.7F * fade);
+                        VfxDraw.wall(buf, m, a, Math.max(0.3D, r), 1.4D * fade, c[0], c[1], c[2], 0.3F * fade);
+                        VfxDraw.runeRing(buf, m, a, 1.6D, 12, time * 0.04F, c[0], c[1], c[2], fade);
+                    }
+                    case ThorFxPacket.WAVE -> {
+                        Vec3 dir = f.b();
+                        double base = Math.atan2(dir.z, dir.x);
+                        double r = Math.max(0.5D, f.scale() - 4.0D + 4.0D * k);
+                        for (int i = -4; i <= 4; i++) {
+                            double ang = base + Math.toRadians(10.0D * i);
+                            Vec3 g = a.add(Math.cos(ang) * r, 0.6D, Math.sin(ang) * r);
+                            VfxDraw.glow(buf, m, g, left, up, 1.2D, c[0], c[1], c[2], 0.25F * fade);
+                        }
+                    }
+                    case ThorFxPacket.IMPACT -> {
+                        float grow = 1.0F - fade * fade;
+                        VfxDraw.sphere(buf, m, a.add(0.0D, 0.5D, 0.0D), f.scale() * (0.2D + 0.6D * grow), cam, c[0],
+                                c[1], c[2], 0.6F * fade * fade, time, 2.2D);
+                        VfxDraw.ring(buf, m, a.add(0.0D, 0.1D, 0.0D), yUp, f.scale() * (0.2D + 1.1D * grow),
+                                0.4D * fade + 0.05D, 0.0F, c[0], c[1], c[2], 0.8F * fade);
+                        VfxDraw.burst(buf, m, a.add(0.0D, 0.8D, 0.0D), left, up, f.scale() * (0.6F + grow), c[0], c[1],
+                                c[2], 0.8F * fade, time * 0.2F);
+                        VfxDraw.runeRing(buf, m, a, f.scale() * 0.45D, 16, time * 0.03F, c[0], c[1], c[2], fade);
+                        if (age < 1.0F) {
+                            impactScreen(a, 2, 16, 1.2F);
+                        }
+                    }
+                    case ThorFxPacket.BIFROST -> {
+                        float in = Math.min(1.0F, age / 4.0F);
+                        float out = Math.min(1.0F, (f.life() - age) / 8.0F);
+                        float al = Math.max(0.0F, Math.min(in, out));
+                        double r = f.scale() * (0.6D + 0.4D * in);
+                        VfxDraw.pillar(buf, m, a, a.y, a.y + 120.0D, cam, (float) r * 2.2F, 1.0F, 1.0F, 1.0F,
+                                0.2F * al);
+                        for (int i = 0; i < 6; i++) {
+                            float[] col = rainbow((i / 6.0F + time * 0.02F) % 1.0F);
+                            VfxDraw.ring(buf, m, a.add(0.0D, 0.06D + i * 0.01D, 0.0D), yUp, r * (1.1D + i * 0.18D),
+                                    0.12D, time * 0.05F, col[0], col[1], col[2], 0.7F * al);
+                        }
+                        VfxDraw.runeRing(buf, m, a, r * 2.4D, 24, time * 0.02F, 1.0F, 0.95F, 0.8F, al);
+                        VfxDraw.burst(buf, m, a.add(0.0D, 1.0D, 0.0D), left, up, (float) r * 3.0F, 1.0F, 1.0F, 1.0F,
+                                0.5F * al, time * 0.1F);
+                    }
+                    case ThorFxPacket.DOME -> {
+                        float al = (float) Math.sin(k * Math.PI);
+                        VfxDraw.sphere(buf, m, a, f.scale(), cam, 0.6F, 0.25F, 1.0F, 0.5F * al, time, 1.6D);
+                        VfxDraw.ring(buf, m, a.add(0.0D, 0.1D, 0.0D), yUp, f.scale(), 0.4D, 0.0F, 0.6F, 0.25F, 1.0F,
+                                0.7F * al);
+                        VfxDraw.runeRing(buf, m, a, f.scale() * 0.7D, 20, time * 0.03F, 0.7F, 0.4F, 1.0F, al);
+                    }
+                    case ThorFxPacket.BEAM -> {
+                        Vec3 b = f.b();
+                        float al = 1.0F - k * 0.6F;
+                        VfxDraw.energy(buf, m, a, b, 1.1F * f.scale(), c[0], c[1], c[2], 0.6F * al);
+                        double len = a.distanceTo(b);
+                        if (len > 1.0D) {
+                            Vec3 dn = b.subtract(a).scale(1.0D / len);
+                            for (int i = 0; i < 5; i++) {
+                                double pos = (time * 2.0D + i * len / 5.0D) % len;
+                                VfxDraw.ring(buf, m, a.add(dn.scale(pos)), dn, 1.6D * f.scale(), 0.12D, 0.0F, c[0],
+                                        c[1], c[2], 0.5F * al);
+                            }
+                        }
+                        VfxDraw.burst(buf, m, a, left, up, 2.5F * f.scale(), c[0], c[1], c[2], 0.8F * al, time * 0.3F);
+                        VfxDraw.burst(buf, m, b, left, up, 4.0F * f.scale(), c[0], c[1], c[2], 0.9F * al, -time * 0.3F);
+                        VfxDraw.sphere(buf, m, b, 1.5D * f.scale(), cam, c[0], c[1], c[2], 0.5F * al, time, 2.0D);
+                    }
+                    default -> {
+                    }
+                }
+            }
+            // the Lightning Blast: glow along it, flares at both ends
+            for (Player p : blasting) {
+                float[] c = tone(cosmic(p));
+                Vec3 from = hand(p, partial);
+                Vec3 to = p.getEyePosition(partial).add(p.getViewVector(partial).scale(32.0D));
+                BlockHitResult block = level.clip(new ClipContext(p.getEyePosition(partial), to,
+                        ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+                if (block.getType() != HitResult.Type.MISS) {
+                    to = block.getLocation();
+                }
+                VfxDraw.beam(buf, m, from, to, 0.6F, c[0], c[1], c[2], 0.2F);
+                VfxDraw.burst(buf, m, from, left, up, 0.8F, c[0], c[1], c[2], 0.7F, time * 0.4F);
+                VfxDraw.burst(buf, m, to, left, up, 1.8F, c[0], c[1], c[2], 0.8F, -time * 0.3F);
+            }
+            // Thor charged: rings of light round him, the hammer glowing
+            for (Player p : level.players()) {
+                if (!ThorState.isThor(p)) {
+                    continue;
+                }
+                boolean aura = ThorState.flag(p, ThorPowers.F_ULTIMATE) || ThorState.flag(p, ThorPowers.F_TWIRL);
+                boolean charging = ThorState.flag(p, ThorPowers.F_CHARGING) || ThorState.flag(p, ThorPowers.F_FURY);
+                if (!aura && !charging) {
+                    continue;
+                }
+                float[] c = tone(cosmic(p));
+                Vec3 pos = p.getPosition(partial);
+                if (aura) {
+                    VfxDraw.ring(buf, m, pos.add(0.0D, 0.25D, 0.0D), yUp, 1.3D, 0.08D, time * 0.2F, c[0], c[1], c[2],
+                            0.7F);
+                    VfxDraw.ring(buf, m, pos.add(0.0D, 1.55D, 0.0D), yUp, 1.0D, 0.06D, -time * 0.26F, c[0], c[1], c[2],
+                            0.6F);
+                    VfxDraw.runeRing(buf, m, pos, 1.9D, 10, time * 0.05F, c[0], c[1], c[2], 0.8F);
+                    VfxDraw.glow(buf, m, pos.add(0.0D, 1.0D, 0.0D), left, up, 1.8D, c[0], c[1], c[2], 0.2F);
+                }
+                boolean me = p == Minecraft.getInstance().getCameraEntity()
+                        && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+                if (!me) {
+                    Vec3 h = hand(p, partial);
+                    VfxDraw.glow(buf, m, h, left, up, 0.6D, c[0], c[1], c[2], 0.5F);
+                    VfxDraw.burst(buf, m, h, left, up, 0.8F, c[0], c[1], c[2], 0.5F, time * 0.5F);
+                }
+            }
+        } finally {
+            VfxDraw.end(buf);
+        }
+    }
+
+    private static final java.util.Set<Long> SCREENED = new java.util.HashSet<>();
+
+    /** God Wand's shockwave over the screen, near enough. */
+    private static void impactScreen(Vec3 at, int type, int ticks, float power) {
+        long key = (long) (at.x * 31.0D) * 1000003L + (long) (at.z * 17.0D) * 7919L + (long) at.y;
+        if (!SCREENED.add(key)) {
+            return;
+        }
+        if (SCREENED.size() > 64) {
+            SCREENED.clear();
+        }
+        Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        if (cam.distanceToSqr(at) < 80.0D * 80.0D) {
+            com.flash.client.godwand.GodWandPostFxManager.triggerImpact(at.x, at.y + 0.5D, at.z, type, ticks, power);
+        }
     }
 
     private static void decalVertex(VertexConsumer c, Matrix4f m, Matrix3f n, double x, float y, double z, float u,

@@ -95,8 +95,19 @@ public final class FlashBodyLightningRenderer {
                 FlashLightningRibbon.blue = false;
             }
         }
-        poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
+        // the halo of Speed Force round them (FlashVfx)
+        var buf = VfxDraw.begin();
+        try {
+            for (Player player : visible) {
+                FlashVfx.halo(buf, matrix, player, partialTick, event.getCamera(),
+                        FlashVfx.color(FlashClientVisualLevels.isNegative(player), FlashClientVisualLevels.isV9(player)),
+                        FlashClientVisualLevels.get(player));
+            }
+        } finally {
+            VfxDraw.end(buf);
+        }
+        poseStack.popPose();
     }
 
     private static void renderPlayer(VertexConsumer consumer, Matrix4f matrix, Vec3 cameraPos,

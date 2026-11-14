@@ -306,7 +306,8 @@ public final class StormAbilities {
         Vec3 look = p.getLookAngle();
         Vec3 eye = p.getEyePosition();
         level.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1.6F, 1.3F);
-        for (int i = 0; i < 40; i++) {
+        fx(p, StormFxPacket.GUST, eye, look, 1.0F);
+        for (int i = 0; i < 12; i++) {
             Vec3 d = look.add((level.random.nextDouble() - 0.5D) * 0.6D, (level.random.nextDouble() - 0.5D) * 0.4D,
                     (level.random.nextDouble() - 0.5D) * 0.6D).normalize();
             level.sendParticles(ParticleTypes.CLOUD, eye.x + look.x, eye.y + look.y - 0.3D, eye.z + look.z, 0, d.x,
@@ -353,8 +354,11 @@ public final class StormAbilities {
     private static void tickTornado(Tornado t) {
         ServerLevel level = t.level;
         t.ticks++;
-        // the funnel: rising rings, wider at the top
-        for (int i = 0; i < 14; i++) {
+        // the funnel, drawn in light (StormVfx), with a little dust
+        if (t.ticks % 4 == 1) {
+            fx(t.owner, StormFxPacket.TORNADO, t.at, t.at, 1.0F);
+        }
+        for (int i = 0; i < 4; i++) {
             double h = (t.ticks * 0.6D + i * 1.1D) % 14.0D;
             double r = 0.6D + h * 0.32D;
             double a = t.ticks * 0.55D + i * 1.7D + h * 0.6D;
@@ -473,13 +477,14 @@ public final class StormAbilities {
         casting(p);
         Vec3 at = ground(p, aim(p, 48.0D));
         HAIL.add(new Hail(p, at, p.level().getGameTime() + 60L));
+        fx(p, StormFxPacket.HAIL, at, at, 60.0F);
         p.serverLevel().playSound(null, at.x, at.y, at.z, SoundEvents.GLASS_BREAK, SoundSource.WEATHER, 1.2F, 0.6F);
     }
 
     private static void tickHail(Hail h) {
         ServerLevel level = h.owner.serverLevel();
         var ice = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ICE.defaultBlockState());
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 5; i++) {
             double x = h.at.x + (level.random.nextDouble() - 0.5D) * 8.0D;
             double z = h.at.z + (level.random.nextDouble() - 0.5D) * 8.0D;
             level.sendParticles(ice, x, h.at.y + 8.0D, z, 0, 0.0D, -1.0D, 0.0D, 1.2D);
@@ -502,8 +507,9 @@ public final class StormAbilities {
         double r = 10.0D;
         level.playSound(null, p.blockPosition(), SoundEvents.POWDER_SNOW_STEP, SoundSource.PLAYERS, 2.0F, 0.5F);
         level.playSound(null, p.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.2F, 0.5F);
-        for (int i = 0; i < 120; i++) {
-            double a = i * Math.PI * 2.0D / 120.0D;
+        fx(p, StormFxPacket.FROST, p.position(), p.position(), (float) r);
+        for (int i = 0; i < 40; i++) {
+            double a = i * Math.PI * 2.0D / 40.0D;
             level.sendParticles(ParticleTypes.SNOWFLAKE, p.getX(), p.getY() + 0.4D, p.getZ(), 0, Math.cos(a), 0.05D,
                     Math.sin(a), 0.8D);
         }

@@ -96,8 +96,31 @@ public final class FlashAbilityEffectsRenderer {
                 v9 = false;
             }
         }
-        poseStack.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
+        // the light of the twisters and of the fists (FlashVfx)
+        var buf = VfxDraw.begin();
+        try {
+            for (Player player : players) {
+                int mask = FlashClientVisualLevels.activeMask(player);
+                float[] c = FlashVfx.color(FlashClientVisualLevels.isNegative(player), FlashClientVisualLevels.isV9(player));
+                float time = player.tickCount + partialTick;
+                Vec3 look = player.getViewVector(partialTick).normalize();
+                Vec3 right = rightOf(look);
+                for (int side = -1; side <= 1; side += 2) {
+                    Vec3 h = hand(player, partialTick, look, right, side);
+                    if ((mask & wind) != 0) {
+                        FlashVfx.twister(buf, matrix, h, look, time, c);
+                    }
+                    if ((mask & barrage) != 0) {
+                        double jab = Math.max(0.0D, Math.sin(time * 2.6D + (side > 0 ? 0.0D : Math.PI)));
+                        FlashVfx.fist(buf, matrix, h.add(look.scale(0.4D + jab * 0.9D)), event.getCamera(), time, c);
+                    }
+                }
+            }
+        } finally {
+            VfxDraw.end(buf);
+        }
+        poseStack.popPose();
     }
 
     private static Vec3 hand(Player player, float partialTick, Vec3 look, Vec3 right, double side) {

@@ -98,8 +98,8 @@ public final class StormCalling {
                     0.8F);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 1.5F,
                     1.0F);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y + 1.0D, at.z, 150, 0.7D, 1.2D, 0.7D, 0.6D);
-            level.sendParticles(ParticleTypes.CLOUD, at.x, at.y + 0.2D, at.z, 60, 1.5D, 0.2D, 1.5D, 0.15D);
+            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y + 1.0D, at.z, 40, 0.7D, 1.2D, 0.7D, 0.6D);
+            StormAbilities.fx(p, StormFxPacket.CALL, at, at, 1.0F);
             p.sendSystemMessage(Component.translatable("message.flash.storm.accepted"));
         } else {
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0D, p.getZ(), 20, 0.3D, 0.6D,
