@@ -91,7 +91,7 @@ public final class StormPowers {
             return;
         }
         boolean st = has(p);
-        if (st && (com.flash.power.HeroPowers.hasAny(p) || com.flash.scarlet.ScarletPowers.has(p))) {
+        if (st && com.flash.power.HeroPowers.hasOther(p, com.flash.power.HeroPowers.Hero.STORM)) {
             revoke(p); // another power came after her
             st = false;
         }

@@ -1277,5 +1277,13 @@
   "entity.flash.stone_cannon": "Stone Cannon",
   "gui.godwand.atomic_release": "Release your button",
   "gui.godwand.atomic_skip": "Esc / F5 - Skip camera",
-  "message.flash.combustion": "§6Combustion! Hit the ground to blast a crater."
+  "message.flash.combustion": "§6Combustion! Hit the ground to blast a crater.",
+  "item.flash.scarlet_essence_capsule": "Chaos Capsule (Scarlet Witch)",
+  "tooltip.flash.scarlet_essence_capsule": "The Scarlet Witch's powers.",
+  "item.flash.storm_essence_capsule": "Storm Capsule (Storm)",
+  "tooltip.flash.storm_essence_capsule": "Storm's powers.",
+  "item.flash.syringe.scarlet_essence": "Syringe of Chaos",
+  "tooltip.flash.syringe.scarlet_essence": "Hold right click: become the Scarlet Witch.",
+  "item.flash.syringe.storm_essence": "Syringe of the Storms",
+  "tooltip.flash.syringe.storm_essence": "Hold right click: become Storm."
 }

@@ -43,7 +43,14 @@ public final class HeroPowers {
         SUPERMAN("superman", SupermanPowers.KEY, ModItems.KRYPTONIAN_BLOOD_CAPSULE),
         THOR("thor", ThorPowers.KEY, ModItems.THOR_ESSENCE_CAPSULE),
         /** Yas (the transcendence): her capsule only answers to the player who transcended. */
-        YAS("yas", com.flash.yas.YasPowers.KEY, ModItems.YAS_ESSENCE_CAPSULE);
+        YAS("yas", com.flash.yas.YasPowers.KEY, ModItems.YAS_ESSENCE_CAPSULE),
+        /** The Scarlet Witch (the Chaos energy). */
+        SCARLET("scarlet", com.flash.scarlet.ScarletPowers.KEY, ModItems.SCARLET_ESSENCE_CAPSULE),
+        /** Storm (the lightning that asked her). */
+        STORM("storm", com.flash.storm.StormPowers.KEY, ModItems.STORM_ESSENCE_CAPSULE);
+
+        // Every power of the game is a Hero here: the empty syringe takes it out into its capsule and the capsule
+        // in a syringe gives it back (SyringeContents). A new power: a value here, its capsule, its SyringeContent.
 
         private final String id;
         private final String key;
@@ -72,6 +79,8 @@ public final class HeroPowers {
                 case SUPERMAN -> SupermanPowers.has(p);
                 case THOR -> ThorPowers.has(p);
                 case YAS -> com.flash.yas.YasPowers.has(p);
+                case SCARLET -> com.flash.scarlet.ScarletPowers.has(p);
+                case STORM -> com.flash.storm.StormPowers.has(p);
             };
         }
 
@@ -81,7 +90,7 @@ public final class HeroPowers {
                 case FLASH -> !FlashPowers.hasPermanentPowers(p) || FlashV9.isActive(p);
                 case HULK -> HulkPowers.isTemporary(p) || HulkPowers.boostTicks(p) > 0;
                 case SUPERMAN -> SupermanPowers.temporaryTicks(p) > 0;
-                case THOR, YAS -> false;
+                case THOR, YAS, SCARLET, STORM -> false;
             };
         }
 
@@ -91,7 +100,7 @@ public final class HeroPowers {
                 case HULK -> HulkPowers.level(p);
                 case SUPERMAN -> SupermanPowers.level(p);
                 case THOR -> ThorPowers.level(p);
-                case YAS -> 1;
+                case YAS, SCARLET, STORM -> 1;
             };
         }
 
@@ -117,6 +126,8 @@ public final class HeroPowers {
                 case SUPERMAN -> SupermanPowers.revoke(p);
                 case THOR -> ThorPowers.revoke(p);
                 case YAS -> com.flash.yas.YasPowers.revoke(p);
+                case SCARLET -> com.flash.scarlet.ScarletPowers.revoke(p);
+                case STORM -> com.flash.storm.StormPowers.revoke(p);
             }
         }
 
@@ -131,6 +142,8 @@ public final class HeroPowers {
                 case SUPERMAN -> SupermanPowers.grant(p, false);
                 case THOR -> ThorPowers.grant(p, false);
                 case YAS -> com.flash.yas.YasPowers.grant(p);
+                case SCARLET -> com.flash.scarlet.ScarletPowers.grant(p);
+                case STORM -> com.flash.storm.StormPowers.grant(p);
             }
         }
 
@@ -152,6 +165,11 @@ public final class HeroPowers {
                     com.flash.yas.YasHandOfGod.apply(p, true);
                     com.flash.yas.YasPowers.sync(p);
                 }
+                case SCARLET -> {
+                    com.flash.yas.YasHandOfGod.apply(p, true);
+                    com.flash.scarlet.ScarletPowers.sync(p);
+                }
+                case STORM -> com.flash.storm.StormPowers.sync(p);
             }
         }
 
@@ -193,6 +211,16 @@ public final class HeroPowers {
 
     public static boolean hasAny(Player player) {
         return current(player) != null;
+    }
+
+    /** Any power other than this one. */
+    public static boolean hasOther(Player player, Hero self) {
+        for (Hero h : Hero.values()) {
+            if (h != self && h.has(player)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The level the player had with a power before taking it out (0 = never had it). */

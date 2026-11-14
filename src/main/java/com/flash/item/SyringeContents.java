@@ -56,6 +56,15 @@ public final class SyringeContents {
             "yas_essence", 9, ModItems.YAS_ESSENCE_CAPSULE::get,
             p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.YAS)));
 
+    /** The Scarlet Witch's Chaos. */
+    public static final SyringeContent SCARLET_ESSENCE = register(new SyringeContent(
+            "scarlet_essence", 10, ModItems.SCARLET_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.SCARLET)));
+    /** Storm's power of the storms. */
+    public static final SyringeContent STORM_ESSENCE = register(new SyringeContent(
+            "storm_essence", 11, ModItems.STORM_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.STORM)));
+
     private static boolean injectHulk(net.minecraft.server.level.ServerPlayer p, boolean red) {
         if (!com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.HULK)) {
             return false;

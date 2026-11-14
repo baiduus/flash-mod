@@ -207,6 +207,14 @@ public final class ModItems {
     public static final RegistryObject<Item> THOR_ESSENCE_CAPSULE = ITEMS.register("thor_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.thor_essence_capsule", "tooltip.flash.power_capsule"));
+    /** The Scarlet Witch's Chaos, taken out with an empty syringe. */
+    public static final RegistryObject<Item> SCARLET_ESSENCE_CAPSULE = ITEMS.register("scarlet_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.scarlet_essence_capsule", "tooltip.flash.power_capsule"));
+    /** Storm's power of the storms, taken out with an empty syringe. */
+    public static final RegistryObject<Item> STORM_ESSENCE_CAPSULE = ITEMS.register("storm_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.storm_essence_capsule", "tooltip.flash.power_capsule"));
 
     /** Lex Luthor's green and purple war suit. */
     public static final RegistryObject<Item> LEX_HELMET = ITEMS.register("lex_armor_helmet",

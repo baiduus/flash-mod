@@ -1277,5 +1277,13 @@
   "entity.flash.stone_cannon": "Canhão de Pedra",
   "gui.godwand.atomic_release": "Solte o botão",
   "gui.godwand.atomic_skip": "Esc / F5 - Pular câmera",
-  "message.flash.combustion": "§6Combustão! Desça até o chão para abrir uma cratera."
+  "message.flash.combustion": "§6Combustão! Desça até o chão para abrir uma cratera.",
+  "item.flash.scarlet_essence_capsule": "Cápsula de Caos (Feiticeira Escarlate)",
+  "tooltip.flash.scarlet_essence_capsule": "Os poderes da Feiticeira Escarlate.",
+  "item.flash.storm_essence_capsule": "Cápsula das Tempestades (Tempestade)",
+  "tooltip.flash.storm_essence_capsule": "Os poderes da Tempestade.",
+  "item.flash.syringe.scarlet_essence": "Seringa com Caos",
+  "tooltip.flash.syringe.scarlet_essence": "Segure o botão direito: vira a Feiticeira Escarlate.",
+  "item.flash.syringe.storm_essence": "Seringa com o Poder das Tempestades",
+  "tooltip.flash.syringe.storm_essence": "Segure o botão direito: vira a Tempestade."
 }

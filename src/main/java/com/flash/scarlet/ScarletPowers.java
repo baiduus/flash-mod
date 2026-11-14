@@ -117,7 +117,8 @@ public final class ScarletPowers {
             return;
         }
         boolean sw = has(p);
-        if (sw && (com.flash.power.HeroPowers.hasAny(p) || com.flash.yas.YasPowers.has(p)
+        if (sw && (com.flash.power.HeroPowers.hasOther(p, com.flash.power.HeroPowers.Hero.SCARLET)
+                || com.flash.yas.YasPowers.has(p)
                 || com.flash.storm.StormPowers.has(p))) {
             // another power came after her: it wins
             revoke(p);

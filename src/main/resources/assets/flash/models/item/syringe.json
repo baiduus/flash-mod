@@ -54,6 +54,18 @@
     "flash:content": 9
    },
    "model": "flash:item/syringe_yas_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 10
+   },
+   "model": "flash:item/syringe_scarlet_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 11
+   },
+   "model": "flash:item/syringe_storm_essence"
   }
  ]
 }
