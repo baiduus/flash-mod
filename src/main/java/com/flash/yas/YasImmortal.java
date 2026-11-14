@@ -27,9 +27,9 @@ import net.minecraftforge.fml.common.Mod;
  * is put back on the ground above it;</li>
  * <li>the Lanterns' ring forces its damage through every other mod's defence (its DanoAnel): not through the
  * heroes' of this mod (all of them, hero()): their own defences hold against the ring as against anything;</li>
- * <li>as the ring does to the others, every hero's blows go through a ring bearer's defences (ring, suit, shield bubble):
- * what the Lanterns take off is put back, armour can take half of it at most, and against a player of more life
- * than a common one it grows as the ring's does (life / 20 to the 0.6, five times at most).</li>
+ * <li>every hero's blow on a ring bearer takes off a set amount, whatever his ring, suit, bubble and armour:
+ * five hearts for Superman's slap or the Hulk's punch, the others by the square root of their strength
+ * (onLantern).</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
@@ -199,14 +199,25 @@ public final class YasImmortal {
         event.setAmount(lanternScale(event.getAmount()));
     }
 
+    /** Superman's slap at level 10 (HeroBalance's reference): on a Lantern it takes five hearts. */
+    private static final float SUPERMAN_SLAP = 44.0F;
+    private static final float SLAP_ON_LANTERN = 10.0F;
+
+    /**
+     * A hero's blow on a ring bearer, what it finally takes off: five hearts for Superman's slap (and the Hulk's
+     * punch, about the same), growing as the square root of the hero's raw blow (Yas' punch about six hearts, a
+     * strong ability seven or eight), whatever the Lantern's ring, suit, bubble and armour.
+     */
+    public static float onLantern(float raw) {
+        return SLAP_ON_LANTERN * (float) Math.sqrt(Math.max(0.0F, raw) / SUPERMAN_SLAP);
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onHurtRingFirst(LivingHurtEvent event) {
         LivingEntity victim = event.getEntity();
         RAW.remove(victim.getId());
         if (yasOnRing(victim, event.getSource())) {
-            double life = victim.getMaxHealth();
-            float mult = life <= 20.0D ? 1.0F : (float) Math.min(5.0D, Math.pow(life / 20.0D, 0.6D));
-            float v = lanternScale(event.getAmount()) * mult;
+            float v = onLantern(event.getAmount());
             event.setAmount(v);
             RAW.put(victim.getId(), v);
         }
@@ -214,23 +225,20 @@ public final class YasImmortal {
 
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onHurtRingLast(LivingHurtEvent event) {
-        Float raw = RAW.get(event.getEntity().getId());
-        if (raw != null) {
+        Float v = RAW.get(event.getEntity().getId());
+        if (v != null) {
             event.setCanceled(false);
-            if (event.getAmount() < raw) {
-                event.setAmount(raw);
-            }
+            event.setAmount(v);
         }
     }
 
+    /** After armour and everything: exactly that. */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onDamageRing(LivingDamageEvent event) {
-        Float raw = RAW.remove(event.getEntity().getId());
-        if (raw != null) {
+        Float v = RAW.remove(event.getEntity().getId());
+        if (v != null) {
             event.setCanceled(false);
-            if (event.getAmount() < raw * 0.5F) {
-                event.setAmount(raw * 0.5F);
-            }
+            event.setAmount(v);
         }
     }
 
