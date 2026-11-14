@@ -751,7 +751,7 @@ public final class SupermanPowers {
         for (int i = 0; i < abilities.length; i++) {
             cds[i] = cooldown(player, abilities[i]);
         }
-        return new SupermanSyncPacket(player.getUUID(), has(player), isSuperman(player), level(player), xp(player),
+        return new SupermanSyncPacket(player.getUUID(), has(player), suited(player), level(player), xp(player),
                 energy(player), flags(player), destroyBlocks(player), cds, noCooldowns(player),
                 infiniteEnergy(player), inSunlight(player), suit(player), temporaryTicks(player),
                 combo(player) | (laserCut(player) ? 16 : 0));
