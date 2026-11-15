@@ -54,6 +54,7 @@ public final class InfinityServer {
         /** Ticks an ability has been on (the original's animation timers). */
         final Map<String, Integer> timers = new HashMap<>();
         CompoundTag sent;
+        ListTag sentVisual;
 
         State(ServerPlayer p) {
             this.player = p;
@@ -145,6 +146,11 @@ public final class InfinityServer {
     }
 
     private static final Map<UUID, State> STATES = new HashMap<>();
+    /** The ability types others must know are on (they change how the player looks). */
+    static final Set<String> VISUAL = Set.of("palladium:render_layer", "palladium:invisibility",
+            "palladium:intangibility", "flash:dynamic_scale", "flash:force_field", "palladium:energy_beam",
+            "flash:power_blast", "flash:power_radiation", "palladium:aim", "flash:power_cyclone", "flash:telekinesis",
+            "palladium:vibrate", "palladium:animation_timer", "palladium:entity_glow");
 
     private InfinityServer() {
     }
@@ -190,7 +196,38 @@ public final class InfinityServer {
     public static final int RELEASE = 2;
     public static final int SETTING = 3;
 
+    public static final int SCROLL = 4;
+    public static final int ATTACK = 5;
+    public static final int USE = 6;
+    public static final int PORTAL = 7;
+
     public static void handle(ServerPlayer p, int op, String key) {
+        switch (op) {
+            case SCROLL -> {
+                SpaceStone.scroll(p, "+".equals(key) ? -1 : 1);
+                return;
+            }
+            case ATTACK -> {
+                SpaceStone.attack(p);
+                return;
+            }
+            case USE -> {
+                SpaceStone.useWhileHolding(p);
+                return;
+            }
+            case PORTAL -> {
+                String[] parts = key.split("\\|");
+                try {
+                    SpaceStone.portalTo(p, parts[0], Double.parseDouble(parts[1]), Double.parseDouble(parts[2]),
+                            Double.parseDouble(parts[3]));
+                } catch (RuntimeException e) {
+                    p.displayClientMessage(Component.translatable("message.flash.infinity.bad_portal"), true);
+                }
+                return;
+            }
+            default -> {
+            }
+        }
         InfPowers.Ability a = InfPowers.ability(key);
         if (a == null) {
             return;
@@ -397,6 +434,13 @@ public final class InfinityServer {
         sync(p, false);
     }
 
+    /** Opens a menu of the stones on the player's screen ("portal", "disguise", "mind"...). */
+    public static void open(ServerPlayer p, String screen) {
+        CompoundTag t = new CompoundTag();
+        t.putString("open", screen);
+        FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new InfinitySyncPacket(t));
+    }
+
     /** The client's copy: powers, bought, settings off, on, cooldowns left, scores. */
     public static void sync(ServerPlayer p, boolean force) {
         State s = state(p);
@@ -441,6 +485,22 @@ public final class InfinityServer {
             cdKeys.add(StringTag.valueOf(k));
         }
         key.put("cd", cdKeys);
+        // what others see (the shields, invisibility, size...): to everyone around
+        ListTag vis = new ListTag();
+        for (String x : s.enabled) {
+            InfPowers.Ability a = InfPowers.ability(x);
+            if (a != null && VISUAL.contains(a.type)) {
+                vis.add(StringTag.valueOf(x));
+            }
+        }
+        if (!vis.equals(s.sentVisual)) {
+            s.sentVisual = vis;
+            CompoundTag v = new CompoundTag();
+            v.putInt("entity", p.getId());
+            v.put("visual", vis);
+            FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p),
+                    new InfinitySyncPacket(v));
+        }
         if (!force && key.equals(s.sent)) {
             return;
         }
@@ -448,6 +508,19 @@ public final class InfinityServer {
         t.put("cd", cd);
         t.put("timers", tm);
         FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new InfinitySyncPacket(t));
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer) {
+            State s = STATES.get(target.getUUID());
+            if (s != null && s.sentVisual != null && !s.sentVisual.isEmpty()) {
+                CompoundTag v = new CompoundTag();
+                v.putInt("entity", target.getId());
+                v.put("visual", s.sentVisual.copy());
+                FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer), new InfinitySyncPacket(v));
+            }
+        }
     }
 
     @SubscribeEvent

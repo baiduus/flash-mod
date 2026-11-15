@@ -32,6 +32,13 @@ public final class InfinityClientSetup {
     }
 
     @SubscribeEvent
+    public static void onRenderers(net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(com.flash.infinity.InfinityEntities.SPACE_PORTAL.get(),
+                SpacePortalRenderer::new);
+        event.registerEntityRenderer(com.flash.infinity.InfinityEntities.BLACK_HOLE.get(), BlackHoleRenderer::new);
+    }
+
+    @SubscribeEvent
     public static void onOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("flash_infinity", new InfinityHud());
     }

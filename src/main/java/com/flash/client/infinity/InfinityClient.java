@@ -45,6 +45,7 @@ public final class InfinityClient {
     private static final Map<String, Long> COOLDOWN_LEN = new HashMap<>();
     private static final Map<String, Integer> SCORES = new HashMap<>();
     private static final Map<String, Integer> TIMERS = new HashMap<>();
+    private static final Map<Integer, Set<String>> VISUAL = new HashMap<>();
     private static String selected;
     private static String pressed;
 
@@ -52,6 +53,22 @@ public final class InfinityClient {
     }
 
     public static void receive(CompoundTag t) {
+        if (t.contains("visual")) {
+            Set<String> v = new HashSet<>();
+            for (Tag e : t.getList("visual", Tag.TAG_STRING)) {
+                v.add(e.getAsString());
+            }
+            if (v.isEmpty()) {
+                VISUAL.remove(t.getInt("entity"));
+            } else {
+                VISUAL.put(t.getInt("entity"), v);
+            }
+            return;
+        }
+        if (t.contains("open")) {
+            InfinityScreens.open(t.getString("open"));
+            return;
+        }
         Set<String> p = new LinkedHashSet<>();
         for (Tag e : t.getList("powers", Tag.TAG_STRING)) {
             p.add(e.getAsString());
@@ -97,6 +114,7 @@ public final class InfinityClient {
         TOGGLED.clear();
         COOLDOWN.clear();
         SCORES.clear();
+        VISUAL.clear();
         selected = null;
         pressed = null;
     }
@@ -168,6 +186,26 @@ public final class InfinityClient {
         return false;
     }
 
+    /** An ability of that type is on for that entity (what everyone sees: shields, invisibility...). */
+    public static boolean visible(net.minecraft.world.entity.Entity e, String type) {
+        Set<String> v = VISUAL.get(e.getId());
+        if (v == null) {
+            return false;
+        }
+        for (String k : v) {
+            InfPowers.Ability a = InfPowers.ability(k);
+            if (a != null && type.equals(a.type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean visibleKey(net.minecraft.world.entity.Entity e, String key) {
+        Set<String> v = VISUAL.get(e.getId());
+        return v != null && v.contains(key);
+    }
+
     public static boolean on(String key) {
         return ON.contains(key);
     }
@@ -228,9 +266,28 @@ public final class InfinityClient {
         FlashNetwork.CHANNEL.sendToServer(new InfinityActionPacket(op, key));
     }
 
+    /** One of the player's abilities of that type is on now. */
+    public static boolean anyOn(String type) {
+        for (String k : ON) {
+            InfPowers.Ability a = InfPowers.ability(k);
+            if (a != null && type.equals(a.type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onScroll(InputEvent.MouseScrollingEvent event) {
-        if (event.getScrollDelta() == 0.0D || !Screen.hasAltDown()) {
+        if (event.getScrollDelta() == 0.0D) {
+            return;
+        }
+        if (!Screen.hasAltDown()) {
+            // telekinesis holds something: closer / farther
+            if (anyOn("flash:telekinesis")) {
+                event.setCanceled(true);
+                send(InfinityServer.SCROLL, event.getScrollDelta() > 0.0D ? "+" : "-");
+            }
             return;
         }
         List<InfPowers.Ability> bar = bar();
@@ -248,6 +305,33 @@ public final class InfinityClient {
             mc.player.displayClientMessage(Component.translatable("message.flash.infinity.selected",
                     InfinityScreen.title(next)), true);
             mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, 1.6F);
+        }
+    }
+
+    /** Attacking throws what telekinesis holds (or the black hole); using locks it in space. */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onClick(InputEvent.InteractionKeyMappingTriggered event) {
+        if (event.isAttack() && (anyOn("flash:telekinesis") || anyOn("flash:black_hole"))) {
+            event.setCanceled(true);
+            event.setSwingHand(true);
+            send(InfinityServer.ATTACK, "");
+        } else if (event.isUseItem() && anyOn("flash:telekinesis")) {
+            event.setCanceled(true);
+            send(InfinityServer.USE, "");
+        }
+    }
+
+    /** The movement lock: no walking, strafing or jumping. */
+    @SubscribeEvent
+    public static void onInput(net.minecraftforge.client.event.MovementInputUpdateEvent event) {
+        if (anyOn("flash:movement_lock")) {
+            event.getInput().forwardImpulse = 0.0F;
+            event.getInput().leftImpulse = 0.0F;
+            event.getInput().jumping = false;
+            event.getInput().up = false;
+            event.getInput().down = false;
+            event.getInput().left = false;
+            event.getInput().right = false;
         }
     }
 

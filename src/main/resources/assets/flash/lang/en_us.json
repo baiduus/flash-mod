@@ -1867,5 +1867,11 @@
   "gui.flash.infinity.need_item": "The right item in the right place",
   "gui.flash.infinity.need_score": "Progress: %s",
   "gui.flash.infinity.need_setting": "Setting on",
-  "gui.flash.infinity.active": "Active"
+  "gui.flash.infinity.active": "Active",
+  "message.flash.infinity.no_dimension": "Unknown dimension: %s",
+  "message.flash.infinity.no_block": "No block found within range for the portal.",
+  "message.flash.infinity.bad_portal": "Invalid destination.",
+  "gui.flash.infinity.portal": "Space Stone Portal",
+  "gui.flash.infinity.portal_open": "Open portal",
+  "gui.flash.infinity.portal_dim": "Dimension (Tab completes)"
 }

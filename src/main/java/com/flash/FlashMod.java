@@ -42,6 +42,8 @@ public final class FlashMod {
         ModItems.ITEMS.register(modBus);
         com.flash.infinity.InfinityItems.BLOCKS.register(modBus);
         com.flash.infinity.InfinityItems.ITEMS.register(modBus);
+        com.flash.infinity.InfinityEntities.TYPES.register(modBus);
+        com.flash.infinity.InfinitySounds.SOUNDS.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         com.flash.registry.ModEntities.ENTITY_TYPES.register(modBus);
         ModMenus.MENUS.register(modBus);

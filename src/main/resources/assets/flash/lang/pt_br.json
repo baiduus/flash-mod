@@ -1782,5 +1782,11 @@
   "gui.flash.infinity.need_item": "Item certo no lugar certo",
   "gui.flash.infinity.need_score": "Progresso: %s",
   "gui.flash.infinity.need_setting": "Opção ligada",
-  "gui.flash.infinity.active": "Ativa"
+  "gui.flash.infinity.active": "Ativa",
+  "message.flash.infinity.no_dimension": "Dimensão desconhecida: %s",
+  "message.flash.infinity.no_block": "Nenhum bloco ao alcance para o portal.",
+  "message.flash.infinity.bad_portal": "Destino inválido.",
+  "gui.flash.infinity.portal": "Portal da Joia do Espaço",
+  "gui.flash.infinity.portal_open": "Abrir portal",
+  "gui.flash.infinity.portal_dim": "Dimensão (Tab completa)"
 }

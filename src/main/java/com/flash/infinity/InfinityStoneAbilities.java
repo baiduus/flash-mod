@@ -12,7 +12,25 @@ public final class InfinityStoneAbilities {
     }
 
     static void run(ServerPlayer p, InfinityServer.State s, InfPowers.Ability a, boolean on, boolean was) {
-        // Etapa 2: each stone's abilities
+        boolean start = on && !was;
+        switch (a.type) {
+            // the Space Stone
+            case "flash:telekinesis" -> SpaceStone.telekinesis(p, s, a, on, was);
+            case "flash:black_hole" -> SpaceStone.blackHoleToggle(p, on, was);
+            case "flash:jump_portal" -> {
+                if (start) {
+                    SpaceStone.jump(p, a.json.has("range") ? a.json.get("range").getAsDouble() : 256.0D);
+                }
+            }
+            case "flash:portal" -> {
+                if (start) {
+                    InfinityServer.open(p, "portal");
+                }
+            }
+            case "flash:movement_lock" -> SpaceStone.movementLock(p, on);
+            default -> {
+            }
+        }
     }
 
     /** The Mind Stone's flight (the original's flight speed attribute): free flight while on. */
