@@ -28,6 +28,25 @@ public final class InfinityStoneAbilities {
                 }
             }
             case "flash:movement_lock" -> SpaceStone.movementLock(p, on);
+            // the Mind Stone
+            case "palladium:intangibility" -> MindStone.intangibilityTick(p, s, a, on);
+            case "flash:clones" -> {
+                if (start) {
+                    MindStone.clones(p, a);
+                }
+            }
+            case "flash:mind_reading" -> {
+                if (start) {
+                    MindStone.readMind(p);
+                }
+            }
+            case "flash:disguise" -> {
+                if (start) {
+                    InfinityServer.open(p, "disguise");
+                }
+            }
+            case "palladium:energy_beam" -> InfinityBeams.tick(p, a, on, a.json.has("damage")
+                    ? a.json.get("damage").getAsFloat() : 5.0F, false);
             default -> {
             }
         }

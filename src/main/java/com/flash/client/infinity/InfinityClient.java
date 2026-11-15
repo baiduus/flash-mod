@@ -65,10 +65,19 @@ public final class InfinityClient {
             }
             return;
         }
+        if (t.contains("disguise_entity")) {
+            MindClient.disguise(t.getInt("disguise_entity"), t.getString("disguise"));
+            return;
+        }
+        if (t.contains("mind")) {
+            Minecraft.getInstance().setScreen(new MindCardScreen(t.getCompound("mind")));
+            return;
+        }
         if (t.contains("open")) {
             InfinityScreens.open(t.getString("open"));
             return;
         }
+        MindClient.hook();
         Set<String> p = new LinkedHashSet<>();
         for (Tag e : t.getList("powers", Tag.TAG_STRING)) {
             p.add(e.getAsString());
@@ -115,6 +124,7 @@ public final class InfinityClient {
         COOLDOWN.clear();
         SCORES.clear();
         VISUAL.clear();
+        MindClient.reset();
         selected = null;
         pressed = null;
     }

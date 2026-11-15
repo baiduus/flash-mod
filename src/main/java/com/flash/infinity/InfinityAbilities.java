@@ -95,6 +95,18 @@ public final class InfinityAbilities {
         }
     }
 
+    /** Commands run as the player at a spot (a beam's commands where it hits a block). */
+    static void commandsAt(ServerPlayer p, JsonElement list, net.minecraft.world.phys.Vec3 at) {
+        if (list == null || !list.isJsonArray()) {
+            return;
+        }
+        CommandSourceStack src = p.createCommandSourceStack().withSuppressedOutput().withPermission(2)
+                .withPosition(at);
+        for (JsonElement e : list.getAsJsonArray()) {
+            p.server.getCommands().performPrefixedCommand(src, e.getAsString().replace(" infinity:", " flash:"));
+        }
+    }
+
     // ------------------------------------------------------------------
     // Attributes
     // ------------------------------------------------------------------

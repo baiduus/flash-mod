@@ -12,6 +12,8 @@ public final class InfinityScreens {
         Minecraft mc = Minecraft.getInstance();
         switch (screen) {
             case "portal" -> mc.setScreen(new PortalScreen());
+            case "disguise" -> mc.setScreen(new DisguiseScreen());
+            case "mind_name" -> mc.setScreen(new MindNameScreen());
             default -> {
             }
         }

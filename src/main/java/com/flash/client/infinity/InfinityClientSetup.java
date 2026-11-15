@@ -36,6 +36,7 @@ public final class InfinityClientSetup {
         event.registerEntityRenderer(com.flash.infinity.InfinityEntities.SPACE_PORTAL.get(),
                 SpacePortalRenderer::new);
         event.registerEntityRenderer(com.flash.infinity.InfinityEntities.BLACK_HOLE.get(), BlackHoleRenderer::new);
+        event.registerEntityRenderer(com.flash.infinity.InfinityEntities.CLONE.get(), CloneRenderer::new);
     }
 
     @SubscribeEvent

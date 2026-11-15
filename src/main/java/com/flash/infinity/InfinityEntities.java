@@ -10,6 +10,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 /** The Infinity Stones' entities. */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = FlashMod.MODID,
+        bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.MOD)
 public final class InfinityEntities {
 
     public static final DeferredRegister<EntityType<?>> TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES,
@@ -23,6 +25,17 @@ public final class InfinityEntities {
     public static final RegistryObject<EntityType<BlackHole>> BLACK_HOLE = TYPES.register("black_hole",
             () -> EntityType.Builder.<BlackHole>of(BlackHole::new, MobCategory.MISC).sized(1.0F, 1.0F)
                     .clientTrackingRange(16).updateInterval(1).fireImmune().build("black_hole"));
+
+    /** An illusion of the Mind Stone. */
+    public static final RegistryObject<EntityType<com.flash.infinity.entity.StoneClone>> CLONE = TYPES.register(
+            "clone", () -> EntityType.Builder.<com.flash.infinity.entity.StoneClone>of(
+                    com.flash.infinity.entity.StoneClone::new, MobCategory.MISC).sized(0.6F, 1.8F)
+                    .clientTrackingRange(10).build("clone"));
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onAttributes(net.minecraftforge.event.entity.EntityAttributeCreationEvent event) {
+        event.put(CLONE.get(), com.flash.infinity.entity.StoneClone.attributes().build());
+    }
 
     private InfinityEntities() {
     }

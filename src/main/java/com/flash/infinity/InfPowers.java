@@ -122,7 +122,7 @@ public final class InfPowers {
 
         /** Picked with Alt + scroll and used with the ability key. */
         public boolean inBar() {
-            return !this.hidden && !this.hiddenInBar && this.key != Key.NONE;
+            return !this.hiddenInBar && this.key != Key.NONE;
         }
 
         /** Aspects of Existence to spend (0: none). */

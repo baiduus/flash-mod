@@ -1,0 +1,9 @@
+[
+  {
+    "body_part": "right_arm",
+    "glow_color": "#3aff1f",
+    "core_color": "#3aff1f",
+    "rotation_speed": 24,
+    "offset": [0, -11, 0]
+  }
+]

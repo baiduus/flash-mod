@@ -5,11 +5,14 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "LevelChunkGuardMixin",
-    "HandOfGodBossMixin"
+    "HandOfGodBossMixin",
+    "PlayerIntangibleMixin"
   ],
   "client": [
     "PedacosMixin",
-    "SpiderPoseMixin"
+    "SpiderPoseMixin",
+    "LocalPlayerIntangibleMixin",
+    "DisguiseSkinMixin"
   ],
   "injectors": {
     "defaultRequire": 0

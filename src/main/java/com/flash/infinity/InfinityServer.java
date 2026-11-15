@@ -200,6 +200,8 @@ public final class InfinityServer {
     public static final int ATTACK = 5;
     public static final int USE = 6;
     public static final int PORTAL = 7;
+    public static final int DISGUISE = 8;
+    public static final int MIND_NAME = 9;
 
     public static void handle(ServerPlayer p, int op, String key) {
         switch (op) {
@@ -213,6 +215,14 @@ public final class InfinityServer {
             }
             case USE -> {
                 SpaceStone.useWhileHolding(p);
+                return;
+            }
+            case DISGUISE -> {
+                MindStone.setDisguise(p, key.trim());
+                return;
+            }
+            case MIND_NAME -> {
+                MindStone.readByName(p, key.trim());
                 return;
             }
             case PORTAL -> {
