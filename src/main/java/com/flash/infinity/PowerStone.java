@@ -231,7 +231,7 @@ public final class PowerStone {
         }
         if (t % 20 == 0) {
             Vec3 dir = new Vec3(p.getRandom().nextGaussian(), 0.8D, p.getRandom().nextGaussian());
-            PowerShot.shoot(p, p.position().add(0.0D, 2.0D, 0.0D), dir, 1.0D, 5.0F * level(p) / 11.0F, COLOR, true);
+            PowerShot.shoot(p, p.position().add(0.0D, 2.0D, 0.0D), dir, 1.0F, 5.0F * level(p) / 11.0F, COLOR, true);
         }
         if (t % 40 == 0) {
             SpaceStone.sound(level, p.position(), "power_stone_beam1", 0.8F, 0.7F);
