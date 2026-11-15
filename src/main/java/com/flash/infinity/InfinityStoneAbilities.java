@@ -68,6 +68,79 @@ public final class InfinityStoneAbilities {
                     InfinityServer.open(p, "wheel:" + a.key());
                 }
             }
+            // the Power Stone
+            case "flash:power_level" -> {
+                if (on) {
+                    PowerStone.levelTick(p, s, a);
+                }
+            }
+            case "flash:power_level_change" -> {
+                if (start) {
+                    PowerStone.change(p, a);
+                }
+            }
+            case "flash:energy_blast" -> {
+                if (start) {
+                    PowerStone.energyBlast(p, a);
+                }
+            }
+            case "flash:rocket_burst" -> {
+                if (start) {
+                    PowerStone.rocketBurst(p, a);
+                }
+            }
+            case "flash:super_punch" -> {
+                if (start) {
+                    PowerStone.superPunch(p, a);
+                }
+            }
+            case "flash:power_cyclone" -> {
+                if (on) {
+                    if ("unprotected_cyclone".equals(a.id)) {
+                        PowerStone.unprotected(p, a, s);
+                    } else {
+                        PowerStone.cyclone(p, a, s);
+                    }
+                }
+            }
+            case "flash:meteor_storm" -> {
+                if (start) {
+                    PowerStone.meteorStorm(p, a);
+                }
+            }
+            case "flash:power_blast" -> InfinityBeams.tick(p, a, on, PowerStone.damage(p), PowerStone.maxed(p));
+            // the Time Stone
+            case "flash:time_flow" -> TimeStone.flow(p, a, on, was);
+            case "flash:time_flow_change" -> {
+                if (start) {
+                    TimeStone.flowChange(p, a);
+                }
+            }
+            case "flash:time_freeze" -> TimeStone.freeze(p, on, was);
+            case "flash:projectile_stop" -> TimeStone.projectileStop(p, on);
+            case "palladium:water_walk" -> TimeStone.waterWalk(p, on);
+            // the Soul Stone
+            case "flash:soul_heal" -> {
+                if (start) {
+                    SoulStone.heal(p, a);
+                }
+            }
+            case "flash:soul_drain" -> {
+                if (start) {
+                    SoulStone.drain(p);
+                }
+            }
+            case "flash:effect_immunity" -> SoulStone.effectImmunity(p, a, start);
+            case "flash:pocket_dimension_enter" -> {
+                if (start) {
+                    SoulStone.enter(p, a);
+                }
+            }
+            case "flash:pocket_dimension_exit" -> {
+                if (start) {
+                    SoulStone.exit(p, a);
+                }
+            }
             case "palladium:energy_beam" -> InfinityBeams.tick(p, a, on, a.json.has("damage")
                     ? a.json.get("damage").getAsFloat() : 5.0F, false);
             default -> {

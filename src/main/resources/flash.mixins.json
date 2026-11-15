@@ -6,13 +6,15 @@
   "mixins": [
     "LevelChunkGuardMixin",
     "HandOfGodBossMixin",
-    "PlayerIntangibleMixin"
+    "PlayerIntangibleMixin",
+    "ServerTickRateMixin"
   ],
   "client": [
     "PedacosMixin",
     "SpiderPoseMixin",
     "LocalPlayerIntangibleMixin",
-    "DisguiseSkinMixin"
+    "DisguiseSkinMixin",
+    "SoulGlowMixin"
   ],
   "injectors": {
     "defaultRequire": 0

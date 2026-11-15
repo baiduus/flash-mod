@@ -1896,5 +1896,15 @@
   "gui.flash.infinity.mind_where": "Where: %s",
   "entity.flash.space_portal": "Portal",
   "message.flash.infinity.reality_saved": "Reality block saved: %s",
-  "message.flash.infinity.reality_nothing": "No block saved (use Reality Copy)."
+  "message.flash.infinity.reality_nothing": "No block saved (use Reality Copy).",
+  "message.flash.infinity.tps": "Flow of time: %s ticks per second",
+  "message.flash.infinity.soul_full": "Health is already full.",
+  "message.flash.infinity.soul_none": "Not enough souls.",
+  "message.flash.infinity.need_soul": "Needs the Soul Stone (Locate Entity).",
+  "message.flash.infinity.need_time": "Needs the Time Stone (Time Set).",
+  "message.flash.infinity.located": "%s is in %s, %s",
+  "gui.flash.infinity.souls": "Souls",
+  "gui.flash.infinity.power_level": "Power Level",
+  "gui.flash.infinity.time_flow": "Flow of time",
+  "entity.flash.power_shot": "Energy Blast"
 }

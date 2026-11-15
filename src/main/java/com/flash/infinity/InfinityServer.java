@@ -38,7 +38,7 @@ public final class InfinityServer {
     private static final String KEY = "flash_infinity";
     /** The scores the client is told (the original's power level, size, the Orb's lock). */
     public static final String[] SCORES = {"DamageCycle", "SizeCycle", "power_stone_open_stage", "orb_opened",
-            "orb_lock_progress"};
+            "orb_lock_progress", "SoulStorage", "TimeFlow"};
 
     /** A player's running state (what is not kept with the player). */
     public static final class State implements InfinityPowers.View {
@@ -409,6 +409,27 @@ public final class InfinityServer {
                 }
             }
         }
+        // the original's animation timers: up to their max while on, back down while off
+        for (String pid : now) {
+            InfPowers.Power power = InfPowers.get(pid);
+            if (power == null) {
+                continue;
+            }
+            for (InfPowers.Ability a : power.abilities.values()) {
+                if (!"palladium:animation_timer".equals(a.type)) {
+                    continue;
+                }
+                int max = a.json.has("max_value") ? a.json.get("max_value").getAsInt() : 10;
+                int v = s.timers.getOrDefault(a.key(), a.json.has("start_value") ? a.json.get("start_value").getAsInt()
+                        : 0);
+                v = s.enabled.contains(a.key()) ? Math.min(max, v + 1) : Math.max(0, v - 1);
+                if (v == 0) {
+                    s.timers.remove(a.key());
+                } else {
+                    s.timers.put(a.key(), v);
+                }
+            }
+        }
         // what is on runs (rising edge first, every tick, falling edge)
         Set<String> all = new HashSet<>(s.enabled);
         all.addAll(s.wasEnabled);
@@ -419,10 +440,12 @@ public final class InfinityServer {
             }
             boolean on = s.enabled.contains(key);
             boolean was = s.wasEnabled.contains(key);
-            if (on) {
-                s.timers.merge(key, 1, Integer::sum);
-            } else {
-                s.timers.remove(key);
+            if (!"palladium:animation_timer".equals(a.type)) {
+                if (on) {
+                    s.timers.merge(key, 1, Integer::sum);
+                } else {
+                    s.timers.remove(key);
+                }
             }
             try {
                 InfinityAbilities.run(p, s, a, on, was);

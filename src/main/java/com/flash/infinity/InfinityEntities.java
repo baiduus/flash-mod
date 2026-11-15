@@ -26,6 +26,12 @@ public final class InfinityEntities {
             () -> EntityType.Builder.<BlackHole>of(BlackHole::new, MobCategory.MISC).sized(1.0F, 1.0F)
                     .clientTrackingRange(16).updateInterval(1).fireImmune().build("black_hole"));
 
+    /** The Power Stone's blasts and rockets. */
+    public static final RegistryObject<EntityType<com.flash.infinity.entity.PowerShot>> POWER_SHOT = TYPES.register(
+            "power_shot", () -> EntityType.Builder.<com.flash.infinity.entity.PowerShot>of(
+                    com.flash.infinity.entity.PowerShot::new, MobCategory.MISC).sized(0.4F, 0.4F)
+                    .clientTrackingRange(8).updateInterval(1).build("power_shot"));
+
     /** An illusion of the Mind Stone. */
     public static final RegistryObject<EntityType<com.flash.infinity.entity.StoneClone>> CLONE = TYPES.register(
             "clone", () -> EntityType.Builder.<com.flash.infinity.entity.StoneClone>of(
