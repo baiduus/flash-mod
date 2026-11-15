@@ -36,6 +36,8 @@ public record HeroFxPacket(int hero, int caster, int type, Vec3 from, Vec3 to, f
                 () -> () -> {
                     if (this.hero == HeroSyncPacket.SPIDER) {
                         com.flash.client.SpiderClient.fx(this);
+                    } else if (this.hero == HeroSyncPacket.WONDER) {
+                        com.flash.client.WonderVfx.fx(this);
                     } else {
                         com.flash.client.DoomVfx.fx(this);
                     }

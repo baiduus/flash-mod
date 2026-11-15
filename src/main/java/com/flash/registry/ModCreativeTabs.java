@@ -43,6 +43,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.STORM_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.SPIDER_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.DOOM_ESSENCE_CAPSULE.get());
+                        output.accept(ModItems.WONDER_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.NEGATIVE_STONE.get());
                         output.accept(ModItems.NEGATIVE_CRYSTAL.get());
                         output.accept(ModItems.FLASH_SUIT_HELMET.get());

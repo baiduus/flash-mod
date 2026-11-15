@@ -148,8 +148,8 @@ public class FlashProgressScreen extends Screen {
         if (PowerTheme.localStorm() || PowerTheme.localDoom()) {
             return new int[] {TAB_PROGRESS};
         }
-        if (PowerTheme.localSpider()) {
-            // his suit is picked in the settings
+        if (PowerTheme.localSpider() || PowerTheme.localWonder()) {
+            // the suit is picked in the settings
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         if (PowerTheme.localLex() && !FlashClientData.hasPowers()) {
@@ -268,6 +268,8 @@ public class FlashProgressScreen extends Screen {
             drawYasConfig(graphics, mx, my);
         } else if (PowerTheme.localSpider()) {
             drawSpiderConfig(graphics, mx, my);
+        } else if (PowerTheme.localWonder()) {
+            drawWonderConfig(graphics, mx, my);
         } else if (PowerTheme.localScarlet()) {
             configRow(graphics, 0, "gui.flash.scarlet.cfg.aura", "gui.flash.scarlet.cfg.aura.desc", mx, my);
             drawSwitch(graphics, "ssw0", switchX(), cfgY(0) + 8, ScarletClient.localAura());
@@ -922,6 +924,7 @@ public class FlashProgressScreen extends Screen {
     private static final String[] SPIDER_PASSIVES = {"web_swing", "wall_crawl", "spider_sense", "agility",
             "healing"};
     private static final String[] DOOM_PASSIVES = {"armour", "thrusters", "repair"};
+    private static final String[] WONDER_PASSIVES = {"flight", "demigoddess", "bracelets", "healing"};
 
     /** Storm, Spider-Man or Doom (heroes with modes of their own): their tab, their texts. */
     private static boolean stormTab() {
@@ -930,7 +933,8 @@ public class FlashProgressScreen extends Screen {
 
     /** The id of the texts of the hero with modes of his own ("storm", "spider", "doom"). */
     private static String ownHero() {
-        return PowerTheme.localSpider() ? "spider" : PowerTheme.localDoom() ? "doom" : "storm";
+        return PowerTheme.localSpider() ? "spider" : PowerTheme.localDoom() ? "doom"
+                : PowerTheme.localWonder() ? "wonder" : "storm";
     }
 
     /** Yas or the Scarlet Witch (the same tab, their own passives and modes). */
@@ -940,6 +944,7 @@ public class FlashProgressScreen extends Screen {
 
     private static String[] yasPassives() {
         return PowerTheme.localSpider() ? SPIDER_PASSIVES : PowerTheme.localDoom() ? DOOM_PASSIVES
+                : PowerTheme.localWonder() ? WONDER_PASSIVES
                 : stormTab() ? STORM_PASSIVES : scarletTab() ? SCARLET_PASSIVES : YAS_PASSIVES_OF_YAS;
     }
 
@@ -1244,6 +1249,35 @@ public class FlashProgressScreen extends Screen {
         return false;
     }
 
+    /** Wonder Woman's settings: the HUD, and her suit (with the tiara or without it). */
+    private void drawWonderConfig(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.config.hud", "gui.flash.superman.cfg.hud.desc", mx, my);
+        drawSwitch(g, "wsw0", switchX(), cfgY(0) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+        configRow(g, 1, "gui.flash.wonder.cfg.suit", "gui.flash.wonder.cfg.suit.desc", mx, my);
+        int suit = WonderClient.suitIndex(this.minecraft.player);
+        drawPicker(g, cfgY(1) + 7, mx, my, Component.translatable("suit.flash."
+                + com.flash.wonder.WonderPowers.SUITS[suit]).getString(), suit, com.flash.wonder.WonderPowers.SUITS.length);
+    }
+
+    private boolean clickWonderConfig(int mx, int my) {
+        if (inRow(mx, my, 0)) {
+            FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
+            click();
+            return true;
+        }
+        if (inRow(mx, my, 1)) {
+            int step = pickerStep(mx, my, 1);
+            if (step != 0 && this.minecraft.player != null) {
+                int n = com.flash.wonder.WonderPowers.SUITS.length;
+                WonderClient.send(com.flash.wonder.WonderAbilities.SUIT,
+                        Math.floorMod(WonderClient.suitIndex(this.minecraft.player) + step, n));
+                click();
+            }
+            return true;
+        }
+        return false;
+    }
+
     private void drawSupermanConfig(GuiGraphics g, int mx, int my) {
         configRow(g, 0, "gui.flash.superman.cfg.destroy", "gui.flash.superman.cfg.destroy.desc", mx, my);
         drawSwitch(g, "ssw0", switchX(), cfgY(0) + 8, com.flash.superman.SupermanState.destroyBlocks());
@@ -1525,8 +1559,8 @@ public class FlashProgressScreen extends Screen {
 
     /** Hero id (its advancement and its texts gui.flash.guide.<id>), number of steps. */
     private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas", "scarlet",
-            "storm", "spiderman", "doom"};
-    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4};
+            "storm", "spiderman", "doom", "wonderwoman"};
+    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 5, 4, 4, 4, 4, 4};
     private static final int GUIDE_LIST_W = 168;
     private static final int GUIDE_ROW_H = 19;
     private static final int GUIDE_ROW_GAP = 1;
@@ -1544,6 +1578,7 @@ public class FlashProgressScreen extends Screen {
             case 8 -> net.minecraft.world.item.Items.LIGHTNING_ROD;
             case 9 -> net.minecraft.world.item.Items.COBWEB;
             case 10 -> net.minecraft.world.item.Items.ENCHANTING_TABLE;
+            case 11 -> net.minecraft.world.item.Items.SHIELD;
             default -> net.minecraft.world.item.Items.NETHER_STAR;
         });
     }
@@ -1646,21 +1681,24 @@ public class FlashProgressScreen extends Screen {
         return y + 60;
     }
 
-    /** The heroes the transcendence asks for, in two columns. */
+    /** The heroes the transcendence asks for, in three columns. */
     private int drawYasHeroes(GuiGraphics g, int x, int y, int w) {
         String[] heroes = com.flash.power.HeroAdvancements.HEROES;
-        int rows = (heroes.length + 1) / 2;
+        int cols = 3;
+        int rows = (heroes.length + cols - 1) / cols;
         card(g, x, y - 2, w, rows * 10 + 6, 0.0F);
         for (int i = 0; i < heroes.length; i++) {
-            int cx = x + 8 + (i % 2) * (w / 2);
-            int cy = y + 2 + (i / 2) * 10;
-            checkLine(g, cx, cy, HeroProgressClient.has(heroes[i]),
-                    Component.translatable("gui.flash.guide." + heroes[i]));
+            int cx = x + 8 + (i % cols) * (w / cols);
+            int cy = y + 2 + (i / cols) * 10;
+            String name = this.font.plainSubstrByWidth(Component.translatable(
+                    "worthy".equals(heroes[i]) ? "gui.flash.guide.thor.worthy" : "gui.flash.guide." + heroes[i])
+                    .getString(), w / cols - 22);
+            checkLine(g, cx, cy, HeroProgressClient.has(heroes[i]), Component.literal(name));
         }
         return y + rows * 10 + 10;
     }
 
-    /** What must be in the inventory (checked on the player's inventory now). */
+    /** What must be in the inventory (checked on the player's inventory now), in three columns. */
     private int drawYasItems(GuiGraphics g, int x, int y, int w) {
         net.minecraft.world.entity.player.Player p = Minecraft.getInstance().player;
         if (p == null) {
@@ -1671,17 +1709,26 @@ public class FlashProgressScreen extends Screen {
                 {com.flash.registry.ModItems.HULK_ESSENCE_CAPSULE.get(),
                         com.flash.registry.ModItems.RED_HULK_ESSENCE_CAPSULE.get()},
                 {com.flash.registry.ModItems.KRYPTONIAN_BLOOD_CAPSULE.get()},
-                {com.flash.registry.ModItems.THOR_ESSENCE_CAPSULE.get()}};
-        int rows = 3;
+                {com.flash.registry.ModItems.THOR_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.SCARLET_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.STORM_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.SPIDER_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.DOOM_ESSENCE_CAPSULE.get()},
+                {com.flash.registry.ModItems.WONDER_ESSENCE_CAPSULE.get()},
+                {net.minecraft.world.item.Items.DRAGON_EGG},
+                {net.minecraft.world.item.Items.NETHER_STAR}};
+        int cols = 3;
+        int rows = (needs.length + 1 + cols - 1) / cols;
         card(g, x, y - 2, w, rows * 10 + 6, 0.0F);
         for (int i = 0; i < needs.length; i++) {
             boolean has = false;
             for (net.minecraft.world.item.Item it : needs[i]) {
                 has |= p.getInventory().countItem(it) > 0;
             }
-            int cx = x + 8 + (i % 2) * (w / 2);
-            int cy = y + 2 + (i / 2) * 10;
-            String name = this.font.plainSubstrByWidth(needs[i][0].getDescription().getString(), w / 2 - 24);
+            int cx = x + 8 + (i % cols) * (w / cols);
+            int cy = y + 2 + (i / cols) * 10;
+            String name = this.font.plainSubstrByWidth(Component.translatable("gui.flash.guide.yas.need." + i)
+                    .getString(), w / cols - 22);
             checkLine(g, cx, cy, has, Component.literal(name));
         }
         int lex = 0;
@@ -1692,7 +1739,10 @@ public class FlashProgressScreen extends Screen {
                 lex++;
             }
         }
-        checkLine(g, x + 8, y + 22, lex == 4, Component.translatable("gui.flash.guide.yas.lex", lex));
+        int li = needs.length;
+        String lexName = this.font.plainSubstrByWidth(Component.translatable("gui.flash.guide.yas.lex", lex)
+                .getString(), w / cols - 22);
+        checkLine(g, x + 8 + (li % cols) * (w / cols), y + 2 + (li / cols) * 10, lex == 4, Component.literal(lexName));
         return y + rows * 10 + 10;
     }
 
@@ -2444,6 +2494,9 @@ public class FlashProgressScreen extends Screen {
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localSpider()) {
             return clickSpiderConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localWonder()) {
+            return clickWonderConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localYas()) {
             return clickYasConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);

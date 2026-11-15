@@ -51,7 +51,9 @@ public final class HeroPowers {
         /** Spider-Man (the bite of a cave spider). */
         SPIDER("spiderman", com.flash.spider.SpiderPowers.KEY, ModItems.SPIDER_ESSENCE_CAPSULE),
         /** Doctor Doom (the grimoire of Latveria, in a netherite armour). */
-        DOOM("doom", com.flash.doom.DoomPowers.KEY, ModItems.DOOM_ESSENCE_CAPSULE);
+        DOOM("doom", com.flash.doom.DoomPowers.KEY, ModItems.DOOM_ESSENCE_CAPSULE),
+        /** Wonder Woman (the Amazons' trial: a Ravager brought down with a sword and a shield). */
+        WONDER("wonderwoman", com.flash.wonder.WonderPowers.KEY, ModItems.WONDER_ESSENCE_CAPSULE);
 
         // Every power of the game is a Hero here: the empty syringe takes it out into its capsule and the capsule
         // in a syringe gives it back (SyringeContents). A new power: a value here, its capsule, its SyringeContent.
@@ -87,6 +89,7 @@ public final class HeroPowers {
                 case STORM -> com.flash.storm.StormPowers.has(p);
                 case SPIDER -> com.flash.spider.SpiderPowers.has(p);
                 case DOOM -> com.flash.doom.DoomPowers.has(p);
+                case WONDER -> com.flash.wonder.WonderPowers.has(p);
             };
         }
 
@@ -96,7 +99,7 @@ public final class HeroPowers {
                 case FLASH -> !FlashPowers.hasPermanentPowers(p) || FlashV9.isActive(p);
                 case HULK -> HulkPowers.isTemporary(p) || HulkPowers.boostTicks(p) > 0;
                 case SUPERMAN -> SupermanPowers.temporaryTicks(p) > 0;
-                case THOR, YAS, SCARLET, STORM, SPIDER, DOOM -> false;
+                case THOR, YAS, SCARLET, STORM, SPIDER, DOOM, WONDER -> false;
             };
         }
 
@@ -106,7 +109,7 @@ public final class HeroPowers {
                 case HULK -> HulkPowers.level(p);
                 case SUPERMAN -> SupermanPowers.level(p);
                 case THOR -> ThorPowers.level(p);
-                case YAS, SCARLET, STORM, SPIDER, DOOM -> 1;
+                case YAS, SCARLET, STORM, SPIDER, DOOM, WONDER -> 1;
             };
         }
 
@@ -136,6 +139,7 @@ public final class HeroPowers {
                 case STORM -> com.flash.storm.StormPowers.revoke(p);
                 case SPIDER -> com.flash.spider.SpiderPowers.revoke(p);
                 case DOOM -> com.flash.doom.DoomPowers.revoke(p);
+                case WONDER -> com.flash.wonder.WonderPowers.revoke(p);
             }
         }
 
@@ -154,6 +158,7 @@ public final class HeroPowers {
                 case STORM -> com.flash.storm.StormPowers.grant(p);
                 case SPIDER -> com.flash.spider.SpiderPowers.grant(p);
                 case DOOM -> com.flash.doom.DoomPowers.grant(p);
+                case WONDER -> com.flash.wonder.WonderPowers.grant(p);
             }
         }
 
@@ -182,6 +187,7 @@ public final class HeroPowers {
                 case STORM -> com.flash.storm.StormPowers.sync(p);
                 case SPIDER -> com.flash.spider.SpiderPowers.sync(p);
                 case DOOM -> com.flash.doom.DoomPowers.sync(p);
+                case WONDER -> com.flash.wonder.WonderPowers.sync(p);
             }
         }
 

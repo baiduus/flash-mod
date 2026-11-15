@@ -92,6 +92,7 @@ public final class FlashClientEvents {
                 player.addLayer(new HulkClient.Layer(player));
                 player.addLayer(new SupermanSuitLayer(player));
                 player.addLayer(new DoomLayer(player));
+                player.addLayer(new WonderLayer(player));
                 player.addLayer(new LexSuitLayer<>(player));
                 player.addLayer(new YasLayer<>(player));
                 player.addLayer(new ScarletLayer(player));

@@ -25,6 +25,8 @@ public record HeroActionPacket(int hero, int action, int value) {
         }
         if (this.hero == HeroSyncPacket.SPIDER) {
             com.flash.spider.SpiderAbilities.act(p, this.action, this.value);
+        } else if (this.hero == HeroSyncPacket.WONDER) {
+            com.flash.wonder.WonderAbilities.act(p, this.action, this.value);
         } else {
             com.flash.doom.DoomAbilities.act(p, this.action, this.value);
         }

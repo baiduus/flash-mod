@@ -72,6 +72,10 @@ public final class SyringeContents {
     public static final SyringeContent DOOM_ESSENCE = register(new SyringeContent(
             "doom_essence", 13, ModItems.DOOM_ESSENCE_CAPSULE::get,
             p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.DOOM)));
+    /** Wonder Woman's power. */
+    public static final SyringeContent WONDER_ESSENCE = register(new SyringeContent(
+            "wonder_essence", 14, ModItems.WONDER_ESSENCE_CAPSULE::get,
+            p -> com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.WONDER)));
 
     private static boolean injectHulk(net.minecraft.server.level.ServerPlayer p, boolean red) {
         if (!com.flash.power.HeroPowers.inject(p, com.flash.power.HeroPowers.Hero.HULK)) {

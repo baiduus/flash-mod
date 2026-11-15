@@ -78,6 +78,12 @@
     "flash:content": 13
    },
    "model": "flash:item/syringe_doom_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 14
+   },
+   "model": "flash:item/syringe_wonder_essence"
   }
  ]
 }

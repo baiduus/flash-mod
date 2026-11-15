@@ -76,6 +76,16 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFF4FD86A, 0xFF1C2A20, 0xFF0B120D,
             "gui.flash.theme.doom.title", "gui.flash.theme.doom.subtitle", Icon.SHIELD, true);
 
+    /** Wonder Woman: Amazon gold on deep red. */
+    public static final PowerTheme WONDER = new PowerTheme("wonder",
+            0xFFFFC83C, 0xFF3A0C12, 0xFF1A0508,
+            "gui.flash.theme.wonder.title", "gui.flash.theme.wonder.subtitle", Icon.SHIELD, true);
+
+    public static boolean localWonder() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && WonderClient.isWonder(player);
+    }
+
     public static boolean localSpider() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
         return player != null && SpiderClient.isSpider(player);
@@ -88,7 +98,7 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
 
     /** One of the heroes with modes of their own on R / Z (Storm, Spider-Man, Doom: not Yas, not Wanda). */
     public static boolean localOwnModes() {
-        return localStorm() || localSpider() || localDoom();
+        return localStorm() || localSpider() || localDoom() || localWonder();
     }
 
     public static boolean localStorm() {
@@ -158,6 +168,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
         }
         if (localDoom()) {
             return DOOM;
+        }
+        if (localWonder()) {
+            return WONDER;
         }
         if (localThor()) {
             return THOR;

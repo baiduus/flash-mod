@@ -97,6 +97,14 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> SPIDER_WHOOSH = spider("whoosh");
     public static final RegistryObject<SoundEvent> SPIDER_SENSE = spider("sense");
 
+    public static final RegistryObject<SoundEvent> WONDER_LASSO = spider("lasso", "wonder.");
+    public static final RegistryObject<SoundEvent> WONDER_CATACLYSM = spider("cataclysm", "wonder.");
+
+    private static RegistryObject<SoundEvent> spider(String name, String prefix) {
+        String id = prefix + name;
+        return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));
+    }
+
     private static RegistryObject<SoundEvent> spider(String name) {
         String id = "spider." + name;
         return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));

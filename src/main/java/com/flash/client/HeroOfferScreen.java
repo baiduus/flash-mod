@@ -29,11 +29,15 @@ public class HeroOfferScreen extends Screen {
         net.minecraft.client.Minecraft.getInstance().setScreen(new HeroOfferScreen(hero));
     }
 
+    private static String name(int hero) {
+        return hero == HeroSyncPacket.SPIDER ? "spider" : hero == HeroSyncPacket.WONDER ? "wonder" : "doom";
+    }
+
     public HeroOfferScreen(int hero) {
-        super(Component.translatable("gui.flash." + (hero == HeroSyncPacket.SPIDER ? "spider" : "doom")
+        super(Component.translatable("gui.flash." + name(hero)
                 + "_offer.title"));
         this.hero = hero;
-        this.key = "gui.flash." + (hero == HeroSyncPacket.SPIDER ? "spider" : "doom") + "_offer.";
+        this.key = "gui.flash." + name(hero) + "_offer.";
     }
 
     @Override
@@ -75,11 +79,16 @@ public class HeroOfferScreen extends Screen {
         float t = this.ticks + partial;
         boolean spider = this.hero == HeroSyncPacket.SPIDER;
         float pulse = 0.75F + 0.25F * Mth.sin(t * 0.25F);
-        int border = spider ? lerp(0xFF7A1418, 0xFFE8333C, pulse) : lerp(0xFF1C5A28, 0xFF6CFF8A, pulse);
+        boolean wonder = this.hero == HeroSyncPacket.WONDER;
+        int border = wonder ? lerp(0xFF7A5A14, 0xFFFFD45A, pulse) : spider ? lerp(0xFF7A1418, 0xFFE8333C, pulse)
+                : lerp(0xFF1C5A28, 0xFF6CFF8A, pulse);
         g.fill(x - 1, y - 1, x + W + 1, y + H + 1, border);
-        g.fill(x, y, x + W, y + H, spider ? 0xF00A0F22 : 0xF0081208);
-        g.fillGradient(x, y, x + W, y + 30, spider ? 0x60E8333C : 0x604FD86A, 0x00000000);
-        if (spider) {
+        g.fill(x, y, x + W, y + H, wonder ? 0xF0200A0C : spider ? 0xF00A0F22 : 0xF0081208);
+        g.fillGradient(x, y, x + W, y + 30, wonder ? 0x60FFC83C : spider ? 0x60E8333C : 0x604FD86A, 0x00000000);
+        if (wonder) {
+            g.fill(x + 6, y + 6, x + 22, y + 8, 0xFFFFD45A);
+            g.fill(x + W - 22, y + 6, x + W - 6, y + 8, 0xFFFFD45A);
+        } else if (spider) {
             web(g, x + 2, y + 2, 1, 1);
             web(g, x + W - 2, y + 2, -1, 1);
         } else {
@@ -87,7 +96,7 @@ public class HeroOfferScreen extends Screen {
             rune(g, x + W - 14, y + 14, -t);
         }
         Component title = this.title;
-        g.drawString(this.font, title, x + (W - this.font.width(title)) / 2, y + 10, spider ? 0xFFFFD6D8 : 0xFFD6FFDD,
+        g.drawString(this.font, title, x + (W - this.font.width(title)) / 2, y + 10, wonder ? 0xFFFFEFC0 : spider ? 0xFFFFD6D8 : 0xFFD6FFDD,
                 true);
         List<FormattedCharSequence> lines = this.font.split(Component.translatable(this.key + "text"), W - 30);
         int ty = y + 30;

@@ -54,6 +54,9 @@ public final class FlashClientForgeEvents {
             } else if (minecraft.screen == null && PowerTheme.localSpider()) {
                 // Spider-Man: the suit on / off (his powers stay)
                 SpiderClient.send(com.flash.spider.SpiderAbilities.SUIT_TOGGLE, 0);
+            } else if (minecraft.screen == null && PowerTheme.localWonder()) {
+                // Wonder Woman: the suit on / off (her powers stay)
+                WonderClient.send(com.flash.wonder.WonderAbilities.SUIT_TOGGLE, 0);
             } else if (minecraft.screen == null && PowerTheme.localDoom()) {
                 // Doctor Doom: the armour on / off (his powers stay)
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HeroActionPacket(
@@ -178,6 +181,8 @@ public final class FlashClientForgeEvents {
         StormClient.reset();
         SpiderClient.reset();
         DoomClient.reset();
+        WonderClient.reset();
+        WonderLayer.resetModels();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */

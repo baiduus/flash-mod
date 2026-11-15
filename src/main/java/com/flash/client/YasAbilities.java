@@ -242,6 +242,17 @@ public final class YasAbilities {
             {".....##.....", "....#..#....", "...#.++.#...", "..#.+..+.#..", ".#.+.##.+.#.", "#.+.####.+.#",
                     "#.+.####.+.#", ".#.+.##.+.#.", "..#.+..+.#..", "...#.++.#...", "....#..#....", ".....##....."}};
 
+    /** Wonder Woman: the Lasso of Truth, the Bracelets, the Warrior. */
+    public static final String[] WONDER_MODES = {"lasso", "bracelets", "warrior"};
+    private static final int[] WONDER_COLORS = {0xFFFFD45A, 0xFFE8E8F0, 0xFFE8333C};
+    private static final String[][] WONDER_ICONS = {
+            {"....####....", "..##++++##..", ".#+......+#.", "#+..####..+#", "#+.#....#.+#", "#+.#....#.+#",
+                    ".#+.####.+#.", "..##+..+##..", "....#..#....", ".....#.#....", "......#.#...", ".......#...."},
+            {"............", "############", "#++++++++++#", "############", "............", "............",
+                    "............", "############", "#++++++++++#", "############", "............", "............"},
+            {"....####....", "..##++++##..", ".#++####++#.", ".#+#+##+#+#.", "#+#+####+#+#", "#+##.##.##+#",
+                    "#+##.##.##+#", "#+#+####+#+#", ".#+#+##+#+#.", ".#++####++#.", "..##++++##..", "....####...."}};
+
     /** A hero whose modes are all his own on R / Z (Storm, Spider-Man, Doom). */
     private static final class Own {
         final String prefix;
@@ -261,6 +272,7 @@ public final class YasAbilities {
     private static final Own STORM_OWN = new Own("storm", STORM_MODES, STORM_COLORS, STORM_ICONS);
     private static final Own SPIDER_OWN = new Own("spider", SPIDER_MODES, SPIDER_COLORS, SPIDER_ICONS);
     private static final Own DOOM_OWN = new Own("doom", DOOM_MODES, DOOM_COLORS, DOOM_ICONS);
+    private static final Own WONDER_OWN = new Own("wonder", WONDER_MODES, WONDER_COLORS, WONDER_ICONS);
 
     /** The local hero's own modes (null: Yas, the Scarlet Witch or nobody). */
     private static Own own() {
@@ -269,6 +281,9 @@ public final class YasAbilities {
         }
         if (PowerTheme.localSpider()) {
             return SPIDER_OWN;
+        }
+        if (PowerTheme.localWonder()) {
+            return WONDER_OWN;
         }
         return PowerTheme.localDoom() ? DOOM_OWN : null;
     }
@@ -552,6 +567,7 @@ public final class YasAbilities {
             StormClient.tickMode(mc, o == STORM_OWN ? mode : null, v);
             SpiderClient.tickMode(mc, o == SPIDER_OWN ? mode : null, v);
             DoomClient.tickMode(mc, o == DOOM_OWN ? mode : null, v);
+            WonderClient.tickMode(mc, o == WONDER_OWN ? mode : null, v);
             com.flash.client.godwand.GodWandClient.tickMode(mc, -1);
             com.flash.client.godwand.GodWandClient.tickPath(mc, false);
             return;
@@ -559,6 +575,7 @@ public final class YasAbilities {
         StormClient.tickMode(mc, null, false);
         SpiderClient.tickMode(mc, null, false);
         DoomClient.tickMode(mc, null, false);
+        WonderClient.tickMode(mc, null, false);
         if (mc.player == null || !(PowerTheme.localYas() || PowerTheme.localScarlet()) || !ready()) {
             unbind();
             ScarletClient.tickMode(mc, null, false);

@@ -21,5 +21,6 @@ public abstract class SpiderPoseMixin {
         PlayerModel<?> model = (PlayerModel<?>) (Object) this;
         com.flash.client.SpiderAnim.apply(model, entity, ageInTicks);
         com.flash.client.DoomPose.apply(model, entity, ageInTicks);
+        com.flash.client.WonderPose.apply(model, entity, ageInTicks);
     }
 }

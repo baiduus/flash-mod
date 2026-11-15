@@ -47,7 +47,14 @@ public final class ScarletCooldowns {
             Map.entry("force_field", 400),
             Map.entry("force_wave", 160),
             Map.entry("mystic_bolt", 40),
-            Map.entry("ritual", 360));
+            Map.entry("ritual", 360),
+            // Wonder Woman
+            Map.entry("lasso", 60),
+            Map.entry("lasso_whip", 120),
+            Map.entry("bracelet_guard", 200),
+            Map.entry("bracelet_clash", 160),
+            Map.entry("shield_throw", 60),
+            Map.entry("cataclysm", 500));
 
     /** The rows of each mode in the HUD: cooldown id ("" none), name key suffix, key ("R", "Z", "RMB", "R+"). */
     public static String[][] rows(String mode) {
@@ -73,6 +80,11 @@ public final class ScarletCooldowns {
                     {"discharge", "discharge", "Z"}};
             case "force" -> new String[][] {{"force_field", "force_field", "R"}, {"force_wave", "force_wave", "Z"}};
             case "sorcery" -> new String[][] {{"mystic_bolt", "mystic_bolt", "R"}, {"ritual", "ritual", "Z"}};
+            // Wonder Woman
+            case "lasso" -> new String[][] {{"lasso", "lasso", "R"}, {"lasso_whip", "lasso_whip", "Z"}};
+            case "bracelets" -> new String[][] {{"bracelet_guard", "bracelet_guard", "R"},
+                    {"bracelet_clash", "bracelet_clash", "Z"}};
+            case "warrior" -> new String[][] {{"shield_throw", "shield_throw", "R"}, {"cataclysm", "cataclysm", "Z"}};
             // Yas' God Wand modes (cooldowns sent by the server with their own length, by charge level)
             case "singularity" -> new String[][] {{"gw_1", "gw_singularity", "R+"}, {"", "gw_collapse", "R"}};
             case "earth_drill" -> new String[][] {{"gw_2", "gw_earth_drill", "R+"}};

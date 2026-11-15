@@ -74,6 +74,10 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     /** Where a suit's files are: Thor's, Spider-Man's, Doom's or Superman's (told apart by the id). */
     private static String folder(String id, String thor, String spider, String doom, String superman) {
+        if (id.startsWith("wonder_woman")) {
+            // Wonder Woman's: the same layout in her own folders
+            return doom.replace("doom", "wonder");
+        }
         return thor(id) ? thor : com.flash.spider.SpiderSuits.isSpider(id) ? spider
                 : DOOM_SUIT.equals(id) ? doom : superman;
     }
@@ -93,6 +97,9 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
         if (DoomClient.isDoom(player)) {
             return DoomClient.suited(player) ? DOOM_SUIT : null;
+        }
+        if (WonderClient.isWonder(player)) {
+            return WonderClient.suited(player) ? WonderClient.suit(player) : null;
         }
         if (com.flash.thor.ThorState.has(player)) {
             return com.flash.thor.ThorState.suited(player)

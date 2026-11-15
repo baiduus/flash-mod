@@ -892,5 +892,17 @@
     "sounds": [
       "flash:spider/spider_sense"
     ]
+  },
+  "wonder.lasso": {
+    "subtitle": "subtitles.flash.wonder.lasso",
+    "sounds": [
+      "flash:wonder/swing_lasso"
+    ]
+  },
+  "wonder.cataclysm": {
+    "subtitle": "subtitles.flash.wonder.cataclysm",
+    "sounds": [
+      "flash:wonder/amazonian_cataclysm"
+    ]
   }
 }

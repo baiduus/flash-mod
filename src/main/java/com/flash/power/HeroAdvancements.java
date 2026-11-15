@@ -55,11 +55,13 @@ public final class HeroAdvancements {
     public static final String STORM = "storm";
     public static final String SPIDER = "spiderman";
     public static final String DOOM = "doom";
-    /** The heroes the transcendence asks for (YasTranscendence). */
-    public static final String[] HEROES = {FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX};
+    public static final String WONDER = "wonderwoman";
+    /** The heroes the transcendence asks for (YasTranscendence): every one of them, and worthy too. */
+    public static final String[] HEROES = {FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX, SCARLET, STORM, SPIDER, DOOM,
+            WONDER, WORTHY};
     /** In the order of the bits of the client sync. */
     public static final String[] ALL = {ROOT, FLASH, HULK, RED_HULK, SUPERMAN, THOR, LEX, VILLAGE, HUNTER, WORTHY,
-            YAS, SCARLET, STORM, SPIDER, DOOM};
+            YAS, SCARLET, STORM, SPIDER, DOOM, WONDER};
 
     /** Hostile creatures to kill to be worthy. */
     public static final int KILLS_NEEDED = 100;
@@ -146,6 +148,9 @@ public final class HeroAdvancements {
         }
         if (com.flash.doom.DoomPowers.has(p)) {
             award(p, DOOM);
+        }
+        if (com.flash.wonder.WonderPowers.has(p)) {
+            award(p, WONDER);
         }
         if (com.flash.item.LexArmorItem.wearingFull(p)) {
             award(p, LEX);
@@ -240,7 +245,7 @@ public final class HeroAdvancements {
             {"flash", FLASH}, {"hulk", HULK}, {"hulk_vermelho", RED_HULK}, {"superman", SUPERMAN}, {"thor", THOR},
             {"lex", LEX}, {"heroi_da_vila", VILLAGE}, {"cacador", HUNTER}, {"digno", WORTHY}, {"yas", YAS},
             {"feiticeira_escarlate", SCARLET}, {"tempestade", STORM},
-            {"homem_aranha", SPIDER}, {"doutor_destino", DOOM}};
+            {"homem_aranha", SPIDER}, {"doutor_destino", DOOM}, {"mulher_maravilha", WONDER}};
 
     private static java.util.List<String> ids() {
         java.util.List<String> out = new java.util.ArrayList<>();

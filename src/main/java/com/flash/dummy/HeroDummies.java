@@ -42,7 +42,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class HeroDummies {
 
     public static final String[] POWERS = {"none", "flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas",
-            "scarlet", "storm", "spiderman", "doom"};
+            "scarlet", "storm", "spiderman", "doom", "wonderwoman"};
     private static final List<HeroDummy> ALL = new ArrayList<>();
 
     private HeroDummies() {
@@ -145,6 +145,7 @@ public final class HeroDummies {
             case "storm" -> com.flash.storm.StormPowers.grant(d);
             case "spiderman" -> com.flash.spider.SpiderPowers.grant(d);
             case "doom" -> com.flash.doom.DoomPowers.grant(d);
+            case "wonderwoman" -> com.flash.wonder.WonderPowers.grant(d);
             default -> {
             }
         }

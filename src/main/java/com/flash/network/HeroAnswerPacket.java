@@ -24,6 +24,8 @@ public record HeroAnswerPacket(int hero, boolean accept) {
         }
         if (this.hero == HeroSyncPacket.SPIDER) {
             com.flash.spider.SpiderCalling.answer(p, this.accept);
+        } else if (this.hero == HeroSyncPacket.WONDER) {
+            com.flash.wonder.WonderCalling.answer(p, this.accept);
         } else {
             com.flash.doom.DoomCalling.answer(p, this.accept);
         }

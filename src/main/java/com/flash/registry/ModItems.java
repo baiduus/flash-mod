@@ -223,6 +223,10 @@ public final class ModItems {
     public static final RegistryObject<Item> DOOM_ESSENCE_CAPSULE = ITEMS.register("doom_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.doom_essence_capsule", "tooltip.flash.power_capsule"));
+    /** Wonder Woman's power (the gift of the gods of Themyscira), taken out with an empty syringe. */
+    public static final RegistryObject<Item> WONDER_ESSENCE_CAPSULE = ITEMS.register("wonder_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.wonder_essence_capsule", "tooltip.flash.power_capsule"));
 
     /** Lex Luthor's green and purple war suit. */
     public static final RegistryObject<Item> LEX_HELMET = ITEMS.register("lex_armor_helmet",
