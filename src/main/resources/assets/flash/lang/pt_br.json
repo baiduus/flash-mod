@@ -1285,5 +1285,10 @@
   "item.flash.syringe.scarlet_essence": "Seringa com Caos",
   "tooltip.flash.syringe.scarlet_essence": "Segure o botão direito: vira a Feiticeira Escarlate.",
   "item.flash.syringe.storm_essence": "Seringa com o Poder das Tempestades",
-  "tooltip.flash.syringe.storm_essence": "Segure o botão direito: vira a Tempestade."
+  "tooltip.flash.syringe.storm_essence": "Segure o botão direito: vira a Tempestade.",
+  "gui.flash.thor.level": "Nível asgardiano",
+  "gui.flash.thor.levels": "Níveis do trovão",
+  "gui.flash.thor.strength": "Força asgardiana",
+  "gui.flash.thor.resistance": "Corpo de Asgard: -%s%% de dano",
+  "gui.flash.thor.next": "Nível %s: %s%% (lute)"
 }

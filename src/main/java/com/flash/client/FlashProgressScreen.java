@@ -770,7 +770,7 @@ public class FlashProgressScreen extends Screen {
         float energy = infinite ? 1.0F : Math.max(0.0F, Math.min(1.0F, com.flash.thor.ThorState.energy()
                 / com.flash.thor.ThorPowers.MAX_ENERGY));
         int half = (LEFT_W - 8) / 2;
-        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.superman.level"),
+        statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable("gui.flash.thor.level"),
                 Component.translatable("gui.flash.superman.level_value", level),
                 Component.literal(String.format(java.util.Locale.ROOT, "x%.2f",
                         0.55F + 0.05F * level)));
@@ -778,7 +778,7 @@ public class FlashProgressScreen extends Screen {
                 Component.translatable(form ? "gui.flash.thor.form_thor" : "gui.flash.thor.form_civil"),
                 Component.translatable("gui.flash.hulk.key_short", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage()));
 
-        sectionTitle(g, Component.translatable("gui.flash.hulk.levels"), PAD, GRID_Y - 13);
+        sectionTitle(g, Component.translatable("gui.flash.thor.levels"), PAD, GRID_Y - 13);
         int cols = 5;
         int cw = (LEFT_W - GRID_GAP * (cols - 1)) / cols;
         int ch = 30;
@@ -812,7 +812,7 @@ public class FlashProgressScreen extends Screen {
         int sh = PROGRESS_Y - 6 - sy;
         card(g, PAD, sy, LEFT_W, sh, 0.0F);
         g.fill(PAD, sy + 6, PAD + 2, sy + sh - 6, accent());
-        g.drawString(this.font, Component.translatable("gui.flash.superman.strength"), PAD + 10, sy + 6, COLOR_MUTED, false);
+        g.drawString(this.font, Component.translatable("gui.flash.thor.strength"), PAD + 10, sy + 6, COLOR_MUTED, false);
         scaledText(g, Component.literal(String.format(java.util.Locale.ROOT, "x%.1f", punch)), PAD + 10, sy + 17,
                 1.4F, accent());
         int resist = Math.round((1.0F - Math.max(0.24F, 0.64F - 0.04F * level)) * 100.0F);
@@ -820,7 +820,7 @@ public class FlashProgressScreen extends Screen {
                 String.format(java.util.Locale.ROOT, "%.1f", punch),
                 String.format(java.util.Locale.ROOT, "%.1f", punch / 2.0D));
         g.drawString(this.font, dmg, PAD + LEFT_W - 10 - this.font.width(dmg), sy + 6, COLOR_TEXT, false);
-        Component res = Component.translatable("gui.flash.superman.resistance", resist);
+        Component res = Component.translatable("gui.flash.thor.resistance", resist);
         g.drawString(this.font, res, PAD + LEFT_W - 10 - this.font.width(res), sy + 17, COLOR_MUTED, false);
 
         // progress to the next level and the energy bar
@@ -836,7 +836,7 @@ public class FlashProgressScreen extends Screen {
         g.drawString(this.font, energyText, PAD + 10, y + 6, com.flash.thor.ThorState.storm() > 0
                 ? 0xFF8FD8FF : COLOR_TEXT, false);
         drawBar(g, PAD + 10, y + 17, LEFT_W - 20, energy, energy < 0.15F ? 0xFFFF3A3A : 0xFF6FC3FF);
-        Component next = Component.translatable(maxed ? "gui.flash.superman.maxed" : "gui.flash.superman.next",
+        Component next = Component.translatable(maxed ? "gui.flash.superman.maxed" : "gui.flash.thor.next",
                 level + 1, Math.round(xp * 100.0F));
         g.drawString(this.font, next, PAD + 10, y + 27, COLOR_MUTED, false);
         if (!maxed) {

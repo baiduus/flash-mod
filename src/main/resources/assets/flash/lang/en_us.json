@@ -1285,5 +1285,10 @@
   "item.flash.syringe.scarlet_essence": "Syringe of Chaos",
   "tooltip.flash.syringe.scarlet_essence": "Hold right click: become the Scarlet Witch.",
   "item.flash.syringe.storm_essence": "Syringe of the Storms",
-  "tooltip.flash.syringe.storm_essence": "Hold right click: become Storm."
+  "tooltip.flash.syringe.storm_essence": "Hold right click: become Storm.",
+  "gui.flash.thor.level": "Asgardian level",
+  "gui.flash.thor.levels": "Thunder levels",
+  "gui.flash.thor.strength": "Asgardian strength",
+  "gui.flash.thor.resistance": "Asgardian body: -%s%% damage",
+  "gui.flash.thor.next": "Level %s: %s%% (fight)"
 }
