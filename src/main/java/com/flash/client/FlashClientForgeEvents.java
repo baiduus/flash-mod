@@ -169,6 +169,8 @@ public final class FlashClientForgeEvents {
         YasClient.reset();
         ScarletClient.reset();
         StormClient.reset();
+        SpiderClient.reset();
+        DoomClient.reset();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */

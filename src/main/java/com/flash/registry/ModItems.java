@@ -215,6 +215,14 @@ public final class ModItems {
     public static final RegistryObject<Item> STORM_ESSENCE_CAPSULE = ITEMS.register("storm_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.storm_essence_capsule", "tooltip.flash.power_capsule"));
+    /** Spider-Man's power, taken out with an empty syringe. */
+    public static final RegistryObject<Item> SPIDER_ESSENCE_CAPSULE = ITEMS.register("spider_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.spider_essence_capsule", "tooltip.flash.power_capsule"));
+    /** Doctor Doom's power (his armour and his sorcery), taken out with an empty syringe. */
+    public static final RegistryObject<Item> DOOM_ESSENCE_CAPSULE = ITEMS.register("doom_essence_capsule",
+            () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
+                    "tooltip.flash.doom_essence_capsule", "tooltip.flash.power_capsule"));
 
     /** Lex Luthor's green and purple war suit. */
     public static final RegistryObject<Item> LEX_HELMET = ITEMS.register("lex_armor_helmet",

@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "48";
+    private static final String PROTOCOL = "49";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -383,6 +383,42 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(StormAnswerPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(StormAnswerPacket::encode)
                 .decoder(StormAnswerPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HeroSyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(HeroSyncPacket::encode)
+                .decoder(HeroSyncPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HeroActionPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(HeroActionPacket::encode)
+                .decoder(HeroActionPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HeroFxPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(HeroFxPacket::encode)
+                .decoder(HeroFxPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HeroOfferPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(HeroOfferPacket::encode)
+                .decoder(HeroOfferPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(HeroAnswerPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(HeroAnswerPacket::encode)
+                .decoder(HeroAnswerPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(SpiderLinePacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SpiderLinePacket::encode)
+                .decoder(SpiderLinePacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
 

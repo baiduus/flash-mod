@@ -221,10 +221,65 @@ public final class YasAbilities {
                     "...#..#..#..", "..#..#..#...", "...#..#..#..", "............", "............", "............"},
             {".....#......", "..#..#..#...", "...#.#.#....", "....###.....", "#####+#####.", "....###.....",
                     "...#.#.#....", "..#..#..#...", ".....#......", "............", "............", "............"}};
-    private static int stormMode;
+    /** Spider-Man: Webs, Pull, Combat. */
+    public static final String[] SPIDER_MODES = {"webs", "pull", "combat"};
+    private static final int[] SPIDER_COLORS = {0xFFF2F2F2, 0xFF4A7BFF, 0xFFE8333C};
+    private static final String[][] SPIDER_ICONS = {
+            {"#....#....#.", ".#...#...#..", "..##+#+##...", "..+#.#.#+...", "..+.###.+...", "######+#####",
+                    "..+.###.+...", "..+#.#.#+...", "..##+#+##...", ".#...#...#..", "#....#....#.", "............"},
+            {"............", "...#........", "..##........", ".###########", "####++++++++", ".###########",
+                    "..##........", "...#........", "............", "......#..#..", ".....#..#...", "............"},
+            {"..#......#..", "...#....#...", "#...#..#...#", ".#..####..#.", "..#.####.#..", "...######...",
+                    "...######...", "..#.####.#..", ".#..####..#.", "#...#..#...#", "...#....#...", "..#......#.."}};
+    /** Doctor Doom: Gauntlets, Force Field, Sorcery. */
+    public static final String[] DOOM_MODES = {"gauntlets", "force", "sorcery"};
+    private static final int[] DOOM_COLORS = {0xFF7FE8FF, 0xFF5AE07A, 0xFFA6FF5A};
+    private static final String[][] DOOM_ICONS = {
+            {"........#...", ".......##...", "......###...", ".....######.", ".......##...", "..####.#....",
+                    ".#++++#.....", ".#++++##....", ".#+++++#....", ".#+++++#....", "..#####.....", "............"},
+            {"....####....", "..##++++##..", ".#++####++#.", ".#+#....#+#.", "#+#......#+#", "#+#......#+#",
+                    "#+#......#+#", "#+#......#+#", ".#+#....#+#.", ".#++####++#.", "..##++++##..", "....####...."},
+            {".....##.....", "....#..#....", "...#.++.#...", "..#.+..+.#..", ".#.+.##.+.#.", "#.+.####.+.#",
+                    "#.+.####.+.#", ".#.+.##.+.#.", "..#.+..+.#..", "...#.++.#...", "....#..#....", ".....##....."}};
+
+    /** A hero whose modes are all his own on R / Z (Storm, Spider-Man, Doom). */
+    private static final class Own {
+        final String prefix;
+        final String[] modes;
+        final int[] colors;
+        final String[][] icons;
+        int mode;
+
+        Own(String prefix, String[] modes, int[] colors, String[][] icons) {
+            this.prefix = prefix;
+            this.modes = modes;
+            this.colors = colors;
+            this.icons = icons;
+        }
+    }
+
+    private static final Own STORM_OWN = new Own("storm", STORM_MODES, STORM_COLORS, STORM_ICONS);
+    private static final Own SPIDER_OWN = new Own("spider", SPIDER_MODES, SPIDER_COLORS, SPIDER_ICONS);
+    private static final Own DOOM_OWN = new Own("doom", DOOM_MODES, DOOM_COLORS, DOOM_ICONS);
+
+    /** The local hero's own modes (null: Yas, the Scarlet Witch or nobody). */
+    private static Own own() {
+        if (PowerTheme.localStorm()) {
+            return STORM_OWN;
+        }
+        if (PowerTheme.localSpider()) {
+            return SPIDER_OWN;
+        }
+        return PowerTheme.localDoom() ? DOOM_OWN : null;
+    }
 
     public static boolean storm() {
-        return PowerTheme.localStorm();
+        return own() != null;
+    }
+
+    /** The key of the flight row: Spider-Man swings on it. */
+    public static String flightRow() {
+        return PowerTheme.localSpider() ? "hud.flash.scarlet.row.swing" : "hud.flash.scarlet.row.flight";
     }
 
     /** A hero of the mod's own modes (not Yas). */
@@ -267,7 +322,7 @@ public final class YasAbilities {
     }
 
     public static int count() {
-        return storm() ? STORM_MODES.length : scarlet() ? SCARLET_MODES.length : POWERS.length + WAND_MODES.length;
+        return storm() ? own().modes.length : scarlet() ? SCARLET_MODES.length : POWERS.length + WAND_MODES.length;
     }
 
     /** Hand of God's power of a mode (-1: one of the Scarlet Witch's own, or God Wand's). */
@@ -285,7 +340,7 @@ public final class YasAbilities {
         if (wand(i)) {
             return WAND_MODES[i - POWERS.length];
         }
-        return storm() ? STORM_MODES[i] : scarlet() ? SCARLET_MODES[i] : POWERS[i].toLowerCase(java.util.Locale.ROOT);
+        return storm() ? own().modes[i] : scarlet() ? SCARLET_MODES[i] : POWERS[i].toLowerCase(java.util.Locale.ROOT);
     }
 
     private static int scarletMode;
@@ -295,7 +350,7 @@ public final class YasAbilities {
         if (!custom() && wandMode >= 0) {
             return POWERS.length + wandMode;
         }
-        return storm() ? stormMode : scarlet() ? scarletMode : hogSelected();
+        return storm() ? own().mode : scarlet() ? scarletMode : hogSelected();
     }
 
     /** Picks a mode (Alt + scroll, the K menu). */
@@ -304,7 +359,7 @@ public final class YasAbilities {
             return;
         }
         if (storm()) {
-            stormMode = i;
+            own().mode = i;
             return;
         }
         if (scarlet()) {
@@ -325,7 +380,7 @@ public final class YasAbilities {
             return Component.translatable("yas.flash.mode." + modeId(i));
         }
         if (storm()) {
-            return Component.translatable("storm.flash.mode." + STORM_MODES[i]);
+            return Component.translatable(own().prefix + ".flash.mode." + own().modes[i]);
         }
         return h >= 0 ? hogName(h) : Component.translatable("scarlet.flash.mode." + SCARLET_MODES[i]);
     }
@@ -336,7 +391,7 @@ public final class YasAbilities {
             return Component.translatable("yas.flash.mode." + modeId(i) + ".desc");
         }
         if (storm()) {
-            return Component.translatable("storm.flash.mode." + STORM_MODES[i] + ".desc");
+            return Component.translatable(own().prefix + ".flash.mode." + own().modes[i] + ".desc");
         }
         return h >= 0 ? Component.translatable("poder.hand_of_god." + POWERS[h].toLowerCase(java.util.Locale.ROOT)
                 + ".desc") : Component.translatable("scarlet.flash.mode." + SCARLET_MODES[i] + ".desc");
@@ -361,14 +416,15 @@ public final class YasAbilities {
         List<Component> out = new ArrayList<>(h >= 0 ? hogLines(h) : List.of());
         KeyMapping fly = FlashAbilityKeys.mapping(com.flash.ability.FlashAbility.WIND_HANDS);
         if (fly != null) {
-            out.add(Component.translatable("hud.flash.yas.flight_key", fly.getTranslatedKeyMessage())
+            out.add(Component.translatable(PowerTheme.localSpider() ? "hud.flash.spider.swing_key"
+                    : "hud.flash.yas.flight_key", fly.getTranslatedKeyMessage())
                     .withStyle(net.minecraft.ChatFormatting.AQUA));
         }
         if (!custom() && h >= 0 && "REALIDADE".equals(POWERS[h])) {
             out.add(Component.translatable("hud.flash.yas.path_key", FlashKeys.YAS_PATH.getTranslatedKeyMessage())
                     .withStyle(net.minecraft.ChatFormatting.AQUA));
         }
-        String base = wand(i) ? "hud.flash.yas." + modeId(i) : storm() ? "hud.flash.storm." + STORM_MODES[i]
+        String base = wand(i) ? "hud.flash.yas." + modeId(i) : storm() ? "hud.flash." + own().prefix + "." + own().modes[i]
                 : scarlet() ? "hud.flash.scarlet." + SCARLET_MODES[i] : null;
         if (base != null) {
             for (int n = 1; n <= 8 && net.minecraft.client.resources.language.I18n.exists(base + "." + n); n++) {
@@ -381,7 +437,7 @@ public final class YasAbilities {
 
     public static int color(int i) {
         if (storm()) {
-            return i >= 0 && i < STORM_COLORS.length ? STORM_COLORS[i] : 0xFFBFE6FF;
+            return i >= 0 && i < own().colors.length ? own().colors[i] : 0xFFBFE6FF;
         }
         if (scarlet()) {
             return i >= 0 && i < SCARLET_COLORS.length ? SCARLET_COLORS[i] : 0xFFE0263A;
@@ -395,7 +451,7 @@ public final class YasAbilities {
     /** The pixel-art icon of the mode ('#' the colour, '+' lighter), {@code px} pixels a dot. */
     public static void drawIcon(GuiGraphics g, int i, int x, int y, int px) {
         int c = color(i);
-        String[][] own = storm() ? STORM_ICONS : scarlet() ? SCARLET_ICONS : null;
+        String[][] own = storm() ? own().icons : scarlet() ? SCARLET_ICONS : null;
         int oi = i;
         if (wand(i)) {
             own = WAND_ICONS;
@@ -489,13 +545,20 @@ public final class YasAbilities {
             while (FlashKeys.YAS_VARIANT.consumeClick()) {
                 variant = true;
             }
-            int m = Math.max(0, Math.min(STORM_MODES.length - 1, stormMode));
-            StormClient.tickMode(mc, STORM_MODES[m], variant && mc.screen == null);
+            Own o = own();
+            int m = Math.max(0, Math.min(o.modes.length - 1, o.mode));
+            String mode = o.modes[m];
+            boolean v = variant && mc.screen == null;
+            StormClient.tickMode(mc, o == STORM_OWN ? mode : null, v);
+            SpiderClient.tickMode(mc, o == SPIDER_OWN ? mode : null, v);
+            DoomClient.tickMode(mc, o == DOOM_OWN ? mode : null, v);
             com.flash.client.godwand.GodWandClient.tickMode(mc, -1);
             com.flash.client.godwand.GodWandClient.tickPath(mc, false);
             return;
         }
         StormClient.tickMode(mc, null, false);
+        SpiderClient.tickMode(mc, null, false);
+        DoomClient.tickMode(mc, null, false);
         if (mc.player == null || !(PowerTheme.localYas() || PowerTheme.localScarlet()) || !ready()) {
             unbind();
             ScarletClient.tickMode(mc, null, false);
@@ -769,7 +832,7 @@ public final class YasAbilities {
     private static boolean active() {
         Minecraft mc = Minecraft.getInstance();
         return mc.player != null && mc.screen == null && !mc.player.isSpectator()
-                && (PowerTheme.localStorm() || (PowerTheme.localYas() || PowerTheme.localScarlet()) && ready());
+                && (PowerTheme.localOwnModes() || (PowerTheme.localYas() || PowerTheme.localScarlet()) && ready());
     }
 
     private static Method holding;

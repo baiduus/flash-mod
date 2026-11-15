@@ -272,7 +272,8 @@ public final class SupermanPose {
         State st = STATES.get(player.getUUID());
         // the flight poses are Thor's too
         if (!SupermanState.isSuperman(player) && !com.flash.thor.ThorState.isThor(player) && !lex(player)
-                && !YasClient.isYas(player) && !ScarletClient.isScarlet(player) && !StormClient.isStorm(player)) {
+                && !YasClient.isYas(player) && !ScarletClient.isScarlet(player) && !StormClient.isStorm(player)
+                && !DoomClient.isDoom(player)) {
             LanternFlight.forget(player);
             if (st != null) {
                 STATES.remove(player.getUUID());
@@ -332,7 +333,8 @@ public final class SupermanPose {
         return SupermanState.flag(player, SupermanPowers.F_FLYING)
                 || com.flash.thor.ThorState.flag(player, com.flash.thor.ThorPowers.F_FLYING)
                 || com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_FLY)
-                || YasClient.flying(player) || ScarletClient.flying(player) || StormClient.flying(player);
+                || YasClient.flying(player) || ScarletClient.flying(player) || StormClient.flying(player)
+                || DoomClient.flying(player);
     }
 
     /** Lex's suit on (no powers of his own): his moves play here too, with Iron Man's flight poses. */
@@ -379,7 +381,7 @@ public final class SupermanPose {
         }
         st.wasDiving = diving;
         // high up in the sunlight and still: basking, arms open to the sun (the recharge spot)
-        if (hs < 0.08D && Math.abs(vy) < 0.15D && basking(player) && !lex(player)) {
+        if (hs < 0.08D && Math.abs(vy) < 0.15D && basking(player) && !lex(player) && !DoomClient.isDoom(player)) {
             return "solar_bask";
         }
         // every other flight: the Lanterns' (LanternFlight: upright and leaning slow, a dart fast)

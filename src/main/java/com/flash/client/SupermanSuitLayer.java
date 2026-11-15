@@ -64,13 +64,22 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     private static GeoModel model(String id) {
         return MODELS.computeIfAbsent(id, k -> GeoModel.load(new ResourceLocation(FlashMod.MODID,
-                (thor(k) ? "geo/thor/" : "geo/superman/") + k + ".geo.json"), null));
+                folder(k, "geo/thor/", "geo/spider/", "geo/doom/", "geo/superman/") + k + ".geo.json"), null));
     }
 
     private static ResourceLocation tex(String id, String name) {
-        return new ResourceLocation(FlashMod.MODID, (thor(id) ? "textures/thor_suits/" : "textures/superman_suits/")
-                + id + "/" + name + ".png");
+        return new ResourceLocation(FlashMod.MODID, folder(id, "textures/thor_suits/", "textures/spider_suits/",
+                "textures/doom_suits/", "textures/superman_suits/") + id + "/" + name + ".png");
     }
+
+    /** Where a suit's files are: Thor's, Spider-Man's, Doom's or Superman's (told apart by the id). */
+    private static String folder(String id, String thor, String spider, String doom, String superman) {
+        return thor(id) ? thor : com.flash.spider.SpiderSuits.isSpider(id) ? spider
+                : DOOM_SUIT.equals(id) ? doom : superman;
+    }
+
+    /** Doctor Doom's armour (Legends: Superheroes'). */
+    public static final String DOOM_SUIT = "doctor_doom";
 
     /** Thor suits (same layer: 3D model on the body, physics cape) are told apart by their id. */
     private static boolean thor(String id) {
@@ -79,6 +88,12 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     /** Suit worn by this player now, or null (not in the Superman form). */
     public static String worn(AbstractClientPlayer player) {
+        if (SpiderClient.isSpider(player)) {
+            return com.flash.spider.SpiderSuits.id(SpiderClient.suit(player));
+        }
+        if (DoomClient.isDoom(player)) {
+            return DOOM_SUIT;
+        }
         if (com.flash.thor.ThorState.has(player)) {
             return com.flash.thor.ThorState.suited(player)
                     ? com.flash.thor.ThorSuits.id(com.flash.thor.ThorState.suit(player)) : null;

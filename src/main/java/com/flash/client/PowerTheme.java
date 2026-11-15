@@ -66,6 +66,31 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFFBFE6FF, 0xFF1E2A38, 0xFF0C121A,
             "gui.flash.theme.storm.title", "gui.flash.theme.storm.subtitle", Icon.BOLT, true);
 
+    /** Spider-Man: suit red on deep blue. */
+    public static final PowerTheme SPIDER = new PowerTheme("spider",
+            0xFFE8333C, 0xFF14234A, 0xFF0A1022,
+            "gui.flash.theme.spider.title", "gui.flash.theme.spider.subtitle", Icon.SHIELD, true);
+
+    /** Doctor Doom: Latverian green on steel. */
+    public static final PowerTheme DOOM = new PowerTheme("doom",
+            0xFF4FD86A, 0xFF1C2A20, 0xFF0B120D,
+            "gui.flash.theme.doom.title", "gui.flash.theme.doom.subtitle", Icon.SHIELD, true);
+
+    public static boolean localSpider() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && SpiderClient.isSpider(player);
+    }
+
+    public static boolean localDoom() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && DoomClient.isDoom(player);
+    }
+
+    /** One of the heroes with modes of their own on R / Z (Storm, Spider-Man, Doom: not Yas, not Wanda). */
+    public static boolean localOwnModes() {
+        return localStorm() || localSpider() || localDoom();
+    }
+
     public static boolean localStorm() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
         return player != null && StormClient.isStorm(player);
@@ -127,6 +152,12 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
         }
         if (localStorm()) {
             return STORM;
+        }
+        if (localSpider()) {
+            return SPIDER;
+        }
+        if (localDoom()) {
+            return DOOM;
         }
         if (localThor()) {
             return THOR;

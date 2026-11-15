@@ -32,7 +32,22 @@ public final class ScarletCooldowns {
             Map.entry("weather", 100),
             Map.entry("fury_storm", 900),
             Map.entry("hail", 200),
-            Map.entry("frost", 300));
+            Map.entry("frost", 300),
+            // Spider-Man
+            Map.entry("web_shot", 10),
+            Map.entry("web_net", 160),
+            Map.entry("yank", 40),
+            Map.entry("zip", 50),
+            Map.entry("spider_kick", 50),
+            Map.entry("sense", 600),
+            // Doctor Doom
+            Map.entry("doom_blast", 14),
+            Map.entry("doom_beam", 100),
+            Map.entry("discharge", 140),
+            Map.entry("force_field", 400),
+            Map.entry("force_wave", 160),
+            Map.entry("mystic_bolt", 40),
+            Map.entry("ritual", 360));
 
     /** The rows of each mode in the HUD: cooldown id ("" none), name key suffix, key ("R", "Z", "RMB", "R+"). */
     public static String[][] rows(String mode) {
@@ -49,6 +64,15 @@ public final class ScarletCooldowns {
             case "wind" -> new String[][] {{"gust", "gust", "R"}, {"tornado", "tornado", "Z"}};
             case "weather" -> new String[][] {{"weather", "weather", "R"}, {"fury_storm", "fury_storm", "Z"}};
             case "ice" -> new String[][] {{"hail", "hail", "R"}, {"frost", "frost", "Z"}};
+            // Spider-Man
+            case "webs" -> new String[][] {{"web_shot", "web_shot", "R"}, {"web_net", "web_net", "Z"}};
+            case "pull" -> new String[][] {{"yank", "yank", "R"}, {"zip", "zip", "Z"}};
+            case "combat" -> new String[][] {{"spider_kick", "spider_kick", "R"}, {"sense", "sense", "Z"}};
+            // Doctor Doom
+            case "gauntlets" -> new String[][] {{"doom_blast", "doom_blast", "R"}, {"doom_beam", "doom_beam", "R+"},
+                    {"discharge", "discharge", "Z"}};
+            case "force" -> new String[][] {{"force_field", "force_field", "R"}, {"force_wave", "force_wave", "Z"}};
+            case "sorcery" -> new String[][] {{"mystic_bolt", "mystic_bolt", "R"}, {"ritual", "ritual", "Z"}};
             // Yas' God Wand modes (cooldowns sent by the server with their own length, by charge level)
             case "singularity" -> new String[][] {{"gw_1", "gw_singularity", "R+"}, {"", "gw_collapse", "R"}};
             case "earth_drill" -> new String[][] {{"gw_2", "gw_earth_drill", "R+"}};

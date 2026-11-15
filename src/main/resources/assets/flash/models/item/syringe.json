@@ -66,6 +66,18 @@
     "flash:content": 11
    },
    "model": "flash:item/syringe_storm_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 12
+   },
+   "model": "flash:item/syringe_spider_essence"
+  },
+  {
+   "predicate": {
+    "flash:content": 13
+   },
+   "model": "flash:item/syringe_doom_essence"
   }
  ]
 }

@@ -41,6 +41,8 @@ public final class ModCreativeTabs {
                         // the powers that come from elsewhere, kept in capsules (empty syringe)
                         output.accept(ModItems.SCARLET_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.STORM_ESSENCE_CAPSULE.get());
+                        output.accept(ModItems.SPIDER_ESSENCE_CAPSULE.get());
+                        output.accept(ModItems.DOOM_ESSENCE_CAPSULE.get());
                         output.accept(ModItems.NEGATIVE_STONE.get());
                         output.accept(ModItems.NEGATIVE_CRYSTAL.get());
                         output.accept(ModItems.FLASH_SUIT_HELMET.get());

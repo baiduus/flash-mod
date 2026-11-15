@@ -28,7 +28,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
                        int width, int height) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player != null && (PowerTheme.localYas() || PowerTheme.localScarlet()
-                || PowerTheme.localStorm())) {
+                || PowerTheme.localOwnModes())) {
             if (!minecraft.options.hideGui && !minecraft.player.isSpectator() && minecraft.screen == null
                     && !minecraft.options.renderDebug && com.flash.config.FlashClientConfig.SHOW_ABILITY_HUD.get()) {
                 renderYas(graphics, minecraft, width, height);
@@ -302,7 +302,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
         String count = (mode + 1) + "/" + n;
         String hint = Component.translatable("hud.flash.yas_pick").getString();
         KeyMapping flyKey = FlashAbilityKeys.mapping(com.flash.ability.FlashAbility.WIND_HANDS);
-        String flyName = Component.translatable("hud.flash.scarlet.row.flight").getString();
+        String flyName = Component.translatable(YasAbilities.flightRow()).getString();
         int panelWidth = Math.max(MIN_WIDTH + 20, Math.max(font.width(title) + font.width(count) + 40,
                 font.width(hint) + 12));
         String[] names = new String[rows.length];
@@ -335,7 +335,7 @@ public final class FlashAbilityHud implements IGuiOverlay {
             ry += ROW_HEIGHT + ROW_GAP;
         }
         drawRow(graphics, font, x, ry, panelWidth, flyName, keyLabel(flyKey), 0, 1,
-                minecraft.player != null && minecraft.player.getAbilities().flying);
+                minecraft.player != null && (minecraft.player.getAbilities().flying || SpiderClient.swinging()));
         ry += ROW_HEIGHT + ROW_GAP;
         graphics.drawString(font, hint, x + panelWidth - font.width(hint), ry, 0xFFB8B0A0, true);
     }

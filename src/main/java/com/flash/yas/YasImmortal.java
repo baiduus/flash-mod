@@ -131,7 +131,8 @@ public final class YasImmortal {
     /** Any hero of the mod (Yas, Superman, the Hulk, Thor, the Flash, the Scarlet Witch, Storm, Lex in his suit). */
     public static boolean hero(Player p) {
         return YasPowers.has(p) || com.flash.power.HeroBalance.isHero(p) || com.flash.scarlet.ScarletPowers.has(p)
-                || com.flash.storm.StormPowers.has(p) || com.flash.lex.LexSuit.active(p);
+                || com.flash.storm.StormPowers.has(p) || com.flash.spider.SpiderPowers.has(p)
+                || com.flash.doom.DoomPowers.has(p) || com.flash.lex.LexSuit.active(p);
     }
 
     /** The ring's forcing of its damage, taken off the heroes (it is noted there by its HIGHEST handler). */

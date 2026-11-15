@@ -145,8 +145,12 @@ public class FlashProgressScreen extends Screen {
         if (PowerTheme.localScarlet()) {
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
-        if (PowerTheme.localStorm()) {
+        if (PowerTheme.localStorm() || PowerTheme.localDoom()) {
             return new int[] {TAB_PROGRESS};
+        }
+        if (PowerTheme.localSpider()) {
+            // his suit is picked in the settings
+            return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
         if (PowerTheme.localLex() && !FlashClientData.hasPowers()) {
             return new int[] {TAB_PROGRESS, TAB_EQUIP};
@@ -262,6 +266,8 @@ public class FlashProgressScreen extends Screen {
             drawEquipTab(graphics, mx, my);
         } else if (PowerTheme.localYas()) {
             drawYasConfig(graphics, mx, my);
+        } else if (PowerTheme.localSpider()) {
+            drawSpiderConfig(graphics, mx, my);
         } else if (PowerTheme.localScarlet()) {
             configRow(graphics, 0, "gui.flash.scarlet.cfg.aura", "gui.flash.scarlet.cfg.aura.desc", mx, my);
             drawSwitch(graphics, "ssw0", switchX(), cfgY(0) + 8, ScarletClient.localAura());
@@ -309,8 +315,9 @@ public class FlashProgressScreen extends Screen {
         boolean superForm = superPower && com.flash.superman.SupermanState.suited(Minecraft.getInstance().player);
         boolean thorPower = PowerTheme.localThor();
         boolean thorForm = thorPower && com.flash.thor.ThorState.suited(Minecraft.getInstance().player);
-        boolean yasPower = PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localStorm();
-        Component badge = yasPower ? Component.translatable(PowerTheme.localStorm() ? "gui.flash.storm.badge"
+        boolean yasPower = PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localOwnModes();
+        Component badge = yasPower ? Component.translatable(PowerTheme.localOwnModes() ? "gui.flash." + ownHero()
+                + ".badge"
                 : PowerTheme.localScarlet() ? "gui.flash.scarlet.badge" : "gui.flash.yas.badge") : thorPower
                 ? Component.translatable(thorForm ? "gui.flash.thor.badge_thor" : "gui.flash.thor.badge_civil")
                 : superPower
@@ -424,7 +431,7 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private void drawProgressTab(GuiGraphics g, int mx, int my) {
-        if (PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localStorm()) {
+        if (PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localOwnModes()) {
             drawYasTab(g, mx, my);
             return;
         }
@@ -912,9 +919,18 @@ public class FlashProgressScreen extends Screen {
     private static final String[] YAS_PASSIVES_OF_YAS = {"flight", "toughness", "punch", "regen"};
     private static final String[] SCARLET_PASSIVES = {"flight", "toughness"};
     private static final String[] STORM_PASSIVES = {"flight", "lightning_body", "toughness"};
+    private static final String[] SPIDER_PASSIVES = {"web_swing", "wall_crawl", "spider_sense", "agility",
+            "healing"};
+    private static final String[] DOOM_PASSIVES = {"armour", "thrusters", "repair"};
 
+    /** Storm, Spider-Man or Doom (heroes with modes of their own): their tab, their texts. */
     private static boolean stormTab() {
-        return PowerTheme.localStorm();
+        return PowerTheme.localOwnModes();
+    }
+
+    /** The id of the texts of the hero with modes of his own ("storm", "spider", "doom"). */
+    private static String ownHero() {
+        return PowerTheme.localSpider() ? "spider" : PowerTheme.localDoom() ? "doom" : "storm";
     }
 
     /** Yas or the Scarlet Witch (the same tab, their own passives and modes). */
@@ -923,11 +939,13 @@ public class FlashProgressScreen extends Screen {
     }
 
     private static String[] yasPassives() {
-        return stormTab() ? STORM_PASSIVES : scarletTab() ? SCARLET_PASSIVES : YAS_PASSIVES_OF_YAS;
+        return PowerTheme.localSpider() ? SPIDER_PASSIVES : PowerTheme.localDoom() ? DOOM_PASSIVES
+                : stormTab() ? STORM_PASSIVES : scarletTab() ? SCARLET_PASSIVES : YAS_PASSIVES_OF_YAS;
     }
 
     private static String passivePrefix() {
-        return stormTab() ? "ability.flash.storm." : scarletTab() ? "ability.flash.scarlet." : "ability.flash.yas.";
+        return stormTab() ? "ability.flash." + ownHero() + "." : scarletTab() ? "ability.flash.scarlet."
+                : "ability.flash.yas.";
     }
 
     private static Component yasKey(int i) {
@@ -963,7 +981,7 @@ public class FlashProgressScreen extends Screen {
 
     private void drawYasTab(GuiGraphics g, int mx, int my) {
         int half = (LEFT_W - 8) / 2;
-        String h = stormTab() ? "gui.flash.storm." : scarletTab() ? "gui.flash.scarlet." : "gui.flash.yas.";
+        String h = stormTab() ? "gui.flash." + ownHero() + "." : scarletTab() ? "gui.flash.scarlet." : "gui.flash.yas.";
         statCard(g, PAD, CONTENT_Y, half, STAT_H, Component.translatable(h + "stat_toughness"),
                 Component.translatable(h + "stat_toughness_value"),
                 Component.translatable(h + "stat_toughness_hint"));
@@ -991,7 +1009,7 @@ public class FlashProgressScreen extends Screen {
             }
             ty += 3;
         }
-        drawCredits(g, stormTab() ? "gui.flash.credits.storm" : scarletTab() ? "gui.flash.credits.scarlet"
+        drawCredits(g, stormTab() ? "gui.flash.credits." + ownHero() : scarletTab() ? "gui.flash.credits.scarlet"
                 : "gui.flash.credits.yas", PAD + LEFT_W - 8,
                 CONTENT_BOTTOM - 12, LEFT_W - 16);
 
@@ -1196,6 +1214,34 @@ public class FlashProgressScreen extends Screen {
             return true;
         }
         return inRow(mx, my, 2);
+    }
+
+    /** Spider-Man's settings: the HUD, and his suit (Legends: Superheroes' suits). */
+    private void drawSpiderConfig(GuiGraphics g, int mx, int my) {
+        configRow(g, 0, "gui.flash.config.hud", "gui.flash.superman.cfg.hud.desc", mx, my);
+        drawSwitch(g, "spw0", switchX(), cfgY(0) + 8, FlashClientConfig.SHOW_ABILITY_HUD.get());
+        configRow(g, 1, "gui.flash.spider.cfg.suit", "gui.flash.spider.cfg.suit.desc", mx, my);
+        int suit = com.flash.spider.SpiderSuits.clamp(SpiderClient.suit(this.minecraft.player));
+        drawPicker(g, cfgY(1) + 7, mx, my, com.flash.spider.SpiderSuits.name(suit).getString(), suit,
+                com.flash.spider.SpiderSuits.IDS.length);
+    }
+
+    private boolean clickSpiderConfig(int mx, int my) {
+        if (inRow(mx, my, 0)) {
+            FlashClientConfig.toggle(FlashClientConfig.SHOW_ABILITY_HUD);
+            click();
+            return true;
+        }
+        if (inRow(mx, my, 1)) {
+            int step = pickerStep(mx, my, 1);
+            if (step != 0 && this.minecraft.player != null) {
+                int n = com.flash.spider.SpiderSuits.IDS.length;
+                SpiderClient.pickSuit(Math.floorMod(SpiderClient.suit(this.minecraft.player) + step, n));
+                click();
+            }
+            return true;
+        }
+        return false;
     }
 
     private void drawSupermanConfig(GuiGraphics g, int mx, int my) {
@@ -1479,10 +1525,10 @@ public class FlashProgressScreen extends Screen {
 
     /** Hero id (its advancement and its texts gui.flash.guide.<id>), number of steps. */
     private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas", "scarlet",
-            "storm"};
-    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 4, 4, 4};
+            "storm", "spiderman", "doom"};
+    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4};
     private static final int GUIDE_LIST_W = 168;
-    private static final int GUIDE_ROW_H = 24;
+    private static final int GUIDE_ROW_H = 19;
     private static final int GUIDE_ROW_GAP = 1;
     private static int guideHero;
 
@@ -1496,6 +1542,8 @@ public class FlashProgressScreen extends Screen {
             case 5 -> com.flash.registry.ModItems.LEX_HELMET.get();
             case 7 -> net.minecraft.world.item.Items.REDSTONE;
             case 8 -> net.minecraft.world.item.Items.LIGHTNING_ROD;
+            case 9 -> net.minecraft.world.item.Items.COBWEB;
+            case 10 -> net.minecraft.world.item.Items.ENCHANTING_TABLE;
             default -> net.minecraft.world.item.Items.NETHER_STAR;
         });
     }
@@ -1515,10 +1563,10 @@ public class FlashProgressScreen extends Screen {
                 g.fill(PAD, y + 4, PAD + 2, y + GUIDE_ROW_H - 4, accent());
             }
             g.renderItem(guideIcon(i), PAD + 9, y + (GUIDE_ROW_H - 16) / 2);
-            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 3,
+            g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i]), PAD + 32, y + 1,
                     sel ? COLOR_TEXT : COLOR_MUTED, false);
             g.drawString(this.font, Component.translatable("gui.flash.guide." + GUIDE[i] + ".sub"), PAD + 32,
-                    y + 13, COLOR_DIM, false);
+                    y + 10, COLOR_DIM, false);
             if (HeroProgressClient.has(GUIDE[i])) {
                 g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + (GUIDE_ROW_H - 8) / 2, accent(), false);
             }
@@ -2390,9 +2438,12 @@ public class FlashProgressScreen extends Screen {
             return clickEquip(mx, my) || super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_PROGRESS && (PowerTheme.localYas() || PowerTheme.localScarlet()
-                || PowerTheme.localStorm())
+                || PowerTheme.localOwnModes())
                 && clickYasTab(ix, iy)) {
             return true;
+        }
+        if (activeTab() == TAB_CONFIG && PowerTheme.localSpider()) {
+            return clickSpiderConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
         }
         if (activeTab() == TAB_CONFIG && PowerTheme.localYas()) {
             return clickYasConfig(ix, iy) || super.mouseClicked(mouseX, mouseY, button);
@@ -2460,7 +2511,7 @@ public class FlashProgressScreen extends Screen {
         }
 
         if (activeTab() == TAB_PROGRESS && !FlashClientData.hasPowers() && theme() != PowerTheme.LEX
-                && !PowerTheme.localYas() && !PowerTheme.localScarlet() && !PowerTheme.localStorm()
+                && !PowerTheme.localYas() && !PowerTheme.localScarlet() && !PowerTheme.localOwnModes()
                 && !PowerTheme.localThor() && !PowerTheme.localSuperman() && !PowerTheme.localHulk()
                 && clickHeroGuide(ix, iy)) {
             return true;
