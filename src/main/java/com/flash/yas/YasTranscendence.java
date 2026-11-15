@@ -100,8 +100,6 @@ public final class YasTranscendence {
             new Need("item.flash.lex_armor_chestplate", s -> s.is(ModItems.LEX_CHESTPLATE.get())),
             new Need("item.flash.lex_armor_leggings", s -> s.is(ModItems.LEX_LEGGINGS.get())),
             new Need("item.flash.lex_armor_boots", s -> s.is(ModItems.LEX_BOOTS.get()))};
-    /** The capsules are given up to the transcendence (the suit stays). */
-    private static final int CONSUMED = 4;
 
     private static boolean holds(ServerPlayer p, Predicate<ItemStack> item) {
         Inventory inv = p.getInventory();
@@ -246,18 +244,7 @@ public final class YasTranscendence {
     }
 
     private static void finishAscend(ServerPlayer p, Seq s) {
-        if (!s.free) {
-            // the capsules go into her (one of each)
-            for (int n = 0; n < CONSUMED; n++) {
-                Inventory inv = p.getInventory();
-                for (int i = 0; i < inv.getContainerSize(); i++) {
-                    if (ITEMS[n].item().test(inv.getItem(i))) {
-                        inv.getItem(i).shrink(1);
-                        break;
-                    }
-                }
-            }
-        }
+        // the items asked for stay with her (nothing is used up)
         YasPowers.grant(p);
         p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 200, 0, false, false));
         p.level().playSound(null, p.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.5F, 0.8F);
