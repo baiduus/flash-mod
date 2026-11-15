@@ -12,7 +12,8 @@ public final class SupermanSuits {
             "superman_mos", "superman_bvs", "superman_zsjl", "superman_recovery", "superman_cw", "superman_maws",
             "superman_new52", "superman_rebirth", "superman_injustice", "superman_injustice2", "superman_red_son_v1",
             "superman_red_son_v2", "superman_godfall", "superman_apokolips", "superman_antikryptonite", "superman_sal",
-            "superman_wonk"};
+            "superman_wonk", "superman_homelander", "superman_homelander_tv", "superman_homelander_tv_v2",
+            "superman_homelander_absolute", "superman_homelander_diabolical"};
 
     /** Civilian clothes worn as Clark Kent. */
     public static final String CLARK = "superman_clark_kent";
@@ -20,7 +21,9 @@ public final class SupermanSuits {
     private static final Set<String> CAPES = Set.of("superman", "superman_1941", "superman_bvs", "superman_cw",
             "superman_dcau", "superman_godfall", "superman_injustice", "superman_injustice2", "superman_jlw",
             "superman_justice_lords", "superman_maws", "superman_mos", "superman_new52", "superman_rebirth",
-            "superman_red_son_v1", "superman_red_son_v2", "superman_sal", "superman_zsjl");
+            "superman_red_son_v1", "superman_red_son_v2", "superman_sal", "superman_zsjl", "superman_homelander",
+            "superman_homelander_tv", "superman_homelander_tv_v2", "superman_homelander_absolute",
+            "superman_homelander_diabolical");
 
     private static final Set<String> OVERLAY = Set.of("superman_antikryptonite", "superman_clark_kent");
 
