@@ -79,7 +79,7 @@ public final class InfinityPowers {
         }
     }
 
-    static List<String> strings(JsonElement e) {
+    public static List<String> strings(JsonElement e) {
         List<String> out = new ArrayList<>();
         if (e == null) {
             return out;
