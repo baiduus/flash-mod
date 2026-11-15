@@ -8,7 +8,8 @@
     "HandOfGodBossMixin"
   ],
   "client": [
-    "PedacosMixin"
+    "PedacosMixin",
+    "SpiderPoseMixin"
   ],
   "injectors": {
     "defaultRequire": 0

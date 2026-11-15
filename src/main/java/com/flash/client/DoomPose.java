@@ -26,7 +26,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
  * mystic bolt, both arms up to the sky for the ritual.
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT)
-public final class DoomPose implements IAnimation {
+public final class DoomPose {
 
     private static final ResourceLocation LAYER = new ResourceLocation(FlashMod.MODID, "doom_pose");
 
@@ -47,21 +47,7 @@ public final class DoomPose implements IAnimation {
 
     private static final Map<Integer, S> STATES = new HashMap<>();
 
-    private final AbstractClientPlayer player;
-
-    private DoomPose(AbstractClientPlayer player) {
-        this.player = player;
-    }
-
-    @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static final class Setup {
-        private Setup() {
-        }
-
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(LAYER, 1260, DoomPose::new);
-        }
+    private DoomPose() {
     }
 
     /** One of his powers seen (DoomVfx): the arms that go with it. */
@@ -126,23 +112,32 @@ public final class DoomPose implements IAnimation {
         });
     }
 
-    @Override
-    public boolean isActive() {
-        S s = STATES.get(this.player.getId());
-        return s != null && (s.weight > 0.0F || s.prevWeight > 0.0F) && DoomClient.isDoom(this.player);
-    }
-
-    @Override
-    public void setupAnim(float tickDelta) {
-    }
-
-    @Override
-    public Vec3f get3DTransform(String modelName, TransformType type, float tickDelta, Vec3f value) {
-        if (type != TransformType.ROTATION) {
-            return value;
+    /** His arms posed (SpiderPoseMixin, right after the game posed the model). */
+    public static void apply(net.minecraft.client.model.PlayerModel<?> m, net.minecraft.world.entity.LivingEntity e,
+                             float ageInTicks) {
+        if (!(e instanceof Player p) || ageInTicks == 0.0F || !DoomClient.isDoom(p)) {
+            return;
         }
-        S s = STATES.get(this.player.getId());
-        if (s == null || s.pose < 0) {
+        S s = STATES.get(p.getId());
+        if (s == null || s.weight <= 0.0F && s.prevWeight <= 0.0F) {
+            return;
+        }
+        float pt = Minecraft.getInstance().getFrameTime();
+        pose(p, s, "rightArm", m.rightArm, pt);
+        pose(p, s, "leftArm", m.leftArm, pt);
+        pose(p, s, "torso", m.body, pt);
+        m.rightSleeve.copyFrom(m.rightArm);
+        m.leftSleeve.copyFrom(m.leftArm);
+        m.jacket.copyFrom(m.body);
+    }
+
+    private static void pose(Player p, S s, String name, net.minecraft.client.model.geom.ModelPart part, float pt) {
+        Vec3f v = transform(p, s, name, pt, new Vec3f(part.xRot, part.yRot, part.zRot));
+        part.setRotation(v.getX(), v.getY(), v.getZ());
+    }
+
+    private static Vec3f transform(Player player, S s, String modelName, float tickDelta, Vec3f value) {
+        if (s.pose < 0) {
             return value;
         }
         float w = Mth.lerp(tickDelta, s.prevWeight, s.weight);
@@ -157,9 +152,9 @@ public final class DoomPose implements IAnimation {
             return value;
         }
         // where he aims: the look's pitch, and its yaw from the body
-        float pitch = Mth.clamp(this.player.getViewXRot(tickDelta), -80.0F, 80.0F) * Mth.DEG_TO_RAD;
-        float yaw = Mth.clamp(Mth.wrapDegrees(Mth.rotLerp(tickDelta, this.player.yHeadRotO, this.player.yHeadRot)
-                - Mth.rotLerp(tickDelta, this.player.yBodyRotO, this.player.yBodyRot)), -70.0F, 70.0F)
+        float pitch = Mth.clamp(player.getViewXRot(tickDelta), -80.0F, 80.0F) * Mth.DEG_TO_RAD;
+        float yaw = Mth.clamp(Mth.wrapDegrees(Mth.rotLerp(tickDelta, player.yHeadRotO, player.yHeadRot)
+                - Mth.rotLerp(tickDelta, player.yBodyRotO, player.yBodyRot)), -70.0F, 70.0F)
                 * Mth.DEG_TO_RAD;
         float aimX = -Mth.HALF_PI + pitch;
         float x;
@@ -223,7 +218,7 @@ public final class DoomPose implements IAnimation {
             }
             default -> {
                 // the ritual: both arms to the sky
-                float sway = Mth.sin((this.player.tickCount + tickDelta) * 0.3F) * 0.08F;
+                float sway = Mth.sin((player.tickCount + tickDelta) * 0.3F) * 0.08F;
                 x = -2.95F + sway;
                 y = 0.0F;
                 z = right ? 0.3F : -0.3F;

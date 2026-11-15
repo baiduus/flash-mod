@@ -39,7 +39,7 @@ import org.joml.Vector3f;
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT)
-public final class SpiderAnim implements IAnimation {
+public final class SpiderAnim {
 
     private static final ResourceLocation LAYER = new ResourceLocation(FlashMod.MODID, "spider_anim");
     private static final float FLIP_PIVOT_Y = 20.0F;
@@ -135,21 +135,7 @@ public final class SpiderAnim implements IAnimation {
 
     private static final Map<Integer, S> STATES = new HashMap<>();
 
-    private final AbstractClientPlayer player;
-
-    private SpiderAnim(AbstractClientPlayer player) {
-        this.player = player;
-    }
-
-    @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static final class Setup {
-        private Setup() {
-        }
-
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(LAYER, 1250, SpiderAnim::new);
-        }
+    private SpiderAnim() {
     }
 
     public static void reset() {
@@ -820,28 +806,23 @@ public final class SpiderAnim implements IAnimation {
     }
 
     // ------------------------------------------------------------------
-    // The layer
+    // Applied to the model (SpiderPoseMixin, right after the game posed it) and to the whole body (the render)
     // ------------------------------------------------------------------
 
-    private S frame(float pt) {
-        S s = STATES.get(this.player.getId());
-        if (s == null) {
+    private static S frame(Player p, float pt) {
+        S s = STATES.get(p.getId());
+        if (s == null || !active(s) || !SpiderClient.isSpider(p)) {
             return null;
         }
-        if (s.cachePt != pt || s.cacheTick != this.player.tickCount) {
+        if (s.cachePt != pt || s.cacheTick != p.tickCount) {
             s.cachePt = pt;
-            s.cacheTick = this.player.tickCount;
-            build(this.player, s, pt);
+            s.cacheTick = p.tickCount;
+            build(p, s, pt);
         }
         return s;
     }
 
-    @Override
-    public boolean isActive() {
-        S s = STATES.get(this.player.getId());
-        if (s == null || !SpiderClient.isSpider(this.player)) {
-            return false;
-        }
+    private static boolean active(S s) {
         for (int i = 0; i < MAX.length; i++) {
             if (i != GROUND && i != PERCH_DELAY && (s.val[i] > 0 || s.prev[i] > 0)) {
                 return true;
@@ -850,29 +831,47 @@ public final class SpiderAnim implements IAnimation {
         return false;
     }
 
-    @Override
-    public void setupAnim(float tickDelta) {
+    /** His limbs posed (the vanilla pose eased toward his), the overlay parts following them. */
+    public static void apply(net.minecraft.client.model.PlayerModel<?> m, net.minecraft.world.entity.LivingEntity e,
+                             float ageInTicks) {
+        if (!(e instanceof Player p) || ageInTicks == 0.0F) {
+            return; // (the first-person hand is posed with all zeros: left as the game draws it)
+        }
+        float pt = Minecraft.getInstance().getFrameTime();
+        S s = frame(p, pt);
+        if (s == null) {
+            return;
+        }
+        part(s, "head", m.head);
+        part(s, "torso", m.body);
+        part(s, "rightArm", m.rightArm);
+        part(s, "leftArm", m.leftArm);
+        part(s, "rightLeg", m.rightLeg);
+        part(s, "leftLeg", m.leftLeg);
+        m.hat.copyFrom(m.head);
+        m.jacket.copyFrom(m.body);
+        m.rightSleeve.copyFrom(m.rightArm);
+        m.leftSleeve.copyFrom(m.leftArm);
+        m.rightPants.copyFrom(m.rightLeg);
+        m.leftPants.copyFrom(m.leftLeg);
     }
 
-    @Override
-    public Vec3f get3DTransform(String modelName, TransformType type, float tickDelta, Vec3f value) {
-        if (type != TransformType.ROTATION && type != TransformType.POSITION) {
-            return value;
-        }
-        S s = frame(tickDelta);
-        if (s == null) {
-            return value;
-        }
-        List<Op> list = s.ops.get(modelName);
-        if ("body".equals(modelName)) {
-            return body(s, list, type, value);
-        }
+    private static void part(S s, String name, net.minecraft.client.model.geom.ModelPart part) {
+        List<Op> list = s.ops.get(name);
         if (list == null) {
-            return value;
+            return;
         }
-        float[] cur = {value.getX(), value.getY(), value.getZ()};
-        float[] base = cur.clone();
-        boolean rot = type == TransformType.ROTATION;
+        float[] pos = eval(list, new float[] {part.x, part.y, part.z}, false);
+        float[] rot = eval(list, new float[] {part.xRot, part.yRot, part.zRot}, true);
+        part.x = pos[0];
+        part.y = pos[1];
+        part.z = pos[2];
+        part.setRotation(rot[0], rot[1], rot[2]);
+    }
+
+    private static float[] eval(List<Op> list, float[] value, boolean rot) {
+        float[] cur = value.clone();
+        float[] base = value.clone();
         for (Op op : list) {
             float[] t = cur.clone();
             boolean touched = false;
@@ -904,48 +903,75 @@ public final class SpiderAnim implements IAnimation {
                 cur[i] += (t[i] - cur[i]) * e;
             }
         }
-        return new Vec3f(cur[0], cur[1], cur[2]);
+        return cur;
     }
 
-    /** The whole body: its turn (about the pivot of the pose) and its offset. */
-    private static Vec3f body(S s, List<Op> list, TransformType type, Vec3f value) {
+    private static final java.util.Set<Integer> TURNED = new java.util.HashSet<>();
+
+    /**
+     * The whole body (flips, the pitch along the rope, hanging, the ceiling...): turned about the pose's pivot in
+     * the body's own frame, before the game draws him.
+     */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        if (event.isCanceled()) {
+            return;
+        }
+        Player p = event.getEntity();
+        float pt = event.getPartialTick();
+        S s = frame(p, pt);
+        if (s == null) {
+            return;
+        }
+        List<Op> list = s.ops.get("body");
+        if (list == null || list.isEmpty()) {
+            return;
+        }
         float[] rot = {0.0F, 0.0F, 0.0F};
         float[] pos = {0.0F, 0.0F, 0.0F};
         float pivot = 0.7F * 16.0F;
-        if (list != null) {
-            for (Op op : list) {
-                float e = ease(op.ease, op.progress);
-                float[] tr = rot.clone();
-                float[] tp = pos.clone();
-                for (float[] a : op.acts) {
-                    int kind = (int) a[0];
-                    int axis = (int) a[1];
-                    switch (kind) {
-                        case 0 -> tr[axis] = a[2];
-                        case 1 -> tr[axis] += a[2];
-                        case 2 -> tp[axis] = a[2];
-                        case 3 -> tp[axis] += a[2];
-                        default -> {
-                        }
+        for (Op op : list) {
+            float e = ease(op.ease, op.progress);
+            float[] tr = rot.clone();
+            float[] tp = pos.clone();
+            for (float[] a : op.acts) {
+                int kind = (int) a[0];
+                int axis = (int) a[1];
+                switch (kind) {
+                    case 0 -> tr[axis] = a[2];
+                    case 1 -> tr[axis] += a[2];
+                    case 2 -> tp[axis] = a[2];
+                    case 3 -> tp[axis] += a[2];
+                    default -> {
                     }
                 }
-                for (int i = 0; i < 3; i++) {
-                    rot[i] += (tr[i] - rot[i]) * e;
-                    pos[i] += (tp[i] - pos[i]) * e;
-                }
-                if (!Float.isNaN(op.pivot) && e > 0.0F) {
-                    pivot = op.pivot;
-                }
+            }
+            for (int i = 0; i < 3; i++) {
+                rot[i] += (tr[i] - rot[i]) * e;
+                pos[i] += (tp[i] - pos[i]) * e;
+            }
+            if (!Float.isNaN(op.pivot) && e > 0.0F) {
+                pivot = op.pivot;
             }
         }
-        if (type == TransformType.ROTATION) {
-            return new Vec3f(value.getX() + rot[0], value.getY() + rot[1], value.getZ() + rot[2]);
+        float bodyYaw = Mth.rotLerp(pt, p.yBodyRotO, p.yBodyRot);
+        float h = pivot / 16.0F;
+        com.mojang.blaze3d.vertex.PoseStack ps = event.getPoseStack();
+        ps.pushPose();
+        ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180.0F - bodyYaw));
+        ps.translate(pos[0] / 16.0F, pos[1] / 16.0F + h, pos[2] / 16.0F);
+        ps.mulPose(com.mojang.math.Axis.ZP.rotation(rot[2]));
+        ps.mulPose(com.mojang.math.Axis.YP.rotation(rot[1]));
+        ps.mulPose(com.mojang.math.Axis.XP.rotation(rot[0]));
+        ps.translate(0.0F, -h, 0.0F);
+        ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-(180.0F - bodyYaw)));
+        TURNED.add(p.getId());
+    }
+
+    @SubscribeEvent
+    public static void onRenderPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
+        if (TURNED.remove(event.getEntity().getId())) {
+            event.getPoseStack().popPose();
         }
-        // turning about a point "pivot" pixels up instead of playerAnimator's own (0.7 blocks)
-        float h = pivot / 16.0F - 0.7F;
-        Vector3f up = new Vector3f(0.0F, h, 0.0F);
-        new Quaternionf().rotationZYX(rot[2], rot[1], rot[0]).transform(up);
-        return new Vec3f(value.getX() + pos[0] / 16.0F - up.x, value.getY() + pos[1] / 16.0F + h - up.y,
-                value.getZ() + pos[2] / 16.0F - up.z);
     }
 }
