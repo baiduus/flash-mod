@@ -1466,7 +1466,7 @@
   "gui.flash.wonder.about": "About",
   "gui.flash.wonder.about1": "Diana of Themyscira, daughter of the gods: immense strength, the Lasso of Truth, the Bracelets of Submission that turn any blow, and the shield and fury of an Amazon warrior.",
   "gui.flash.wonder.about2": "Alt + scroll (or click on the side) changes the mode. R uses the mode; Z is the second ability. All have cooldowns.",
-  "gui.flash.wonder.about3": "Flight key: tap toggles it; held on the ground she takes off in a leap. U takes the suit off/on (the powers stay). In the K menu: with or without the tiara.",
+  "gui.flash.wonder.about3": "Flight key: tap toggles it; held on the ground she takes off in a leap. C conjures her sword and shield into her hands (C again sends them away). U takes the suit off/on.",
   "gui.flash.wonder.about4": "Obtained by bringing down a Ravager with a sword in one hand and a shield in the other, with no powers: the Amazons ask whether you want the power.",
   "gui.flash.credits.wonder": "Credits: Wonder Woman's suit, shield and Lasso of Truth from Legends: Superheroes, used with permission",
   "gui.flash.credits.wonderwoman": "Credits: Wonder Woman's suit, shield and Lasso of Truth from Legends: Superheroes, used with permission",
@@ -1483,7 +1483,7 @@
   "wonder.flash.mode.bracelets": "Bracelets",
   "wonder.flash.mode.bracelets.desc": "R: a 4 s guard — arrows go back to the shooter and blows from the front do not get through. Z: the bracelets' clash, a golden wave throwing everything ahead.",
   "wonder.flash.mode.warrior": "Warrior",
-  "wonder.flash.mode.warrior.desc": "R: throws her shield, which bounces off up to 3 enemies and comes back. Z: Amazonian Cataclysm — she leaps high and crashes down, with golden lightning and a huge shockwave.",
+  "wonder.flash.mode.warrior.desc": "R: throws her shield, which bounces off up to 3 enemies and comes back. Z: Amazonian Cataclysm — she leaps high and crashes down, with golden lightning and a huge shockwave. C (any mode): conjures her sword and shield into her hands.",
   "hud.flash.scarlet.row.lasso": "Lasso of Truth",
   "hud.flash.scarlet.row.lasso_whip": "Lasso whirl",
   "hud.flash.scarlet.row.bracelet_guard": "Bracelet guard",
@@ -1565,5 +1565,7 @@
   "ability.flash.doom_god.repair.description": "Heals 4 health a second.",
   "ability.flash.doom_god.beyonder": "Beyonder Power",
   "ability.flash.doom_god.beyonder.description": "Every power 2.5× stronger, bigger and with half the cooldown; the Beyonder mode: annihilation and Secret Wars.",
-  "gui.flash.guide.doom.5": "Evolution: as Doom, absorb the power of the Ender Dragon, the Wither, the Warden and the Elder Guardian (dying near you). Then crouch and use a beacon with a Nether Star: become God Emperor Doom."
+  "gui.flash.guide.doom.5": "Evolution: as Doom, absorb the power of the Ender Dragon, the Wither, the Warden and the Elder Guardian (dying near you). Then crouch and use a beacon with a Nether Star: become God Emperor Doom.",
+  "item.flash.amazon_sword": "Amazon Sword",
+  "item.flash.amazon_shield": "Amazon Shield"
 }

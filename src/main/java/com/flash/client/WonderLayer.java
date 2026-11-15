@@ -73,6 +73,12 @@ public class WonderLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
         pose.popPose();
     }
 
+    /** The shield in her hand (conjured): not on her back. */
+    private static boolean holdsShield(AbstractClientPlayer p) {
+        return p.getOffhandItem().is(com.flash.registry.ModItems.AMAZON_SHIELD.get())
+                || p.getMainHandItem().is(com.flash.registry.ModItems.AMAZON_SHIELD.get());
+    }
+
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw,
@@ -81,11 +87,11 @@ public class WonderLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<A
             return;
         }
         PlayerModel<AbstractClientPlayer> model = this.getParentModel();
-        if (!WonderVfx.shieldOut(player.getId())) {
+        if (!WonderVfx.shieldOut(player.getId()) && !holdsShield(player)) {
             pose.pushPose();
             model.body.translateAndRotate(pose);
-            pose.translate(0.0D, 5.5D / 16.0D, 3.0D / 16.0D);
-            drawShield(pose, buffers, light, 0.78F, true);
+            pose.translate(0.0D, 5.5D / 16.0D, 2.6D / 16.0D);
+            drawShield(pose, buffers, light, 0.24F, true);
             pose.popPose();
         }
         GeoModel l = lasso();

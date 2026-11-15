@@ -183,6 +183,7 @@ public final class FlashClientForgeEvents {
         DoomClient.reset();
         WonderClient.reset();
         WonderLayer.resetModels();
+        WonderItemRenderer.resetModels();
     }
 
     /** True while this handler draws the hand itself (the event fires again from inside renderRightHand). */

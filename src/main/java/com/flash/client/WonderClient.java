@@ -85,6 +85,12 @@ public final class WonderClient {
             useWas = false;
             return;
         }
+        // C: her sword and shield conjured into her hands, or sent away
+        while (FlashKeys.YAS_PATH.consumeClick()) {
+            if (mc.screen == null) {
+                send(WonderAbilities.SUMMON_ARMS, 0);
+            }
+        }
         boolean down = FlashKeys.YAS_USE.isDown() && mc.screen == null;
         boolean pressed = down && !useWas;
         useWas = down;

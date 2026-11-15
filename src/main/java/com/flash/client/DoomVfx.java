@@ -125,57 +125,6 @@ public final class DoomVfx {
                     mc.level.addParticle(ParticleTypes.HAPPY_VILLAGER, b.x, b.y, b.z, rnd(0.6D), rnd(0.6D), rnd(0.6D));
                 }
             }
-            case DoomAbilities.FX_ANNIHILATE -> {
-                Vec3 a = handOf(mc, f, pt);
-                float w = 0.45F * (0.4F + fade);
-                VfxDraw.energy(buf, m, a, f.b, w, GOD[0], GOD[1], GOD[2], fade);
-                VfxDraw.energy(buf, m, a, f.b, w * 0.4F, WHITE[0], WHITE[1], WHITE[2], fade);
-                VfxDraw.path(buf, m, VfxDraw.helix(a, f.b, 0.5D * (1.0F + k), 6.0D, t * 0.5D, 40), 0.05F, GAUNT[0],
-                        GAUNT[1], GAUNT[2], fade);
-                VfxDraw.glow(buf, m, a, left, up, 0.9D, WHITE[0], WHITE[1], WHITE[2], fade);
-                VfxDraw.burst(buf, m, f.b, left, up, 1.5F + 3.0F * k, GOD[0], GOD[1], GOD[2], fade, t * 0.2F);
-            }
-            case DoomAbilities.FX_REWRITE -> {
-                double r = f.power;
-                Vec3 c = f.a;
-                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.0D + r * k, cam, GOD[0], GOD[1], GOD[2],
-                        0.5F * fade, t, 3.0D);
-                VfxDraw.ring(buf, m, c.add(0.0D, 0.1D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 1.0D + r * k, 0.8D,
-                        t * 0.05F, GOD[0], GOD[1], GOD[2], fade);
-                VfxDraw.runeRing(buf, m, c.add(0.0D, 0.05D, 0.0D), 4.0D + r * 0.4D * k, 16, t * 0.03F, MYSTIC[0],
-                        MYSTIC[1], MYSTIC[2], fade);
-                VfxDraw.wall(buf, m, c, 1.0D + r * k, 6.0D * fade, GOD[0], GOD[1], GOD[2], 0.4F * fade);
-                VfxDraw.pillar(buf, m, c, c.y, c.y + 60.0D, cam, 2.5F * fade, WHITE[0], WHITE[1], WHITE[2],
-                        0.8F * fade);
-            }
-            case DoomAbilities.FX_ASCEND -> {
-                Entity e = mc.level.getEntity(f.caster);
-                Vec3 c = e != null ? e.getPosition(pt) : f.a;
-                float charge = Math.min(1.0F, age / Math.max(1.0F, f.power));
-                float out = Math.min(1.0F, (f.life - age) / 10.0F);
-                VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.6F + 2.2F * charge) * out, GOD[0],
-                        GOD[1], GOD[2], 0.6F * out);
-                VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.2F + 0.6F * charge) * out, WHITE[0],
-                        WHITE[1], WHITE[2], 0.9F * out);
-                for (int i = 0; i < 3; i++) {
-                    VfxDraw.runeRing(buf, m, c.add(0.0D, 0.2D + i * 0.9D, 0.0D), 1.6D + i * 0.5D, 10,
-                            t * (0.03F + i * 0.02F) * (i % 2 == 0 ? 1 : -1), GOD[0], GOD[1], GOD[2], out);
-                }
-                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.2D + charge * 1.2D, cam, GOD[0], GOD[1], GOD[2],
-                        0.5F * out, t, 2.0D);
-                VfxDraw.runeRing(buf, m, f.a.add(0.0D, 0.05D, 0.0D), 6.0D, 16, t * 0.02F, MYSTIC[0], MYSTIC[1],
-                        MYSTIC[2], out);
-            }
-            case DoomAbilities.FX_ABSORB -> {
-                Entity e = mc.level.getEntity(f.caster);
-                Vec3 to = e != null ? e.getPosition(pt).add(0.0D, 1.0D, 0.0D) : f.b;
-                float head = Math.min(1.0F, age / 25.0F);
-                Vec3 tip = f.a.lerp(to, head);
-                VfxDraw.path(buf, m, VfxDraw.helix(f.a, tip, 0.6D, 4.0D, t * 0.4D, 30), 0.12F, MYSTIC[0],
-                        MYSTIC[1], MYSTIC[2], fade);
-                VfxDraw.energy(buf, m, f.a, tip, 0.2F, GOD[0], GOD[1], GOD[2], fade);
-                VfxDraw.glow(buf, m, tip, left, up, 1.0D, WHITE[0], WHITE[1], WHITE[2], fade);
-            }
             case DoomAbilities.FX_GRIMOIRE -> {
                 for (int i = 0; i < 60; i++) {
                     double a = i / 60.0D * Math.PI * 2.0D;
@@ -395,6 +344,57 @@ public final class DoomVfx {
                 VfxDraw.ring(buf, m, f.a.add(0.0D, 0.05D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 0.5D + 3.5D * k, 0.3D,
                         0.0F, JET[0], JET[1], JET[2], fade);
                 VfxDraw.glow(buf, m, f.a.add(0.0D, 0.3D, 0.0D), left, up, 1.5D * fade, 1.0F, 0.7F, 0.4F, fade);
+            }
+            case DoomAbilities.FX_ANNIHILATE -> {
+                Vec3 a = handOf(mc, f, pt);
+                float w = 0.45F * (0.4F + fade);
+                VfxDraw.energy(buf, m, a, f.b, w, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.energy(buf, m, a, f.b, w * 0.4F, WHITE[0], WHITE[1], WHITE[2], fade);
+                VfxDraw.path(buf, m, VfxDraw.helix(a, f.b, 0.5D * (1.0F + k), 6.0D, t * 0.5D, 40), 0.05F, GAUNT[0],
+                        GAUNT[1], GAUNT[2], fade);
+                VfxDraw.glow(buf, m, a, left, up, 0.9D, WHITE[0], WHITE[1], WHITE[2], fade);
+                VfxDraw.burst(buf, m, f.b, left, up, 1.5F + 3.0F * k, GOD[0], GOD[1], GOD[2], fade, t * 0.2F);
+            }
+            case DoomAbilities.FX_REWRITE -> {
+                double r = f.power;
+                Vec3 c = f.a;
+                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.0D + r * k, cam, GOD[0], GOD[1], GOD[2],
+                        0.5F * fade, t, 3.0D);
+                VfxDraw.ring(buf, m, c.add(0.0D, 0.1D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 1.0D + r * k, 0.8D,
+                        t * 0.05F, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.runeRing(buf, m, c.add(0.0D, 0.05D, 0.0D), 4.0D + r * 0.4D * k, 16, t * 0.03F, MYSTIC[0],
+                        MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.wall(buf, m, c, 1.0D + r * k, 6.0D * fade, GOD[0], GOD[1], GOD[2], 0.4F * fade);
+                VfxDraw.pillar(buf, m, c, c.y, c.y + 60.0D, cam, 2.5F * fade, WHITE[0], WHITE[1], WHITE[2],
+                        0.8F * fade);
+            }
+            case DoomAbilities.FX_ASCEND -> {
+                Entity e = mc.level.getEntity(f.caster);
+                Vec3 c = e != null ? e.getPosition(pt) : f.a;
+                float charge = Math.min(1.0F, age / Math.max(1.0F, f.power));
+                float out = Math.min(1.0F, (f.life - age) / 10.0F);
+                VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.6F + 2.2F * charge) * out, GOD[0],
+                        GOD[1], GOD[2], 0.6F * out);
+                VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.2F + 0.6F * charge) * out, WHITE[0],
+                        WHITE[1], WHITE[2], 0.9F * out);
+                for (int i = 0; i < 3; i++) {
+                    VfxDraw.runeRing(buf, m, c.add(0.0D, 0.2D + i * 0.9D, 0.0D), 1.6D + i * 0.5D, 10,
+                            t * (0.03F + i * 0.02F) * (i % 2 == 0 ? 1 : -1), GOD[0], GOD[1], GOD[2], out);
+                }
+                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.2D + charge * 1.2D, cam, GOD[0], GOD[1], GOD[2],
+                        0.5F * out, t, 2.0D);
+                VfxDraw.runeRing(buf, m, f.a.add(0.0D, 0.05D, 0.0D), 6.0D, 16, t * 0.02F, MYSTIC[0], MYSTIC[1],
+                        MYSTIC[2], out);
+            }
+            case DoomAbilities.FX_ABSORB -> {
+                Entity e = mc.level.getEntity(f.caster);
+                Vec3 to = e != null ? e.getPosition(pt).add(0.0D, 1.0D, 0.0D) : f.b;
+                float head = Math.min(1.0F, age / 25.0F);
+                Vec3 tip = f.a.lerp(to, head);
+                VfxDraw.path(buf, m, VfxDraw.helix(f.a, tip, 0.6D, 4.0D, t * 0.4D, 30), 0.12F, MYSTIC[0],
+                        MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.energy(buf, m, f.a, tip, 0.2F, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.glow(buf, m, tip, left, up, 1.0D, WHITE[0], WHITE[1], WHITE[2], fade);
             }
             case DoomAbilities.FX_GRIMOIRE -> {
                 Entity e = mc.level.getEntity(f.caster);

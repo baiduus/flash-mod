@@ -39,6 +39,12 @@ public final class FlashClientEvents {
                     ModItems.SYRINGE.get(),
                     new net.minecraft.resources.ResourceLocation("flash", "content"),
                     (stack, level, entity, seed) -> com.flash.item.SyringeItem.modelIndex(stack));
+            // Wonder Woman's shield raised as a shield is
+            net.minecraft.client.renderer.item.ItemProperties.register(
+                    ModItems.AMAZON_SHIELD.get(),
+                    new net.minecraft.resources.ResourceLocation("blocking"),
+                    (stack, level, entity, seed) -> entity != null && entity.isUsingItem()
+                            && entity.getUseItem() == stack ? 1.0F : 0.0F);
         });
     }
 

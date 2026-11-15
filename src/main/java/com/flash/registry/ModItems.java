@@ -223,6 +223,11 @@ public final class ModItems {
     public static final RegistryObject<Item> DOOM_ESSENCE_CAPSULE = ITEMS.register("doom_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),
                     "tooltip.flash.doom_essence_capsule", "tooltip.flash.power_capsule"));
+    /** Wonder Woman's sword and shield, conjured into her hands (WonderArms). */
+    public static final RegistryObject<Item> AMAZON_SWORD = ITEMS.register("amazon_sword",
+            com.flash.item.AmazonSwordItem::new);
+    public static final RegistryObject<Item> AMAZON_SHIELD = ITEMS.register("amazon_shield",
+            com.flash.item.AmazonShieldItem::new);
     /** Wonder Woman's power (the gift of the gods of Themyscira), taken out with an empty syringe. */
     public static final RegistryObject<Item> WONDER_ESSENCE_CAPSULE = ITEMS.register("wonder_essence_capsule",
             () -> new FlashTooltipItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC),

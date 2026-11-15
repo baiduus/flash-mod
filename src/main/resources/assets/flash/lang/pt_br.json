@@ -1466,7 +1466,7 @@
   "gui.flash.wonder.about": "Sobre",
   "gui.flash.wonder.about1": "Diana de Themyscira, filha dos deuses: força imensa, o Laço da Verdade, os Braceletes da Submissão que desviam qualquer golpe, e o escudo e a fúria de uma guerreira amazona.",
   "gui.flash.wonder.about2": "Alt + scroll (ou clique ao lado) troca o modo. R usa o modo; Z é a segunda habilidade. Todas têm recarga.",
-  "gui.flash.wonder.about3": "Tecla de voo: toque liga/desliga; segurando no chão ela decola num salto. U tira/põe o traje (os poderes ficam). No menu K: com ou sem tiara.",
+  "gui.flash.wonder.about3": "Tecla de voo: toque liga/desliga; segurando no chão ela decola num salto. C conjura a espada e o escudo nas mãos (C de novo os manda embora). U tira/põe o traje.",
   "gui.flash.wonder.about4": "Obtida derrotando um Devastador com uma espada na mão e um escudo na outra, sem ter poderes: as Amazonas perguntam se você quer o poder.",
   "gui.flash.credits.wonder": "Créditos: traje, escudo e Laço da Verdade da Mulher-Maravilha do Legends: Superheroes, usados com autorização",
   "gui.flash.credits.wonderwoman": "Créditos: traje, escudo e Laço da Verdade da Mulher-Maravilha do Legends: Superheroes, usados com autorização",
@@ -1483,7 +1483,7 @@
   "wonder.flash.mode.bracelets": "Braceletes",
   "wonder.flash.mode.bracelets.desc": "R: guarda por 4 s — flechas voltam para quem atirou e os golpes da frente não passam. Z: choque dos braceletes, uma onda dourada que arremessa tudo à frente.",
   "wonder.flash.mode.warrior": "Guerreira",
-  "wonder.flash.mode.warrior.desc": "R: arremessa o escudo, que ricocheteia em até 3 inimigos e volta. Z: Cataclismo Amazônico — salta alto e despenca, com raios dourados e uma onda de choque enorme.",
+  "wonder.flash.mode.warrior.desc": "R: arremessa o escudo, que ricocheteia em até 3 inimigos e volta. Z: Cataclismo Amazônico — salta alto e despenca, com raios dourados e uma onda de choque enorme. C (qualquer modo): conjura a espada e o escudo nas mãos.",
   "hud.flash.scarlet.row.lasso": "Laço da Verdade",
   "hud.flash.scarlet.row.lasso_whip": "Giro do laço",
   "hud.flash.scarlet.row.bracelet_guard": "Guarda dos braceletes",
@@ -1565,5 +1565,7 @@
   "ability.flash.doom_god.repair.description": "Recupera 4 de vida por segundo.",
   "ability.flash.doom_god.beyonder": "Poder dos Beyonders",
   "ability.flash.doom_god.beyonder.description": "Todos os poderes 2,5× mais fortes, maiores e com metade da recarga; o modo dos Beyonders: aniquilação e Guerras Secretas.",
-  "gui.flash.guide.doom.5": "Evolução: já como Destino, absorva o poder do Ender Dragon, do Wither, do Warden e do Guardião Ancião (morrendo perto de você). Depois agache e use um sinalizador com uma Estrela do Nether: vire o Deus Imperador Destino."
+  "gui.flash.guide.doom.5": "Evolução: já como Destino, absorva o poder do Ender Dragon, do Wither, do Warden e do Guardião Ancião (morrendo perto de você). Depois agache e use um sinalizador com uma Estrela do Nether: vire o Deus Imperador Destino.",
+  "item.flash.amazon_sword": "Espada das Amazonas",
+  "item.flash.amazon_shield": "Escudo das Amazonas"
 }

@@ -62,6 +62,8 @@ public final class WonderAbilities {
     public static final int CATACLYSM = 5;
     public static final int SUIT = 9;
     public static final int SUIT_TOGGLE = 10;
+    /** The conjure key: her sword and shield in her hands / sent away (WonderArms). */
+    public static final int SUMMON_ARMS = 11;
 
     public static final int FX_LASSO = 0;
     public static final int FX_SPIN = 1;
@@ -156,6 +158,7 @@ public final class WonderAbilities {
             }
             case SUIT -> WonderPowers.setSuit(p, value);
             case SUIT_TOGGLE -> WonderPowers.toggleSuited(p);
+            case SUMMON_ARMS -> WonderArms.toggle(p);
             default -> {
             }
         }

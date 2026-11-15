@@ -240,7 +240,7 @@ public final class WonderVfx {
                 // the model's space has y down
                 ps.scale(1.0F, -1.0F, 1.0F);
                 int light = LevelRenderer.getLightColor(mc.level, BlockPos.containing(at));
-                WonderLayer.drawShield(ps, src, light, 0.9F, false);
+                WonderLayer.drawShield(ps, src, light, 0.4F, false);
                 ps.popPose();
             }
             src.endBatch();
