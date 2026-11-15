@@ -86,6 +86,11 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
         return player != null && WonderClient.isWonder(player);
     }
 
+    /** God Emperor Doom: Beyonder gold on Latverian green. */
+    public static final PowerTheme DOOM_GOD = new PowerTheme("doom_god",
+            0xFFFFD86A, 0xFF1C2A14, 0xFF0B1208,
+            "gui.flash.theme.doom_god.title", "gui.flash.theme.doom_god.subtitle", Icon.SHIELD, true);
+
     public static boolean localSpider() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
         return player != null && SpiderClient.isSpider(player);
@@ -167,7 +172,7 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             return SPIDER;
         }
         if (localDoom()) {
-            return DOOM;
+            return DoomClient.god(net.minecraft.client.Minecraft.getInstance().player) ? DOOM_GOD : DOOM;
         }
         if (localWonder()) {
             return WONDER;

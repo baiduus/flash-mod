@@ -75,6 +75,18 @@ public final class DoomPose {
                 pose = PUSH;
                 ticks = 14;
             }
+            case DoomAbilities.FX_ANNIHILATE -> {
+                pose = BEAM;
+                ticks = 14;
+            }
+            case DoomAbilities.FX_REWRITE -> {
+                pose = RITUAL;
+                ticks = 24;
+            }
+            case DoomAbilities.FX_ASCEND -> {
+                pose = FIELD;
+                ticks = (int) power;
+            }
             case DoomAbilities.FX_CAST -> {
                 pose = power >= 2.0F ? RITUAL : MYSTIC;
                 ticks = power >= 2.0F ? 30 : 12;

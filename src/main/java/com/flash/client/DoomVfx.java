@@ -34,6 +34,9 @@ public final class DoomVfx {
     private static final float[] FIELD = {0.3F, 0.95F, 0.45F};
     private static final float[] MYSTIC = {0.62F, 1.0F, 0.28F};
     private static final float[] JET = {0.45F, 0.75F, 1.0F};
+    /** God Emperor Doom: the Beyonders' gold-white. */
+    private static final float[] GOD = {1.0F, 0.85F, 0.4F};
+    private static final float[] WHITE = {1.0F, 0.97F, 0.88F};
 
     private static final class Fx {
         final int type;
@@ -86,10 +89,21 @@ public final class DoomVfx {
             case DoomAbilities.FX_ERUPT -> 24;
             case DoomAbilities.FX_TAKEOFF -> 12;
             case DoomAbilities.FX_GRIMOIRE -> 50;
+            case DoomAbilities.FX_ANNIHILATE -> 14;
+            case DoomAbilities.FX_REWRITE -> 40;
+            case DoomAbilities.FX_ASCEND -> (int) p.power() + 10;
+            case DoomAbilities.FX_ABSORB -> 40;
             default -> 0;
         };
         if (mc.level.getEntity(p.caster()) instanceof Player cp) {
             DoomPose.cast(cp, p.type(), p.power());
+        }
+        if (p.type() == DoomAbilities.FX_ABSORB) {
+            Vec3 a = p.from();
+            for (int i = 0; i < 40; i++) {
+                mc.level.addParticle(ParticleTypes.SOUL, a.x + rnd(3.0D), a.y + rnd(3.0D), a.z + rnd(3.0D), 0.0D,
+                        0.05D, 0.0D);
+            }
         }
         if (life > 0 && ACTIVE.size() < 400) {
             ACTIVE.add(new Fx(p, life));
@@ -110,6 +124,57 @@ public final class DoomVfx {
                 for (int i = 0; i < 20; i++) {
                     mc.level.addParticle(ParticleTypes.HAPPY_VILLAGER, b.x, b.y, b.z, rnd(0.6D), rnd(0.6D), rnd(0.6D));
                 }
+            }
+            case DoomAbilities.FX_ANNIHILATE -> {
+                Vec3 a = handOf(mc, f, pt);
+                float w = 0.45F * (0.4F + fade);
+                VfxDraw.energy(buf, m, a, f.b, w, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.energy(buf, m, a, f.b, w * 0.4F, WHITE[0], WHITE[1], WHITE[2], fade);
+                VfxDraw.path(buf, m, VfxDraw.helix(a, f.b, 0.5D * (1.0F + k), 6.0D, t * 0.5D, 40), 0.05F, GAUNT[0],
+                        GAUNT[1], GAUNT[2], fade);
+                VfxDraw.glow(buf, m, a, left, up, 0.9D, WHITE[0], WHITE[1], WHITE[2], fade);
+                VfxDraw.burst(buf, m, f.b, left, up, 1.5F + 3.0F * k, GOD[0], GOD[1], GOD[2], fade, t * 0.2F);
+            }
+            case DoomAbilities.FX_REWRITE -> {
+                double r = f.power;
+                Vec3 c = f.a;
+                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.0D + r * k, cam, GOD[0], GOD[1], GOD[2],
+                        0.5F * fade, t, 3.0D);
+                VfxDraw.ring(buf, m, c.add(0.0D, 0.1D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 1.0D + r * k, 0.8D,
+                        t * 0.05F, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.runeRing(buf, m, c.add(0.0D, 0.05D, 0.0D), 4.0D + r * 0.4D * k, 16, t * 0.03F, MYSTIC[0],
+                        MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.wall(buf, m, c, 1.0D + r * k, 6.0D * fade, GOD[0], GOD[1], GOD[2], 0.4F * fade);
+                VfxDraw.pillar(buf, m, c, c.y, c.y + 60.0D, cam, 2.5F * fade, WHITE[0], WHITE[1], WHITE[2],
+                        0.8F * fade);
+            }
+            case DoomAbilities.FX_ASCEND -> {
+                Entity e = mc.level.getEntity(f.caster);
+                Vec3 c = e != null ? e.getPosition(pt) : f.a;
+                float charge = Math.min(1.0F, age / Math.max(1.0F, f.power));
+                float out = Math.min(1.0F, (f.life - age) / 10.0F);
+                VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.6F + 2.2F * charge) * out, GOD[0],
+                        GOD[1], GOD[2], 0.6F * out);
+                VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.2F + 0.6F * charge) * out, WHITE[0],
+                        WHITE[1], WHITE[2], 0.9F * out);
+                for (int i = 0; i < 3; i++) {
+                    VfxDraw.runeRing(buf, m, c.add(0.0D, 0.2D + i * 0.9D, 0.0D), 1.6D + i * 0.5D, 10,
+                            t * (0.03F + i * 0.02F) * (i % 2 == 0 ? 1 : -1), GOD[0], GOD[1], GOD[2], out);
+                }
+                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.2D + charge * 1.2D, cam, GOD[0], GOD[1], GOD[2],
+                        0.5F * out, t, 2.0D);
+                VfxDraw.runeRing(buf, m, f.a.add(0.0D, 0.05D, 0.0D), 6.0D, 16, t * 0.02F, MYSTIC[0], MYSTIC[1],
+                        MYSTIC[2], out);
+            }
+            case DoomAbilities.FX_ABSORB -> {
+                Entity e = mc.level.getEntity(f.caster);
+                Vec3 to = e != null ? e.getPosition(pt).add(0.0D, 1.0D, 0.0D) : f.b;
+                float head = Math.min(1.0F, age / 25.0F);
+                Vec3 tip = f.a.lerp(to, head);
+                VfxDraw.path(buf, m, VfxDraw.helix(f.a, tip, 0.6D, 4.0D, t * 0.4D, 30), 0.12F, MYSTIC[0],
+                        MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.energy(buf, m, f.a, tip, 0.2F, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.glow(buf, m, tip, left, up, 1.0D, WHITE[0], WHITE[1], WHITE[2], fade);
             }
             case DoomAbilities.FX_GRIMOIRE -> {
                 for (int i = 0; i < 60; i++) {
@@ -171,6 +236,16 @@ public final class DoomVfx {
                 if (!DoomClient.isDoom(p) || p.isInvisible()) {
                     continue;
                 }
+                if (DoomClient.god(p)) {
+                    // the crown of a god: runes turning over his head, a soft halo of gold
+                    Vec3 head = p.getPosition(pt).add(0.0D, p.getBbHeight() + 0.35D, 0.0D);
+                    float pulse = 0.55F + 0.2F * (float) Math.sin(t * 0.15F + p.getId());
+                    VfxDraw.runeRing(buf, m, head, 0.55D, 6, t * 0.04F, GOD[0], GOD[1], GOD[2], pulse);
+                    VfxDraw.ring(buf, m, head, new Vec3(0.0D, 1.0D, 0.0D), 0.5D, 0.04D, t * 0.05F, WHITE[0], WHITE[1],
+                            WHITE[2], pulse);
+                    VfxDraw.glow(buf, m, p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.55D, 0.0D), left, up,
+                            1.3D, GOD[0], GOD[1], GOD[2], 0.16F * pulse);
+                }
                 if (DoomClient.shielded(p)) {
                     Vec3 c = p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
                     double r = DoomAbilities.FIELD_RADIUS;
@@ -190,7 +265,7 @@ public final class DoomVfx {
     private static boolean any(Minecraft mc) {
         for (int id : DoomClient.ids()) {
             Entity e = mc.level.getEntity(id);
-            if (e instanceof Player p && DoomClient.shielded(p)) {
+            if (e instanceof Player p && (DoomClient.shielded(p) || DoomClient.god(p))) {
                 return true;
             }
         }

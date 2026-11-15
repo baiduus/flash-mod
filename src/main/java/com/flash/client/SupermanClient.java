@@ -398,7 +398,7 @@ public final class SupermanClient {
         }
         if (doomFlight) {
             // the thrusters of his armour: as Storm on her winds
-            scale = 3.4D;
+            scale = DoomClient.god(p) ? 5.0D : 3.4D;
         }
         double maxSpeed = yasFlight ? YAS_MAX_SPEED : MAX_SPEED;
         Vec3 look = p.getLookAngle();

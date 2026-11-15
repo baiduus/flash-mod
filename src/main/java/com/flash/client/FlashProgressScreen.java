@@ -923,7 +923,8 @@ public class FlashProgressScreen extends Screen {
     private static final String[] STORM_PASSIVES = {"flight", "lightning_body", "toughness"};
     private static final String[] SPIDER_PASSIVES = {"web_swing", "wall_crawl", "spider_sense", "agility",
             "healing"};
-    private static final String[] DOOM_PASSIVES = {"armour", "thrusters", "repair"};
+    private static final String[] DOOM_PASSIVES = {"armour", "thrusters", "repair", "ascension"};
+    private static final String[] DOOM_GOD_PASSIVES = {"divinity", "thrusters", "repair", "beyonder"};
     private static final String[] WONDER_PASSIVES = {"flight", "demigoddess", "bracelets", "healing"};
 
     /** Storm, Spider-Man or Doom (heroes with modes of their own): their tab, their texts. */
@@ -933,7 +934,8 @@ public class FlashProgressScreen extends Screen {
 
     /** The id of the texts of the hero with modes of his own ("storm", "spider", "doom"). */
     private static String ownHero() {
-        return PowerTheme.localSpider() ? "spider" : PowerTheme.localDoom() ? "doom"
+        return PowerTheme.localSpider() ? "spider" : PowerTheme.localDoom()
+                ? (DoomClient.god(Minecraft.getInstance().player) ? "doom_god" : "doom")
                 : PowerTheme.localWonder() ? "wonder" : "storm";
     }
 
@@ -943,7 +945,8 @@ public class FlashProgressScreen extends Screen {
     }
 
     private static String[] yasPassives() {
-        return PowerTheme.localSpider() ? SPIDER_PASSIVES : PowerTheme.localDoom() ? DOOM_PASSIVES
+        return PowerTheme.localSpider() ? SPIDER_PASSIVES : PowerTheme.localDoom()
+                ? (DoomClient.god(Minecraft.getInstance().player) ? DOOM_GOD_PASSIVES : DOOM_PASSIVES)
                 : PowerTheme.localWonder() ? WONDER_PASSIVES
                 : stormTab() ? STORM_PASSIVES : scarletTab() ? SCARLET_PASSIVES : YAS_PASSIVES_OF_YAS;
     }
@@ -1560,7 +1563,7 @@ public class FlashProgressScreen extends Screen {
     /** Hero id (its advancement and its texts gui.flash.guide.<id>), number of steps. */
     private static final String[] GUIDE = {"flash", "hulk", "red_hulk", "superman", "thor", "lex", "yas", "scarlet",
             "storm", "spiderman", "doom", "wonderwoman"};
-    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 5, 4, 4, 4, 4, 4};
+    private static final int[] GUIDE_STEPS = {4, 4, 4, 4, 3, 4, 5, 4, 4, 4, 5, 4};
     private static final int GUIDE_LIST_W = 168;
     private static final int GUIDE_ROW_H = 19;
     private static final int GUIDE_ROW_GAP = 1;

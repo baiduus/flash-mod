@@ -48,7 +48,17 @@ public final class DoomPowers {
     public static final int F_SHIELD = 2;
     /** The armour taken off (his powers stay). */
     public static final int F_UNSUITED = 4;
+    /** God Emperor Doom (DoomAscension). */
+    public static final int F_GOD = 8;
     private static final String UNSUITED = "unsuited";
+    private static final String GOD = "god";
+    /** God Emperor Doom: a little under Yas (0.018 taken, +64.8 punch). */
+    public static final float GOD_DAMAGE_FACTOR = 0.03F;
+    public static final float GOD_PUNCH_BONUS = 40.0F;
+    private static final java.util.UUID GOD_HEALTH = java.util.UUID.fromString("9d2c41e0-7b1a-4f0e-8c55-3a7d0b6e2f01");
+    private static final java.util.UUID GOD_KNOCKBACK = java.util.UUID.fromString(
+            "9d2c41e0-7b1a-4f0e-8c55-3a7d0b6e2f02");
+    private static final java.util.UUID GOD_SPEED = java.util.UUID.fromString("9d2c41e0-7b1a-4f0e-8c55-3a7d0b6e2f03");
 
     private static final java.util.Map<java.util.UUID, Integer> SENT = new java.util.HashMap<>();
 
@@ -78,6 +88,7 @@ public final class DoomPowers {
         }
         p.getPersistentData().remove(KEY);
         DoomAbilities.forget(p);
+        godAttributes(p, false);
         if (!p.isCreative() && !p.isSpectator()) {
             var ab = p.getAbilities();
             ab.mayfly = false;
@@ -93,7 +104,66 @@ public final class DoomPowers {
             return 0;
         }
         return (p.getAbilities().flying ? F_FLYING : 0) | (DoomAbilities.shielded(p) ? F_SHIELD : 0)
-                | (suited(p) ? 0 : F_UNSUITED);
+                | (suited(p) ? 0 : F_UNSUITED) | (god(p) ? F_GOD : 0);
+    }
+
+    /** God Emperor Doom: the power of the Beyonders his. */
+    public static boolean god(Player p) {
+        return has(p) && p.getPersistentData().getCompound(KEY).getBoolean(GOD);
+    }
+
+    public static void setGod(ServerPlayer p, boolean on) {
+        if (!has(p)) {
+            return;
+        }
+        CompoundTag tag = p.getPersistentData().getCompound(KEY);
+        tag.putBoolean(GOD, on);
+        p.getPersistentData().put(KEY, tag);
+        godAttributes(p, on);
+        if (on) {
+            p.setHealth(p.getMaxHealth());
+        }
+        sync(p);
+    }
+
+    /** The data of his evolution (DoomAscension: what he has absorbed). */
+    static CompoundTag tag(Player p) {
+        return p.getPersistentData().getCompound(KEY);
+    }
+
+    static void putTag(Player p, CompoundTag tag) {
+        p.getPersistentData().put(KEY, tag);
+    }
+
+    private static void godAttributes(ServerPlayer p, boolean on) {
+        attr(p, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, GOD_HEALTH, on ? 30.0D : 0.0D,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION);
+        attr(p, net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE, GOD_KNOCKBACK,
+                on ? 1.0D : 0.0D, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION);
+        attr(p, net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, GOD_SPEED, on ? 0.35D : 0.0D,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE);
+        if (p.getHealth() > p.getMaxHealth()) {
+            p.setHealth(p.getMaxHealth());
+        }
+    }
+
+    private static void attr(ServerPlayer p, net.minecraft.world.entity.ai.attributes.Attribute a, java.util.UUID id,
+                             double amount, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation op) {
+        var inst = p.getAttribute(a);
+        if (inst == null) {
+            return;
+        }
+        var cur = inst.getModifier(id);
+        if (cur != null && Math.abs(cur.getAmount() - amount) < 1.0E-6D) {
+            return;
+        }
+        if (cur != null) {
+            inst.removeModifier(id);
+        }
+        if (amount != 0.0D) {
+            inst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(id, "doom_god",
+                    amount, op));
+        }
     }
 
     public static boolean suited(Player p) {
@@ -137,9 +207,24 @@ public final class DoomPowers {
         }
         flight(p);
         p.clearFire();
-        // the armour's repair systems
-        if (p.tickCount % 40 == 0 && p.getHealth() < p.getMaxHealth() && p.isAlive()) {
-            p.heal(1.0F);
+        boolean god = god(p);
+        if (p.tickCount % 20 == 0) {
+            godAttributes(p, god);
+        }
+        // the armour's repair systems (a god heals as one)
+        if (p.tickCount % (god ? 10 : 40) == 0 && p.getHealth() < p.getMaxHealth() && p.isAlive()) {
+            p.heal(god ? 2.0F : 1.0F);
+        }
+        if (god && p.tickCount % 10 == 0) {
+            // nothing of this world can poison or wither a god
+            for (var e : new net.minecraft.world.effect.MobEffect[] {net.minecraft.world.effect.MobEffects.POISON,
+                    net.minecraft.world.effect.MobEffects.WITHER, net.minecraft.world.effect.MobEffects.WEAKNESS,
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, net.minecraft.world.effect.MobEffects.BLINDNESS,
+                    net.minecraft.world.effect.MobEffects.DARKNESS, net.minecraft.world.effect.MobEffects.DIG_SLOWDOWN}) {
+                p.removeEffect(e);
+            }
+            p.setAirSupply(p.getMaxAirSupply());
+            p.getFoodData().setFoodLevel(20);
         }
         Integer sent = SENT.get(p.getUUID());
         if (sent == null || sent != flags(p)) {
@@ -178,7 +263,7 @@ public final class DoomPowers {
             return;
         }
         flight(p);
-        p.setDeltaMovement(p.getDeltaMovement().x, 2.0D, p.getDeltaMovement().z);
+        p.setDeltaMovement(p.getDeltaMovement().x, god(p) ? 2.6D : 2.0D, p.getDeltaMovement().z);
         p.hurtMarked = true;
         com.flash.superman.SupermanAbilities.anim(p, "charged_launch9");
         com.flash.superman.SupermanAbilities.groundPuff(level, p.position(), 3.0D, 30);
@@ -203,7 +288,7 @@ public final class DoomPowers {
         if (event.getSource().getDirectEntity() instanceof ServerPlayer p && has(p)
                 && event.getSource().getEntity() == p && event.getSource().is(net.minecraft.world.damagesource
                 .DamageTypes.PLAYER_ATTACK)) {
-            event.setAmount(event.getAmount() + PUNCH_BONUS);
+            event.setAmount(event.getAmount() + (god(p) ? GOD_PUNCH_BONUS : PUNCH_BONUS));
         }
     }
 
@@ -213,7 +298,7 @@ public final class DoomPowers {
                 || event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
-        float f = DAMAGE_FACTOR;
+        float f = god(p) ? GOD_DAMAGE_FACTOR : DAMAGE_FACTOR;
         if (event.getSource().is(DamageTypeTags.IS_EXPLOSION)) {
             f *= 0.5F;
         }

@@ -48,6 +48,8 @@ public final class ScarletCooldowns {
             Map.entry("force_wave", 160),
             Map.entry("mystic_bolt", 40),
             Map.entry("ritual", 360),
+            Map.entry("annihilate", 100),
+            Map.entry("rewrite", 900),
             // Wonder Woman
             Map.entry("lasso", 60),
             Map.entry("lasso_whip", 120),
@@ -80,6 +82,7 @@ public final class ScarletCooldowns {
                     {"discharge", "discharge", "Z"}};
             case "force" -> new String[][] {{"force_field", "force_field", "R"}, {"force_wave", "force_wave", "Z"}};
             case "sorcery" -> new String[][] {{"mystic_bolt", "mystic_bolt", "R"}, {"ritual", "ritual", "Z"}};
+            case "beyonder" -> new String[][] {{"annihilate", "annihilate", "R"}, {"rewrite", "rewrite", "Z"}};
             // Wonder Woman
             case "lasso" -> new String[][] {{"lasso", "lasso", "R"}, {"lasso_whip", "lasso_whip", "Z"}};
             case "bracelets" -> new String[][] {{"bracelet_guard", "bracelet_guard", "R"},

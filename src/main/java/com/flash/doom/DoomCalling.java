@@ -131,7 +131,9 @@ public final class DoomCalling {
                 .requires(source -> source.hasPermission(2))
                 .then(sub("give", DoomPowers::grant, "commands.flash.doom.given"))
                 .then(sub("remove", DoomPowers::revoke, "commands.flash.doom.removed"))
-                .then(sub("offer", DoomCalling::offer, "commands.flash.doom.offered")));
+                .then(sub("offer", DoomCalling::offer, "commands.flash.doom.offered"))
+                .then(sub("god", DoomAscension::makeGod, "commands.flash.doom.god"))
+                .then(sub("ungod", DoomAscension::unmakeGod, "commands.flash.doom.ungod")));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> sub(String name, Consumer<ServerPlayer> action,

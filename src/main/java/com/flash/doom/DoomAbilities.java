@@ -58,6 +58,9 @@ public final class DoomAbilities {
     public static final int RITUAL = 6;
     /** The suit key (U): the armour on / off (his powers stay). */
     public static final int SUIT_TOGGLE = 9;
+    /** God Emperor Doom only (the Beyonder mode): R the annihilation, Z Secret Wars (reality rewritten). */
+    public static final int ANNIHILATE = 7;
+    public static final int REWRITE = 8;
     /** The force field's radius: nobody gets in. */
     public static final double FIELD_RADIUS = 2.6D;
 
@@ -75,6 +78,14 @@ public final class DoomAbilities {
     public static final int FX_SHIELD_HIT = 11;
     /** Nothing drawn: he casts (his arms; power: 1 the mystic bolt, 2 the ritual). */
     public static final int FX_CAST = 12;
+    /** God Emperor Doom: the annihilation beam (a -> b). */
+    public static final int FX_ANNIHILATE = 13;
+    /** Secret Wars: reality rewritten round him (power: the radius). */
+    public static final int FX_REWRITE = 14;
+    /** The ascension to God Emperor (power: its ticks). */
+    public static final int FX_ASCEND = 15;
+    /** A boss' power absorbed (a: where it died, b: him). */
+    public static final int FX_ABSORB = 16;
 
     private static final int SHIELD_TICKS = 200;
     private static final int RITUAL_TICKS = 30;
@@ -121,34 +132,44 @@ public final class DoomAbilities {
         }
         switch (action) {
             case BLAST -> {
-                if (ScarletAbilities.ready(p, "doom_blast")) {
+                if (ready(p, "doom_blast")) {
                     blast(p);
                 }
             }
             case BEAM -> beam(p);
             case DISCHARGE -> {
-                if (ScarletAbilities.ready(p, "discharge")) {
+                if (ready(p, "discharge")) {
                     discharge(p);
                 }
             }
             case SHIELD -> {
-                if (ScarletAbilities.ready(p, "force_field")) {
+                if (ready(p, "force_field")) {
                     shield(p);
                 }
             }
             case WAVE -> {
-                if (ScarletAbilities.ready(p, "force_wave")) {
+                if (ready(p, "force_wave")) {
                     wave(p);
                 }
             }
             case MYSTIC -> {
-                if (ScarletAbilities.ready(p, "mystic_bolt")) {
+                if (ready(p, "mystic_bolt")) {
                     mystic(p);
                 }
             }
             case RITUAL -> {
                 if (!ScarletAbilities.cooling(p, "ritual") && ritual(p)) {
-                    ScarletAbilities.start(p, "ritual", com.flash.scarlet.ScarletCooldowns.ticks("ritual"));
+                    ScarletAbilities.start(p, "ritual", cd(p, "ritual"));
+                }
+            }
+            case ANNIHILATE -> {
+                if (DoomPowers.god(p) && ready(p, "annihilate")) {
+                    annihilate(p);
+                }
+            }
+            case REWRITE -> {
+                if (DoomPowers.god(p) && ready(p, "rewrite")) {
+                    DoomAscension.rewrite(p);
                 }
             }
             case SUIT_TOGGLE -> DoomPowers.toggleSuited(p);
@@ -193,7 +214,26 @@ public final class DoomAbilities {
                 && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand);
     }
 
-    private static void hurt(ServerPlayer p, LivingEntity e, float amount) {
+    /** As God Emperor everything he does hits two and a half times as hard, reaches farther, comes back sooner. */
+    static float god(ServerPlayer p) {
+        return DoomPowers.god(p) ? 2.5F : 1.0F;
+    }
+
+    static double reach(ServerPlayer p) {
+        return DoomPowers.god(p) ? 1.6D : 1.0D;
+    }
+
+    static int cd(ServerPlayer p, String id) {
+        int t = com.flash.scarlet.ScarletCooldowns.ticks(id);
+        return DoomPowers.god(p) && !"annihilate".equals(id) && !"rewrite".equals(id) ? Math.max(4, t / 2) : t;
+    }
+
+    private static boolean ready(ServerPlayer p, String id) {
+        return ScarletAbilities.ready(p, id, cd(p, id));
+    }
+
+    static void hurt(ServerPlayer p, LivingEntity e, float amount) {
+        amount *= god(p);
         e.invulnerableTime = 0;
         e.hurt(p.damageSources().indirectMagic(p, p), amount);
     }
@@ -254,11 +294,12 @@ public final class DoomAbilities {
         Vec3 eye = p.getEyePosition();
         Vec3 look = p.getLookAngle();
         int n = 0;
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(11.0D),
+        double range = 11.0D * reach(p);
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range),
                 e -> foe(p, e))) {
             Vec3 to = e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D).subtract(eye);
             double d = to.length();
-            if (d > 11.0D || d < 0.01D || to.normalize().dot(look) < 0.6D) {
+            if (d > range || d < 0.01D || to.normalize().dot(look) < 0.6D) {
                 continue;
             }
             hurt(p, e, 8.0F);
@@ -273,6 +314,45 @@ public final class DoomAbilities {
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS,
                 1.0F, 1.4F);
         fx(p, FX_DISCHARGE, hand(p), look, n, -1);
+    }
+
+    /**
+     * God Emperor Doom's annihilation: a beam of the Beyonders' power through everything in its way (60 blocks),
+     * unmaking what it touches.
+     */
+    private static void annihilate(ServerPlayer p) {
+        ServerLevel level = p.serverLevel();
+        Vec3 eye = p.getEyePosition();
+        Vec3 look = p.getLookAngle();
+        Vec3 end = eye.add(look.scale(60.0D));
+        HitResult wall = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+        if (wall.getType() != HitResult.Type.MISS) {
+            end = wall.getLocation();
+        }
+        Vec3 from = hand(p);
+        AABB box = new AABB(eye, end).inflate(1.5D);
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> foe(p, e))) {
+            Vec3 c = e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D);
+            Vec3 rel = c.subtract(eye);
+            double t = rel.dot(look);
+            if (t < 0.0D || rel.subtract(look.scale(t)).length() > 1.2D + e.getBbWidth() * 0.5D) {
+                continue;
+            }
+            // 32 * 2.5: 80 a blow
+            hurt(p, e, 32.0F);
+            e.setSecondsOnFire(6);
+            e.knockback(2.0D, -look.x, -look.z);
+            e.hurtMarked = true;
+            level.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 25, 0.4D, 0.6D, 0.4D, 0.2D);
+        }
+        if (wall.getType() != HitResult.Type.MISS) {
+            level.explode(p, end.x, end.y, end.z, 3.0F, net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+        }
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5F,
+                0.6F);
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS,
+                1.5F, 0.5F);
+        fx(p, FX_ANNIHILATE, from, end, 1.0F, -1);
     }
 
     // ------------------------------------------------------------------
@@ -348,18 +428,19 @@ public final class DoomAbilities {
 
     private static void wave(ServerPlayer p) {
         ServerLevel level = p.serverLevel();
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(9.0D),
-                e -> foe(p, e) && e.distanceToSqr(p) < 81.0D)) {
+        double range = 9.0D * reach(p);
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range),
+                e -> foe(p, e) && e.distanceToSqr(p) < range * range)) {
             Vec3 away = e.position().subtract(p.position());
             double d = Math.max(1.0D, away.length());
-            hurt(p, e, (float) (8.0D - d * 0.5D));
+            hurt(p, e, (float) Math.max(2.0D, 8.0D - d * 0.5D / reach(p)));
             e.knockback(3.0D - d * 0.2D, -away.x / d, -away.z / d);
             e.setDeltaMovement(e.getDeltaMovement().add(0.0D, 0.45D, 0.0D));
             e.hurtMarked = true;
         }
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8F,
                 1.5F);
-        fx(p, FX_WAVE, p.position().add(0.0D, 1.0D, 0.0D), p.position(), 9.0F, -1);
+        fx(p, FX_WAVE, p.position().add(0.0D, 1.0D, 0.0D), p.position(), (float) range, -1);
     }
 
     // ------------------------------------------------------------------
@@ -395,7 +476,7 @@ public final class DoomAbilities {
         fx(p, FX_CAST, at, at, 2.0F, -1);
         p.serverLevel().playSound(null, at.x, at.y, at.z, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.PLAYERS, 1.4F,
                 0.8F);
-        fx(p, FX_RITUAL, at, at, 5.0F, RITUAL_TICKS);
+        fx(p, FX_RITUAL, at, at, (float) (5.0D * reach(p)), RITUAL_TICKS);
         return true;
     }
 
@@ -476,9 +557,10 @@ public final class DoomAbilities {
                 continue;
             }
             it.remove();
+            double rr = 5.0D * reach(r.owner);
             for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new AABB(r.at, r.at)
-                    .inflate(5.0D, 3.0D, 5.0D), e -> foe(r.owner, e)
-                    && e.position().multiply(1, 0, 1).distanceToSqr(r.at.multiply(1, 0, 1)) < 25.0D)) {
+                    .inflate(rr, 3.0D, rr), e -> foe(r.owner, e)
+                    && e.position().multiply(1, 0, 1).distanceToSqr(r.at.multiply(1, 0, 1)) < rr * rr)) {
                 hurt(r.owner, e, 16.0F);
                 e.setDeltaMovement(e.getDeltaMovement().x * 0.3D, 1.25D, e.getDeltaMovement().z * 0.3D);
                 e.hurtMarked = true;
@@ -490,7 +572,7 @@ public final class DoomAbilities {
                     0.9F);
             level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, r.at.x, r.at.y + 0.2D, r.at.z, 80, 2.5D, 0.2D, 2.5D,
                     0.25D);
-            fx(r.owner, FX_ERUPT, r.at, r.at, 5.0F, -1);
+            fx(r.owner, FX_ERUPT, r.at, r.at, (float) rr, -1);
         }
         if (!SHIELDS.isEmpty()) {
             for (Map.Entry<UUID, Long> en : SHIELDS.entrySet()) {

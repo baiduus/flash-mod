@@ -26,6 +26,7 @@ import org.joml.Vector3f;
 public class DoomLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
     private static final float[] JET = {0.45F, 0.75F, 1.0F};
+    private static final float[] GOD_JET = {1.0F, 0.82F, 0.4F};
     /** Entity -> [right foot, its jet direction, left foot, its jet direction], and the tick they were seen. */
     private static final Map<Integer, Vec3[]> FEET = new HashMap<>();
     private static final Map<Integer, Integer> SEEN = new HashMap<>();
@@ -52,6 +53,7 @@ public class DoomLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
         Quaternionf toWorld = new Quaternionf().rotationY(-(cam.getYRot() + 180.0F) * Mth.DEG_TO_RAD)
                 .rotateX(-cam.getXRot() * Mth.DEG_TO_RAD);
         PlayerModel<AbstractClientPlayer> model = this.getParentModel();
+        float[] jet = DoomClient.god(player) ? GOD_JET : JET;
         float flick = 0.85F + 0.15F * Mth.sin(ageInTicks * 2.3F + player.getId());
         Vec3[] out = new Vec3[4];
         BufferBuilder buf = VfxDraw.begin();
@@ -65,11 +67,11 @@ public class DoomLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
                 Matrix4f m = pose.last().pose();
                 Vec3 sole = new Vec3(0.0D, 12.2D / 16.0D, 0.0D);
                 Vec3 tail = new Vec3(0.0D, (12.2D + 9.0D * flick) / 16.0D, 0.0D);
-                VfxDraw.energy(buf, m, sole, tail, 0.09F, JET[0], JET[1], JET[2], 0.85F);
+                VfxDraw.energy(buf, m, sole, tail, 0.09F, jet[0], jet[1], jet[2], 0.85F);
                 Matrix4f inv = new Matrix4f(m).invert();
                 Vector3f right = inv.transformDirection(new Vector3f(1.0F, 0.0F, 0.0F)).normalize();
                 Vector3f up = inv.transformDirection(new Vector3f(0.0F, 1.0F, 0.0F)).normalize();
-                VfxDraw.glow(buf, m, sole, new Vec3(right), new Vec3(up), 0.3D, JET[0], JET[1], JET[2], 0.55F * flick);
+                VfxDraw.glow(buf, m, sole, new Vec3(right), new Vec3(up), 0.3D, jet[0], jet[1], jet[2], 0.55F * flick);
                 Vector3f w = m.transformPosition(new Vector3f(0.0F, 12.2F / 16.0F, 0.0F));
                 toWorld.transform(w);
                 Vector3f d = m.transformDirection(new Vector3f(0.0F, 1.0F, 0.0F));

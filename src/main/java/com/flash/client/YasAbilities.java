@@ -253,6 +253,13 @@ public final class YasAbilities {
             {"....####....", "..##++++##..", ".#++####++#.", ".#+#+##+#+#.", "#+#+####+#+#", "#+##.##.##+#",
                     "#+##.##.##+#", "#+#+####+#+#", ".#+#+##+#+#.", ".#++####++#.", "..##++++##..", "....####...."}};
 
+    /** God Emperor Doom: his three modes and the Beyonders' power. */
+    public static final String[] DOOM_GOD_MODES = {"gauntlets", "force", "sorcery", "beyonder"};
+    private static final int[] DOOM_GOD_COLORS = {0xFF7FE8FF, 0xFF5AE07A, 0xFFA6FF5A, 0xFFFFD86A};
+    private static final String[][] DOOM_GOD_ICONS = {DOOM_ICONS[0], DOOM_ICONS[1], DOOM_ICONS[2],
+            {".#..#..#..#.", ".##.##.##.##", ".##########.", ".#++++++++#.", ".##########.", "............",
+                    ".....##.....", "....#++#....", "...#++++#...", "....#++#....", ".....##.....", "............"}};
+
     /** A hero whose modes are all his own on R / Z (Storm, Spider-Man, Doom). */
     private static final class Own {
         final String prefix;
@@ -272,6 +279,7 @@ public final class YasAbilities {
     private static final Own STORM_OWN = new Own("storm", STORM_MODES, STORM_COLORS, STORM_ICONS);
     private static final Own SPIDER_OWN = new Own("spider", SPIDER_MODES, SPIDER_COLORS, SPIDER_ICONS);
     private static final Own DOOM_OWN = new Own("doom", DOOM_MODES, DOOM_COLORS, DOOM_ICONS);
+    private static final Own DOOM_GOD_OWN = new Own("doom", DOOM_GOD_MODES, DOOM_GOD_COLORS, DOOM_GOD_ICONS);
     private static final Own WONDER_OWN = new Own("wonder", WONDER_MODES, WONDER_COLORS, WONDER_ICONS);
 
     /** The local hero's own modes (null: Yas, the Scarlet Witch or nobody). */
@@ -285,7 +293,10 @@ public final class YasAbilities {
         if (PowerTheme.localWonder()) {
             return WONDER_OWN;
         }
-        return PowerTheme.localDoom() ? DOOM_OWN : null;
+        if (PowerTheme.localDoom()) {
+            return DoomClient.god(Minecraft.getInstance().player) ? DOOM_GOD_OWN : DOOM_OWN;
+        }
+        return null;
     }
 
     public static boolean storm() {
@@ -566,7 +577,7 @@ public final class YasAbilities {
             boolean v = variant && mc.screen == null;
             StormClient.tickMode(mc, o == STORM_OWN ? mode : null, v);
             SpiderClient.tickMode(mc, o == SPIDER_OWN ? mode : null, v);
-            DoomClient.tickMode(mc, o == DOOM_OWN ? mode : null, v);
+            DoomClient.tickMode(mc, o == DOOM_OWN || o == DOOM_GOD_OWN ? mode : null, v);
             WonderClient.tickMode(mc, o == WONDER_OWN ? mode : null, v);
             com.flash.client.godwand.GodWandClient.tickMode(mc, -1);
             com.flash.client.godwand.GodWandClient.tickPath(mc, false);

@@ -63,6 +63,17 @@ public final class DoomClient {
         return f != null && (f & DoomPowers.F_UNSUITED) == 0;
     }
 
+    /** God Emperor Doom. */
+    public static boolean god(Entity e) {
+        Integer f = DOOMS.get(e.getId());
+        return f != null && (f & DoomPowers.F_GOD) != 0;
+    }
+
+    private static int beamCd(Minecraft mc) {
+        int t = ScarletClient.cd("doom_beam");
+        return mc.player != null && god(mc.player) ? t / 2 : t;
+    }
+
     public static boolean shielded(Entity e) {
         Integer f = DOOMS.get(e.getId());
         return f != null && (f & DoomPowers.F_SHIELD) != 0;
@@ -105,7 +116,7 @@ public final class DoomClient {
                                 ScarletClient.denied("doom_beam");
                             }
                         } else if (++beamTicks > BEAM_MAX) {
-                            ScarletClient.startLocal("doom_beam", ScarletClient.cd("doom_beam"));
+                            ScarletClient.startLocal("doom_beam", beamCd(mc));
                         } else if (useHeld % 3 == 0) {
                             send(DoomAbilities.BEAM);
                         }
@@ -115,7 +126,7 @@ public final class DoomClient {
                         use("doom_blast", DoomAbilities.BLAST);
                     } else if (beamTicks > 20 && !ScarletClient.coolingDown("doom_beam")) {
                         ScarletClient.startLocal("doom_beam",
-                                ScarletClient.cd("doom_beam") * Math.min(beamTicks, BEAM_MAX) / BEAM_MAX);
+                                beamCd(mc) * Math.min(beamTicks, BEAM_MAX) / BEAM_MAX);
                     }
                     useHeld = -1;
                 }
@@ -129,6 +140,14 @@ public final class DoomClient {
                 }
                 if (variant) {
                     use("force_wave", DoomAbilities.WAVE);
+                }
+            }
+            case "beyonder" -> {
+                if (pressed) {
+                    use("annihilate", DoomAbilities.ANNIHILATE);
+                }
+                if (variant) {
+                    use("rewrite", DoomAbilities.REWRITE);
                 }
             }
             case "sorcery" -> {
