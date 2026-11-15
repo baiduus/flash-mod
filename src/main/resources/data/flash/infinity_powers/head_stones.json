@@ -1,0 +1,13 @@
+{
+  "name": "Head Stones",
+  "icon": "flash:mind_stone",
+  "hidden": true,
+  "abilities": {
+    "render_layer_head_stones": {
+      "type": "flash:gauntlet_stones_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "position": "head"
+    }
+  }
+}

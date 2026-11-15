@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:gold_titanium_alloy_block"
+    }
+  ],
+  "result": { "item": "flash:gold_titanium_alloy_ingot", "count": 9 }
+}

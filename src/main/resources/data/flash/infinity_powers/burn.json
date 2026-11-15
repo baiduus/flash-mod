@@ -1,0 +1,42 @@
+{
+  "name": "orb",
+  "background": "minecraft:textures/block/purple_concrete.png",
+  "icon": "flash:orb",
+  "gui_display_type": "tree",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
+
+  "abilities": {
+    "render_layer_burn": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "render_layer": "flash:burn",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:has_tag",
+            "tag": "burn_texture"
+          },
+          {
+            "type": "palladium:not",
+            "conditions": [{"type": "palladium:has_tag", "tag": "burn_right"}]
+          }
+        ]
+      }
+    },
+    "render_layer_burn_right": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "render_layer": "flash:burn_right",
+      "conditions": {
+        "enabling": [
+          {"type": "palladium:has_tag", "tag": "burn_texture"},
+          {"type": "palladium:has_tag", "tag": "burn_right"}
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "hold": {
+      "loop": true,
+      "animation_length": 1.0,
+      "bones": {
+        "New": {
+          "rotation": {
+            "0.0": [
+              0,
+              "query.infinity_orb_left",
+              0
+            ]
+          },
+          "position": {
+            "0.0": [
+              0,
+              "-query.infinity_orb_split",
+              0
+            ]
+          }
+        },
+        "group": {
+          "rotation": {
+            "0.0": [
+              0,
+              "query.infinity_orb_right",
+              0
+            ]
+          },
+          "position": {
+            "0.0": [
+              0,
+              "query.infinity_orb_split",
+              0
+            ]
+          }
+        },
+        "group2": {
+          "rotation": {
+            "0.0": [
+              0,
+              "query.infinity_orb_teeth",
+              0
+            ]
+          }
+        },
+        "bone2": {
+          "position": {
+            "0.0": [
+              0,
+              "query.infinity_orb_split + (1 - query.infinity_orb_teeth_extent) * 2",
+              0
+            ]
+          },
+          "scale": {
+            "0.0": [
+              "query.infinity_orb_teeth_extent",
+              "query.infinity_orb_teeth_extent",
+              "query.infinity_orb_teeth_extent"
+            ]
+          }
+        },
+        "group3": {
+          "position": {
+            "0.0": [
+              0,
+              "-query.infinity_orb_split / 3 - (1 - query.infinity_orb_teeth_extent) * 2",
+              0
+            ]
+          },
+          "scale": {
+            "0.0": [
+              "query.infinity_orb_teeth_extent",
+              "query.infinity_orb_teeth_extent",
+              "query.infinity_orb_teeth_extent"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

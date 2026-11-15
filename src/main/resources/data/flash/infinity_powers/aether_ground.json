@@ -1,0 +1,39 @@
+{
+  "name": "xp",
+  "background": "minecraft:textures/block/emerald_block.png",
+  "icon": "minecraft:experience_bottle",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
+  "gui_display_type": "tree",
+  "persistent_data": false,
+  "abilities": {
+    "test": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "render_layer": "flash:aether_ground"
+    },
+    "hideBody": {
+      "type": "palladium:hide_body_part",
+      "icon": "minecraft:blaze_rod",
+      "bar_color": "light_gray",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "affects_first_person": true,
+      "body_parts": [
+        "right_arm",
+        "left_arm",
+        "chest",
+        "chest_overlay",
+        "right_arm_overlay",
+        "left_arm_overlay",
+        "right_leg",
+        "left_leg",
+        "cape",
+        "right_leg_overlay",
+        "left_leg_overlay",
+        "head",
+        "head_overlay"
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["HG ", "   ", "   "],
+  "key": {
+    "H": {
+      "item": "flash:shards_of_existance"
+    },
+    "G": {
+      "item": "minecraft:experience_bottle"
+    }
+  },
+  "result": {
+    "item": "flash:aspects_of_existance",
+    "count": 4
+  }
+}

@@ -25,7 +25,8 @@ public final class FlightGuard {
             return;
         }
         var ab = p.getAbilities();
-        if (Math.abs(ab.getFlyingSpeed() - VANILLA) < 1.0E-4F) {
+        // only the heroes' zeroed speed (the Mind Stone's flight sets its own)
+        if (ab.getFlyingSpeed() > 0.01F) {
             return;
         }
         for (HeroPowers.Hero h : HeroPowers.Hero.values()) {

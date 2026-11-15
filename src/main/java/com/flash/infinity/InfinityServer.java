@@ -1,0 +1,487 @@
+package com.flash.infinity;
+
+import com.flash.FlashMod;
+import com.flash.network.FlashNetwork;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.criteria.ObjectiveCriteria;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
+
+/**
+ * The stones' abilities on the server: what each player bought (kept with the player), its settings, what it has on
+ * (the ability key: an action, a toggle, held, pressed twice), the cooldowns; every tick each ability of every power
+ * the player has is worked out (unlocked? on?) and run (InfinityAbilities). The player's client gets a copy
+ * (InfinitySyncPacket) for the bar and the tree.
+ */
+@Mod.EventBusSubscriber(modid = FlashMod.MODID)
+public final class InfinityServer {
+
+    private static final String KEY = "flash_infinity";
+    /** The scores the client is told (the original's power level, size, the Orb's lock). */
+    public static final String[] SCORES = {"DamageCycle", "SizeCycle", "power_stone_open_stage", "orb_opened",
+            "orb_lock_progress"};
+
+    /** A player's running state (what is not kept with the player). */
+    public static final class State implements InfinityPowers.View {
+        final ServerPlayer player;
+        Set<String> powers = new LinkedHashSet<>();
+        final Set<String> toggled = new HashSet<>();
+        final Set<String> held = new HashSet<>();
+        final Set<String> pulse = new HashSet<>();
+        final Map<String, Long> armed = new HashMap<>();
+        final Map<String, Long> cooldown = new HashMap<>();
+        final Set<String> enabled = new HashSet<>();
+        final Set<String> wasEnabled = new HashSet<>();
+        /** Ticks an ability has been on (the original's animation timers). */
+        final Map<String, Integer> timers = new HashMap<>();
+        CompoundTag sent;
+
+        State(ServerPlayer p) {
+            this.player = p;
+        }
+
+        CompoundTag data() {
+            CompoundTag t = this.player.getPersistentData().getCompound(KEY);
+            if (!this.player.getPersistentData().contains(KEY)) {
+                this.player.getPersistentData().put(KEY, t);
+            }
+            return t;
+        }
+
+        @Override
+        public Player player() {
+            return this.player;
+        }
+
+        @Override
+        public Set<String> powers() {
+            return this.powers;
+        }
+
+        @Override
+        public boolean purchased(String key) {
+            for (Tag e : data().getList("bought", Tag.TAG_STRING)) {
+                if (e.getAsString().equals(key)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void buy(String key) {
+            CompoundTag d = data();
+            ListTag l = d.getList("bought", Tag.TAG_STRING);
+            l.add(StringTag.valueOf(key));
+            d.put("bought", l);
+        }
+
+        @Override
+        public boolean settingOn(String setting) {
+            for (Tag e : data().getList("off", Tag.TAG_STRING)) {
+                if (e.getAsString().equals(setting)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void setSetting(String setting, boolean on) {
+            CompoundTag d = data();
+            ListTag l = d.getList("off", Tag.TAG_STRING);
+            l.removeIf(e -> e.getAsString().equals(setting));
+            if (!on) {
+                l.add(StringTag.valueOf(setting));
+            }
+            d.put("off", l);
+        }
+
+        @Override
+        public boolean enabled(String key) {
+            return this.enabled.contains(key);
+        }
+
+        @Override
+        public boolean cooling(String key) {
+            Long t = this.cooldown.get(key);
+            return t != null && this.player.level().getGameTime() < t;
+        }
+
+        @Override
+        public int score(String objective) {
+            return InfinityServer.score(this.player, objective);
+        }
+
+        @Override
+        public int timer(String key) {
+            return this.timers.getOrDefault(key, 0);
+        }
+
+        public boolean toggledOn(String key) {
+            return this.toggled.contains(key);
+        }
+
+        public void untoggle(String key) {
+            this.toggled.remove(key);
+        }
+    }
+
+    private static final Map<UUID, State> STATES = new HashMap<>();
+
+    private InfinityServer() {
+    }
+
+    public static State state(ServerPlayer p) {
+        State s = STATES.get(p.getUUID());
+        if (s == null || s.player != p) {
+            s = new State(p);
+            STATES.put(p.getUUID(), s);
+        }
+        return s;
+    }
+
+    // ------------------------------------------------------------------
+    // Scores (the original keeps some values in the scoreboard)
+    // ------------------------------------------------------------------
+
+    public static int score(Player p, String objective) {
+        Scoreboard sb = p.level().getScoreboard();
+        Objective o = sb.getObjective(objective);
+        if (o == null || !sb.hasPlayerScore(p.getScoreboardName(), o)) {
+            return 0;
+        }
+        return sb.getOrCreatePlayerScore(p.getScoreboardName(), o).getScore();
+    }
+
+    public static void setScore(Player p, String objective, int value) {
+        Scoreboard sb = p.level().getScoreboard();
+        Objective o = sb.getObjective(objective);
+        if (o == null) {
+            o = sb.addObjective(objective, ObjectiveCriteria.DUMMY, Component.literal(objective),
+                    ObjectiveCriteria.RenderType.INTEGER);
+        }
+        sb.getOrCreatePlayerScore(p.getScoreboardName(), o).setScore(value);
+    }
+
+    // ------------------------------------------------------------------
+    // From the client: buy, the ability key, a setting
+    // ------------------------------------------------------------------
+
+    public static final int BUY = 0;
+    public static final int PRESS = 1;
+    public static final int RELEASE = 2;
+    public static final int SETTING = 3;
+
+    public static void handle(ServerPlayer p, int op, String key) {
+        InfPowers.Ability a = InfPowers.ability(key);
+        if (a == null) {
+            return;
+        }
+        State s = state(p);
+        if (!s.powers.contains(a.power.id)) {
+            return;
+        }
+        switch (op) {
+            case BUY -> buy(p, s, a);
+            case PRESS -> press(p, s, a);
+            case RELEASE -> s.held.remove(key);
+            case SETTING -> InfinityAbilities.clickToggle(p, s, a);
+            default -> {
+            }
+        }
+    }
+
+    private static void buy(ServerPlayer p, State s, InfPowers.Ability a) {
+        if (!InfinityPowers.buyable(s, a)) {
+            return;
+        }
+        int aspects = a.aspects();
+        int levels = a.levels();
+        if (!p.isCreative()) {
+            if (p.experienceLevel < levels || count(p) < aspects) {
+                p.displayClientMessage(Component.translatable("message.flash.infinity.cannot_buy", aspects, levels),
+                        true);
+                return;
+            }
+            take(p, aspects);
+            if (levels > 0) {
+                p.giveExperienceLevels(-levels);
+            }
+        }
+        s.buy(a.key());
+        p.level().playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.PLAYER_LEVELUP,
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
+        sync(p, true);
+    }
+
+    /** Aspects of Existence in the inventory. */
+    public static int count(Player p) {
+        int n = 0;
+        for (ItemStack st : p.getInventory().items) {
+            if (st.is(InfinityItems.ASPECTS_OF_EXISTANCE.get())) {
+                n += st.getCount();
+            }
+        }
+        for (ItemStack st : p.getInventory().offhand) {
+            if (st.is(InfinityItems.ASPECTS_OF_EXISTANCE.get())) {
+                n += st.getCount();
+            }
+        }
+        return n;
+    }
+
+    private static void take(Player p, int n) {
+        for (var list : java.util.List.of(p.getInventory().items, p.getInventory().offhand)) {
+            for (ItemStack st : list) {
+                if (n <= 0) {
+                    return;
+                }
+                if (st.is(InfinityItems.ASPECTS_OF_EXISTANCE.get())) {
+                    int t = Math.min(n, st.getCount());
+                    st.shrink(t);
+                    n -= t;
+                }
+            }
+        }
+    }
+
+    private static void press(ServerPlayer p, State s, InfPowers.Ability a) {
+        String key = a.key();
+        if (!InfinityPowers.unlocked(s, a) || a.key == InfPowers.Key.NONE) {
+            return;
+        }
+        long now = p.level().getGameTime();
+        switch (a.key) {
+            case ACTION -> {
+                if (!s.cooling(key)) {
+                    s.pulse.add(key);
+                }
+            }
+            case HELD -> {
+                if (!s.cooling(key)) {
+                    s.held.add(key);
+                }
+            }
+            case TOGGLE -> {
+                if (s.toggled.remove(key)) {
+                    if (a.cooldown > 0) {
+                        s.cooldown.put(key, now + a.cooldown);
+                    }
+                } else if (!s.cooling(key)) {
+                    s.toggled.add(key);
+                }
+            }
+            case DOUBLE_ACTION, DOUBLE_TOGGLE -> {
+                if (a.key == InfPowers.Key.DOUBLE_TOGGLE && s.toggled.remove(key)) {
+                    return;
+                }
+                Long armedAt = s.armed.get(key);
+                if (armedAt != null && now - armedAt <= 60) {
+                    s.armed.remove(key);
+                    if (a.key == InfPowers.Key.DOUBLE_ACTION) {
+                        s.pulse.add(key);
+                    } else {
+                        s.toggled.add(key);
+                    }
+                } else {
+                    s.armed.put(key, now);
+                    if (a.keyMessage != null) {
+                        p.displayClientMessage(Component.literal(a.keyMessage), true);
+                    }
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Every tick
+    // ------------------------------------------------------------------
+
+    @SubscribeEvent
+    public static void onTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) {
+            return;
+        }
+        State s = state(p);
+        Set<String> now = InfinityPowers.powers(p);
+        boolean empty = now.isEmpty() && s.powers.isEmpty() && s.wasEnabled.isEmpty();
+        s.powers = now;
+        if (empty) {
+            if (s.sent != null && !s.sent.isEmpty()) {
+                sync(p, true);
+            }
+            return;
+        }
+        s.enabled.clear();
+        long time = p.level().getGameTime();
+        for (String pid : now) {
+            InfPowers.Power power = InfPowers.get(pid);
+            if (power == null) {
+                continue;
+            }
+            for (InfPowers.Ability a : power.abilities.values()) {
+                String key = a.key();
+                boolean on = InfinityPowers.unlocked(s, a);
+                if (on) {
+                    on = switch (a.key) {
+                        case NONE -> true;
+                        case ACTION, DOUBLE_ACTION -> s.pulse.contains(key);
+                        case HELD -> s.held.contains(key);
+                        case TOGGLE, DOUBLE_TOGGLE -> s.toggled.contains(key);
+                    };
+                }
+                if (on) {
+                    on = InfinityPowers.all(s, a, a.enabling);
+                }
+                if (!on && (a.key == InfPowers.Key.TOGGLE || a.key == InfPowers.Key.DOUBLE_TOGGLE)
+                        && s.toggled.contains(key) && !InfinityPowers.unlocked(s, a)) {
+                    s.toggled.remove(key);
+                }
+                if (on) {
+                    s.enabled.add(key);
+                }
+            }
+        }
+        // what is on runs (rising edge first, every tick, falling edge)
+        Set<String> all = new HashSet<>(s.enabled);
+        all.addAll(s.wasEnabled);
+        for (String key : all) {
+            InfPowers.Ability a = InfPowers.ability(key);
+            if (a == null) {
+                continue;
+            }
+            boolean on = s.enabled.contains(key);
+            boolean was = s.wasEnabled.contains(key);
+            if (on) {
+                s.timers.merge(key, 1, Integer::sum);
+            } else {
+                s.timers.remove(key);
+            }
+            try {
+                InfinityAbilities.run(p, s, a, on, was);
+            } catch (RuntimeException e) {
+                com.mojang.logging.LogUtils.getLogger().warn("[flash] infinity ability {}: {}", key, e.toString());
+            }
+            if (was && !on && a.key == InfPowers.Key.HELD && a.cooldown > 0) {
+                s.cooldown.put(key, time + a.cooldown);
+            }
+            if (on && !was && (a.key == InfPowers.Key.ACTION || a.key == InfPowers.Key.DOUBLE_ACTION)
+                    && a.cooldown > 0) {
+                s.cooldown.put(key, time + a.cooldown);
+            }
+        }
+        s.pulse.clear();
+        s.wasEnabled.clear();
+        s.wasEnabled.addAll(s.enabled);
+        s.armed.values().removeIf(t -> time - t > 60);
+        sync(p, false);
+    }
+
+    /** The client's copy: powers, bought, settings off, on, cooldowns left, scores. */
+    public static void sync(ServerPlayer p, boolean force) {
+        State s = state(p);
+        CompoundTag t = new CompoundTag();
+        ListTag pw = new ListTag();
+        for (String x : s.powers) {
+            pw.add(StringTag.valueOf(x));
+        }
+        t.put("powers", pw);
+        t.put("bought", s.data().getList("bought", Tag.TAG_STRING).copy());
+        t.put("off", s.data().getList("off", Tag.TAG_STRING).copy());
+        ListTag en = new ListTag();
+        for (String x : s.enabled) {
+            en.add(StringTag.valueOf(x));
+        }
+        t.put("on", en);
+        ListTag tog = new ListTag();
+        for (String x : s.toggled) {
+            tog.add(StringTag.valueOf(x));
+        }
+        t.put("toggled", tog);
+        CompoundTag cd = new CompoundTag();
+        long time = p.level().getGameTime();
+        for (Map.Entry<String, Long> e : s.cooldown.entrySet()) {
+            if (e.getValue() > time) {
+                cd.putLong(e.getKey(), e.getValue() - time);
+            }
+        }
+        CompoundTag sc = new CompoundTag();
+        for (String o : SCORES) {
+            sc.putInt(o, score(p, o));
+        }
+        t.put("scores", sc);
+        CompoundTag tm = new CompoundTag();
+        for (Map.Entry<String, Integer> e : s.timers.entrySet()) {
+            tm.putInt(e.getKey(), e.getValue());
+        }
+        // the cooldown counts down by itself on the client: sent only when it starts
+        CompoundTag key = t.copy();
+        ListTag cdKeys = new ListTag();
+        for (String k : cd.getAllKeys()) {
+            cdKeys.add(StringTag.valueOf(k));
+        }
+        key.put("cd", cdKeys);
+        if (!force && key.equals(s.sent)) {
+            return;
+        }
+        s.sent = key;
+        t.put("cd", cd);
+        t.put("timers", tm);
+        FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p), new InfinitySyncPacket(t));
+    }
+
+    @SubscribeEvent
+    public static void onClone(PlayerEvent.Clone event) {
+        CompoundTag old = event.getOriginal().getPersistentData();
+        if (old.contains(KEY)) {
+            event.getEntity().getPersistentData().put(KEY, old.getCompound(KEY).copy());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        State s = STATES.remove(event.getEntity().getUUID());
+        if (s != null && event.getEntity() instanceof ServerPlayer p) {
+            for (String key : s.wasEnabled) {
+                InfPowers.Ability a = InfPowers.ability(key);
+                if (a != null) {
+                    InfinityAbilities.run(p, s, a, false, true);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) {
+            for (String o : SCORES) {
+                if (p.level().getScoreboard().getObjective(o) == null) {
+                    setScore(p, o, 0);
+                }
+            }
+            if (p.level().getScoreboard().getPlayerTeam("peaceful") == null) {
+                p.level().getScoreboard().addPlayerTeam("peaceful");
+            }
+            sync(p, true);
+        }
+    }
+}

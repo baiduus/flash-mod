@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " A ",
+    " A ",
+    " H "
+  ],
+  "key": {
+    "A": {
+      "item": "flash:uru_plate"
+    },
+    "H": {
+      "item": "flash:hammer"
+    }
+
+
+  },
+  "result": {
+    "item": "flash:uru_blade",
+    "count": 1
+  }
+}

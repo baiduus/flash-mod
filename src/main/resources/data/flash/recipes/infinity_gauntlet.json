@@ -1,0 +1,45 @@
+{
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:mod_loaded",
+        "modid": "tconstruct"
+      }
+    }
+  ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:not",
+      "value": {
+        "condition": "fabric:all_mods_loaded",
+        "values": [
+          "tconstruct"
+        ]
+      }
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+      "GHG",
+      "GIG",
+      "G G"
+  ],
+  "key": {
+      "G": {
+          "item": "flash:gold_titanium_alloy_plate"
+      },
+      "I": {
+          "item": "flash:infinity_gauntlet_cast"
+      },
+      "H": {
+        "item": "flash:hammer"
+    }
+
+
+  },
+  "result": {
+      "item": "flash:infinity_gauntlet",
+      "count": 1
+  }
+}

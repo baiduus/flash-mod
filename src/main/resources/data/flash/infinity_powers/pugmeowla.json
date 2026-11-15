@@ -1,0 +1,28 @@
+{
+  "name": "Pugmeowla",
+  "background": "minecraft:textures/block/emerald_block.png",
+  "icon": "minecraft:experience_bottle",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
+  "gui_display_type": "tree",
+  "persistent_data": false,
+  "abilities": {
+    "icon": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "minecraft:experience_bottle",
+      "title": "null",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": 0,
+      "gui_position": "null",
+      "description": "null",
+      "first_tick_commands": [
+        "tag @s add pugmeowla"
+      ],
+      "conditions": {
+        "unlocking": []
+      }
+    }
+  }
+}

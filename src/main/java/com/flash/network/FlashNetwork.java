@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  */
 public final class FlashNetwork {
 
-    private static final String PROTOCOL = "51";
+    private static final String PROTOCOL = "52";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(FlashMod.MODID, "main"),
             () -> PROTOCOL,
@@ -389,6 +389,18 @@ public final class FlashNetwork {
         CHANNEL.messageBuilder(HeroSyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(HeroSyncPacket::encode)
                 .decoder(HeroSyncPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(InfinitySyncPacket.class, nextId++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(InfinitySyncPacket::encode)
+                .decoder(InfinitySyncPacket::new)
+                .consumerMainThread((message, context) -> message.handle(context.get()))
+                .add();
+
+        CHANNEL.messageBuilder(InfinityActionPacket.class, nextId++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(InfinityActionPacket::encode)
+                .decoder(InfinityActionPacket::new)
                 .consumerMainThread((message, context) -> message.handle(context.get()))
                 .add();
 

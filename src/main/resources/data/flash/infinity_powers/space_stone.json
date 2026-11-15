@@ -1,0 +1,609 @@
+{
+  "name": "Space Stone",
+  "background": "minecraft:textures/block/light_blue_concrete.png",
+  "icon": "flash:space_stone",
+  "persistent_data": true,
+  "gui_display_type": "tree",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/space_ability_bar.png",
+
+  "abilities": {
+    "dummy1": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [0.5, 2]
+    },
+    "jump_teleport": {
+      "type": "flash:jump_portal",
+      "icon": "flash:textures/icon/teleport.png",
+      "title": "Jump Teleport",
+      "bar_color": "light_blue",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "gui_position": [1, 1],
+      "description": {
+        "translate": "ability.infinity.space_stone.teleport.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 6
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "teleport": {
+      "type": "flash:portal",
+      "icon": "flash:textures/icon/teleport.png",
+      "title": "Teleport GUI",
+      "bar_color": "light_blue",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 4,
+      "gui_position": [1, 1.5],
+      "description": {
+        "translate": "ability.infinity.space_stone.teleport.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 10
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "telekinesis": {
+      "type": "flash:telekinesis",
+      "icon": "flash:space_stone",
+      "title": "Telekinesis",
+      "bar_color": "light_blue",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 2,
+      "gui_position": [0, 1],
+      "description": {
+        "translate": "ability.infinity.space_stone.telekinesis.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:toggle",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 8
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "spatial_lock": {
+      "type": "flash:spatial_lock",
+      "icon": "flash:space_stone",
+      "title": "Spatial Lock",
+      "bar_color": "light_blue",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [0, 2],
+      "description": {
+        "translate": "ability.infinity.space_stone.spatial_lock.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 6
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "telekinesis"
+          }
+        ]
+      }
+    },
+    "black_hole": {
+      "type": "flash:black_hole",
+      "icon": "flash:textures/icon/black_hole.png",
+      "title": "Black Hole",
+      "bar_color": "light_blue",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 3,
+      "gui_position": [1, 2],
+      "description": {
+        "translate": "ability.infinity.space_stone.black_hole.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:toggle",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 32
+          },
+          {
+            "type": "palladium:has_power",
+            "power": "flash:space_stone"
+          },
+          {
+            "type": "palladium:has_power",
+            "power": "flash:power_stone"
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "teleport"
+          }
+        ]
+      }
+    },
+    "water_breathing": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "minecraft:textures/mob_effect/water_breathing.png",
+      "title": "Water Breathing",
+      "bar_color": "light_blue",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "gui_position": [0, 0.5],
+      "description": {
+        "translate": "ability.infinity.space_stone.water_breathing.description"
+      },
+      "first_tick_commands": ["effect give @s minecraft:water_breathing infinite 0 true"],
+      "last_tick_commands": ["effect clear @s minecraft:water_breathing"],
+      "conditions": {
+        "enabling": [
+          {"type": "flash:setting", "setting": "space_stone.water_breathing"}
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 2
+          }
+        ]
+      }
+    },
+
+    "render_layer_space_stone_shield": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "render_layer": "flash:space_stone_shield2",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "movement_lock": {
+      "type": "flash:movement_lock",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "lock_hotbar": false,
+      "conditions": {
+        "enabling": [
+          {"type": "palladium:ability_enabled", "ability": "force_field"}
+        ]
+      }
+    },
+    "telekinesis_aim": {
+      "type": "palladium:aim",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "time": 3,
+      "arm": "left_arm",
+      "conditions": {
+        "enabling": [
+          {"type": "flash:gauntlet_arm", "arm": "left"},
+          {
+            "type": "palladium:or",
+            "conditions": [
+              {"type": "palladium:ability_enabled", "ability": "telekinesis"},
+              {"type": "palladium:ability_enabled", "ability": "black_hole"}
+            ]
+          }
+        ]
+      }
+    },
+    "telekinesis_aim_right": {
+      "type": "palladium:aim",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "time": 3,
+      "arm": "right_arm",
+      "conditions": {
+        "enabling": [
+          {"type": "flash:gauntlet_arm", "arm": "right"},
+          {
+            "type": "palladium:or",
+            "conditions": [
+              {"type": "palladium:ability_enabled", "ability": "telekinesis"},
+              {"type": "palladium:ability_enabled", "ability": "black_hole"}
+            ]
+          }
+        ]
+      }
+    },
+    "force_field_anim": {
+      "type": "palladium:animation_timer",
+      "list_index": 3,
+      "max_value": 8,
+      "bar_color": "orange",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+
+    "force_field": {
+      "type": "palladium:attribute_modifier",
+      "icon": "flash:textures/icon/force_field.png",
+      "title": "Force Field",
+      "persistent_data": true,
+      "bar_color": "light_blue",
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "gui_position": [0.5, 1],
+      "description": {
+        "translate": "ability.infinity.space_stone.force_field.description"
+      },
+      "attribute": "minecraft:generic.armor",
+      "amount": 2147483647,
+      "operation": 0,
+      "uuid": "498be4fb-af04-42f2-8948-e6ccdc0d99e1",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:toggle",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 4
+          }
+        ]
+      }
+    },
+    "force_field_protection": {
+      "type": "flash:force_field",
+      "hidden": true,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "shield_toughness": {
+      "type": "palladium:attribute_modifier",
+      "icon": "minecraft:iron_chestplate",
+      "persistent_data": true,
+      "title": "Max Health",
+      "bar_color": "orange",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "null",
+      "attribute": "minecraft:generic.armor_toughness",
+      "amount": 2147483647,
+      "operation": 0,
+      "uuid": "498be4fb-af04-42f2-8948-e6ccdc0d99e1",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "vibrate_sound": {
+      "type": "palladium:command",
+      "commands": [],
+      "persistent_data": true,
+      "icon": "minecraft:player_head",
+      "title": "Passive",
+      "bar_color": "yellow",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": 0,
+      "gui_position": [0, -1],
+      "description": "Pacify hostile mobs around you",
+      "first_tick_commands": [
+        "playsound flash:infinity.space_stone_forcefield block @s"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "force_field"
+          }
+        ]
+      }
+    },
+    "fall_immunity": {
+      "type": "palladium:damage_immunity",
+      "icon": "minecraft:diamond_boots",
+      "title": "Fall Damage Immunity",
+      "bar_color": "light_gray",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [0, 0],
+      "description": {
+        "translate": "ability.infinity.space_stone.fall_immunity.description"
+      },
+      "damage_sources": ["minecraft:is_fall"],
+      "conditions": {
+        "enabling": [
+          {"type": "flash:setting", "setting": "space_stone.fall_immunity"}
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 3
+          }
+        ]
+      }
+    },
+    "step_assist": {
+      "type": "palladium:attribute_modifier",
+      "icon": "flash:textures/icon/step.png",
+      "title": "Step Assist",
+      "persistent_data": true,
+      "bar_color": "light_blue",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [0.5, 0],
+      "description": {
+        "translate": "ability.infinity.space_stone.step_assist.description"
+      },
+      "attribute": "forge:step_height_addition",
+      "amount": 0.5,
+      "operation": 0,
+      "uuid": "498be4fb-af04-42f2-8948-e6ccdc0d99e1",
+      "conditions": {
+        "enabling": [
+          {"type": "flash:setting", "setting": "space_stone.step_assist"}
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 1
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "speed"
+          }
+        ]
+      }
+    },
+    "speed": {
+      "type": "palladium:attribute_modifier",
+      "icon": "minecraft:textures/mob_effect/speed.png",
+      "title": "Speed",
+      "bar_color": "light_blue",
+      "hidden": false,
+      "persistent_data": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [1, 0],
+      "description": {
+        "translate": "ability.infinity.space_stone.speed.description"
+      },
+      "attribute": "minecraft:generic.movement_speed",
+      "amount": 0.05,
+      "operation": 0,
+      "uuid": "498be4fb-af04-42f2-8948-e6ccdc0d99e1",
+      "conditions": {
+        "enabling": [
+          {"type": "flash:setting", "setting": "space_stone.speed"}
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 2
+          }
+        ]
+      }
+    },
+    "speed_toggle": {
+      "type": "flash:toggle",
+      "icon": "minecraft:textures/mob_effect/speed.png",
+      "persistent_data": false,
+      "title": "Speed Toggle",
+      "bar_color": "light_gray",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": 1,
+      "gui_position": [-0.25, -1],
+      "description": {
+        "translate": "ability.infinity.space_stone.speed_toggle.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
+          {"type": "palladium:ability_unlocked", "power": "null", "ability": "speed"}
+        ]
+      },
+      "setting": "space_stone.speed"
+},
+    "step_assist_toggle": {
+      "type": "flash:toggle",
+      "icon": "flash:textures/icon/step.png",
+      "persistent_data": false,
+      "title": "Step Assist Toggle",
+      "bar_color": "light_gray",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": 1,
+      "gui_position": [0.25, -1],
+      "description": {
+        "translate": "ability.infinity.space_stone.step_assist_toggle.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
+          {"type": "palladium:ability_unlocked", "power": "null", "ability": "step_assist"}
+        ]
+      },
+      "setting": "space_stone.step_assist"
+},
+    "fall_immunity_toggle": {
+      "type": "flash:toggle",
+      "icon": "minecraft:diamond_boots",
+      "persistent_data": false,
+      "title": "Fall Damage Immunity Toggle",
+      "bar_color": "light_gray",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": 1,
+      "gui_position": [0.75, -1],
+      "description": {
+        "translate": "ability.infinity.space_stone.fall_immunity_toggle.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
+          {"type": "palladium:ability_unlocked", "power": "null", "ability": "fall_immunity"}
+        ]
+      },
+      "setting": "space_stone.fall_immunity"
+},
+    "water_breathing_toggle": {
+      "type": "flash:toggle",
+      "icon": "minecraft:textures/mob_effect/water_breathing.png",
+      "persistent_data": false,
+      "title": "Water Breathing Toggle",
+      "bar_color": "light_gray",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": 1,
+      "gui_position": [1.25, -1],
+      "description": {
+        "translate": "ability.infinity.space_stone.water_breathing_toggle.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
+          {"type": "palladium:ability_unlocked", "power": "null", "ability": "water_breathing"}
+        ]
+      },
+      "setting": "space_stone.water_breathing"
+}
+  }
+}

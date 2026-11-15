@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GGG", "GGG", "GGG"],
+  "key": {
+    "G": {
+      "item": "flash:dwarf_star_alloy_nugget"
+    }
+  },
+  "result": {
+    "item": "flash:dwarf_star_alloy_ingot",
+    "count": 1
+  }
+}

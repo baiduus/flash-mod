@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["HHH", "HHH", "HHH"],
+  "key": {
+    "H": {
+      "item": "flash:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "flash:steel_block",
+    "count": 1
+  }
+}

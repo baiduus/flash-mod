@@ -563,6 +563,18 @@ public final class YasAbilities {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && com.flash.client.infinity.InfinityClient.takesKeys()) {
+            // a stone in hand has the keys (its own bar: InfinityClient)
+            StormClient.tickMode(mc, null, false);
+            SpiderClient.tickMode(mc, null, false);
+            DoomClient.tickMode(mc, null, false);
+            WonderClient.tickMode(mc, null, false);
+            ScarletClient.tickMode(mc, null, false);
+            while (FlashKeys.YAS_VARIANT.consumeClick()) {
+                // not the hero's second ability
+            }
+            return;
+        }
         if (mc.player != null && storm()) {
             // Storm: her own modes only (Hand of God's keys untouched)
             unbind();

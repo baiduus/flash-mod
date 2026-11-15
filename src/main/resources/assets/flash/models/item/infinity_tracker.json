@@ -1,0 +1,132 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "flash:item/infinity_tracker",
+    "layer1": "flash:item/infinity_tracker/lights"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "flash:angle": 0.0
+      },
+      "model": "flash:item/infinity_tracker/needle_00"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.03125
+      },
+      "model": "flash:item/infinity_tracker/needle_01"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.09375
+      },
+      "model": "flash:item/infinity_tracker/needle_02"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.15625
+      },
+      "model": "flash:item/infinity_tracker/needle_03"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.21875
+      },
+      "model": "flash:item/infinity_tracker/needle_04"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.28125
+      },
+      "model": "flash:item/infinity_tracker/needle_05"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.34375
+      },
+      "model": "flash:item/infinity_tracker/needle_06"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.40625
+      },
+      "model": "flash:item/infinity_tracker/needle_07"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.46875
+      },
+      "model": "flash:item/infinity_tracker/needle_08"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.53125
+      },
+      "model": "flash:item/infinity_tracker/needle_09"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.59375
+      },
+      "model": "flash:item/infinity_tracker/needle_10"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.65625
+      },
+      "model": "flash:item/infinity_tracker/needle_11"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.71875
+      },
+      "model": "flash:item/infinity_tracker/needle_12"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.78125
+      },
+      "model": "flash:item/infinity_tracker/needle_13"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.84375
+      },
+      "model": "flash:item/infinity_tracker/needle_14"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.90625
+      },
+      "model": "flash:item/infinity_tracker/needle_15"
+    },
+    {
+      "predicate": {
+        "flash:angle": 0.96875
+      },
+      "model": "flash:item/infinity_tracker/needle_00"
+    },
+    {
+      "predicate": {
+        "flash:tracker_state": 1
+      },
+      "model": "flash:item/infinity_tracker/not_found"
+    },
+    {
+      "predicate": {
+        "flash:tracker_state": 2
+      },
+      "model": "flash:item/infinity_tracker/orb"
+    }
+  ],
+  "loader": "forge:item_layers",
+  "forge_data": {
+    "layers": {
+      "1": {
+        "block_light": 15,
+        "sky_light": 15
+      }
+    }
+  }
+}

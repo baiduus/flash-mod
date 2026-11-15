@@ -1,0 +1,24 @@
+{
+  "type": "tconstruct:alloy",
+  "inputs": [
+    {
+      "tag": "tconstruct:molten_iron",
+      "amount": 144
+    },
+    {
+      "fluid": "flash:molten_gold_titanium_alloy",
+      "amount": 144
+    }
+  ],
+  "result": {
+    "fluid": "flash:molten_ferro-titanium-gold_alloy",
+    "amount": 288
+  },
+  "temperature": 1250,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "tconstruct"
+    }
+  ]
+}

@@ -1,0 +1,581 @@
+{
+  "name": "Reality Stone",
+  "background": "flash:textures/gui/powers/reality_background_block.png",
+  "icon": "flash:reality_stone",
+  "gui_display_type": "tree",
+  "persistent_data": true,
+  "ability_bar_texture": "flash:textures/gui/ability_bars/reality_ability_bar.png",
+
+  "abilities": {
+    "dummy1": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [0, 0.5]
+    },
+    "bubbles": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/bubbles.png",
+      "persistent_data": true,
+      "title": "Bubbles",
+      "bar_color": "red",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [0.5, 0],
+      "description": {
+        "translate": "ability.infinity.reality_stone.bubbles.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "save_dummy"
+          },
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 16
+          }
+        ]
+      }
+    },
+    "dummy3": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [1, 0]
+    },
+    "dummy4": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [1, 1]
+    },
+    "dummy5": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [0.5, 1]
+    },
+    "dummy6": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [0, 1.5]
+    },
+    "dummy7": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [1, 1.5]
+    },
+    "dummy8": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/nothing.png",
+      "title": " ",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "gui_position": [1.5, 2]
+    },
+    "save_dummy": {
+      "type": "palladium:dummy",
+      "icon": "flash:reality_stone",
+      "persistent_data": true,
+      "title": "Block Saving",
+      "bar_color": "red",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [0, 0],
+      "description": {
+        "translate": "ability.infinity.reality_stone.save_dummy.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 64
+          }
+        ]
+      }
+    },
+    "shrink_dummy": {
+      "type": "palladium:dummy",
+      "persistent_data": true,
+      "icon": "palladium:textures/icon/size.png",
+      "title": "Size Changing",
+      "bar_color": "red",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [0, 2],
+      "description": {
+        "translate": "ability.infinity.reality_stone.shrink_dummy.description"
+      },
+      "conditions": {
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 8
+          }
+        ]
+      }
+    },
+
+    "slow_time": {
+      "type": "flash:score_step",
+      "icon": "flash:textures/icon/hourglass.png",
+      "title": "Slow Time",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "list_index": 5,
+      "description": {
+        "translate": "ability.infinity.time_stone.slow_time_dummy.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "scroll_down",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "size_toggle"
+          }
+        ]
+      },
+      "objective": "SizeCycle",
+      "amount": 1,
+      "min": -4,
+      "max": 9,
+      "sound": "minecraft:block.comparator.click"
+},
+    "slow_time2": {
+      "type": "flash:score_step",
+      "icon": "flash:textures/icon/hourglass.png",
+      "title": "Slow Time",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "list_index": 5,
+      "description": {
+        "translate": "ability.infinity.time_stone.slow_time_dummy.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "scroll_up",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "size_toggle"
+          }
+        ]
+      },
+      "objective": "SizeCycle",
+      "amount": -1,
+      "min": -4,
+      "max": 9,
+      "sound": "minecraft:block.comparator.click"
+},
+
+    "size": {
+      "type": "flash:dynamic_scale",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "scale_types": ["height", "width", "reach"],
+      "dynamic_property": "scoreboard",
+      "property": "SizeCycle",
+      "steps": [5, 4, 3, 2, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
+      "first_step": -4,
+      "duration": 10,
+      "conditions": {
+        "enabling": [
+          {"type": "palladium:ability_enabled", "power": "null", "ability": "size_toggle"}
+        ]
+      }
+    },
+    "size_motion": {
+      "type": "flash:dynamic_scale",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "scale_types": ["motion"],
+      "dynamic_property": "scoreboard",
+      "property": "SizeCycle",
+      "steps": [5, 4, 3, 2, 1],
+      "first_step": -4,
+      "duration": 10,
+      "conditions": {
+        "enabling": [
+          {"type": "palladium:ability_enabled", "power": "null", "ability": "size_toggle"}
+        ]
+      }
+    },
+    "size_toggle": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "palladium:textures/icon/size.png",
+      "title": "Size Control",
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "persistent_data": true,
+      "list_index": 0,
+      "description": {
+        "translate": "ability.infinity.time_stone.reset_time_speed.description"
+      },
+      "last_tick_commands": [
+        "scoreboard players set @s SizeCycle 0"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:toggle",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "shrink_dummy"
+          }
+        ]
+      }
+    },
+
+    "invisibility": {
+      "type": "palladium:invisibility",
+      "icon": "palladium:textures/icon/invisibility.png",
+      "title": "Invisibility",
+      "bar_color": "red",
+      "persistent_data": true,
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "gui_position": [0, 1],
+      "description": {
+        "translate": "ability.infinity.reality_stone.invisibility.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:toggle",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 6
+          }
+        ]
+      }
+    },
+    "invisibility_effect + sound": {
+      "type": "palladium:command",
+      "commands": [],
+      "persistent_data": true,
+      "icon": "minecraft:player_head",
+      "title": "Passive",
+      "bar_color": "yellow",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": 0,
+      "gui_position": [0, -1],
+      "description": {
+        "translate": "ability.infinity.reality_stone.vibrate_sound.description"
+      },
+      "first_tick_commands": [
+        "playsound flash:infinity.reality_stone_invis block @s",
+        "effect give @s minecraft:invisibility infinite 0 true",
+        "scale set pehkui:visibility -1 @s",
+        "particle minecraft:dust 1.0 0.0 0.0 1.5 ~ ~1 ~ 0.3 0.5 0.3 0 200 force"
+      ],
+      "last_tick_commands": [
+        "playsound flash:infinity.reality_stone_invis block @s",
+        "effect clear @s minecraft:invisibility",
+        "scale set pehkui:visibility 1 @s",
+        "particle minecraft:dust 1.0 0.0 0.0 1.5 ~ ~1 ~ 0.3 0.5 0.3 0 200 force"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "invisibility"
+          }
+        ]
+      }
+    },
+
+    "reality_copy": {
+      "type": "flash:reality_copy",
+      "icon": "flash:reality_stone",
+      "air_unlock": "bubbles",
+      "title": "Copy Block",
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "persistent_data": true,
+      "list_index": 3,
+      "description": {
+        "translate": "ability.infinity.reality_stone.reality_copy.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "save_dummy"
+          }
+        ]
+      }
+    },
+    "reality_paste": {
+      "type": "flash:reality_paste",
+      "icon": {
+        "type": "flash:reality_saved_block"
+      },
+      "title": "Paste Block",
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "persistent_data": true,
+      "list_index": 4,
+      "description": {
+        "translate": "ability.infinity.reality_stone.reality_paste.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "save_dummy"
+          }
+        ]
+      }
+    },
+
+    "weather_wheel": {
+      "type": "palladium:ability_wheel",
+      "icon": "flash:textures/icon/weather_wheel.png",
+      "title": "Change the Weather",
+      "bar_color": "red",
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 2,
+      "gui_position": [1.5, 0.5],
+      "description": "null",
+      "abilities": ["clear", "rain", "thunder"],
+      "texture": "null",
+      "disable_mouse_scrolling": false,
+      "disable_center_icon": false,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:held",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_buyable",
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
+            "amount": 3
+          }
+        ]
+      }
+    },
+    "rain": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "flash:textures/icon/rain_icon.png",
+      "title": "Rain",
+      "persistent_data": true,
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "first_tick_commands": [
+        "weather rain",
+        "particle minecraft:cloud ~ ~1 ~ 1.5 1.5 1.5 0.4 150 force",
+        "particle minecraft:dust 1.0 0.0 0.0 2.0 ~ ~1 ~ 1.5 1.5 1.5 0 150 force"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": []
+      }
+    },
+    "clear": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "flash:textures/icon/sun_icon.png",
+      "title": "Clear",
+      "persistent_data": true,
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "first_tick_commands": [
+        "weather clear",
+        "particle minecraft:cloud ~ ~1 ~ 1.5 1.5 1.5 0.4 150 force",
+        "particle minecraft:dust 1.0 0.0 0.0 2.0 ~ ~1 ~ 1.5 1.5 1.5 0 150 force"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": []
+      }
+    },
+    "thunder": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "flash:textures/icon/thunder_icon.png",
+      "title": "Thunder",
+      "persistent_data": true,
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "first_tick_commands": [
+        "weather thunder",
+        "particle minecraft:cloud ~ ~1 ~ 1.5 1.5 1.5 0.4 150 force",
+        "particle minecraft:dust 1.0 0.0 0.0 2.0 ~ ~1 ~ 1.5 1.5 1.5 0 150 force"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": []
+      }
+    },
+
+    "aim": {
+      "type": "palladium:aim",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "time": 10,
+      "persistent_data": true,
+      "arm": "main_arm",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:item_in_slot",
+            "item": {
+              "item": "flash:aether"
+            },
+            "slot": "mainhand"
+          }
+        ]
+      }
+    },
+    "aim2": {
+      "type": "palladium:aim",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "persistent_data": true,
+      "time": 10,
+      "arm": "off_arm",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:item_in_slot",
+            "item": {
+              "item": "flash:aether"
+            },
+            "slot": "offhand"
+          }
+        ]
+      }
+    }
+  }
+}

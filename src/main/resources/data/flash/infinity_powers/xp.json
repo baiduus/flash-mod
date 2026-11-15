@@ -1,0 +1,36 @@
+{
+    "name": "xp",
+    "background": "minecraft:textures/block/emerald_block.png",
+    "icon": "minecraft:experience_bottle",
+    "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
+    "gui_display_type": "tree",
+    "persistent_data": false,
+    "abilities": {
+
+        "give_xp":{
+    "type": "palladium:command",
+    "icon": "minecraft:experience_bottle",
+    "title": "null",
+    "bar_color": "lime",
+    "hidden": false,
+    "hidden_in_bar": false,
+    "list_index": 0,
+    "gui_position": "null",
+    "description": "null",
+    "commands": [
+        "clear @s infinity:fancy_bottle 1",
+        "give @s minecraft:experience_bottle",
+        "superpower remove infinity:xp"
+    ],
+     "conditions": {
+        "unlocking":[
+            {
+    "type": "palladium:experience_level_buyable",
+    "xp_level": 3,
+    "flat_levels": true
+}
+        ]
+     }
+}
+    }
+}

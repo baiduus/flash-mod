@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["ANA", "CRC", "AEA"],
+  "key": {
+    "A": {
+      "item": "flash:aspects_of_existance"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    },
+    "R": {
+      "item": "minecraft:recovery_compass"
+    },
+    "E": {
+      "item": "minecraft:echo_shard"
+    },
+    "C": {
+      "item": "palladium:vibranium_circuit"
+    }
+  },
+  "result": {
+    "item": "infinity_tracker:infinity_tracker",
+    "count": 1
+  }
+}

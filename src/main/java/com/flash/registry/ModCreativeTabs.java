@@ -17,6 +17,30 @@ public final class ModCreativeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, FlashMod.MODID);
 
+    /** The Infinity Stones (the original's two tabs: the stones and their gear, the resources). */
+    public static final RegistryObject<CreativeModeTab> INFINITY = CREATIVE_MODE_TABS.register("infinity",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.flash.infinity"))
+                    .icon(() -> new ItemStack(com.flash.infinity.InfinityItems.INFINITY_GAUNTLET.get()))
+                    .displayItems((parameters, output) -> {
+                        for (var s : com.flash.infinity.InfinityItems.TAB_STONES) {
+                            output.accept(s.get());
+                        }
+                    })
+                    .build());
+
+    public static final RegistryObject<CreativeModeTab> INFINITY_RESOURCES = CREATIVE_MODE_TABS.register(
+            "infinity_resources",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.flash.infinity_resources"))
+                    .icon(() -> new ItemStack(com.flash.infinity.InfinityItems.HAMMER.get()))
+                    .displayItems((parameters, output) -> {
+                        for (var s : com.flash.infinity.InfinityItems.TAB_RESOURCES) {
+                            output.accept(s.get());
+                        }
+                    })
+                    .build());
+
     public static final RegistryObject<CreativeModeTab> FLASH = CREATIVE_MODE_TABS.register(
             "flash",
             () -> CreativeModeTab.builder()

@@ -1,0 +1,89 @@
+{
+  "name": "soul_guardian_telephone",
+  "background": "minecraft:textures/block/orange_concrete.png",
+  "icon": "flash:soul_guardian_telephone",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/soul_ability_bar.png",
+  "gui_display_type": "tree",
+  "persistent_data": false,
+  "abilities": {
+    "summon": {
+      "type": "palladium:command",
+      "icon": "flash:soul_guardian_telephone",
+      "title": "Summon Soul Guardian",
+      "bar_color": "orange",
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "gui_position": "null",
+      "description": {
+        "translate": "ability.infinity.soul_guardian_telephone.summon.description"
+      },
+      "commands": ["infinity soulguardian call"],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 24000,
+            "key_type": "right_click",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:not",
+            "conditions": [
+              {
+                "type": "palladium:crouching"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "return": {
+      "type": "palladium:command",
+      "icon": "flash:vormir_sand",
+      "title": "Return Soul Guardian",
+      "bar_color": "orange",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "gui_position": "null",
+      "description": {
+        "translate": "ability.infinity.soul_guardian_telephone.return.description"
+      },
+      "commands": ["infinity soulguardian return"],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 24000,
+            "key_type": "right_click",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:crouching"
+          }
+        ]
+      }
+    },
+    "return_dummy": {
+      "type": "palladium:dummy",
+      "icon": "flash:vormir_sand",
+      "title": "Return Soul Guardian",
+      "bar_color": "orange",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "gui_frame_type": "task",
+      "description": {
+        "translate": "ability.infinity.soul_guardian_telephone.return.description"
+      }
+    }
+  }
+}

@@ -1,0 +1,519 @@
+{
+  "name": "Orb",
+  "background": "flash:textures/block/titanium_block.png",
+  "icon": "flash:orb",
+  "gui_display_type": "tree",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/power_ability_bar.png",
+  "abilities": {
+    "render_layer_orb": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "render_layer": "flash:orb"
+    },
+    "render_layer_power_stone_orb": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "persistent_data": true,
+      "render_layer": "flash:power_stone_orb",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "flash:orb",
+            "stone": true
+          }
+        ]
+      }
+    },
+    "open_close_dummy": {
+      "type": "palladium:dummy",
+      "icon": "flash:orb",
+      "title": "Open/Close Orb",
+      "bar_color": "purple",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "gui_position": "null",
+      "description": "null",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:toggle",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:objective_score",
+            "objective": "power_stone_open_stage",
+            "min_score": 15,
+            "max_score": 15
+          }
+        ]
+      }
+    },
+    "rotate_left": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/left.png",
+      "title": "Rotate Left",
+      "bar_color": "purple",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 10,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:not",
+            "conditions": [
+              {
+                "type": "palladium:or",
+                "conditions": [
+                  {
+                    "type": "palladium:ability_on_cooldown",
+                    "power": "null",
+                    "ability": "rotate_left"
+                  },
+                  {
+                    "type": "palladium:ability_on_cooldown",
+                    "power": "null",
+                    "ability": "rotate_right"
+                  },
+                  {
+                    "type": "palladium:ability_enabled",
+                    "power": "null",
+                    "ability": "open_close_dummy"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "rotate_right": {
+      "type": "palladium:dummy",
+      "icon": "flash:textures/icon/right.png",
+      "title": "Rotate Right",
+      "hidden": true,
+      "bar_color": "purple",
+      "hidden_in_bar": false,
+      "list_index": 2,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 10,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:not",
+            "conditions": [
+              {
+                "type": "palladium:or",
+                "conditions": [
+                  {
+                    "type": "palladium:ability_on_cooldown",
+                    "power": "null",
+                    "ability": "rotate_left"
+                  },
+                  {
+                    "type": "palladium:ability_on_cooldown",
+                    "power": "null",
+                    "ability": "rotate_right"
+                  },
+                  {
+                    "type": "palladium:ability_enabled",
+                    "power": "null",
+                    "ability": "open_close_dummy"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "orb_close_animation_timer": {
+      "type": "palladium:animation_timer",
+      "start_value": 0,
+      "max_value": 10,
+      "gui_position": "null",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:not",
+            "conditions": [
+              {
+                "type": "palladium:or",
+                "conditions": [
+                  {
+                    "type": "palladium:ability_enabled",
+                    "power": "null",
+                    "ability": "open_close_dummy"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "orb_open_animation_timer": {
+      "type": "palladium:animation_timer",
+      "start_value": 0,
+      "max_value": 18,
+      "gui_position": "null",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "open_close_dummy"
+          }
+        ]
+      }
+    },
+    "remove_power_stone": {
+      "type": "palladium:command",
+      "icon": "flash:power_stone",
+      "title": "Remove Stone",
+      "persistent_data": true,
+      "bar_color": "purple",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "gui_position": "null",
+      "description": {
+        "translate": "ability.infinity.power_stone.remove_power_stone.description"
+      },
+      "commands": [
+        "infinity orb take"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "right_click",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "open_close_dummy"
+          },
+          {
+            "type": "flash:orb",
+            "slot": "mainhand",
+            "stone": true
+          }
+        ]
+      }
+    },
+    "remove_power_stone_offhand": {
+      "type": "palladium:command",
+      "icon": "flash:power_stone",
+      "title": "Remove Stone",
+      "persistent_data": true,
+      "bar_color": "purple",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "gui_position": "null",
+      "description": {
+        "translate": "ability.infinity.power_stone.remove_power_stone.description"
+      },
+      "commands": [
+        "infinity orb take"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "right_click",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "open_close_dummy"
+          },
+          {
+            "type": "flash:orb",
+            "slot": "offhand",
+            "stone": true
+          }
+        ]
+      }
+    },
+    "insert_power_stone": {
+      "type": "palladium:command",
+      "icon": {
+        "type": "flash:held_stone",
+        "item": "flash:power_stone"
+      },
+      "title": "Insert Stone",
+      "persistent_data": true,
+      "bar_color": "purple",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "gui_position": "null",
+      "description": {
+        "translate": "ability.infinity.power_stone.insert_power_stone.description"
+      },
+      "commands": [
+        "infinity orb insert"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "right_click",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "open_close_dummy"
+          },
+          {
+            "type": "flash:orb",
+            "stone": false
+          },
+          {
+            "type": "flash:holding_stone",
+            "slot": "offhand"
+          }
+        ]
+      }
+    },
+    "insert_power_stone_offhand": {
+      "type": "palladium:command",
+      "icon": {
+        "type": "flash:held_stone",
+        "item": "flash:power_stone"
+      },
+      "title": "Insert Stone",
+      "persistent_data": true,
+      "bar_color": "purple",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "gui_position": "null",
+      "description": {
+        "translate": "ability.infinity.power_stone.insert_power_stone.description"
+      },
+      "commands": [
+        "infinity orb insert"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "right_click",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:ability_enabled",
+            "power": "null",
+            "ability": "open_close_dummy"
+          },
+          {
+            "type": "flash:orb",
+            "stone": false
+          },
+          {
+            "type": "flash:holding_stone",
+            "slot": "mainhand"
+          }
+        ]
+      }
+    },
+    "cosmi_desc": {
+      "type": "palladium:dummy",
+      "icon": "flash:orb",
+      "title": "Use in Offhand preferably",
+      "bar_color": "light_gray",
+      "hidden": false,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": [
+        0,
+        0
+      ]
+    },
+    "hands": {
+      "type": "palladium:show_both_arms",
+      "icon": "minecraft:blaze_rod",
+      "title": "null",
+      "bar_color": "light_gray",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "null"
+    },
+    "left_command": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "minecraft:command_block",
+      "title": "null",
+      "bar_color": "light_gray",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "null",
+      "first_tick_commands": [
+        "infinity orb turn left"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "rotate_left"
+          }
+        ]
+      }
+    },
+    "right_command": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "minecraft:command_block",
+      "title": "null",
+      "bar_color": "light_gray",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "null",
+      "first_tick_commands": [
+        "infinity orb turn right"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "rotate_right"
+          }
+        ]
+      }
+    },
+    "open_command": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "minecraft:command_block",
+      "title": "null",
+      "bar_color": "light_gray",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "null",
+      "first_tick_commands": [
+        "playsound flash:infinity.reality_stone block @s"
+      ],
+      "last_tick_commands": [
+        "playsound flash:infinity.reality_stone_size block @s"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "open_close_dummy"
+          }
+        ]
+      }
+    },
+    "command": {
+      "type": "palladium:command",
+      "commands": [],
+      "icon": "minecraft:command_block",
+      "title": "null",
+      "bar_color": "light_gray",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "null",
+      "first_tick_commands": [
+        "infinity orb sync"
+      ]
+    },
+    "reset_progress": {
+      "type": "palladium:command",
+      "icon": "flash:textures/icon/lock.png",
+      "title": "Lock Orb",
+      "bar_color": "purple",
+      "hidden": false,
+      "hidden_in_bar": false,
+      "list_index": 3,
+      "gui_position": [
+        0,
+        0.5
+      ],
+      "description": {
+        "translate": "ability.infinity.orb.reset_progress.description"
+      },
+      "commands": [
+        "infinity orb reset"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 10,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:objective_score",
+            "objective": "power_stone_open_stage",
+            "min_score": 15,
+            "max_score": 15
+          }
+        ]
+      }
+    }
+  }
+}

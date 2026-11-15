@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "flash:item/infinity_tracker",
+    "layer1": "flash:item/infinity_tracker/not_found",
+    "layer2": "flash:item/infinity_tracker/lights"
+  },
+  "loader": "forge:item_layers",
+  "forge_data": {
+    "layers": {
+      "2": {
+        "block_light": 15,
+        "sky_light": 15
+      }
+    }
+  }
+}

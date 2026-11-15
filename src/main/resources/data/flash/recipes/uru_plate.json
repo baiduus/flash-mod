@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "HG ",
+    "G  ",
+    "   "
+  ],
+  "key": {
+    "H": {
+      "item": "flash:hammer"
+    },
+    "G": {
+      "item": "flash:uru_ingot"
+    }
+
+
+  },
+  "result": {
+    "item": "flash:uru_plate",
+    "count": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:hammer"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    }
+  ],
+  "result": { "item": "flash:iron_dust", "count": 1 }
+}

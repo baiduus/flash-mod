@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "flash:item/ferro-titanium-gold_alloy_ingot"
+  }
+}

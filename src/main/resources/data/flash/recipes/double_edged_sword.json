@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  B",
+    " H ",
+    "B  "
+  ],
+  "key": {
+    "B": {
+      "item": "flash:uru_blade"
+    },
+    "H": {
+      "item": "flash:gold_titanium_alloy_handle"
+    }
+
+
+  },
+  "result": {
+    "item": "flash:double_edged_sword",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "item": "tconstruct:ingot_cast"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "fluid": "flash:molten_ferro-titanium-gold_alloy",
+    "amount": 6000
+  },
+  "result": "flash:ferro-titanium-gold_alloy_ingot",
+  "cooling_time": 2080,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "tconstruct"
+    }
+  ]
+}

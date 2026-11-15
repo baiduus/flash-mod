@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["DCD", "SNS", "DHD"],
+  "key": {
+    "D": {
+      "item": "flash:dwarf_star_alloy_plate"
+    },
+    "C": {
+      "item": "palladium:vibranium_circuit"
+    },
+    "S": {
+      "tag": "forge:blocks/steel"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    },
+    "H": {
+      "item": "palladium:vibranium_flux_capacitor"
+    }
+  },
+  "result": {
+    "item": "infinitygenerator:infinity_generator",
+    "count": 1
+  }
+}

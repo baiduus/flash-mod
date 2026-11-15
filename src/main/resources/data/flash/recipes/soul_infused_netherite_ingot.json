@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" H ", "LCL", " S "],
+  "key": {
+    "H": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "S": {
+      "item": "minecraft:soul_sand"
+    },
+    "L": {
+      "item": "minecraft:soul_lantern"
+    },
+    "C": {
+      "item": "minecraft:soul_campfire"
+    }
+  },
+  "result": {
+    "item": "flash:soul_infused_netherite_ingot",
+    "count": 1
+  }
+}

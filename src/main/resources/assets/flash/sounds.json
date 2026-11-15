@@ -904,5 +904,112 @@
     "sounds": [
       "flash:wonder/amazonian_cataclysm"
     ]
+  },
+  "infinity.space_stone_portal": {
+    "sounds": [
+      "flash:infinity/space_stone_portal",
+      "flash:infinity/space_stone_portal2",
+      "flash:infinity/space_stone_portal3",
+      "flash:infinity/space_stone_portal4",
+      "flash:infinity/space_stone_portal5"
+    ]
+  },
+  "infinity.space_stone_grab": {
+    "sounds": [
+      "flash:infinity/space_stone_grab"
+    ]
+  },
+  "infinity.space_stone_random": {
+    "sounds": [
+      "flash:infinity/space_stone_random"
+    ]
+  },
+  "infinity.infinity_stone_equip": {
+    "sounds": [
+      "flash:infinity/infinity_stone_equip"
+    ]
+  },
+  "infinity.use_infinity_gauntlet": {
+    "sounds": [
+      "flash:infinity/use_infinity_gauntlet"
+    ]
+  },
+  "infinity.mind_stone_phase": {
+    "sounds": [
+      "flash:infinity/mind_stone_phase1",
+      "flash:infinity/mind_stone_phase2"
+    ]
+  },
+  "infinity.nano_gauntlet": {
+    "sounds": [
+      "flash:infinity/nano_gauntlet"
+    ]
+  },
+  "infinity.power_stone_beam1": {
+    "sounds": [
+      "flash:infinity/power_stone_beam1",
+      "flash:infinity/power_stone_beam2",
+      "flash:infinity/power_stone_beam3"
+    ]
+  },
+  "infinity.energy_blast": {
+    "sounds": [
+      "flash:infinity/energy_blast"
+    ],
+    "subtitle": "subtitles.flash.energy_blast"
+  },
+  "infinity.power_stone_explode": {
+    "sounds": [
+      "flash:infinity/power_stone_explode"
+    ]
+  },
+  "infinity.reality_stone_bubble": {
+    "sounds": [
+      "flash:infinity/reality_stone_bubble"
+    ]
+  },
+  "infinity.reality_stone_invis": {
+    "sounds": [
+      "flash:infinity/reality_stone_invis"
+    ]
+  },
+  "infinity.reality_stone_size": {
+    "sounds": [
+      "flash:infinity/reality_stone_size"
+    ]
+  },
+  "infinity.reality_stone": {
+    "sounds": [
+      "flash:infinity/reality_stone1",
+      "flash:infinity/reality_stone2",
+      "flash:infinity/reality_stone3"
+    ]
+  },
+  "infinity.soul_stone": {
+    "sounds": [
+      "flash:infinity/soul_stone"
+    ]
+  },
+  "infinity.space_stone_forcefield": {
+    "sounds": [
+      "flash:infinity/space_stone_forcefield"
+    ]
+  },
+  "infinity.stone_remove": {
+    "sounds": [
+      "flash:infinity/stone_remove"
+    ]
+  },
+  "infinity.time_stone": {
+    "sounds": [
+      "flash:infinity/time_stone1",
+      "flash:infinity/time_stone2",
+      "flash:infinity/time_stone3"
+    ]
+  },
+  "infinity.np52": {
+    "sounds": [
+      "flash:infinity/np52"
+    ]
   }
 }

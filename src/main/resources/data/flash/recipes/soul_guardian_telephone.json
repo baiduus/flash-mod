@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["SDS", "CHC", " G "],
+  "key": {
+    "D": {
+      "item": "flash:dwarf_star_alloy_plate"
+    },
+    "C": {
+      "item": "palladium:vibranium_circuit"
+    },
+    "S": {
+      "tag": "forge:blocks/steel"
+    },
+    "H": {
+      "item": "palladium:vibranium_flux_capacitor"
+    },
+    "G": {
+      "item": "flash:vormir_sand"
+    }
+  },
+  "result": {
+    "item": "flash:soul_guardian_telephone",
+    "count": 1
+  }
+}

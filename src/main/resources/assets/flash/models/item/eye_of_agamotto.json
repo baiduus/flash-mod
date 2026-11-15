@@ -1,0 +1,30 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "flash:item/eye_of_agamoto_gem",
+    "layer1": "flash:item/eye_of_agamoto_frame"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "flash:stone_out": 1
+      },
+      "model": "flash:item/eye_of_agamotto_stone_out"
+    },
+    {
+      "predicate": {
+        "flash:other_stone": 1
+      },
+      "model": "flash:item/eye_of_agamotto_other_stone"
+    }
+  ],
+  "display": {
+    "head": {
+      "scale": [
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "flash:steel_dust"
+  },
+  "result": "flash:steel_ingot",
+  "experience": 1,
+  "cookingtime": 100
+}

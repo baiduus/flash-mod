@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:mind_stone"
+    },
+    {
+      "item": "flash:empty_scepter"
+    }
+  ],
+  "result": { "item": "flash:scepter", "count": 1 }
+}

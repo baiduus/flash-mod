@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:hammer"
+    },
+    {
+      "tag": "forge:ingots/titanium"
+    }
+  ],
+  "result": { "item": "flash:titanium_dust", "count": 1 }
+}

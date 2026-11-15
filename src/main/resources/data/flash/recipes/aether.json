@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GGG", "UHU", "GGG"],
+  "key": {
+    "H": {
+      "item": "flash:reality_stone"
+    },
+    "G": {
+      "item": "flash:gold_titanium_alloy_plate"
+    },
+    "U": {
+      "item": "flash:uru_ingot"
+    }
+  },
+  "result": {
+    "item": "flash:aether",
+    "count": 1
+  }
+}

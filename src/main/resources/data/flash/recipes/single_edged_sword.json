@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:uru_blade"
+    },
+    {
+      "item": "flash:gold_titanium_alloy_handle"
+    }
+  ],
+  "result": { "item": "flash:single_edged_sword", "count": 1 }
+}

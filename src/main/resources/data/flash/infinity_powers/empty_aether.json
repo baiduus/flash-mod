@@ -1,0 +1,85 @@
+{
+  "name": "Empty Aether",
+  "background": "minecraft:textures/block/red_concrete.png",
+  "icon": "flash:empty_aether",
+  "gui_display_type": "tree",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
+
+  "abilities": {
+    "aim": {
+      "type": "palladium:aim",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "time": 10,
+      "arm": "main_arm",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:item_in_slot",
+            "item": {
+              "item": "flash:empty_aether"
+            },
+            "slot": "mainhand"
+          }
+        ]
+      }
+    },
+
+    "aim2": {
+      "type": "palladium:aim",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "list_index": -1,
+      "time": 10,
+      "arm": "off_arm",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:item_in_slot",
+            "item": {
+              "item": "flash:empty_aether"
+            },
+            "slot": "offhand"
+          }
+        ]
+      }
+    },
+    "insert_reality_stone": {
+      "type": "palladium:command",
+      "icon": "flash:aether",
+      "title": "Insert Reality Stone",
+      "bar_color": "red",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": -1,
+      "gui_position": "null",
+      "description": "Insert Reality Stone",
+      "commands": [
+        "execute as @s run clear @s infinity:reality_stone",
+        "execute as @s run clear @s infinity:empty_aether",
+        "execute as @s run give @s infinity:aether"
+      ],
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 0,
+            "key_type": "key_bind",
+            "needs_empty_hand": false,
+            "allow_scrolling_when_crouching": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "palladium:item_in_slot",
+            "item": {
+              "item": "flash:reality_stone"
+            },
+            "slot": "offhand"
+          }
+        ]
+      }
+    }
+  }
+}

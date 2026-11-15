@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GGG", "GHG", "GGG"],
+  "key": {
+    "H": {
+      "item": "flash:space_stone"
+    },
+    "G": {
+      "item": "minecraft:light_blue_stained_glass"
+    }
+  },
+  "result": {
+    "item": "flash:tesseract",
+    "count": 1
+  }
+}

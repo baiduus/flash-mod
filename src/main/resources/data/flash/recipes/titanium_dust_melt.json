@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "flash:titanium_dust"
+  },
+  "result": {
+    "fluid": "flash:molten_titanium",
+    "amount": 144
+  },
+  "temperature": 250,
+  "time": 800,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "tconstruct"
+    }
+  ]
+}

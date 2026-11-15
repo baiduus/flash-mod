@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["ICC", "CC ", "   "],
+  "key": {
+    "I": {
+      "tag": "forge:dusts/iron"
+    },
+    "C": {
+      "tag": "forge:dusts/coal"
+    }
+  },
+  "result": {
+    "item": "flash:steel_dust",
+    "count": 1
+  }
+}

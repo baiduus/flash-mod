@@ -1,0 +1,4 @@
+{
+  "loader": "forge:fluid_container",
+  "fluid": "flash:molten_uru"
+}

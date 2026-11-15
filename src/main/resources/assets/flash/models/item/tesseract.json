@@ -1,0 +1,56 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 16],
+	"textures": {
+		"0": "flash:item/tesseract_heroes",
+		"particle": "flash:item/tesseract_heroes"
+	},
+	"elements": [
+		{
+			"from": [5, 0, 5],
+			"to": [11, 6, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 2, 7]},
+			"shade": false,
+			"forge_data": {"block_light": 15, "sky_light": 15},
+			"faces": {
+				"north": {"uv": [3, 6, 6, 12], "texture": "#0"},
+				"east": {"uv": [6, 6, 9, 12], "texture": "#0"},
+				"south": {"uv": [9, 6, 12, 12], "texture": "#0"},
+				"west": {"uv": [0, 6, 3, 12], "texture": "#0"},
+				"up": {"uv": [3, 0, 6, 6], "texture": "#0"},
+				"down": {"uv": [6, 0, 9, 6], "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, 8, 0]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, 8, 0]
+		},
+		"firstperson_righthand": {
+			"translation": [0, 10, -2.25]
+		},
+		"firstperson_lefthand": {
+			"translation": [0, 10, -2.25]
+		},
+		"ground": {
+			"translation": [0, 5.75, 0]
+		},
+		"gui": {
+			"rotation": [45, 45, 0],
+			"translation": [0, 3.5, 0]
+		},
+		"head": {
+			"translation": [0, 14.75, 0]
+		},
+		"fixed": {
+			"translation": [0, 4.75, 0]
+		},
+		"on_shelf": {
+			"translation": [0, 8.25, -1]
+		}
+	}
+}

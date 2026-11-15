@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:reality_stone"
+    },
+    {
+      "item": "flash:empty_aether"
+    }
+  ],
+  "result": { "item": "flash:aether", "count": 1 }
+}

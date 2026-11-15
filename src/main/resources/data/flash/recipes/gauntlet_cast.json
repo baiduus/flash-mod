@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "item": "flash:infinity_gauntlet_cast"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "fluid": "flash:molten_gold_titanium_alloy",
+    "amount": 6000
+  },
+  "result": "flash:infinity_gauntlet",
+  "cooling_time": 2080,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "tconstruct"
+    }
+  ]
+}

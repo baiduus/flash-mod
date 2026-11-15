@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:steel_block"
+    }
+  ],
+  "result": { "item": "flash:steel_ingot", "count": 9 }
+}

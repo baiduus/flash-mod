@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "tag": "forge:ingots/titanium"
+    }
+  ],
+  "result": { "item": "flash:titanium_nugget", "count": 9 }
+}

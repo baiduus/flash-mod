@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "flash:gold_titanium_alloy_plate"
+  },
+  "result": {
+    "fluid": "flash:molten_gold_titanium_alloy",
+    "amount": 144
+  },
+  "temperature": 275,
+  "time": 800,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "tconstruct"
+    }
+  ]
+}

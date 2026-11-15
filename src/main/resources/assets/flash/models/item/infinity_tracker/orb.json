@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "flash:item/infinity_tracker",
+    "layer1": "flash:item/infinity_tracker/orb",
+    "layer2": "flash:item/infinity_tracker/orb_core",
+    "layer3": "flash:item/infinity_tracker/lights"
+  },
+  "loader": "forge:item_layers",
+  "forge_data": {
+    "layers": {
+      "3": {
+        "block_light": 15,
+        "sky_light": 15
+      }
+    }
+  }
+}

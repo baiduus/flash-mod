@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GGG", "GGG", "GGG"],
+  "key": {
+    "G": {
+      "item": "flash:uru_nugget"
+    }
+  },
+  "result": {
+    "item": "flash:uru_ingot",
+    "count": 1
+  }
+}

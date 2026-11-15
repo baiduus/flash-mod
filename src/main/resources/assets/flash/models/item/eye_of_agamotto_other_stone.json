@@ -1,0 +1,16 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "flash:item/eye_of_agamoto_stone",
+    "layer1": "flash:item/eye_of_agamoto_frame"
+  },
+  "display": {
+    "head": {
+      "scale": [
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:uru_block"
+    }
+  ],
+  "result": { "item": "flash:uru_ingot", "count": 9 }
+}

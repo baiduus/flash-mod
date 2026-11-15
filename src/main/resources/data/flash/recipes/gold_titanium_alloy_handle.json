@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " G ",
+    "GHG",
+    " G "
+  ],
+  "key": {
+    "G": {
+      "item": "flash:gold_titanium_alloy_plate"
+    },
+    "H": {
+      "item": "flash:hammer"
+    }
+
+
+  },
+  "result": {
+    "item": "flash:gold_titanium_alloy_handle",
+    "count": 1
+  }
+}

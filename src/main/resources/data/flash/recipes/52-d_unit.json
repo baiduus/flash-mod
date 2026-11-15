@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["SQS", "LVL", "GRG"],
+  "key": {
+    "S": {
+      "item": "flash:steel_plate"
+    },
+    "Q": {
+      "item": "palladium:quartz_circuit"
+    },
+    "L": {
+      "item": "palladium:lead_circuit"
+    },
+    "V": {
+      "item": "palladium:vibranium_ingot"
+    },
+    "G": {
+      "item": "flash:gold_plate"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "result": {
+    "item": "flash:52-d_unit",
+    "count": 1
+  }
+}

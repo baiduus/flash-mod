@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "palladium:vibranium_ingot"
+    },
+    {
+      "item": "minecraft:egg"
+    }
+  ],
+  "result": { "item": "flash:endosym_ingot", "count": 1 }
+}

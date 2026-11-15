@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["  N", "IP ", "PI "],
+  "key": {
+    "N": {
+      "item": "minecraft:iron_nugget"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "flash:iron_plate"
+    }
+  },
+  "result": {
+    "item": "flash:injection",
+    "count": 1
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "HG ",
+    "G  ",
+    "   "
+  ],
+  "key": {
+    "H": {
+      "item": "flash:hammer"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    }
+
+
+  },
+  "result": {
+    "item": "flash:gold_plate",
+    "count": 1
+  }
+}

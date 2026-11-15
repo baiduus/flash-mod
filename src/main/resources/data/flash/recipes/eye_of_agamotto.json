@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["S S", "GHG", " G "],
+  "key": {
+    "H": {
+      "item": "flash:time_stone"
+    },
+    "G": {
+      "item": "flash:gold_titanium_alloy_plate"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "result": {
+    "item": "flash:eye_of_agamotto",
+    "count": 1
+  }
+}

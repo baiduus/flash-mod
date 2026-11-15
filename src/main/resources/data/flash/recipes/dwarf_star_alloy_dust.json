@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:hammer"
+    },
+    {
+      "item": "flash:dwarf_star_alloy_ingot"
+    }
+  ],
+  "result": { "item": "flash:dwarf_star_alloy_dust", "count": 1 }
+}

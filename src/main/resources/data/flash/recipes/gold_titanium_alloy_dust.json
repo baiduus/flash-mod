@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "HG ",
+    "G  ",
+    "   "
+  ],
+  "key": {
+    "H": {
+      "item": "flash:gold_dust"
+    },
+    "G": {
+      "item": "flash:titanium_dust"
+    }
+
+
+  },
+  "result": {
+    "item": "flash:gold_titanium_alloy_dust",
+    "count": 1
+  }
+}

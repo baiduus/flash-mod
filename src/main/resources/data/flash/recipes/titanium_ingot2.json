@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["GGG", "GGG", "GGG"],
+  "key": {
+    "G": {
+      "item": "flash:titanium_nugget"
+    }
+  },
+  "result": {
+    "item": "flash:titanium_ingot",
+    "count": 1
+  }
+}

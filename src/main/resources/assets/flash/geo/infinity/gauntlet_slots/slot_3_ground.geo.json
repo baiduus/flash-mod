@@ -1,0 +1,168 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.gauntlet_slot_3_ground",
+        "texture_width": 32,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [
+          0,
+          1.25,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "head",
+          "pivot": [
+            6,
+            17.5,
+            0
+          ]
+        },
+        {
+          "name": "body",
+          "pivot": [
+            6,
+            17.5,
+            0
+          ]
+        },
+        {
+          "name": "bone",
+          "parent": "body",
+          "pivot": [
+            0,
+            -2.25,
+            0
+          ],
+          "rotation": [
+            0,
+            90,
+            180
+          ]
+        },
+        {
+          "name": "right_arm",
+          "pivot": [
+            6,
+            17.5,
+            0
+          ]
+        },
+        {
+          "name": "left_arm",
+          "pivot": [
+            6,
+            17.5,
+            0
+          ]
+        },
+        {
+          "name": "right_leg",
+          "pivot": [
+            6,
+            17.5,
+            0
+          ]
+        },
+        {
+          "name": "left_leg",
+          "pivot": [
+            6,
+            17.5,
+            0
+          ]
+        },
+        {
+          "name": "stone",
+          "parent": "bone",
+          "pivot": [
+            2.15,
+            -11.8,
+            -1.9
+          ],
+          "cubes": [
+            {
+              "origin": [
+                1.65,
+                -12.25,
+                -2.35
+              ],
+              "size": [
+                1,
+                0.9,
+                0.9
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    6,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    12,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    18,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    6,
+                    0
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    12,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    -6
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

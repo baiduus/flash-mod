@@ -1,0 +1,188 @@
+{
+  "name": "Eye of Agamotto",
+  "background": "minecraft:textures/block/gold_block.png",
+  "icon": "flash:eye_of_agamotto",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/time_ability_bar.png",
+  "gui_display_type": "tree",
+  "abilities": {
+    "render_layer_eye": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "render_layer": "flash:eye_of_agamotto_animated",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "flash:eye_of_agamotto"
+          }
+        ]
+      }
+    },
+    "render_layer_glow": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "render_layer": "flash:eye_of_agamotto_glow",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "stone": true
+          }
+        ]
+      }
+    },
+    "render_layer_glint_0": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "render_layer": "flash:eye_of_agamotto_glint_0",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "stone": true
+          }
+        ]
+      }
+    },
+    "render_layer_glint_1": {
+      "type": "palladium:render_layer",
+      "hidden": true,
+      "hidden_in_bar": true,
+      "render_layer": "flash:eye_of_agamotto_glint_1",
+      "conditions": {
+        "enabling": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "stone": true
+          }
+        ]
+      }
+    },
+    "open": {
+      "type": "flash:eye_of_agamotto",
+      "icon": "flash:eye_of_agamotto",
+      "title": "Open Eye",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "action": "open",
+      "description": {
+        "translate": "ability.infinity.eye_of_agamotto.open.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 40,
+            "key_type": "key_bind",
+            "needs_empty_hand": false
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "open": false
+          }
+        ]
+      }
+    },
+    "close": {
+      "type": "flash:eye_of_agamotto",
+      "icon": "flash:eye_of_agamotto",
+      "title": "Close Eye",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 0,
+      "action": "close",
+      "description": {
+        "translate": "ability.infinity.eye_of_agamotto.close.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 40,
+            "key_type": "key_bind",
+            "needs_empty_hand": false
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "open": true
+          }
+        ]
+      }
+    },
+    "remove_stone": {
+      "type": "flash:eye_of_agamotto",
+      "icon": "flash:time_stone",
+      "title": "Remove Stone",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "action": "remove_stone",
+      "description": {
+        "translate": "ability.infinity.eye_of_agamotto.remove_stone.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 10,
+            "key_type": "right_click",
+            "needs_empty_hand": true
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "open": true,
+            "stone": true
+          }
+        ]
+      }
+    },
+    "insert_stone": {
+      "type": "flash:eye_of_agamotto",
+      "icon": {
+        "type": "flash:held_stone",
+        "item": "flash:time_stone"
+      },
+      "title": "Insert Stone",
+      "bar_color": "lime",
+      "hidden": true,
+      "hidden_in_bar": false,
+      "list_index": 1,
+      "action": "insert_stone",
+      "description": {
+        "translate": "ability.infinity.eye_of_agamotto.insert_stone.description"
+      },
+      "conditions": {
+        "enabling": [
+          {
+            "type": "palladium:action",
+            "cooldown": 10,
+            "key_type": "right_click",
+            "needs_empty_hand": false
+          }
+        ],
+        "unlocking": [
+          {
+            "type": "flash:eye_of_agamotto",
+            "open": true,
+            "stone": false
+          },
+          {
+            "type": "flash:holding_stone"
+          }
+        ]
+      }
+    }
+  }
+}

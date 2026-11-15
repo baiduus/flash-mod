@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "flash:hammer"
+    },
+    {
+      "item": "minecraft:gold_ingot"
+    }
+  ],
+  "result": { "item": "flash:gold_dust", "count": 1 }
+}

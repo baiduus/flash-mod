@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "flash:block/dwarf_star_alloy_block"
+  }
+}

@@ -82,7 +82,10 @@ public final class FlashClientForgeEvents {
 
         while (FlashKeys.OPEN_PROGRESS.consumeClick()) {
             if (minecraft.screen == null) {
-                minecraft.setScreen(new FlashProgressScreen());
+                // holding a stone: its ability tree (the hero's screen from there)
+                minecraft.setScreen(com.flash.client.infinity.InfinityClient.hasPowers()
+                        && !net.minecraft.client.gui.screens.Screen.hasShiftDown()
+                        ? new com.flash.client.infinity.InfinityScreen() : new FlashProgressScreen());
             }
         }
 
@@ -182,6 +185,7 @@ public final class FlashClientForgeEvents {
         SpiderClient.reset();
         DoomClient.reset();
         WonderClient.reset();
+        com.flash.client.infinity.InfinityClient.reset();
         WonderLayer.resetModels();
         WonderItemRenderer.resetModels();
     }

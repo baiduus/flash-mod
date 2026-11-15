@@ -1,0 +1,9 @@
+{
+  "name": "orb",
+  "background": "minecraft:textures/block/purple_concrete.png",
+  "icon": "flash:orb",
+  "gui_display_type": "tree",
+  "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
+
+  "abilities": {}
+}
