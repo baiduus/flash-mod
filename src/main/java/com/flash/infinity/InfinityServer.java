@@ -2,6 +2,7 @@ package com.flash.infinity;
 
 import com.flash.FlashMod;
 import com.flash.network.FlashNetwork;
+import com.flash.network.InfinitySyncPacket;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
