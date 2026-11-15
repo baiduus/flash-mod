@@ -46,6 +46,9 @@ public final class DoomPowers {
 
     public static final int F_FLYING = 1;
     public static final int F_SHIELD = 2;
+    /** The armour taken off (his powers stay). */
+    public static final int F_UNSUITED = 4;
+    private static final String UNSUITED = "unsuited";
 
     private static final java.util.Map<java.util.UUID, Integer> SENT = new java.util.HashMap<>();
 
@@ -89,7 +92,25 @@ public final class DoomPowers {
         if (!has(p)) {
             return 0;
         }
-        return (p.getAbilities().flying ? F_FLYING : 0) | (DoomAbilities.shielded(p) ? F_SHIELD : 0);
+        return (p.getAbilities().flying ? F_FLYING : 0) | (DoomAbilities.shielded(p) ? F_SHIELD : 0)
+                | (suited(p) ? 0 : F_UNSUITED);
+    }
+
+    public static boolean suited(Player p) {
+        return has(p) && !p.getPersistentData().getCompound(KEY).getBoolean(UNSUITED);
+    }
+
+    /** The suit key: the armour on or off (his powers stay). */
+    public static void toggleSuited(ServerPlayer p) {
+        if (!has(p)) {
+            return;
+        }
+        CompoundTag tag = p.getPersistentData().getCompound(KEY);
+        tag.putBoolean(UNSUITED, !tag.getBoolean(UNSUITED));
+        p.getPersistentData().put(KEY, tag);
+        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ARMOR_EQUIP_NETHERITE,
+                SoundSource.PLAYERS, 1.0F, 0.8F);
+        sync(p);
     }
 
     public static void sync(ServerPlayer p) {

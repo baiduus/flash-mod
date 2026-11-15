@@ -313,8 +313,14 @@ public final class FlashAbilityHud implements IGuiOverlay {
             panelWidth = Math.max(panelWidth, rowWidth(font, names[i], keys[i]));
         }
         panelWidth = Math.max(panelWidth, rowWidth(font, flyName, keyLabel(flyKey)));
+        // Spider-Man and Doom: their suit on the suit key
+        boolean suitRow = PowerTheme.localSpider() || PowerTheme.localDoom();
+        String suitName = Component.translatable("hud.flash.scarlet.row.suit").getString();
+        if (suitRow) {
+            panelWidth = Math.max(panelWidth, rowWidth(font, suitName, keyLabel(FlashKeys.TOGGLE_SUIT)));
+        }
         int headH = 22;
-        int total = headH + 2 + (rows.length + 1) * (ROW_HEIGHT + ROW_GAP) + 11;
+        int total = headH + 2 + (rows.length + 1 + (suitRow ? 1 : 0)) * (ROW_HEIGHT + ROW_GAP) + 11;
         int x = width - panelWidth - MARGIN;
         int y = height - 26 - total;
         if (x < 4 || y < 4) {
@@ -337,6 +343,12 @@ public final class FlashAbilityHud implements IGuiOverlay {
         drawRow(graphics, font, x, ry, panelWidth, flyName, keyLabel(flyKey), 0, 1,
                 minecraft.player != null && (minecraft.player.getAbilities().flying || SpiderClient.swinging()));
         ry += ROW_HEIGHT + ROW_GAP;
+        if (suitRow && minecraft.player != null) {
+            drawRow(graphics, font, x, ry, panelWidth, suitName, keyLabel(FlashKeys.TOGGLE_SUIT), 0, 1,
+                    PowerTheme.localSpider() ? SpiderClient.suited(minecraft.player)
+                            : DoomClient.suited(minecraft.player));
+            ry += ROW_HEIGHT + ROW_GAP;
+        }
         graphics.drawString(font, hint, x + panelWidth - font.width(hint), ry, 0xFFB8B0A0, true);
     }
 

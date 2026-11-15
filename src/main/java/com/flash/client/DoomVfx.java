@@ -88,6 +88,9 @@ public final class DoomVfx {
             case DoomAbilities.FX_GRIMOIRE -> 50;
             default -> 0;
         };
+        if (mc.level.getEntity(p.caster()) instanceof Player cp) {
+            DoomPose.cast(cp, p.type(), p.power());
+        }
         if (life > 0 && ACTIVE.size() < 400) {
             ACTIVE.add(new Fx(p, life));
         }
@@ -168,21 +171,13 @@ public final class DoomVfx {
                 if (!DoomClient.isDoom(p) || p.isInvisible()) {
                     continue;
                 }
-                if (DoomClient.flying(p)) {
-                    // the boot jets: a short cone of blue light under each boot
-                    float flick = 0.85F + 0.15F * (float) Math.sin(t * 2.3F + p.getId());
-                    for (Vec3 b : DoomClient.boots(p, pt)) {
-                        Vec3 tail = b.add(p.getDeltaMovement().scale(-0.6D)).add(0.0D, -0.55D * flick, 0.0D);
-                        VfxDraw.energy(buf, m, b, tail, 0.09F, JET[0], JET[1], JET[2], 0.85F);
-                        VfxDraw.glow(buf, m, b, left, up, 0.32D, JET[0], JET[1], JET[2], 0.55F * flick);
-                    }
-                }
                 if (DoomClient.shielded(p)) {
                     Vec3 c = p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
-                    VfxDraw.sphere(buf, m, c, 1.45D, cam, FIELD[0], FIELD[1], FIELD[2], 0.55F, t, 2.6D);
-                    VfxDraw.hexCircle(buf, m, c.add(0.0D, -p.getBbHeight() * 0.5D + 0.05D, 0.0D), 1.45D, t,
+                    double r = DoomAbilities.FIELD_RADIUS;
+                    VfxDraw.sphere(buf, m, c, r, cam, FIELD[0], FIELD[1], FIELD[2], 0.5F, t, 2.6D);
+                    VfxDraw.hexCircle(buf, m, c.add(0.0D, -p.getBbHeight() * 0.5D + 0.05D, 0.0D), r, t,
                             FIELD[0], FIELD[1], FIELD[2], 0.45F);
-                    VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), 1.5D, 0.05D, t * 0.05F, FIELD[0], FIELD[1],
+                    VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r + 0.05D, 0.05D, t * 0.05F, FIELD[0], FIELD[1],
                             FIELD[2], 0.5F + 0.2F * (float) Math.sin(t * 0.3F));
                 }
             }
@@ -195,7 +190,7 @@ public final class DoomVfx {
     private static boolean any(Minecraft mc) {
         for (int id : DoomClient.ids()) {
             Entity e = mc.level.getEntity(id);
-            if (e instanceof Player p && (DoomClient.flying(p) || DoomClient.shielded(p))) {
+            if (e instanceof Player p && DoomClient.shielded(p)) {
                 return true;
             }
         }
@@ -262,7 +257,8 @@ public final class DoomVfx {
             case DoomAbilities.FX_SHIELD -> {
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 c = e != null ? e.getPosition(pt).add(0.0D, 1.0D, 0.0D) : f.a.add(0.0D, 1.0D, 0.0D);
-                VfxDraw.sphere(buf, m, c, 0.3D + 1.6D * k, cam, FIELD[0], FIELD[1], FIELD[2], fade, t, 2.0D);
+                VfxDraw.sphere(buf, m, c, 0.3D + DoomAbilities.FIELD_RADIUS * k, cam, FIELD[0], FIELD[1], FIELD[2],
+                        fade, t, 2.0D);
                 VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), 0.5D + 2.5D * k, 0.12D, t * 0.1F, FIELD[0],
                         FIELD[1], FIELD[2], fade);
             }
@@ -270,7 +266,8 @@ public final class DoomVfx {
                 Entity e = mc.level.getEntity(f.caster);
                 if (e != null) {
                     Vec3 c = e.getPosition(pt).add(0.0D, 1.0D, 0.0D);
-                    VfxDraw.sphere(buf, m, c, 1.5D + 0.2D * k, cam, 0.8F, 1.0F, 0.8F, 0.8F * fade, t, 1.6D);
+                    VfxDraw.sphere(buf, m, c, DoomAbilities.FIELD_RADIUS + 0.1D + 0.2D * k, cam, 0.8F, 1.0F, 0.8F,
+                            0.8F * fade, t, 1.6D);
                 }
             }
             case DoomAbilities.FX_WAVE -> {

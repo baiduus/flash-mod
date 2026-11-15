@@ -56,6 +56,10 @@ public final class DoomAbilities {
     public static final int WAVE = 4;
     public static final int MYSTIC = 5;
     public static final int RITUAL = 6;
+    /** The suit key (U): the armour on / off (his powers stay). */
+    public static final int SUIT_TOGGLE = 9;
+    /** The force field's radius: nobody gets in. */
+    public static final double FIELD_RADIUS = 2.6D;
 
     public static final int FX_BOLT = 0;
     public static final int FX_BEAM = 1;
@@ -69,6 +73,8 @@ public final class DoomAbilities {
     public static final int FX_TAKEOFF = 9;
     public static final int FX_GRIMOIRE = 10;
     public static final int FX_SHIELD_HIT = 11;
+    /** Nothing drawn: he casts (his arms; power: 1 the mystic bolt, 2 the ritual). */
+    public static final int FX_CAST = 12;
 
     private static final int SHIELD_TICKS = 200;
     private static final int RITUAL_TICKS = 30;
@@ -145,6 +151,7 @@ public final class DoomAbilities {
                     ScarletAbilities.start(p, "ritual", com.flash.scarlet.ScarletCooldowns.ticks("ritual"));
                 }
             }
+            case SUIT_TOGGLE -> DoomPowers.toggleSuited(p);
             default -> {
             }
         }
@@ -285,6 +292,41 @@ public final class DoomAbilities {
         DoomPowers.sync(p);
     }
 
+    /**
+     * The force field keeps everyone out: whoever comes inside is pushed gently back to its edge (not thrown far).
+     */
+    private static void barrier(ServerPlayer p) {
+        ServerLevel level = p.serverLevel();
+        Vec3 c = p.position().add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(FIELD_RADIUS + 0.5D),
+                e -> e != p && e.isAlive() && !e.isSpectator()
+                        && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand))) {
+            Vec3 d = e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D).subtract(c);
+            double reach = FIELD_RADIUS + e.getBbWidth() * 0.5D;
+            double dist = d.length();
+            if (dist >= reach) {
+                continue;
+            }
+            Vec3 flat = new Vec3(d.x, 0.0D, d.z);
+            Vec3 out = flat.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : flat.normalize();
+            double depth = (reach - dist) / reach;
+            Vec3 v = e.getDeltaMovement();
+            double into = v.x * out.x + v.z * out.z;
+            if (into < 0.0D) {
+                // its step inward is stopped at the field
+                v = v.subtract(out.scale(into));
+            }
+            v = v.add(out.scale(0.12D + 0.35D * depth));
+            e.setDeltaMovement(v.x, Math.max(v.y, 0.05D), v.z);
+            e.hurtMarked = true;
+            if (e.tickCount % 10 == 0) {
+                fx(p, FX_SHIELD_HIT, p.position(), p.position(), 1.0F, -1);
+                level.playSound(null, e.getX(), e.getY(), e.getZ(), SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS,
+                        0.5F, 2.0F);
+            }
+        }
+    }
+
     static void shieldHit(ServerPlayer p) {
         p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS,
                 0.8F, 1.6F);
@@ -327,6 +369,7 @@ public final class DoomAbilities {
     private static void mystic(ServerPlayer p) {
         Vec3 from = hand(p);
         BOLTS.add(new Bolt(p, from, p.getLookAngle().scale(1.1D)));
+        fx(p, FX_CAST, from, from, 1.0F, -1);
         p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.EVOKER_CAST_SPELL,
                 SoundSource.PLAYERS, 1.0F, 1.3F);
         p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ILLUSIONER_CAST_SPELL,
@@ -349,6 +392,7 @@ public final class DoomAbilities {
             at = g.getLocation();
         }
         RITUALS.add(new Ritual(p, at));
+        fx(p, FX_CAST, at, at, 2.0F, -1);
         p.serverLevel().playSound(null, at.x, at.y, at.z, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.PLAYERS, 1.4F,
                 0.8F);
         fx(p, FX_RITUAL, at, at, 5.0F, RITUAL_TICKS);
@@ -449,6 +493,12 @@ public final class DoomAbilities {
             fx(r.owner, FX_ERUPT, r.at, r.at, 5.0F, -1);
         }
         if (!SHIELDS.isEmpty()) {
+            for (Map.Entry<UUID, Long> en : SHIELDS.entrySet()) {
+                ServerPlayer p = event.getServer().getPlayerList().getPlayer(en.getKey());
+                if (p != null && p.level().getGameTime() < en.getValue()) {
+                    barrier(p);
+                }
+            }
             for (Iterator<Map.Entry<UUID, Long>> it = SHIELDS.entrySet().iterator(); it.hasNext(); ) {
                 Map.Entry<UUID, Long> en = it.next();
                 ServerPlayer p = event.getServer().getPlayerList().getPlayer(en.getKey());

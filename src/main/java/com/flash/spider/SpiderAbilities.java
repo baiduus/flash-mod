@@ -48,7 +48,7 @@ import net.minecraftforge.network.PacketDistributor;
  * 10 s seeing every enemy around, slowing them, and dodging most attacks.</li>
  * </ul>
  * Passive: the spider-sense warns him (the squiggles over his head) of creatures coming for him and arrows on
- * their way; he dodges some arrows. His swing line (SpiderLinePacket) is shown to the others from here.
+ * their way; he dodges some arrows. His locomotion (SpiderMovePacket) is shown to the others from here.
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
 public final class SpiderAbilities {
@@ -61,6 +61,8 @@ public final class SpiderAbilities {
     public static final int SENSE = 5;
     /** The suit picked in the K menu (value: its index). */
     public static final int SUIT = 9;
+    /** The suit key (U): the suit on / off (his powers stay). */
+    public static final int SUIT_TOGGLE = 10;
 
     // what the clients draw (HeroFxPacket types)
     public static final int FX_SHOT = 0;
@@ -125,6 +127,7 @@ public final class SpiderAbilities {
                 }
             }
             case SUIT -> SpiderPowers.setSuit(p, value);
+            case SUIT_TOGGLE -> SpiderPowers.toggleSuited(p);
             default -> {
             }
         }
@@ -196,10 +199,8 @@ public final class SpiderAbilities {
         Vec3 from = hand(p);
         Vec3 to = hit.getType() == HitResult.Type.MISS ? p.getEyePosition().add(p.getLookAngle().scale(48.0D))
                 : hit.getLocation();
-        level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SLIME_SQUISH_SMALL, SoundSource.PLAYERS, 0.9F,
-                1.6F);
-        level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ENDER_PEARL_THROW, SoundSource.PLAYERS, 0.4F,
-                1.9F);
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_WEB_SHOOT.get(),
+                SoundSource.PLAYERS, 0.9F, 1.2F);
         if (hit instanceof EntityHitResult eh && eh.getEntity() instanceof LivingEntity e) {
             to = e.position().add(0.0D, e.getBbHeight() * 0.6D, 0.0D);
             hurt(p, e, 2.0F);
@@ -263,8 +264,8 @@ public final class SpiderAbilities {
         if (e instanceof Mob m) {
             m.getNavigation().stop();
         }
-        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FISHING_BOBBER_RETRIEVE,
-                SoundSource.PLAYERS, 1.0F, 1.4F);
+        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_WEB_SHOOT.get(),
+                SoundSource.PLAYERS, 1.0F, 0.8F);
         fx(p, FX_YANK, hand(p), e.position().add(0.0D, e.getBbHeight() * 0.6D, 0.0D), 1.0F, e.getId());
         return true;
     }
@@ -283,8 +284,8 @@ public final class SpiderAbilities {
         p.setDeltaMovement(v);
         p.hurtMarked = true;
         p.fallDistance = 0.0F;
-        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FISHING_BOBBER_THROW,
-                SoundSource.PLAYERS, 1.0F, 1.3F);
+        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_WEB_SHOOT.get(),
+                SoundSource.PLAYERS, 1.0F, 0.9F);
         fx(p, FX_ZIP, hand(p), at, 1.0F, -1);
         return true;
     }
@@ -300,8 +301,8 @@ public final class SpiderAbilities {
         p.fallDistance = 0.0F;
         KICKING.put(p.getUUID(), 12);
         KICKED.put(p.getUUID(), new HashSet<>());
-        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                SoundSource.PLAYERS, 1.0F, 0.7F);
+        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_WHOOSH.get(),
+                SoundSource.PLAYERS, 1.0F, 0.9F);
         fx(p, FX_KICK, p.position(), look, 1.0F, -1);
     }
 
@@ -314,8 +315,8 @@ public final class SpiderAbilities {
             e.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 0, false, false));
             e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 1, false, false));
         }
-        level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS,
-                1.4F, 1.6F);
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_SENSE.get(),
+                SoundSource.PLAYERS, 1.4F, 0.8F);
         fx(p, FX_SENSE, p.position(), p.position(), 2.0F, -1);
     }
 
@@ -325,22 +326,35 @@ public final class SpiderAbilities {
     }
 
     // ------------------------------------------------------------------
-    // The swing line (moved on his own client)
+    // His locomotion (moved on his own client): shown to the others, its sounds heard by all
     // ------------------------------------------------------------------
 
-    public static void line(ServerPlayer p, boolean on, Vec3 anchor) {
+    public static void move(ServerPlayer p, com.flash.network.SpiderMovePacket m) {
         if (!SpiderPowers.has(p)) {
             return;
         }
         p.fallDistance = 0.0F;
-        if (on) {
-            if (anchor.distanceToSqr(p.position()) > 100.0D * 100.0D) {
-                return;
+        ServerLevel level = p.serverLevel();
+        switch (m.kind()) {
+            case com.flash.network.SpiderMovePacket.LINE_ON -> {
+                if (m.at().distanceToSqr(p.position()) > 100.0D * 100.0D) {
+                    return;
+                }
+                level.playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_WEB_SHOOT.get(),
+                        SoundSource.PLAYERS, 0.9F, 1.0F);
             }
-            p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FISHING_BOBBER_THROW,
-                    SoundSource.PLAYERS, 0.6F, 1.6F);
+            case com.flash.network.SpiderMovePacket.RELEASE, com.flash.network.SpiderMovePacket.WALL_JUMP ->
+                    level.playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_RELEASE.get(),
+                            SoundSource.PLAYERS, 1.0F, 1.1F);
+            case com.flash.network.SpiderMovePacket.DOUBLE_JUMP -> level.playSound(null, p.getX(), p.getY(), p.getZ(),
+                    com.flash.registry.ModSounds.SPIDER_WHOOSH.get(), SoundSource.PLAYERS, 0.9F, 1.0F);
+            case com.flash.network.SpiderMovePacket.LINE_BREAK -> level.playSound(null, p.getX(), p.getY(), p.getZ(),
+                    SoundEvents.LEASH_KNOT_BREAK, SoundSource.PLAYERS, 1.0F, 1.0F);
+            default -> {
+            }
         }
-        fx(p, on ? FX_LINE : FX_LINE_OFF, anchor, anchor, 1.0F, -1);
+        FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> p),
+                new com.flash.network.SpiderMoveSyncPacket(p.getId(), m.kind(), m.variant(), m.at(), m.nx(), m.nz()));
     }
 
     // ------------------------------------------------------------------
@@ -447,8 +461,8 @@ public final class SpiderAbilities {
         if (threat != null) {
             threat.addEffect(new MobEffectInstance(MobEffects.GLOWING, 50, 0, false, false));
         }
-        level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS,
-                1.2F, 1.9F);
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), com.flash.registry.ModSounds.SPIDER_SENSE.get(),
+                SoundSource.PLAYERS, 1.0F, 1.0F);
         fx(p, FX_SENSE, p.position(), p.position(), 1.0F, threat != null ? threat.getId() : -1);
     }
 

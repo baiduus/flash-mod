@@ -145,7 +145,8 @@ public final class LanternFlight implements IAnimation {
         float soarAmount = s.soar * s.soar * (3.0F - 2.0F * s.soar);
         double flat = Math.sqrt(dx * dx + dz * dz);
         float pitchTarget = !(s.speed > 0.3F) ? 0.0F
-                : Mth.clamp((float) Math.atan2(-dy, Math.max(flat, 1.0E-4D)), -1.4F, 1.4F);
+                : Mth.clamp((float) Math.atan2(-dy, Math.max(flat, 1.0E-4D)), -1.4F, flying ? 0.35F : 1.4F);
+        // (flying down where he looks: tipped a little into it, never head first as if falling)
         s.pitch += (pitchTarget - s.pitch) * 0.3F;
         t[4] = s.pitch * soarAmount;
         float lean = Mth.clamp(0.95F * forward, -0.45F, 1.1F);

@@ -5,7 +5,8 @@ import com.flash.network.FlashNetwork;
 import com.flash.network.HeroActionPacket;
 import com.flash.network.HeroFxPacket;
 import com.flash.network.HeroSyncPacket;
-import com.flash.network.SpiderLinePacket;
+import com.flash.network.SpiderMovePacket;
+import com.flash.network.SpiderMoveSyncPacket;
 import com.flash.spider.SpiderAbilities;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -22,19 +23,27 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -42,64 +51,112 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 /**
- * Spider-Man on the client: who he is and his suit, the keys of his modes (R / Z), his locomotion (moved here, as
- * every player's own motion is) and what is drawn of him:
+ * Spider-Man on the client: who he is and his suit, the keys of his modes (R / Z), his locomotion and what is drawn
+ * of him. The locomotion is Powerborne Heroes' Spider-Man (its scripts, used with permission) ported to the mod,
+ * moved here as every player's own motion is:
  * <ul>
- * <li><b>Web swing</b> (the flight key held): a line shot up ahead fastens to a block, and he swings under it like
- * a pendulum (gravity pulls him, the line holds him, W pumps the swing); let go, he is flung on with the
- * momentum.</li>
- * <li><b>Wall crawling</b>: walking into a wall he climbs it (W / space up, sneak down, still: he clings);
- * S + space jumps off it.</li>
- * <li>The web lines (Legends: Superheroes' web texture), the cocoons of the webbed (its web cocoon), and the
- * spider-sense over his head (its squiggles).</li>
+ * <li><b>Web swing</b> (the flight key held): a web shot ahead (5.5 blocks a tick) fastens where you look (up to 80
+ * blocks; a little higher if nothing is there) and you swing on a rope of that length: W / A / D pump the swing
+ * (more sprinting), space reels the line in, sneak while slow under it hangs upside down; let go and you are flung on
+ * (a release flip, then the dive). Too far past the rope's length it snaps.</li>
+ * <li><b>Wall crawling</b>: jumping (or walking) into a wall you stick to it: W up, S down, A / D sideways, round the
+ * corners; looking away from the wall, space is a wall jump; looking up near a ceiling you crawl on it.</li>
+ * <li><b>Double jump</b> with a flip.</li>
+ * <li>The web lines (a thin white strand that falls when let go), the web splats where they stick (the cobweb), the
+ * cocoons of the webbed, the spider-sense over his head and its direction indicator, the swing's wind and the
+ * camera roll.</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID, value = Dist.CLIENT)
 public final class SpiderClient {
 
-    private static final ResourceLocation WEB = new ResourceLocation(FlashMod.MODID, "textures/spider/web_line.png");
     private static final ResourceLocation COCOON = new ResourceLocation(FlashMod.MODID,
             "textures/spider/web_cocoon.png");
     private static final ResourceLocation SENSE = new ResourceLocation(FlashMod.MODID,
             "textures/spider/spider_sense.png");
+    private static final ResourceLocation INDICATOR = new ResourceLocation(FlashMod.MODID,
+            "textures/spider/directional_indicator.png");
+    private static final ResourceLocation COBWEB = new ResourceLocation("minecraft", "textures/block/cobweb.png");
+    private static final float WEB_WIDTH = 0.036F;
+    private static final float WEB_SHADE = 0.9F;
 
-    /** Spider-Men around: entity -> suit. */
+    /** Spider-Men around: entity -> suit (and SpiderPowers.UNSUITED_BIT). */
     private static final Map<Integer, Integer> SPIDERS = new HashMap<>();
-    /** The swing lines of the others: entity -> where it is fastened. */
-    private static final Map<Integer, Vec3> LINES = new HashMap<>();
+
+    /** What the others are doing (from SpiderMoveSyncPacket). */
+    private static final class Remote {
+        Vec3 anchor;
+        long lineStart;
+        double lineDist;
+        int arm;
+        Vec3 wall;
+        boolean ceiling;
+        boolean hanging;
+    }
+
+    private static final Map<Integer, Remote> REMOTE = new HashMap<>();
     /** The webbed: entity -> game time it breaks free. */
     private static final Map<Integer, Long> WEBBED = new HashMap<>();
     /** The spider-sense showing: entity -> [game time it started, strength]. */
     private static final Map<Integer, long[]> SENSES = new HashMap<>();
-    /** The flying kick: entity -> game time it ends (for the pose). */
-    private static final Map<Integer, Long> KICKS = new HashMap<>();
 
     /** A web strand shot (a moment on screen). */
     private record Strand(int caster, Vec3 from, Vec3 to, int target, long born, int life, boolean fromHand) {
     }
 
+    /** A line let go: it falls and fades (Powerborne's web fades). */
+    private static final class Fade {
+        final Vec3 s;
+        final Vec3 e;
+        int age;
+
+        Fade(Vec3 s, Vec3 e) {
+            this.s = s;
+            this.e = e;
+        }
+    }
+
+    /** A web stuck on a block face (the cobweb). */
+    private static final class Splat {
+        final Vec3 at;
+        final Direction face;
+        final long born;
+        final float spin;
+
+        Splat(Vec3 at, Direction face, long born) {
+            this.at = at;
+            this.face = face;
+            this.born = born;
+            this.spin = (float) (Math.random() * Math.PI * 2.0D);
+        }
+    }
+
     private static final List<Strand> STRANDS = new ArrayList<>();
+    private static final List<Fade> FADES = new ArrayList<>();
+    private static final List<Splat> SPLATS = new ArrayList<>();
 
     private SpiderClient() {
     }
 
     public static void reset() {
         SPIDERS.clear();
-        LINES.clear();
+        REMOTE.clear();
         WEBBED.clear();
         SENSES.clear();
-        KICKS.clear();
         STRANDS.clear();
+        FADES.clear();
+        SPLATS.clear();
         anchor = null;
-        clinging = false;
+        crawl = Crawl.NONE;
+        SpiderAnim.reset();
     }
 
-    public static void set(int entity, boolean has, int suit) {
+    public static void set(int entity, boolean has, int data) {
         if (has) {
-            SPIDERS.put(entity, suit);
+            SPIDERS.put(entity, data);
         } else {
             SPIDERS.remove(entity);
-            LINES.remove(entity);
+            REMOTE.remove(entity);
         }
     }
 
@@ -108,7 +165,13 @@ public final class SpiderClient {
     }
 
     public static int suit(Entity e) {
-        return SPIDERS.getOrDefault(e.getId(), 0);
+        return SPIDERS.getOrDefault(e.getId(), 0) & 0xFF;
+    }
+
+    /** His suit on (the suit key takes it off; his powers stay). */
+    public static boolean suited(Entity e) {
+        Integer d = SPIDERS.get(e.getId());
+        return d != null && (d & com.flash.spider.SpiderPowers.UNSUITED_BIT) == 0;
     }
 
     /** The local player on a web line now. */
@@ -116,35 +179,59 @@ public final class SpiderClient {
         return anchor != null;
     }
 
+    private static Remote remote(Player p) {
+        return REMOTE.get(p.getId());
+    }
+
+    private static boolean local(Player p) {
+        return p == Minecraft.getInstance().player;
+    }
+
     /** Where this player's swing line is fastened (null: none). */
     public static Vec3 line(Player p) {
-        if (p == Minecraft.getInstance().player) {
+        if (local(p)) {
             return anchor;
         }
-        return LINES.get(p.getId());
+        Remote r = remote(p);
+        return r == null ? null : r.anchor;
     }
 
-    /** Clinging to (or climbing) a wall: for the local player his own state, for the others a guess from where they are. */
-    public static boolean clinging(Player p) {
-        if (!isSpider(p) || p.onGround() || p.isPassenger() || line(p) != null) {
-            return false;
+    /** The wall he crawls on (the unit vector into it), or null. */
+    public static Vec3 wallNormal(Player p) {
+        if (local(p)) {
+            return crawl == Crawl.WALL ? new Vec3(wallX, 0.0D, wallZ) : null;
         }
-        if (p == Minecraft.getInstance().player) {
-            return clinging;
+        Remote r = remote(p);
+        return r == null ? null : r.wall;
+    }
+
+    public static boolean onCeiling(Player p) {
+        if (local(p)) {
+            return crawl == Crawl.CEILING;
         }
-        double vy = p.getY() - p.yo;
-        return vy > -0.05D && wallBeside(p);
+        Remote r = remote(p);
+        return r != null && r.ceiling;
     }
 
-    public static boolean kicking(Player p) {
-        Long until = KICKS.get(p.getId());
-        return until != null && p.level().getGameTime() < until;
+    public static boolean hanging(Player p) {
+        if (local(p)) {
+            return hanging;
+        }
+        Remote r = remote(p);
+        return r != null && r.hanging;
     }
 
-    private static boolean wallBeside(Player p) {
-        AABB box = p.getBoundingBox();
-        return !p.level().noCollision(p, new AABB(box.minX - 0.12D, box.minY + 0.15D, box.minZ - 0.12D,
-                box.maxX + 0.12D, box.maxY - 0.1D, box.maxZ + 0.12D));
+    public static boolean reeling(Player p) {
+        return local(p) && anchor != null && attached && p instanceof LocalPlayer lp && lp.input.jumping && !hanging;
+    }
+
+    /** Which arm holds the line: 0 right, 1 left, 2 both. */
+    public static int armVariant(Player p) {
+        if (local(p)) {
+            return armVariant;
+        }
+        Remote r = remote(p);
+        return r == null ? 0 : r.arm;
     }
 
     // ------------------------------------------------------------------
@@ -208,190 +295,688 @@ public final class SpiderClient {
     public static void pickSuit(int index) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p != null && isSpider(p)) {
-            SPIDERS.put(p.getId(), index);
+            SPIDERS.put(p.getId(), index | (SPIDERS.get(p.getId()) & com.flash.spider.SpiderPowers.UNSUITED_BIT));
             send(SpiderAbilities.SUIT, index);
         }
     }
 
+    private static void moved(int kind, int variant, Vec3 at, double nx, double nz) {
+        FlashNetwork.CHANNEL.sendToServer(new SpiderMovePacket(kind, variant, at, (float) nx, (float) nz));
+    }
+
+    /** Another Spider-Man's locomotion changed. */
+    public static void remoteMove(SpiderMoveSyncPacket m) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || !(mc.level.getEntity(m.entity()) instanceof Player p)) {
+            return;
+        }
+        Remote r = REMOTE.computeIfAbsent(m.entity(), k -> new Remote());
+        long now = mc.level.getGameTime();
+        switch (m.kind()) {
+            case SpiderMovePacket.LINE_ON -> {
+                r.anchor = m.at();
+                r.lineStart = now;
+                r.lineDist = p.getEyePosition().distanceTo(m.at());
+                r.arm = m.variant() & 3;
+                r.hanging = false;
+                SPLATS.add(new Splat(m.at(), Direction.from3DDataValue((m.variant() >> 2) & 7), now
+                        + (long) Math.ceil(r.lineDist / 5.5D)));
+            }
+            case SpiderMovePacket.LINE_OFF, SpiderMovePacket.LINE_BREAK -> {
+                if (r.anchor != null) {
+                    FADES.add(new Fade(wrist(mc, p, 1.0F, r.arm), r.anchor));
+                }
+                r.anchor = null;
+                r.hanging = false;
+            }
+            case SpiderMovePacket.RELEASE -> {
+                if (r.anchor != null) {
+                    FADES.add(new Fade(wrist(mc, p, 1.0F, r.arm), r.anchor));
+                }
+                r.anchor = null;
+                r.hanging = false;
+                SpiderAnim.event(p, SpiderAnim.EV_RELEASE, m.variant());
+            }
+            case SpiderMovePacket.WALL -> {
+                r.wall = new Vec3(m.nx(), 0.0D, m.nz());
+                r.ceiling = false;
+            }
+            case SpiderMovePacket.CEILING -> {
+                r.ceiling = true;
+                r.wall = null;
+            }
+            case SpiderMovePacket.CRAWL_OFF -> {
+                r.ceiling = false;
+                r.wall = null;
+            }
+            case SpiderMovePacket.WALL_JUMP -> {
+                r.ceiling = false;
+                r.wall = null;
+                SpiderAnim.event(p, SpiderAnim.EV_WALL_JUMP, 0);
+            }
+            case SpiderMovePacket.DOUBLE_JUMP -> SpiderAnim.event(p, SpiderAnim.EV_DOUBLE_JUMP, m.variant());
+            case SpiderMovePacket.HANG_ON -> r.hanging = true;
+            case SpiderMovePacket.HANG_OFF -> r.hanging = false;
+            default -> {
+            }
+        }
+    }
+
     // ------------------------------------------------------------------
-    // His locomotion: the swing and the walls
+    // The web swing (Powerborne's web_swing.js, its numbers)
     // ------------------------------------------------------------------
 
+    private static final double MAX_ATTACH = 80.0D;
+    private static final double MIN_ATTACH = 1.5D;
+    private static final double WEB_SPEED = 5.5D;
+    private static final double SOFT_CAP = 3.0D;
+    private static final double HARD_CAP = 4.5D;
+    private static final double ROPE_MIN = 1.0D;
+    private static final double REEL_SPEED = 0.38D;
+    private static final double AUTO_REEL = 0.06D;
+    private static final double PUMP = 0.06D;
+    private static final double STRAFE_PUMP = 0.03D;
+    private static final double SPRINT_PUMP = 1.5D;
+    private static final double DRAG_COMP = 0.05D;
+    private static final double TANGENTIAL_PUMP = 0.004D;
+    private static final double CONSTRAINT = 0.15D;
+    private static final double RELEASE_FORWARD = 0.5D;
+    private static final double MAX_EXIST = 128.0D;
+
     private static Vec3 anchor;
+    private static Direction anchorFace = Direction.UP;
+    private static BlockPos anchorBlock;
+    private static boolean attached;
+    private static int shootTicks;
     private static double rope;
-    private static int swingTicks;
+    private static int airTicks;
+    private static int armVariant;
+    private static boolean hanging;
     private static boolean swingWas;
-    private static boolean clinging;
     private static boolean jumpWas;
+    private static boolean doubleUsed;
+    private static int sinceGround;
 
     private static KeyMapping swingKey() {
         return FlashAbilityKeys.mapping(com.flash.ability.FlashAbility.WIND_HANDS);
     }
 
     private static void locomotion(Minecraft mc, LocalPlayer p) {
-        boolean able = isSpider(p) && !p.isSpectator() && !p.isPassenger() && !p.getAbilities().flying
-                && !p.isSleeping() && p.isAlive();
-        if (p.getAbilities().flying && isSpider(p) && !p.isCreative()) {
+        boolean able = isSpider(p) && !p.isSpectator() && !p.isPassenger() && !p.isSleeping() && p.isAlive()
+                && !p.getAbilities().flying;
+        if (p.getAbilities().flying && isSpider(p) && !p.isCreative() && !p.isSpectator()) {
             // he does not fly: the "may fly" is only for the long swings
             p.getAbilities().flying = false;
             p.onUpdateAbilities();
         }
+        if (p.onGround()) {
+            doubleUsed = false;
+            sinceGround = 0;
+        } else {
+            sinceGround++;
+        }
         KeyMapping key = swingKey();
         boolean down = able && key != null && key.isDown() && mc.screen == null;
         if (down && !swingWas && anchor == null) {
-            attach(p);
+            if (crawl != Crawl.NONE) {
+                stopCrawl(p, false);
+            }
+            shoot(p);
         } else if (!down && anchor != null) {
-            release(p, true);
+            release(p, attached);
         }
         swingWas = down;
+        boolean jump = p.input.jumping;
+        boolean jumpPressed = jump && !jumpWas;
         if (!able) {
             if (anchor != null) {
                 release(p, false);
             }
-            clinging = false;
+            if (crawl != Crawl.NONE) {
+                stopCrawl(p, false);
+            }
+            jumpWas = jump;
             return;
         }
         if (anchor != null) {
-            swing(p);
-            clinging = false;
+            swing(mc, p);
         } else {
-            crawl(p);
+            crawlTick(p, jumpPressed);
+            if (crawl == Crawl.NONE && jumpPressed && !p.onGround() && !doubleUsed && sinceGround > 3
+                    && !p.isInWater() && !p.onClimbable()) {
+                doubleJump(p);
+            }
         }
-        jumpWas = p.input.jumping;
+        jumpWas = jump;
     }
 
-    /** A block to fasten the line to: ahead and up (the higher the better for a swing). */
-    private static Vec3 findAnchor(LocalPlayer p) {
+    /** Where the line goes: where he looks; if nothing is there, a little higher. */
+    private static BlockHitResult aimAnchor(LocalPlayer p) {
         Vec3 eye = p.getEyePosition();
         float yaw = p.getYRot();
         float pitch = p.getXRot();
-        float[] raise = {0.0F, 18.0F, 34.0F, 50.0F, 64.0F};
+        float[] raise = {0.0F, 15.0F, 30.0F, 45.0F};
         for (float r : raise) {
-            float pp = Math.max(-80.0F, Math.min(pitch, 10.0F) - r);
-            Vec3 dir = Vec3.directionFromRotation(pp, yaw);
-            HitResult hit = p.level().clip(new ClipContext(eye, eye.add(dir.scale(72.0D)), ClipContext.Block.COLLIDER,
-                    ClipContext.Fluid.NONE, p));
-            if (hit.getType() == HitResult.Type.BLOCK && hit.getLocation().y > p.getY() + 2.5D) {
-                return hit.getLocation();
+            Vec3 dir = Vec3.directionFromRotation(Math.max(-85.0F, pitch - r), yaw);
+            HitResult hit = p.level().clip(new ClipContext(eye, eye.add(dir.scale(MAX_ATTACH)),
+                    ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+            if (hit instanceof BlockHitResult bh && hit.getType() == HitResult.Type.BLOCK) {
+                double d = eye.distanceTo(hit.getLocation());
+                if (d >= MIN_ATTACH && (r == 0.0F || hit.getLocation().y > p.getY() + 2.0D)) {
+                    return bh;
+                }
             }
         }
         return null;
     }
 
-    private static void attach(LocalPlayer p) {
-        Vec3 at = findAnchor(p);
-        if (at == null) {
-            p.playSound(net.minecraft.sounds.SoundEvents.FISHING_BOBBER_THROW, 0.4F, 0.6F);
+    private static void shoot(LocalPlayer p) {
+        BlockHitResult hit = aimAnchor(p);
+        if (hit == null) {
+            p.playSound(SoundEvents.FISHING_BOBBER_THROW, 0.4F, 0.6F);
             return;
         }
-        anchor = at;
-        Vec3 chest = p.position().add(0.0D, 1.1D, 0.0D);
-        rope = Math.max(4.0D, chest.distanceTo(at) * 0.94D);
-        swingTicks = 0;
-        if (p.onGround()) {
-            p.setDeltaMovement(p.getDeltaMovement().add(0.0D, 0.55D, 0.0D));
-        }
-        p.playSound(net.minecraft.sounds.SoundEvents.FISHING_BOBBER_THROW, 0.8F, 1.5F);
-        FlashNetwork.CHANNEL.sendToServer(new SpiderLinePacket(true, at));
+        anchor = hit.getLocation();
+        anchorFace = hit.getDirection();
+        anchorBlock = hit.getBlockPos();
+        attached = false;
+        shootTicks = Math.max(1, (int) Math.ceil(p.getEyePosition().distanceTo(anchor) / WEB_SPEED));
+        double roll = Math.random();
+        armVariant = roll < 0.333D ? 1 : roll < 0.666D ? 0 : 2;
+        hanging = false;
+        airTicks = 0;
+        moved(SpiderMovePacket.LINE_ON, armVariant | (anchorFace.get3DDataValue() << 2), anchor, 0.0D, 0.0D);
+        SPLATS.add(new Splat(anchor, anchorFace, p.level().getGameTime() + shootTicks));
     }
 
-    private static void release(LocalPlayer p, boolean fling) {
-        if (fling && !p.onGround()) {
-            // let go at the bottom of the arc: flung on, a little up
-            Vec3 look = p.getLookAngle();
-            Vec3 v = p.getDeltaMovement().add(look.x * 0.25D, 0.32D, look.z * 0.25D);
-            if (v.length() > 2.8D) {
-                v = v.normalize().scale(2.8D);
-            }
-            p.setDeltaMovement(v);
-        }
+    /** Let go: with momentum (speed over 0.2) flung on with a release flip and the dive; else just dropped. */
+    private static void release(LocalPlayer p, boolean launch) {
+        Minecraft mc = Minecraft.getInstance();
+        Vec3 at = anchor;
+        Vec3 from = wrist(mc, p, 1.0F, armVariant);
         anchor = null;
-        FlashNetwork.CHANNEL.sendToServer(new SpiderLinePacket(false, Vec3.ZERO));
+        boolean wasHanging = hanging;
+        hanging = false;
+        if (wasHanging) {
+            moved(SpiderMovePacket.HANG_OFF, 0, Vec3.ZERO, 0.0D, 0.0D);
+        }
+        if (attached && at != null) {
+            FADES.add(new Fade(from, at));
+        }
+        Vec3 v = p.getDeltaMovement();
+        if (launch && attached && v.length() > 0.2D && !p.onGround()) {
+            Vec3 look = p.getLookAngle();
+            double lh = Math.sqrt(look.x * look.x + look.z * look.z);
+            double vx = v.x;
+            double vy = v.y;
+            double vz = v.z;
+            if (lh > 1.0E-6D) {
+                vx += look.x / lh * RELEASE_FORWARD;
+                vz += look.z / lh * RELEASE_FORWARD;
+            }
+            vy += Mth.clamp((at.y - p.getY()) * 0.1D, -1.0D, 1.0D);
+            Vec3 nv = new Vec3(vx, vy, vz);
+            if (nv.length() > HARD_CAP) {
+                nv = nv.normalize().scale(HARD_CAP);
+            }
+            p.setDeltaMovement(nv);
+            p.fallDistance = 0.0F;
+            int variant = p.getRandom().nextInt(8);
+            SpiderAnim.event(p, SpiderAnim.EV_RELEASE, variant);
+            moved(SpiderMovePacket.RELEASE, variant, Vec3.ZERO, 0.0D, 0.0D);
+            releasing = 10;
+        } else {
+            moved(SpiderMovePacket.LINE_OFF, 0, Vec3.ZERO, 0.0D, 0.0D);
+        }
+        attached = false;
     }
 
-    private static void swing(LocalPlayer p) {
-        swingTicks++;
-        Vec3 chest = p.position().add(0.0D, 1.1D, 0.0D);
-        Vec3 d = anchor.subtract(chest);
-        double dist = d.length();
-        if (dist > 96.0D || swingTicks > 600 || (p.onGround() && swingTicks > 6)
-                || p.level().getBlockState(BlockPos.containing(anchor.add(d.normalize().scale(0.05D)))).isAir()
-                && p.level().getBlockState(BlockPos.containing(anchor)).isAir()) {
+    private static int releasing;
+
+    private static void swing(Minecraft mc, LocalPlayer p) {
+        if (!attached) {
+            if (--shootTicks > 0) {
+                return;
+            }
+            attached = true;
+            rope = Math.max(MIN_ATTACH, p.position().add(0.0D, 1.0D, 0.0D).distanceTo(anchor));
+            if (p.onGround()) {
+                p.setDeltaMovement(p.getDeltaMovement().add(0.0D, 0.45D, 0.0D));
+            }
+            for (int i = 0; i < 6; i++) {
+                p.level().addParticle(ParticleTypes.WHITE_ASH, anchor.x, anchor.y, anchor.z, 0.0D, 0.0D, 0.0D);
+            }
+        }
+        Level level = p.level();
+        double sx = p.getX();
+        double sy = p.getY() + 1.0D;
+        double sz = p.getZ();
+        if (anchorBlock != null && level.getBlockState(anchorBlock).isAir()
+                || anchor.distanceToSqr(sx, sy, sz) > MAX_EXIST * MAX_EXIST) {
             release(p, false);
             return;
         }
-        // the line reels in a little: it lifts him through the arc
-        rope = Math.max(3.5D, rope - 0.035D);
-        Vec3 v = p.getDeltaMovement();
-        Vec3 r = d.scale(1.0D / dist);
-        if (dist > rope) {
-            double out = v.dot(r);
-            if (out < 0.0D) {
-                v = v.subtract(r.scale(out));
+        Vec3 dm = p.getDeltaMovement();
+        double vx = dm.x;
+        double vy = dm.y;
+        double vz = dm.z;
+        boolean onGround = p.onGround();
+        airTicks = onGround ? 0 : airTicks + 1;
+        // hanging: sneaking, slow, straight under the line
+        double ax = anchor.x;
+        double ay = anchor.y;
+        double az = anchor.z;
+        boolean hang = false;
+        if (!onGround && p.input.shiftKeyDown && !p.isSprinting()) {
+            double dx = ax - sx;
+            double dy = ay - sy;
+            double dz = az - sz;
+            double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (len > 1.0E-4D && dy > 0.0D) {
+                double align = dy / len;
+                double speed = dm.length();
+                hang = hanging ? align >= 0.82D && speed <= 0.85D : align >= 0.99D && speed <= 0.5D;
             }
-            v = v.add(r.scale(Math.min(0.55D, (dist - rope) * 0.3D)));
         }
+        if (hang != hanging) {
+            hanging = hang;
+            moved(hang ? SpiderMovePacket.HANG_ON : SpiderMovePacket.HANG_OFF, 0, Vec3.ZERO, 0.0D, 0.0D);
+        }
+        // reeling in (space; sprinting forward, a little)
+        double reelRatio = 1.0D;
+        boolean fwd = p.input.up;
+        boolean back = p.input.down;
+        boolean left = p.input.left;
+        boolean right = p.input.right;
+        if ((onGround || airTicks > 4) && rope > ROPE_MIN) {
+            double reel = 0.0D;
+            if (p.input.jumping && !hanging) {
+                reel += REEL_SPEED;
+            }
+            if (fwd && p.isSprinting() && !hanging) {
+                reel += AUTO_REEL;
+            }
+            if (reel > 0.0D) {
+                double nl = Math.max(ROPE_MIN, rope - reel);
+                reelRatio = Math.min(1.03D, rope / nl);
+                rope = nl;
+            }
+        }
+        // pumping the swing
+        int dirMult = fwd ? 1 : back ? -1 : 0;
+        int strafeMult = right ? 1 : left ? -1 : 0;
         Vec3 look = p.getLookAngle();
-        Vec3 flat = new Vec3(look.x, 0.0D, look.z);
-        flat = flat.lengthSqr() < 1.0E-4D ? Vec3.ZERO : flat.normalize();
-        Vec3 right = new Vec3(-flat.z, 0.0D, flat.x);
-        if (p.input.forwardImpulse > 0.0F) {
-            v = v.add(flat.scale(0.05D));
-        } else if (p.input.forwardImpulse < 0.0F) {
-            v = v.scale(0.97D);
+        double lh = Math.sqrt(look.x * look.x + look.z * look.z);
+        if (lh > 1.0E-6D && (dirMult != 0 || strafeMult != 0)) {
+            double fx = look.x / lh;
+            double fz = look.z / lh;
+            double mx = fx * dirMult + -fz * strafeMult;
+            double mz = fz * dirMult + fx * strafeMult;
+            double ml = Math.sqrt(mx * mx + mz * mz);
+            if (ml > 1.0E-6D) {
+                double strength = (dirMult != 0 ? PUMP : STRAFE_PUMP) * (p.isSprinting() ? SPRINT_PUMP : 1.0D);
+                if (hanging) {
+                    strength *= 0.06D;
+                }
+                vx += mx / ml * strength;
+                vz += mz / ml * strength;
+            }
         }
-        v = v.add(right.scale(-p.input.leftImpulse * 0.025D));
-        if (v.length() > 2.6D) {
-            v = v.normalize().scale(2.6D);
+        if (dirMult != 0) {
+            double d = Math.sqrt((sx - ax) * (sx - ax) + (sy - ay) * (sy - ay) + (sz - az) * (sz - az));
+            double vn = Math.sqrt(vx * vx + vy * vy + vz * vz);
+            if (d > 1.0E-6D && vn > 1.0E-6D) {
+                double ux = (sx - ax) / d;
+                double uy = (sy - ay) / d;
+                double uz = (sz - az) / d;
+                double vr = vx * ux + vy * uy + vz * uz;
+                double tx = vx - vr * ux;
+                double ty = vy - vr * uy;
+                double tz = vz - vr * uz;
+                double tn = Math.sqrt(tx * tx + ty * ty + tz * tz);
+                if (tn > 1.0E-6D) {
+                    double scale = TANGENTIAL_PUMP / tn * (hanging ? 0.06D : 1.0D);
+                    vx += tx * scale;
+                    vy += ty * scale;
+                    vz += tz * scale;
+                }
+            }
         }
-        p.setDeltaMovement(v);
+        vx *= 1.0D + DRAG_COMP;
+        vz *= 1.0D + DRAG_COMP;
+        vy *= 1.015D;
+        // the rope
+        double px = sx + vx;
+        double py = sy + vy;
+        double pz = sz + vz;
+        double rx = px - ax;
+        double ry = py - ay;
+        double rz = pz - az;
+        double d = Math.sqrt(rx * rx + ry * ry + rz * rz);
+        if (d > rope && d > 1.0E-6D) {
+            double ux = rx / d;
+            double uy = ry / d;
+            double uz = rz / d;
+            double vr = vx * ux + vy * uy + vz * uz;
+            if (vr > 0.0D) {
+                vx -= vr * ux;
+                vy -= vr * uy;
+                vz -= vr * uz;
+            }
+            double excess = d - rope;
+            if (excess > 10.0D) {
+                moved(SpiderMovePacket.LINE_BREAK, 0, Vec3.ZERO, 0.0D, 0.0D);
+                release(p, false);
+                return;
+            }
+            vx -= ux * excess * CONSTRAINT;
+            vy -= uy * excess * CONSTRAINT;
+            vz -= uz * excess * CONSTRAINT;
+        }
+        if (reelRatio > 1.0D) {
+            vx *= reelRatio;
+            vy *= reelRatio;
+            vz *= reelRatio;
+        }
+        double speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        if (speed > SOFT_CAP) {
+            double drag = 1.0D - Math.min(0.1D * (speed - SOFT_CAP), 0.12D);
+            vx *= drag;
+            vy *= drag;
+            vz *= drag;
+        }
+        speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        if (speed > HARD_CAP) {
+            double s = HARD_CAP / speed;
+            vx *= s;
+            vy *= s;
+            vz *= s;
+        }
+        p.setDeltaMovement(vx, vy, vz);
         p.fallDistance = 0.0F;
-        if (swingTicks % 2 == 0 && v.lengthSqr() > 0.6D) {
-            p.level().addParticle(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.4D, p.getZ(), -v.x * 0.05D, 0.0D,
-                    -v.z * 0.05D);
+    }
+
+    private static void doubleJump(LocalPlayer p) {
+        doubleUsed = true;
+        Vec3 v = p.getDeltaMovement();
+        Vec3 look = p.getLookAngle();
+        double lh = Math.sqrt(look.x * look.x + look.z * look.z);
+        double fx = lh > 1.0E-6D ? look.x / lh * 0.25D : 0.0D;
+        double fz = lh > 1.0E-6D ? look.z / lh * 0.25D : 0.0D;
+        p.setDeltaMovement(v.x + fx, Math.max(v.y, 0.72D), v.z + fz);
+        p.fallDistance = 0.0F;
+        int[] flips = {0, 1, 3, 5, 7};
+        int variant = flips[p.getRandom().nextInt(flips.length)];
+        SpiderAnim.event(p, SpiderAnim.EV_DOUBLE_JUMP, variant);
+        moved(SpiderMovePacket.DOUBLE_JUMP, variant, Vec3.ZERO, 0.0D, 0.0D);
+    }
+
+    // ------------------------------------------------------------------
+    // Wall and ceiling crawling (Powerborne's wall_crawling.js, its numbers)
+    // ------------------------------------------------------------------
+
+    private enum Crawl { NONE, WALL, CEILING }
+
+    private static final double CLIMB_SPEED = 0.3D;
+    private static final double STRAFE_SPEED = 0.25D;
+    private static final double CEILING_SPEED = 0.25D;
+    private static final double JUMP_LAUNCH = 1.3D;
+    private static final double JUMP_UP = 1.05D;
+
+    private static Crawl crawl = Crawl.NONE;
+    /** Into the wall (a cardinal direction). */
+    private static int wallX;
+    private static int wallZ;
+    private static int ceilingY;
+    private static int suppress;
+
+    private static final int[][] CARDINALS = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
+
+    private static boolean solid(Level level, BlockPos pos) {
+        return !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
+    }
+
+    /** A wall in that direction, beside his body (at his waist or his chest). */
+    private static boolean wallAt(LocalPlayer p, int dx, int dz, double yOffset) {
+        AABB box = p.getBoundingBox();
+        double reach = p.getBbWidth() * 0.5D + 0.35D;
+        double x = p.getX() + dx * reach;
+        double z = p.getZ() + dz * reach;
+        Level level = p.level();
+        return solid(level, BlockPos.containing(x, box.minY + 0.5D + yOffset, z))
+                || solid(level, BlockPos.containing(x, box.minY + 1.3D + yOffset, z));
+    }
+
+    private static int[] findWall(LocalPlayer p, boolean preferLook) {
+        float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+        double lx = -Math.sin(yaw);
+        double lz = Math.cos(yaw);
+        int[] best = null;
+        double bestDot = -2.0D;
+        for (int[] c : CARDINALS) {
+            if (!wallAt(p, c[0], c[1], 0.0D)) {
+                continue;
+            }
+            double dot = preferLook ? c[0] * lx + c[1] * lz : 0.0D;
+            if (best == null || dot > bestDot) {
+                best = c;
+                bestDot = dot;
+            }
+        }
+        return best;
+    }
+
+    private static boolean groundClearance(LocalPlayer p) {
+        return p.level().noCollision(p, p.getBoundingBox().move(0.0D, -1.0D, 0.0D));
+    }
+
+    private static Integer ceilingAbove(LocalPlayer p, double range) {
+        Vec3 from = p.position();
+        Vec3 to = from.add(0.0D, p.getBbHeight() + range, 0.0D);
+        HitResult hit = p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+        return hit instanceof BlockHitResult bh && hit.getType() == HitResult.Type.BLOCK ? bh.getBlockPos().getY()
+                : null;
+    }
+
+    private static void startWall(LocalPlayer p, int[] c) {
+        crawl = Crawl.WALL;
+        wallX = c[0];
+        wallZ = c[1];
+        moved(SpiderMovePacket.WALL, 0, Vec3.ZERO, wallX, wallZ);
+    }
+
+    private static void startCeiling(LocalPlayer p, int y) {
+        crawl = Crawl.CEILING;
+        ceilingY = y;
+        moved(SpiderMovePacket.CEILING, 0, Vec3.ZERO, 0.0D, 0.0D);
+    }
+
+    private static void stopCrawl(LocalPlayer p, boolean quiet) {
+        crawl = Crawl.NONE;
+        if (!quiet) {
+            moved(SpiderMovePacket.CRAWL_OFF, 0, Vec3.ZERO, 0.0D, 0.0D);
         }
     }
 
-    private static void crawl(LocalPlayer p) {
+    private static void crawlTick(LocalPlayer p, boolean jumpPressed) {
+        if (suppress > 0) {
+            suppress--;
+        }
         if (p.isInWater() || p.isInLava() || p.onClimbable()) {
-            clinging = false;
+            if (crawl != Crawl.NONE) {
+                stopCrawl(p, false);
+            }
             return;
         }
-        boolean wall = wallBeside(p);
-        float forward = p.input.forwardImpulse;
-        boolean jump = p.input.jumping;
-        if (!clinging) {
-            // walking into a wall: up it he goes
-            if (wall && p.horizontalCollision && (forward > 0.0F || !p.onGround())) {
-                clinging = true;
-            } else {
+        boolean fwd = p.input.up;
+        boolean back = p.input.down;
+        boolean left = p.input.left;
+        boolean right = p.input.right;
+        if (crawl == Crawl.NONE) {
+            if (suppress > 0) {
+                return;
+            }
+            if (!p.onGround() && p.getXRot() <= -40.0F) {
+                Integer y = ceilingAbove(p, 0.6D);
+                if (y != null) {
+                    startCeiling(p, y);
+                    return;
+                }
+            }
+            boolean into = p.horizontalCollision;
+            if (!p.onGround() && into && groundClearance(p) || p.onGround() && into && fwd) {
+                int[] c = findWall(p, true);
+                if (c != null) {
+                    startWall(p, c);
+                    if (p.onGround()) {
+                        p.setDeltaMovement(p.getDeltaMovement().x, 0.32D, p.getDeltaMovement().z);
+                    }
+                }
+            }
+            return;
+        }
+        if (crawl == Crawl.CEILING) {
+            ceilingTick(p, fwd, back, left, right, jumpPressed);
+            return;
+        }
+        // on the wall
+        if (p.input.shiftKeyDown) {
+            stopCrawl(p, false);
+            return;
+        }
+        float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+        double lx = -Math.sin(yaw);
+        double lz = Math.cos(yaw);
+        boolean facingWall = lx * wallX + lz * wallZ > 0.3D;
+        if (jumpPressed && !facingWall) {
+            // the wall jump: off it where he looks, high
+            double lh = Math.sqrt(lx * lx + lz * lz);
+            p.setDeltaMovement(lx / lh * JUMP_LAUNCH, JUMP_UP, lz / lh * JUMP_LAUNCH);
+            p.fallDistance = 0.0F;
+            stopCrawl(p, true);
+            suppress = 6;
+            SpiderAnim.event(p, SpiderAnim.EV_WALL_JUMP, 0);
+            moved(SpiderMovePacket.WALL_JUMP, 0, Vec3.ZERO, 0.0D, 0.0D);
+            return;
+        }
+        if (fwd && !back && p.getXRot() <= -50.0F) {
+            Integer y = ceilingAbove(p, 0.6D);
+            if (y != null) {
+                startCeiling(p, y);
                 return;
             }
         }
-        if (!wall || (p.onGround() && forward <= 0.0F && !jump)) {
-            clinging = false;
+        boolean topped = !wallAt(p, wallX, wallZ, 0.6D);
+        if (topped && fwd && !back) {
+            // over the edge
+            stopCrawl(p, false);
+            suppress = 8;
+            p.setDeltaMovement(wallX * 0.15D, 0.42D, wallZ * 0.15D);
+            p.fallDistance = 0.0F;
             return;
         }
-        Vec3 v = p.getDeltaMovement();
-        if (forward < 0.0F && jump && !jumpWas) {
-            // a jump off the wall, backwards
-            Vec3 back = p.getLookAngle().multiply(-1.0D, 0.0D, -1.0D);
-            back = back.lengthSqr() < 1.0E-4D ? Vec3.ZERO : back.normalize();
-            p.setDeltaMovement(back.scale(0.7D).add(0.0D, 0.55D, 0.0D));
-            clinging = false;
+        if (!wallAt(p, wallX, wallZ, 0.0D)) {
+            int[] c = findWall(p, true);
+            if (c == null) {
+                stopCrawl(p, false);
+                return;
+            }
+            startWall(p, c);
+        } else if (left != right) {
+            // round a corner: a wall ahead where he strafes
+            int s = right ? 1 : -1;
+            int tx = -wallZ * s;
+            int tz = wallX * s;
+            if (wallAt(p, tx, tz, 0.0D)) {
+                startWall(p, new int[] {tx, tz});
+            }
+        }
+        if (p.onGround() && back) {
+            stopCrawl(p, false);
             return;
         }
-        double vy;
-        if (jump || (forward > 0.0F && p.horizontalCollision)) {
-            vy = 0.26D;
-        } else if (p.input.shiftKeyDown) {
-            vy = -0.16D;
-        } else {
-            vy = 0.0D;
+        double vy = topped ? (back ? -CLIMB_SPEED : 0.0D) : ((fwd || p.input.jumping ? 1 : 0) - (back ? 1 : 0))
+                * CLIMB_SPEED;
+        double strafe = ((right ? 1 : 0) - (left ? 1 : 0)) * STRAFE_SPEED;
+        double tx = -wallZ;
+        double tz = wallX;
+        double vx = tx * strafe + wallX * 0.06D;
+        double vz = tz * strafe + wallZ * 0.06D;
+        if (back) {
+            vx += wallX * 0.18D;
+            vz += wallZ * 0.18D;
         }
-        p.setDeltaMovement(v.x * 0.7D, vy, v.z * 0.7D);
+        p.setDeltaMovement(vx, vy, vz);
         p.fallDistance = 0.0F;
     }
+
+    private static void ceilingTick(LocalPlayer p, boolean fwd, boolean back, boolean left, boolean right,
+                                    boolean jumpPressed) {
+        Level level = p.level();
+        if (jumpPressed || p.input.shiftKeyDown || !solid(level, new BlockPos(p.getBlockX(), ceilingY, p.getBlockZ()))) {
+            stopCrawl(p, false);
+            suppress = 10;
+            return;
+        }
+        double vx = 0.0D;
+        double vz = 0.0D;
+        int forward = (fwd ? 1 : 0) - (back ? 1 : 0);
+        int strafe = (left ? 1 : 0) - (right ? 1 : 0);
+        if (forward != 0 || strafe != 0) {
+            float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+            double cos = Math.cos(yaw);
+            double sin = Math.sin(yaw);
+            vx = (strafe * cos - forward * sin) * CEILING_SPEED;
+            vz = (strafe * sin + forward * cos) * CEILING_SPEED;
+            if (!solid(level, BlockPos.containing(p.getX() + vx * 4.0D, ceilingY, p.getZ() + vz * 4.0D))) {
+                vx = 0.0D;
+                vz = 0.0D;
+            }
+        }
+        BlockPos above = new BlockPos(p.getBlockX(), ceilingY, p.getBlockZ());
+        var shape = level.getBlockState(above).getCollisionShape(level, above);
+        double underside = ceilingY + (shape.isEmpty() ? 0.0D : shape.bounds().minY);
+        double target = underside - p.getBbHeight();
+        p.setDeltaMovement(vx, (target - p.getY()) * 0.5D + 0.08D, vz);
+        p.fallDistance = 0.0F;
+    }
+
+    // ------------------------------------------------------------------
+    // Every tick
+    // ------------------------------------------------------------------
+
+    private static WindSound wind;
+
+    /** The wind of the swing (as Powerborne's: the elytra's rush, louder the faster). */
+    private static final class WindSound extends AbstractTickableSoundInstance {
+        WindSound() {
+            super(SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
+            this.looping = true;
+            this.delay = 0;
+            this.volume = 0.001F;
+            this.relative = true;
+            this.attenuation = SoundInstance.Attenuation.NONE;
+        }
+
+        void level(float v) {
+            this.volume = Math.max(0.001F, v);
+        }
+
+        void end() {
+            this.stop();
+        }
+
+        @Override
+        public boolean canStartSilent() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+        }
+    }
+
+    private static float windVol;
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -401,14 +986,22 @@ public final class SpiderClient {
         }
         if (mc.player != null && !mc.isPaused()) {
             locomotion(mc, mc.player);
+            tickWind(mc, mc.player);
         }
         long now = mc.level.getGameTime();
         WEBBED.values().removeIf(t -> t < now);
-        KICKS.values().removeIf(t -> t < now);
         SENSES.values().removeIf(s -> now - s[0] > 30L);
         STRANDS.removeIf(s -> now - s.born > s.life);
-        LINES.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Player p) || !isSpider(p));
-        // a few threads of web on the webbed
+        SPLATS.removeIf(s -> now - s.born > 140L);
+        for (Iterator<Fade> it = FADES.iterator(); it.hasNext(); ) {
+            if (++it.next().age >= 20) {
+                it.remove();
+            }
+        }
+        REMOTE.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Player pl) || !isSpider(pl));
+        if (indicatorTicks > 0) {
+            indicatorTicks--;
+        }
         if (now % 6 == 0) {
             for (int id : WEBBED.keySet()) {
                 Entity e = mc.level.getEntity(id);
@@ -420,9 +1013,49 @@ public final class SpiderClient {
         }
     }
 
+    private static void tickWind(Minecraft mc, LocalPlayer p) {
+        if (releasing > 0) {
+            releasing--;
+        }
+        boolean on = isSpider(p) && (anchor != null && attached || releasing > 0);
+        float target = 0.0F;
+        if (on) {
+            double sq = p.getDeltaMovement().lengthSqr();
+            target = (float) Math.min(sq / 4.0D, 1.0D) * 0.35F;
+        }
+        windVol += (target - windVol) * 0.15F;
+        if (on || windVol > 0.001F) {
+            if (wind == null || !mc.getSoundManager().isActive(wind)) {
+                wind = new WindSound();
+                mc.getSoundManager().play(wind);
+            }
+            wind.level(windVol);
+        } else if (wind != null) {
+            wind.end();
+            wind = null;
+            windVol = 0.0F;
+        }
+    }
+
+    /** The swing tilts the camera into the arc. */
+    @SubscribeEvent
+    public static void onCamera(ViewportEvent.ComputeCameraAngles event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !isSpider(mc.player) || !mc.options.getCameraType().isFirstPerson()) {
+            return;
+        }
+        float roll = SpiderAnim.roll(mc.player, (float) event.getPartialTick());
+        if (Math.abs(roll) > 0.01F) {
+            event.setRoll(event.getRoll() + roll);
+        }
+    }
+
     // ------------------------------------------------------------------
     // What the server sends
     // ------------------------------------------------------------------
+
+    private static int indicatorTicks;
+    private static int indicatorEntity = -1;
 
     public static void fx(HeroFxPacket p) {
         Minecraft mc = Minecraft.getInstance();
@@ -430,15 +1063,24 @@ public final class SpiderClient {
             return;
         }
         long now = mc.level.getGameTime();
+        Entity caster = mc.level.getEntity(p.caster());
+        Player cp = caster instanceof Player pl ? pl : null;
         switch (p.type()) {
             case SpiderAbilities.FX_SHOT -> {
                 STRANDS.add(new Strand(p.caster(), p.from(), p.to(), -1, now, 5, true));
+                if (cp != null) {
+                    SpiderAnim.event(cp, SpiderAnim.EV_SHOOT, 0);
+                }
                 if (p.power() > 0.0F) {
                     splat(mc, p.to(), 8);
+                    HitResult hit = mc.level.clip(new ClipContext(p.from(), p.to().add(p.to().subtract(p.from())
+                            .normalize().scale(0.2D)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
+                    if (hit instanceof BlockHitResult bh && hit.getType() == HitResult.Type.BLOCK) {
+                        SPLATS.add(new Splat(bh.getLocation(), bh.getDirection(), now));
+                    }
                 }
             }
             case SpiderAbilities.FX_NET -> {
-                // a fan of strands thrown ahead
                 Vec3 dir = p.to();
                 Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
                 side = side.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
@@ -449,22 +1091,37 @@ public final class SpiderClient {
                     Vec3 d = dir.add(side.scale(Math.tan(a))).add(up.scale(b)).normalize();
                     STRANDS.add(new Strand(p.caster(), p.from(), p.from().add(d.scale(12.0D)), -1, now, 8, true));
                 }
-            }
-            case SpiderAbilities.FX_YANK -> STRANDS.add(new Strand(p.caster(), p.from(), p.to(), p.target(), now, 9,
-                    true));
-            case SpiderAbilities.FX_ZIP -> STRANDS.add(new Strand(p.caster(), p.from(), p.to(), -1, now, 10, true));
-            case SpiderAbilities.FX_LINE -> {
-                if (mc.player == null || p.caster() != mc.player.getId()) {
-                    LINES.put(p.caster(), p.from());
+                if (cp != null) {
+                    SpiderAnim.event(cp, SpiderAnim.EV_SHOOT, 0);
                 }
             }
-            case SpiderAbilities.FX_LINE_OFF -> LINES.remove(p.caster());
+            case SpiderAbilities.FX_YANK -> {
+                STRANDS.add(new Strand(p.caster(), p.from(), p.to(), p.target(), now, 9, true));
+                if (cp != null) {
+                    SpiderAnim.event(cp, SpiderAnim.EV_SHOOT, 0);
+                }
+            }
+            case SpiderAbilities.FX_ZIP -> {
+                STRANDS.add(new Strand(p.caster(), p.from(), p.to(), -1, now, 10, true));
+                if (cp != null) {
+                    SpiderAnim.event(cp, SpiderAnim.EV_ZIP, 0);
+                }
+                HitResult hit = mc.level.clip(new ClipContext(p.from(), p.to().add(p.to().subtract(p.from())
+                        .normalize().scale(0.2D)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
+                if (hit instanceof BlockHitResult bh && hit.getType() == HitResult.Type.BLOCK) {
+                    SPLATS.add(new Splat(bh.getLocation(), bh.getDirection(), now + 2));
+                }
+            }
             case SpiderAbilities.FX_WEBBED -> {
                 WEBBED.put(p.target(), now + (long) p.power());
                 splat(mc, p.from().add(0.0D, 0.8D, 0.0D), 14);
             }
             case SpiderAbilities.FX_SENSE -> {
                 SENSES.put(p.caster(), new long[] {now, (long) p.power()});
+                if (mc.player != null && p.caster() == mc.player.getId() && p.target() >= 0) {
+                    indicatorTicks = 30;
+                    indicatorEntity = p.target();
+                }
                 if (p.power() >= 2.0F) {
                     for (int i = 0; i < 24; i++) {
                         double a = i / 24.0D * Math.PI * 2.0D;
@@ -475,7 +1132,9 @@ public final class SpiderClient {
                 }
             }
             case SpiderAbilities.FX_KICK -> {
-                KICKS.put(p.caster(), now + 12L);
+                if (cp != null) {
+                    SpiderAnim.event(cp, SpiderAnim.EV_KICK, 0);
+                }
                 for (int i = 0; i < 10; i++) {
                     mc.level.addParticle(ParticleTypes.CLOUD, p.from().x, p.from().y + 0.4D, p.from().z,
                             -p.to().x * 0.2D + (Math.random() - 0.5D) * 0.1D, 0.02D,
@@ -492,6 +1151,9 @@ public final class SpiderClient {
             }
             case SpiderAbilities.FX_DODGE -> {
                 SENSES.put(p.caster(), new long[] {now, 1L});
+                if (cp != null) {
+                    SpiderAnim.event(cp, SpiderAnim.EV_DEFLECT, 0);
+                }
                 for (int i = 0; i < 8; i++) {
                     mc.level.addParticle(ParticleTypes.POOF, p.from().x, p.from().y + 1.0D, p.from().z,
                             -p.to().x * 0.15D, 0.02D, -p.to().z * 0.15D);
@@ -511,23 +1173,22 @@ public final class SpiderClient {
     }
 
     // ------------------------------------------------------------------
-    // Drawing: the lines, the cocoons, the sense
+    // Drawing
     // ------------------------------------------------------------------
 
-    /** Where his web comes out: the raised right wrist (in first person, from the right of the view). */
-    private static Vec3 wrist(Minecraft mc, Player p, float pt) {
+    /**
+     * Where his web leaves his hand: the raised hand on the line (right, left, or between both), the right wrist
+     * otherwise; in first person, the vanilla rope hold.
+     */
+    private static Vec3 wrist(Minecraft mc, Player p, float pt, int arm) {
         boolean me = p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
         if (me) {
-            Camera cam = mc.gameRenderer.getMainCamera();
-            Vec3 look = new Vec3(cam.getLookVector());
-            Vec3 left = new Vec3(cam.getLeftVector());
-            Vec3 up = new Vec3(cam.getUpVector());
-            return cam.getPosition().add(look.scale(0.6D)).add(left.scale(-0.32D)).add(up.scale(-0.22D));
+            return p.getRopeHoldPosition(pt).add(0.0D, 0.2D, 0.0D);
         }
         Vec3 base = p.getPosition(pt);
         float yaw = Mth.rotLerp(pt, p.yBodyRotO, p.yBodyRot) * Mth.DEG_TO_RAD;
-        double side = -0.36D;
         boolean raised = line(p) != null;
+        double side = raised ? (arm == 1 ? 0.36D : arm == 2 ? 0.0D : -0.36D) : -0.36D;
         double h = raised ? 2.05D : 1.35D;
         double fwd = raised ? 0.05D : 0.35D;
         return base.add(-Math.sin(yaw) * fwd + Math.cos(yaw) * side, h, Math.cos(yaw) * fwd + Math.sin(yaw) * side);
@@ -535,11 +1196,15 @@ public final class SpiderClient {
 
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+                renderSense(event);
+            }
             return;
         }
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || SPIDERS.isEmpty() && WEBBED.isEmpty() && STRANDS.isEmpty()) {
+        if (mc.level == null || SPIDERS.isEmpty() && WEBBED.isEmpty() && STRANDS.isEmpty() && FADES.isEmpty()
+                && SPLATS.isEmpty()) {
             return;
         }
         Camera camera = event.getCamera();
@@ -552,30 +1217,54 @@ public final class SpiderClient {
         Matrix4f m = ps.last().pose();
         Matrix3f n = ps.last().normal();
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-        // the lines
-        VertexConsumer web = buffers.getBuffer(RenderType.entityCutoutNoCull(WEB));
+        // the lines (Powerborne's: a thin light-grey strand, lit by the world)
+        VertexConsumer web = buffers.getBuffer(RenderType.textBackground());
         for (Player p : mc.level.players()) {
             Vec3 at = line(p);
-            if (at != null && isSpider(p)) {
-                Vec3 from = wrist(mc, p, pt);
-                strand(web, m, n, from, at, cam, 0.045F, light(mc, from));
+            if (at == null || !isSpider(p)) {
+                continue;
             }
+            Vec3 from = wrist(mc, p, pt, armVariant(p));
+            Vec3 to = at;
+            double reach = lineReach(p, now, pt, from, at);
+            if (reach < 1.0D) {
+                to = from.add(at.subtract(from).scale(reach));
+            }
+            strand(web, m, from, to, 1.0F, light(mc, from.add(to).scale(0.5D)));
         }
         for (Strand s : STRANDS) {
             float age = now - s.born + pt;
             Entity caster = mc.level.getEntity(s.caster);
-            Vec3 from = s.fromHand && caster instanceof Player cp ? wrist(mc, cp, pt) : s.from;
+            Vec3 from = s.fromHand && caster instanceof Player cp ? wrist(mc, cp, pt, 0) : s.from;
             Vec3 to = s.to;
             Entity t = s.target >= 0 ? mc.level.getEntity(s.target) : null;
             if (t != null) {
                 to = t.getPosition(pt).add(0.0D, t.getBbHeight() * 0.6D, 0.0D);
             }
-            // shot out: it reaches the end in two ticks, then hangs a moment
             float reach = Math.min(1.0F, age / 2.0F);
-            Vec3 end = from.add(to.subtract(from).scale(reach));
-            strand(web, m, n, from, end, cam, 0.04F, light(mc, from));
+            strand(web, m, from, from.add(to.subtract(from).scale(reach)), 1.0F, light(mc, from));
         }
-        buffers.endBatch(RenderType.entityCutoutNoCull(WEB));
+        for (Fade f : FADES) {
+            float t = Mth.clamp((f.age + pt) / 20.0F, 0.0F, 1.0F);
+            Vec3 s = new Vec3(f.s.x + (f.e.x - f.s.x) * t, f.s.y - 5.0D * t * t, f.s.z + (f.e.z - f.s.z) * t);
+            strand(web, m, s, f.e, 1.0F - t, light(mc, f.e));
+        }
+        buffers.endBatch(RenderType.textBackground());
+        // the web splats (the cobweb on the block)
+        if (!SPLATS.isEmpty()) {
+            VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucent(COBWEB));
+            for (Splat s : SPLATS) {
+                if (now < s.born) {
+                    continue;
+                }
+                float age = now - s.born + pt;
+                float a = Math.min(1.0F, age / 3.0F) * Math.min(1.0F, (140.0F - age) / 20.0F);
+                if (a > 0.0F) {
+                    splatQuad(vc, m, n, s, a, light(mc, s.at.add(Vec3.atLowerCornerOf(s.face.getNormal()).scale(0.3D))));
+                }
+            }
+            buffers.endBatch(RenderType.entityTranslucent(COBWEB));
+        }
         // the cocoons
         if (!WEBBED.isEmpty()) {
             VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(COCOON));
@@ -590,25 +1279,57 @@ public final class SpiderClient {
             }
             buffers.endBatch(RenderType.entityCutoutNoCull(COCOON));
         }
-        // the spider-sense over their heads
-        if (!SENSES.isEmpty()) {
-            VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucent(SENSE));
-            Vec3 left = new Vec3(camera.getLeftVector());
-            Vec3 up = new Vec3(camera.getUpVector());
-            for (Map.Entry<Integer, long[]> en : SENSES.entrySet()) {
-                Entity e = mc.level.getEntity(en.getKey());
-                if (e == null || e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
-                    continue;
-                }
-                float age = now - en.getValue()[0] + pt;
-                float big = en.getValue()[1] >= 2 ? 1.35F : 1.0F;
-                float a = Math.min(1.0F, age / 3.0F) * Math.max(0.0F, 1.0F - (age - 18.0F) / 12.0F);
-                float jitter = (((int) age) % 2 == 0) ? 0.03F : -0.03F;
-                Vec3 c = e.getPosition(pt).add(jitter, e.getBbHeight() + 0.42D * big, 0.0D);
-                billboard(vc, m, n, c, left, up, 0.5F * big, 0.42F * big, a);
+        ps.popPose();
+    }
+
+    /** The line shot out at 5.5 blocks a tick until it reaches where it sticks (0..1). */
+    private static double lineReach(Player p, long now, float pt, Vec3 from, Vec3 at) {
+        if (local(p)) {
+            if (attached) {
+                return 1.0D;
             }
-            buffers.endBatch(RenderType.entityTranslucent(SENSE));
+            double total = Math.max(1.0D, Math.ceil(p.getEyePosition().distanceTo(at) / WEB_SPEED));
+            return Mth.clamp((total - shootTicks + pt) / total, 0.0D, 1.0D);
         }
+        Remote r = remote(p);
+        if (r == null) {
+            return 1.0D;
+        }
+        double travelled = (now - r.lineStart + pt) * WEB_SPEED;
+        return Mth.clamp(travelled / Math.max(0.1D, from.distanceTo(at)), 0.0D, 1.0D);
+    }
+
+    private static void renderSense(RenderLevelStageEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || SENSES.isEmpty()) {
+            return;
+        }
+        Camera camera = event.getCamera();
+        Vec3 cam = camera.getPosition();
+        float pt = event.getPartialTick();
+        long now = mc.level.getGameTime();
+        PoseStack ps = event.getPoseStack();
+        ps.pushPose();
+        ps.translate(-cam.x, -cam.y, -cam.z);
+        Matrix4f m = ps.last().pose();
+        Matrix3f n = ps.last().normal();
+        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucent(SENSE));
+        Vec3 left = new Vec3(camera.getLeftVector());
+        Vec3 up = new Vec3(camera.getUpVector());
+        for (Map.Entry<Integer, long[]> en : SENSES.entrySet()) {
+            Entity e = mc.level.getEntity(en.getKey());
+            if (e == null || e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
+                continue;
+            }
+            float age = now - en.getValue()[0] + pt;
+            float big = en.getValue()[1] >= 2 ? 1.35F : 1.0F;
+            float a = Math.min(1.0F, age / 3.0F) * Math.max(0.0F, 1.0F - (age - 18.0F) / 12.0F);
+            float jitter = (((int) age) % 2 == 0) ? 0.03F : -0.03F;
+            Vec3 c = e.getPosition(pt).add(jitter, e.getBbHeight() + 0.42D * big, 0.0D);
+            billboard(vc, m, n, c, left, up, 0.5F * big, 0.42F * big, a);
+        }
+        buffers.endBatch(RenderType.entityTranslucent(SENSE));
         ps.popPose();
     }
 
@@ -616,27 +1337,47 @@ public final class SpiderClient {
         return LevelRenderer.getLightColor(mc.level, BlockPos.containing(at));
     }
 
-    /** A strand of web from a to b, facing the camera, its texture repeated every block. */
-    private static void strand(VertexConsumer vc, Matrix4f m, Matrix3f n, Vec3 a, Vec3 b, Vec3 cam, float w,
-                               int light) {
-        Vec3 d = b.subtract(a);
-        double len = d.length();
-        if (len < 1.0E-3D) {
-            return;
+    /** Powerborne's web strand: a thin box, light grey, with the world's light. */
+    private static void strand(VertexConsumer vc, Matrix4f m, Vec3 a, Vec3 b, float alpha, int lm) {
+        double dx = b.x - a.x;
+        double dy = b.y - a.y;
+        double dz = b.z - a.z;
+        double inv = 1.0D / Math.sqrt(dx * dx + dz * dz + 1.0E-6D);
+        float px = (float) (dz * inv * WEB_WIDTH / 2.0D);
+        float pz = (float) (dx * inv * WEB_WIDTH / 2.0D);
+        float ox = (float) a.x;
+        float oy = (float) a.y;
+        float oz = (float) a.z;
+        float ex = (float) b.x;
+        float ey = (float) b.y;
+        float ez = (float) b.z;
+        float w = WEB_WIDTH;
+        float[][] q = {
+                {ox - px, oy, oz + pz}, {ox + px, oy, oz - pz}, {ex + px, ey, ez - pz}, {ex - px, ey, ez + pz},
+                {ox - px, oy + w, oz + pz}, {ex - px, ey + w, ez + pz}, {ex + px, ey + w, ez - pz},
+                {ox + px, oy + w, oz - pz},
+                {ox + px, oy, oz - pz}, {ox + px, oy + w, oz - pz}, {ex + px, ey + w, ez - pz}, {ex + px, ey, ez - pz},
+                {ex - px, ey, ez + pz}, {ex - px, ey + w, ez + pz}, {ox - px, oy + w, oz + pz},
+                {ox - px, oy, oz + pz}};
+        for (float[] v : q) {
+            vc.vertex(m, v[0], v[1], v[2]).color(WEB_SHADE, WEB_SHADE, WEB_SHADE, alpha).uv2(lm).endVertex();
         }
-        Vec3 mid = a.add(b).scale(0.5D);
-        Vec3 side = d.cross(mid.subtract(cam));
-        if (side.lengthSqr() < 1.0E-8D) {
-            return;
-        }
-        side = side.normalize().scale(w);
-        int seg = Math.max(1, (int) Math.ceil(len));
-        for (int i = 0; i < seg; i++) {
-            Vec3 p0 = a.add(d.scale(i / (double) seg));
-            Vec3 p1 = a.add(d.scale((i + 1) / (double) seg));
-            quad(vc, m, n, p0.subtract(side), p0.add(side), p1.add(side), p1.subtract(side), 0.0F, 0.0F, 4.0F / 16.0F,
-                    15.0F / 16.0F, light, 1.0F);
-        }
+    }
+
+    private static void splatQuad(VertexConsumer vc, Matrix4f m, Matrix3f n, Splat s, float alpha, int light) {
+        Vec3 normal = Vec3.atLowerCornerOf(s.face.getNormal());
+        Vec3 c = s.at.add(normal.scale(0.01D));
+        Vec3 ref = Math.abs(normal.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 u = normal.cross(ref).normalize();
+        Vec3 v = normal.cross(u).normalize();
+        double cs = Math.cos(s.spin) * 0.45D;
+        double sn = Math.sin(s.spin) * 0.45D;
+        Vec3 e1 = u.scale(cs).add(v.scale(sn));
+        Vec3 e2 = u.scale(-sn).add(v.scale(cs));
+        quad(vc, m, n, c.subtract(e1).subtract(e2), c.add(e1).subtract(e2), c.add(e1).add(e2), c.subtract(e1).add(e2),
+                0.0F, 0.0F, 1.0F, 1.0F, light, alpha);
+        quad(vc, m, n, c.subtract(e1).add(e2), c.add(e1).add(e2), c.add(e1).subtract(e2), c.subtract(e1).subtract(e2),
+                0.0F, 1.0F, 1.0F, 0.0F, light, alpha);
     }
 
     /** The web cocoon wrapped around a box. */
@@ -683,7 +1424,7 @@ public final class SpiderClient {
                 .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(n, 0.0F, 1.0F, 0.0F).endVertex();
     }
 
-    /** First person: the spider-sense at the top of the screen when it tingles. */
+    /** First person: the spider-sense at the top of the screen, and Powerborne's indicator toward the threat. */
     @SubscribeEvent
     public static void onOverlay(RenderGuiOverlayEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
@@ -692,31 +1433,44 @@ public final class SpiderClient {
                 || !mc.options.getCameraType().isFirstPerson()) {
             return;
         }
+        var g = event.getGuiGraphics();
+        int sw = event.getWindow().getGuiScaledWidth();
+        int sh = event.getWindow().getGuiScaledHeight();
         long[] s = SENSES.get(mc.player.getId());
-        if (s == null) {
-            return;
-        }
-        float age = mc.level.getGameTime() - s[0] + event.getPartialTick();
-        float a = Math.min(1.0F, age / 3.0F) * Math.max(0.0F, 1.0F - (age - 18.0F) / 12.0F);
-        if (a <= 0.01F) {
-            return;
-        }
-        int w = s[1] >= 2 ? 96 : 72;
-        int h = w * 216 / 256;
-        int x = (event.getWindow().getGuiScaledWidth() - w) / 2 + ((((int) age) % 2 == 0) ? 1 : -1);
-        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        event.getGuiGraphics().setColor(1.0F, 1.0F, 1.0F, a);
-        event.getGuiGraphics().blit(SENSE, x, 6, 0, 0, w, h, w, h);
-        event.getGuiGraphics().setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-    }
-
-    /** Remote lines whose player is gone. */
-    public static void forget(int entity) {
-        for (Iterator<Map.Entry<Integer, Vec3>> it = LINES.entrySet().iterator(); it.hasNext(); ) {
-            if (it.next().getKey() == entity) {
-                it.remove();
+        if (s != null) {
+            float age = mc.level.getGameTime() - s[0] + event.getPartialTick();
+            float a = Math.min(1.0F, age / 3.0F) * Math.max(0.0F, 1.0F - (age - 18.0F) / 12.0F);
+            if (a > 0.01F) {
+                int w = s[1] >= 2 ? 96 : 72;
+                int h = w * 216 / 256;
+                int x = (sw - w) / 2 + ((((int) age) % 2 == 0) ? 1 : -1);
+                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+                g.setColor(1.0F, 1.0F, 1.0F, a);
+                g.blit(SENSE, x, 6, 0, 0, w, h, w, h);
+                g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                com.mojang.blaze3d.systems.RenderSystem.disableBlend();
             }
+        }
+        if (indicatorTicks > 0) {
+            Entity threat = indicatorEntity >= 0 ? mc.level.getEntity(indicatorEntity) : null;
+            if (threat == null || !threat.isAlive()) {
+                indicatorTicks = 0;
+                return;
+            }
+            double dx = threat.getX() - mc.player.getX();
+            double dz = threat.getZ() - mc.player.getZ();
+            float toThreat = (float) Math.toDegrees(Math.atan2(-dx, dz));
+            float angle = Mth.wrapDegrees(toThreat - mc.player.getViewYRot(event.getPartialTick()));
+            float a = Math.min(1.0F, indicatorTicks / 10.0F);
+            g.pose().pushPose();
+            g.pose().translate(sw / 2.0F, sh / 2.0F, 0.0F);
+            g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(angle));
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            g.setColor(1.0F, 1.0F, 1.0F, a);
+            g.blit(INDICATOR, -50, -50, 0, 0, 100, 100, 100, 100);
+            g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+            g.pose().popPose();
         }
     }
 }

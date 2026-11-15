@@ -51,6 +51,13 @@ public final class FlashClientForgeEvents {
             if (minecraft.screen == null && PowerTheme.localThor()) {
                 // Thor: the suit key calls the God of Thunder (and back to civil clothes)
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.ThorTransformPacket());
+            } else if (minecraft.screen == null && PowerTheme.localSpider()) {
+                // Spider-Man: the suit on / off (his powers stay)
+                SpiderClient.send(com.flash.spider.SpiderAbilities.SUIT_TOGGLE, 0);
+            } else if (minecraft.screen == null && PowerTheme.localDoom()) {
+                // Doctor Doom: the armour on / off (his powers stay)
+                FlashNetwork.CHANNEL.sendToServer(new com.flash.network.HeroActionPacket(
+                        com.flash.network.HeroSyncPacket.DOOM, com.flash.doom.DoomAbilities.SUIT_TOGGLE, 0));
             } else if (minecraft.screen == null && PowerTheme.localSuperman()) {
                 // Superman: the suit key turns Clark Kent into Superman and back
                 FlashNetwork.CHANNEL.sendToServer(new com.flash.network.SupermanTransformPacket());

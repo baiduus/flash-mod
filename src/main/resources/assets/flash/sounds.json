@@ -856,5 +856,41 @@
         "stream": true
       }
     ]
+  },
+  "spider.web_shoot": {
+    "subtitle": "subtitles.flash.spider.web_shoot",
+    "sounds": [
+      "flash:spider/web_swing1",
+      "flash:spider/web_swing2",
+      "flash:spider/web_swing3",
+      "flash:spider/web_swing4",
+      "flash:spider/web_swing5"
+    ]
+  },
+  "spider.swing_release": {
+    "subtitle": "subtitles.flash.spider.swing_release",
+    "sounds": [
+      "flash:spider/swing_release1",
+      "flash:spider/swing_release2"
+    ]
+  },
+  "spider.web_stress": {
+    "subtitle": "subtitles.flash.spider.web_stress",
+    "sounds": [
+      "flash:spider/web_stress"
+    ]
+  },
+  "spider.whoosh": {
+    "subtitle": "subtitles.flash.spider.whoosh",
+    "sounds": [
+      "flash:spider/whoosh1",
+      "flash:spider/whoosh2"
+    ]
+  },
+  "spider.sense": {
+    "subtitle": "subtitles.flash.spider.sense",
+    "sounds": [
+      "flash:spider/spider_sense"
+    ]
   }
 }

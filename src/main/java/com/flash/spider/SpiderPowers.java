@@ -35,6 +35,9 @@ public final class SpiderPowers {
 
     public static final String KEY = "flash_spider";
     private static final String SUIT = "suit";
+    private static final String UNSUITED = "unsuited";
+    /** In the sync: the suit taken off (his powers stay). */
+    public static final int UNSUITED_BIT = 1 << 8;
     /** Damage taken: tougher than a man, far from Superman (about the Scarlet Witch's). */
     public static final float DAMAGE_FACTOR = 0.3F;
     /** Added to his punches (a spider's strength: he lifts tons). */
@@ -90,9 +93,30 @@ public final class SpiderPowers {
         sync(p);
     }
 
+    public static boolean suited(Player p) {
+        return has(p) && !p.getPersistentData().getCompound(KEY).getBoolean(UNSUITED);
+    }
+
+    /** The suit key: the suit on or off (his powers stay). */
+    public static void toggleSuited(ServerPlayer p) {
+        if (!has(p)) {
+            return;
+        }
+        CompoundTag tag = p.getPersistentData().getCompound(KEY);
+        tag.putBoolean(UNSUITED, !tag.getBoolean(UNSUITED));
+        p.getPersistentData().put(KEY, tag);
+        p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER,
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F);
+        sync(p);
+    }
+
+    private static int data(Player p) {
+        return suit(p) | (suited(p) ? 0 : UNSUITED_BIT);
+    }
+
     public static void sync(ServerPlayer p) {
         FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p),
-                new HeroSyncPacket(HeroSyncPacket.SPIDER, p.getId(), has(p), suit(p)));
+                new HeroSyncPacket(HeroSyncPacket.SPIDER, p.getId(), has(p), data(p)));
     }
 
     @SubscribeEvent
@@ -162,7 +186,7 @@ public final class SpiderPowers {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer
                 && has(target)) {
             FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> viewer),
-                    new HeroSyncPacket(HeroSyncPacket.SPIDER, target.getId(), true, suit(target)));
+                    new HeroSyncPacket(HeroSyncPacket.SPIDER, target.getId(), true, data(target)));
         }
     }
 

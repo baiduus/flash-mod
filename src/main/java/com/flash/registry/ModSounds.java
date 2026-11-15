@@ -90,6 +90,18 @@ public final class ModSounds {
     public static final java.util.List<RegistryObject<SoundEvent>> THOR_LINES = java.util.stream.IntStream
             .rangeClosed(1, 15).mapToObj(i -> thor("thor_line" + i)).toList();
 
+    // Spider-Man (Powerborne Heroes' sounds, used with permission)
+    public static final RegistryObject<SoundEvent> SPIDER_WEB_SHOOT = spider("web_shoot");
+    public static final RegistryObject<SoundEvent> SPIDER_RELEASE = spider("swing_release");
+    public static final RegistryObject<SoundEvent> SPIDER_WEB_STRESS = spider("web_stress");
+    public static final RegistryObject<SoundEvent> SPIDER_WHOOSH = spider("whoosh");
+    public static final RegistryObject<SoundEvent> SPIDER_SENSE = spider("sense");
+
+    private static RegistryObject<SoundEvent> spider(String name) {
+        String id = "spider." + name;
+        return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));
+    }
+
     private static RegistryObject<SoundEvent> lex(String name) {
         String id = "lex." + name;
         return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(FlashMod.MODID, id)));

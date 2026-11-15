@@ -57,6 +57,12 @@ public final class DoomClient {
                 : (DOOMS.get(p.getId()) & DoomPowers.F_FLYING) != 0;
     }
 
+    /** His armour on (the suit key takes it off; his powers stay). */
+    public static boolean suited(Entity e) {
+        Integer f = DOOMS.get(e.getId());
+        return f != null && (f & DoomPowers.F_UNSUITED) == 0;
+    }
+
     public static boolean shielded(Entity e) {
         Integer f = DOOMS.get(e.getId());
         return f != null && (f & DoomPowers.F_SHIELD) != 0;
@@ -174,11 +180,18 @@ public final class DoomClient {
                 continue;
             }
             Vec3 v = p.getDeltaMovement();
-            for (Vec3 b : boots(p, 1.0F)) {
-                mc.level.addParticle(ParticleTypes.FLAME, b.x, b.y - 0.1D, b.z, -v.x * 0.3D, -0.18D - v.y * 0.2D,
-                        -v.z * 0.3D);
+            // out of the soles of his boots, wherever the flight pose has put them
+            Vec3[] feet = p instanceof net.minecraft.client.player.AbstractClientPlayer ap ? DoomLayer.feet(ap) : null;
+            Vec3[] b = boots(p, 1.0F);
+            for (int i = 0; i < 2; i++) {
+                Vec3 at = feet != null ? feet[i * 2] : b[i].add(0.0D, -0.1D, 0.0D);
+                Vec3 dir = feet != null ? feet[i * 2 + 1] : new Vec3(0.0D, -1.0D, 0.0D);
+                mc.level.addParticle(ParticleTypes.FLAME, at.x, at.y, at.z, dir.x * 0.18D + v.x * 0.6D,
+                        dir.y * 0.18D + v.y * 0.6D, dir.z * 0.18D + v.z * 0.6D);
                 if (p.tickCount % 3 == 0) {
-                    mc.level.addParticle(ParticleTypes.SMOKE, b.x, b.y - 0.2D, b.z, -v.x * 0.2D, -0.06D, -v.z * 0.2D);
+                    mc.level.addParticle(ParticleTypes.SMOKE, at.x + dir.x * 0.2D, at.y + dir.y * 0.2D,
+                            at.z + dir.z * 0.2D, dir.x * 0.06D + v.x * 0.5D, dir.y * 0.06D + v.y * 0.5D,
+                            dir.z * 0.06D + v.z * 0.5D);
                 }
             }
         }
