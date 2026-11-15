@@ -61,7 +61,7 @@ public class FlashSuitStand extends ArmorStand {
 
     /** The suit the player wears as Superman or Thor now, or null. */
     private static String suitOf(Player player) {
-        if (com.flash.thor.ThorPowers.isThor(player)) {
+        if (com.flash.thor.ThorPowers.suited(player)) {
             return com.flash.thor.ThorSuits.id(com.flash.thor.ThorPowers.suit(player));
         }
         if (com.flash.superman.SupermanPowers.suited(player)) {

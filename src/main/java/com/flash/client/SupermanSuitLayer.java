@@ -79,8 +79,9 @@ public class SupermanSuitLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     /** Suit worn by this player now, or null (not in the Superman form). */
     public static String worn(AbstractClientPlayer player) {
-        if (com.flash.thor.ThorState.isThor(player)) {
-            return com.flash.thor.ThorSuits.id(com.flash.thor.ThorState.suit(player));
+        if (com.flash.thor.ThorState.has(player)) {
+            return com.flash.thor.ThorState.suited(player)
+                    ? com.flash.thor.ThorSuits.id(com.flash.thor.ThorState.suit(player)) : null;
         }
         if (!SupermanState.suited(player)) {
             return null;

@@ -114,8 +114,16 @@ public final class ThorPowers {
         return player.getPersistentData().contains(KEY);
     }
 
-    /** True in the God of Thunder form (false = civil clothes). */
+    /**
+     * His powers work (all of them: flight, abilities, the hammer, resistance, regeneration) whether he wears the
+     * suit or not: true whenever he has the power. Only the suit changes with the form (suited).
+     */
     public static boolean isThor(Player player) {
+        return has(player);
+    }
+
+    /** Wearing the God of Thunder's suit (false = civil clothes). Only the looks depend on it. */
+    public static boolean suited(Player player) {
         return has(player) && tag(player).getBoolean(FORM);
     }
 
@@ -202,7 +210,7 @@ public final class ThorPowers {
 
     public static boolean grant(ServerPlayer player, boolean transform) {
         if (has(player)) {
-            if (transform && !isThor(player)) {
+            if (transform && !suited(player)) {
                 setForm(player, true);
             }
             return false;
@@ -267,18 +275,16 @@ public final class ThorPowers {
             player.displayClientMessage(Component.translatable("message.flash.thor_none"), true);
             return;
         }
-        setForm(player, !isThor(player));
+        setForm(player, !suited(player));
     }
 
+    /** Puts the suit on or takes it off: only the looks change, his powers (and the hammer) stay. */
     public static void setForm(ServerPlayer player, boolean thor) {
-        ThorAbilities.stopAll(player);
         CompoundTag tag = tag(player).copy();
         tag.putBoolean(FORM, thor);
-        tag.putInt(FLAGS, thor ? tag.getInt(FLAGS) & ~TRANSIENT : 0);
         save(player, tag);
+        applyAttributes(player);
         if (thor) {
-            applyAttributes(player);
-            player.setHealth(player.getMaxHealth());
             ThorAbilities.giveHammer(player);
             if (player.level() instanceof ServerLevel level) {
                 ThorAbilities.strikeVisual(level, player.position());
@@ -290,8 +296,6 @@ public final class ThorPowers {
                     com.flash.registry.ModSounds.THOR_GRAB.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             player.displayClientMessage(Component.translatable("message.flash.thor_form"), true);
         } else {
-            stopFlight(player);
-            removeAttributes(player);
             player.displayClientMessage(Component.translatable("message.flash.thor_civil"), true);
         }
         sync(player);
@@ -686,7 +690,7 @@ public final class ThorPowers {
         for (int i = 0; i < abilities.length; i++) {
             cds[i] = cooldown(player, abilities[i]);
         }
-        return new ThorSyncPacket(player.getUUID(), has(player), isThor(player), level(player), xp(player),
+        return new ThorSyncPacket(player.getUUID(), has(player), suited(player), level(player), xp(player),
                 energy(player), charge(player), flags(player), destroyBlocks(player), cds, noCooldowns(player),
                 infiniteEnergy(player), suit(player), helmetOff(player), storm(player));
     }

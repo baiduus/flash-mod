@@ -34,12 +34,18 @@ public final class ThorState {
         return player.level().isClientSide ? CLIENT.containsKey(player.getUUID()) : ThorPowers.has(player);
     }
 
+    /** His powers work, suit or no suit (see ThorPowers.isThor). */
     public static boolean isThor(Player player) {
+        return has(player);
+    }
+
+    /** Wearing the suit (only the looks depend on it). */
+    public static boolean suited(Player player) {
         if (player.level().isClientSide) {
             Integer f = CLIENT.get(player.getUUID());
             return f != null && (f & FORM_BIT) != 0;
         }
-        return ThorPowers.isThor(player);
+        return ThorPowers.suited(player);
     }
 
     public static boolean flag(Player player, int flag) {

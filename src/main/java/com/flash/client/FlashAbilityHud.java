@@ -373,7 +373,8 @@ public final class FlashAbilityHud implements IGuiOverlay {
         if (x < 4 || y < 4) {
             return;
         }
-        drawRow(graphics, font, x, y, panelWidth, transform, keyLabel(FlashKeys.TOGGLE_SUIT), 0, 1, form);
+        drawRow(graphics, font, x, y, panelWidth, transform, keyLabel(FlashKeys.TOGGLE_SUIT), 0, 1,
+                com.flash.thor.ThorState.suited(minecraft.player));
         y += ROW_HEIGHT + ROW_GAP;
         if (!form) {
             return;

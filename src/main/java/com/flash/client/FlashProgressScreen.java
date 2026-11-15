@@ -308,7 +308,7 @@ public class FlashProgressScreen extends Screen {
         boolean superPower = PowerTheme.localSuperman();
         boolean superForm = superPower && com.flash.superman.SupermanState.suited(Minecraft.getInstance().player);
         boolean thorPower = PowerTheme.localThor();
-        boolean thorForm = thorPower && com.flash.thor.ThorState.isThor(Minecraft.getInstance().player);
+        boolean thorForm = thorPower && com.flash.thor.ThorState.suited(Minecraft.getInstance().player);
         boolean yasPower = PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localStorm();
         Component badge = yasPower ? Component.translatable(PowerTheme.localStorm() ? "gui.flash.storm.badge"
                 : PowerTheme.localScarlet() ? "gui.flash.scarlet.badge" : "gui.flash.yas.badge") : thorPower
@@ -762,7 +762,7 @@ public class FlashProgressScreen extends Screen {
     private void drawThorTab(GuiGraphics g, int mx, int my) {
         Minecraft mc = Minecraft.getInstance();
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
-        boolean form = mc.player != null && com.flash.thor.ThorState.isThor(mc.player);
+        boolean form = mc.player != null && com.flash.thor.ThorState.suited(mc.player);
         int level = Math.max(1, com.flash.thor.ThorState.level());
         float xp = Math.max(0.0F, Math.min(1.0F, com.flash.thor.ThorState.xp()
                 / com.flash.thor.ThorPowers.MAX_XP));
