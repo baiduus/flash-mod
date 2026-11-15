@@ -1,0 +1,41 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.gauntlet.title",
+      "color": "gold",
+      "bold": true,
+      "italic": true
+    },
+    "description": {
+      "translate": "advancements.infinity.gauntlet.description",
+      "bold": true
+    },
+    "icon": {
+      "item": "flash:infinity_gauntlet"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "inf": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "flash:infinity_gauntlet"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "inf"
+    ]
+  ],
+  "parent": "flash:infinity/gauntlet_cast"
+}

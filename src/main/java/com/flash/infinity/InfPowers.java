@@ -44,6 +44,8 @@ public final class InfPowers {
         public final Key key;
         public final int cooldown;
         public final String keyMessage;
+        /** The original's key type: key_bind (the ability key), scroll_up / scroll_down (the mouse wheel)... */
+        public final String keyType;
         /** The enabling conditions other than the key's. */
         public final List<JsonObject> enabling = new ArrayList<>();
         public final List<JsonObject> unlocking = new ArrayList<>();
@@ -73,6 +75,7 @@ public final class InfPowers {
             Key k = Key.NONE;
             int cd = 0;
             String msg = null;
+            String kt = "key_bind";
             JsonObject cond = o.has("conditions") ? o.getAsJsonObject("conditions") : new JsonObject();
             if (cond.has("enabling")) {
                 for (JsonElement e : cond.getAsJsonArray("enabling")) {
@@ -90,6 +93,7 @@ public final class InfPowers {
                         k = ck;
                         cd = c.has("cooldown") ? c.get("cooldown").getAsInt() : 0;
                         msg = c.has("message") ? c.get("message").getAsString() : null;
+                        kt = c.has("key_type") ? c.get("key_type").getAsString() : "key_bind";
                     } else {
                         this.enabling.add(c);
                     }
@@ -109,6 +113,7 @@ public final class InfPowers {
             this.key = k;
             this.cooldown = cd;
             this.keyMessage = msg;
+            this.keyType = kt;
         }
 
         public String key() {
@@ -122,7 +127,7 @@ public final class InfPowers {
 
         /** Picked with Alt + scroll and used with the ability key. */
         public boolean inBar() {
-            return !this.hiddenInBar && this.key != Key.NONE;
+            return !this.hiddenInBar && this.key != Key.NONE && "key_bind".equals(this.keyType);
         }
 
         /** Aspects of Existence to spend (0: none). */

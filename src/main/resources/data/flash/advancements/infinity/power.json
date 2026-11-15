@@ -1,0 +1,39 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.power.title",
+      "color": "dark_purple",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.power.description"
+    },
+    "icon": {
+      "item": "flash:power_stone"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "power": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "flash:power_stone"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "power"
+    ]
+  ],
+  "parent": "flash:infinity/orb"
+}

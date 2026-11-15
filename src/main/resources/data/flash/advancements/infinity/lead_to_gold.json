@@ -1,0 +1,30 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.lead_to_gold.title",
+      "color": "red",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.lead_to_gold.description"
+    },
+    "icon": {
+      "item": "minecraft:gold_ingot"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "lead_to_gold": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "lead_to_gold"
+    ]
+  ],
+  "parent": "flash:infinity/reality"
+}

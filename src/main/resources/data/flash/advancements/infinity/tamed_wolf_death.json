@@ -1,0 +1,10 @@
+{
+  "criteria": {
+    "killed_tagged_wolf": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "function": "flash:give_soul"
+  }
+}

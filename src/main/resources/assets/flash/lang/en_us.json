@@ -1894,5 +1894,7 @@
   "gui.flash.infinity.mind_drained": "Soul drained",
   "gui.flash.infinity.mind_food": "Food: %s, level %s",
   "gui.flash.infinity.mind_where": "Where: %s",
-  "entity.flash.space_portal": "Portal"
+  "entity.flash.space_portal": "Portal",
+  "message.flash.infinity.reality_saved": "Reality block saved: %s",
+  "message.flash.infinity.reality_nothing": "No block saved (use Reality Copy)."
 }

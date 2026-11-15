@@ -15,6 +15,12 @@ public final class InfinityScreens {
             case "disguise" -> mc.setScreen(new DisguiseScreen());
             case "mind_name" -> mc.setScreen(new MindNameScreen());
             default -> {
+                if (screen.startsWith("wheel:")) {
+                    com.flash.infinity.InfPowers.Ability a = com.flash.infinity.InfPowers.ability(screen.substring(6));
+                    if (a != null) {
+                        mc.setScreen(new WheelScreen(a));
+                    }
+                }
             }
         }
     }

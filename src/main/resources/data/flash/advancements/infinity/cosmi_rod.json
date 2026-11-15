@@ -1,0 +1,39 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.cosmi_rod.title",
+      "color": "dark_purple",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.cosmi_rod.description"
+    },
+    "icon": {
+      "item": "flash:cosmi-rod"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "power": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "flash:cosmi-rod"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "power"
+    ]
+  ],
+  "parent": "flash:infinity/root"
+}

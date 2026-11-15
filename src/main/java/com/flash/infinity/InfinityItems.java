@@ -117,6 +117,9 @@ public final class InfinityItems {
     public static final RegistryObject<Item> URU_INGOT = ITEMS.register("uru_ingot", () -> new Item(props(64, Rarity.COMMON, false)));
     public static final RegistryObject<Item> URU_NUGGET = ITEMS.register("uru_nugget", () -> new Item(props(64, Rarity.COMMON, false)));
     public static final RegistryObject<Item> URU_PLATE = ITEMS.register("uru_plate", () -> new Item(props(64, Rarity.COMMON, false)));
+    /** The Cosmi-Rod (the Universal Weapon). */
+    public static final RegistryObject<Item> COSMI_ROD = ITEMS.register("cosmi-rod", () -> new Item(props(1,
+            Rarity.EPIC, true)));
     /** The Infinity Gauntlet (its stones, the Snap: InfinityGauntlet). */
     public static final RegistryObject<Item> INFINITY_GAUNTLET = ITEMS.register("infinity_gauntlet", () -> new Item(props(1, Rarity.EPIC, true)));
 
@@ -136,6 +139,7 @@ public final class InfinityItems {
             SCEPTER::get,
             INFINITY_GAUNTLET::get,
             INFINITY_GAUNTLET_CAST::get,
+            COSMI_ROD::get,
             ASPECTS_OF_EXISTANCE::get,
             SHARDS_OF_EXISTANCE::get,
             DOUBLE_EDGED_SWORD::get,

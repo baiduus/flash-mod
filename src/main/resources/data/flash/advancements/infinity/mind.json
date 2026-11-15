@@ -1,0 +1,39 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.mind.title",
+      "color": "yellow",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.mind.description"
+    },
+    "icon": {
+      "item": "flash:mind_stone"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "power": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "flash:mind_stone"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "power"
+    ]
+  ],
+  "parent": "flash:infinity/scepter"
+}

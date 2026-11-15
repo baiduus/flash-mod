@@ -1,0 +1,62 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.dance_battle.title",
+      "color": "red",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.dance_battle.description"
+    },
+    "icon": {
+      "item": "flash:cosmi-rod"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill_player": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "minecraft:player"
+        },
+        "player": {
+          "equipment": {
+            "mainhand": {
+              "items": [
+                "flash:cosmi-rod"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "kill_villager": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "minecraft:villager"
+        },
+        "player": {
+          "equipment": {
+            "mainhand": {
+              "items": [
+                "flash:cosmi-rod"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "kill_player",
+      "kill_villager"
+    ]
+  ],
+  "parent": "flash:infinity/cosmi_rod"
+}

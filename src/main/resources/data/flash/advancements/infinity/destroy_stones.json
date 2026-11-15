@@ -1,0 +1,39 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.destroy_stones.title",
+      "color": "dark_purple",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.destroy_stones.description"
+    },
+    "icon": {
+      "item": "flash:infinity_gauntlet"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "power": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "flash:pugmeowla"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "power"
+    ]
+  ],
+  "parent": "flash:infinity/snap"
+}

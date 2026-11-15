@@ -1,0 +1,42 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.what_was_he_cooking.title",
+      "color": "green",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.what_was_he_cooking.description"
+    },
+    "icon": {
+      "item": "minecraft:suspicious_stew"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "garden_stew": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": [
+            "minecraft:suspicious_stew"
+          ]
+        },
+        "player": {
+          "location": {
+            "dimension": "flash:garden"
+          }
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "garden_stew"
+    ]
+  ],
+  "parent": "flash:infinity/root"
+}

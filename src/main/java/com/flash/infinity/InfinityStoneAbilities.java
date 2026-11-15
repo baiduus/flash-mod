@@ -45,6 +45,29 @@ public final class InfinityStoneAbilities {
                     InfinityServer.open(p, "disguise");
                 }
             }
+            // the Reality Stone
+            case "flash:reality_copy" -> {
+                if (start) {
+                    RealityStone.copy(p, s, a);
+                }
+            }
+            case "flash:reality_paste" -> {
+                if (start) {
+                    RealityStone.paste(p, a);
+                }
+            }
+            case "flash:dynamic_scale" -> RealityStone.scale(p, a, on);
+            case "flash:score_step" -> {
+                if (start) {
+                    RealityStone.scoreStep(p, a);
+                }
+            }
+            case "palladium:invisibility" -> RealityStone.invisible(p, on);
+            case "palladium:ability_wheel" -> {
+                if (start) {
+                    InfinityServer.open(p, "wheel:" + a.key());
+                }
+            }
             case "palladium:energy_beam" -> InfinityBeams.tick(p, a, on, a.json.has("damage")
                     ? a.json.get("damage").getAsFloat() : 5.0F, false);
             default -> {

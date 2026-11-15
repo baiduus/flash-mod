@@ -1,0 +1,39 @@
+{
+  "display": {
+    "title": {
+      "translate": "advancements.infinity.orb.title",
+      "color": "dark_purple",
+      "bold": true
+    },
+    "description": {
+      "translate": "advancements.infinity.orb.description"
+    },
+    "icon": {
+      "item": "flash:orb"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "power": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "flash:orb"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "power"
+    ]
+  ],
+  "parent": "flash:infinity/gauntlet"
+}

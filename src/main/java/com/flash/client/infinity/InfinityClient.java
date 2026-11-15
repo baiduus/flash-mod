@@ -49,6 +49,11 @@ public final class InfinityClient {
     private static String selected;
     private static String pressed;
 
+    static {
+        MindClient.hook();
+        RealityClient.hook();
+    }
+
     private InfinityClient() {
     }
 
@@ -67,6 +72,14 @@ public final class InfinityClient {
         }
         if (t.contains("disguise_entity")) {
             MindClient.disguise(t.getInt("disguise_entity"), t.getString("disguise"));
+            return;
+        }
+        if (t.contains("scale_entity")) {
+            RealityClient.scale(t.getInt("scale_entity"), t.getFloat("scale"));
+            return;
+        }
+        if (t.contains("reality_block")) {
+            RealityClient.saved(t.getCompound("reality_block"));
             return;
         }
         if (t.contains("mind")) {
@@ -125,6 +138,7 @@ public final class InfinityClient {
         SCORES.clear();
         VISUAL.clear();
         MindClient.reset();
+        RealityClient.reset();
         selected = null;
         pressed = null;
     }
@@ -297,6 +311,15 @@ public final class InfinityClient {
             if (anyOn("flash:telekinesis")) {
                 event.setCanceled(true);
                 send(InfinityServer.SCROLL, event.getScrollDelta() > 0.0D ? "+" : "-");
+                return;
+            }
+            // the wheel steps a value (size, power level, the flow of time) while its switch is on
+            List<InfPowers.Ability> wheel = byKeyType(event.getScrollDelta() > 0.0D ? "scroll_up" : "scroll_down");
+            if (!wheel.isEmpty()) {
+                event.setCanceled(true);
+                for (InfPowers.Ability a : wheel) {
+                    send(InfinityServer.PRESS, a.key());
+                }
             }
             return;
         }
@@ -318,9 +341,38 @@ public final class InfinityClient {
         }
     }
 
+    /** The unlocked abilities used by that key type now (scroll_up, scroll_down, right_click). */
+    static List<InfPowers.Ability> byKeyType(String keyType) {
+        List<InfPowers.Ability> out = new ArrayList<>();
+        for (String pid : powers) {
+            InfPowers.Power pw = InfPowers.get(pid);
+            if (pw == null) {
+                continue;
+            }
+            for (InfPowers.Ability a : pw.abilities.values()) {
+                if (keyType.equals(a.keyType) && a.key != InfPowers.Key.NONE && InfinityPowers.unlocked(VIEW, a)
+                        && !VIEW.cooling(a.key())) {
+                    out.add(a);
+                }
+            }
+        }
+        return out;
+    }
+
     /** Attacking throws what telekinesis holds (or the black hole); using locks it in space. */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onClick(InputEvent.InteractionKeyMappingTriggered event) {
+        if (event.isUseItem() && !anyOn("flash:telekinesis")) {
+            List<InfPowers.Ability> rc = byKeyType("right_click");
+            if (!rc.isEmpty()) {
+                event.setCanceled(true);
+                event.setSwingHand(true);
+                for (InfPowers.Ability a : rc) {
+                    send(InfinityServer.PRESS, a.key());
+                }
+                return;
+            }
+        }
         if (event.isAttack() && (anyOn("flash:telekinesis") || anyOn("flash:black_hole"))) {
             event.setCanceled(true);
             event.setSwingHand(true);

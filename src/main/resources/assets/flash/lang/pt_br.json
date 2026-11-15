@@ -1810,5 +1810,7 @@
   "gui.flash.infinity.mind_food": "Fome: %s, nível %s",
   "gui.flash.infinity.mind_where": "Onde: %s",
   "entity.flash.clone": "Clone",
-  "entity.flash.space_portal": "Portal"
+  "entity.flash.space_portal": "Portal",
+  "message.flash.infinity.reality_saved": "Bloco da Realidade salvo: %s",
+  "message.flash.infinity.reality_nothing": "Nenhum bloco salvo (use Copiar Realidade)."
 }
