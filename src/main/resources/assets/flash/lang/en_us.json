@@ -1920,5 +1920,11 @@
   "message.flash.infinity.guardian_called": "The Soul Guardian answers your call.",
   "message.flash.infinity.guardian_unreachable": "The Soul Guardian can not be reached.",
   "message.flash.infinity.mode": "Mode: %s",
-  "gui.flash.infinity.next": "next"
+  "gui.flash.infinity.next": "next",
+  "gui.flash.infinity.short_none": "passive",
+  "gui.flash.infinity.short_action": "use",
+  "gui.flash.infinity.short_toggle": "toggle",
+  "gui.flash.infinity.short_held": "hold",
+  "gui.flash.infinity.short_double_action": "use x2",
+  "gui.flash.infinity.short_double_toggle": "toggle x2"
 }

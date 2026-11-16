@@ -57,7 +57,7 @@ public final class SoulClient {
             g.blit(TIME, 0, 0, w, h, 0.0F, 0.0F, 200, 200, 200, 200);
             g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
-        int y = h - 82;
+        int y = InfinityHud.top(h) - 16;
         // the energy bars: souls (Soul Stone), the level (Power Stone), the flow of time (Time Stone)
         if (has("soul_stone")) {
             bar(g, mc, 6, y, InfinityClient.VIEW.score("SoulStorage"), 50, 0xFFFF8B00,

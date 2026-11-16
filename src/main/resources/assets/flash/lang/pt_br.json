@@ -1837,5 +1837,11 @@
   "message.flash.infinity.guardian_called": "O Guardião das Almas atendeu ao chamado.",
   "message.flash.infinity.guardian_unreachable": "O Guardião das Almas não pode ser alcançado.",
   "message.flash.infinity.mode": "Modo: %s",
-  "gui.flash.infinity.next": "próxima"
+  "gui.flash.infinity.next": "próxima",
+  "gui.flash.infinity.short_none": "passiva",
+  "gui.flash.infinity.short_action": "usar",
+  "gui.flash.infinity.short_toggle": "ligar",
+  "gui.flash.infinity.short_held": "segurar",
+  "gui.flash.infinity.short_double_action": "usar 2x",
+  "gui.flash.infinity.short_double_toggle": "ligar 2x"
 }
