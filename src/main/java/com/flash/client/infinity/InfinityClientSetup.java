@@ -38,6 +38,7 @@ public final class InfinityClientSetup {
         event.registerEntityRenderer(com.flash.infinity.InfinityEntities.BLACK_HOLE.get(), BlackHoleRenderer::new);
         event.registerEntityRenderer(com.flash.infinity.InfinityEntities.CLONE.get(), CloneRenderer::new);
         event.registerEntityRenderer(com.flash.infinity.InfinityEntities.POWER_SHOT.get(), PowerShotRenderer::new);
+        event.registerBlockEntityRenderer(com.flash.infinity.TempleBeacon.BLOCK_ENTITY.get(), TempleBeaconRenderer::new);
     }
 
     @SubscribeEvent

@@ -47,6 +47,13 @@ public final class FlashClientEvents {
                     new net.minecraft.resources.ResourceLocation("blocking"),
                     (stack, level, entity, seed) -> entity != null && entity.isUsingItem()
                             && entity.getUseItem() == stack ? 1.0F : 0.0F);
+            // the Infinity Tracker's needle
+            net.minecraft.client.renderer.item.ItemProperties.register(
+                    com.flash.infinity.InfinityTracker.TRACKER.get(),
+                    new net.minecraft.resources.ResourceLocation("flash", "angle"),
+                    (stack, level, entity, seed) -> com.flash.infinity.InfinityTracker.angle(stack,
+                            level != null ? level : entity != null ? entity.level() : null,
+                            entity != null ? entity : stack.getEntityRepresentation()));
         });
     }
 

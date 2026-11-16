@@ -1,0 +1,9 @@
+{
+  "item": "flash:empty_scepter",
+  "combine": [
+    {
+      "item": "flash:mind_stone",
+      "result": "flash:scepter"
+    }
+  ]
+}

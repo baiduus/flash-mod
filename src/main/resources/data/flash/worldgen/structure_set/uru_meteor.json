@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "flash:uru_meteor",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "salt": 41,
+    "frequency": 0.95,
+    "spacing": 80,
+    "separation": 40,
+    "type": "minecraft:random_spread"
+  }
+}

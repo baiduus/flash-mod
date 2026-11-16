@@ -1,0 +1,16 @@
+{
+  "placement": {
+    "type": "minecraft:concentric_rings",
+    "count": 1,
+    "distance": 167,
+    "preferred_biomes": "#minecraft:is_end",
+    "salt": 25412,
+    "spread": 1
+  },
+  "structures": [
+    {
+      "structure": "flash:sanctuary",
+      "weight": 1
+    }
+  ]
+}

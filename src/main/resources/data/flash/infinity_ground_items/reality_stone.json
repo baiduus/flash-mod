@@ -1,0 +1,10 @@
+{
+  "item": "flash:reality_stone",
+  "unique": true,
+  "combine": [
+    {
+      "item": "flash:empty_aether",
+      "result": "flash:aether"
+    }
+  ]
+}

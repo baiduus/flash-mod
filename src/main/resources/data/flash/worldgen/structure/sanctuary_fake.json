@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:jigsaw",
+  "start_pool": "flash:sanctuary_fake/sanctuary_fake",
+  "size": 2,
+  "biomes": [
+    "minecraft:small_end_islands"
+  ],
+  "step": "raw_generation",
+  "max_distance_from_center": 116,
+  "terrain_adaptation": "beard_thin",
+  "use_expansion_hack": false,
+  "start_height": {
+    "absolute": 1
+  },
+  "spawn_overrides": {}
+}

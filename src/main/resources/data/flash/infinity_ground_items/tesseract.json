@@ -1,0 +1,13 @@
+{
+  "item": "flash:tesseract",
+  "release": {
+    "items": [
+      "flash:space_stone"
+    ],
+    "color": "#66BFFF",
+    "opening": {
+      "effect": "rays",
+      "duration": 100
+    }
+  }
+}

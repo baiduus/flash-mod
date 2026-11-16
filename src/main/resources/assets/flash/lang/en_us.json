@@ -1913,5 +1913,8 @@
   "message.flash.infinity.burn_healed": "The Snap burn has healed.",
   "message.flash.infinity.orb_taken": "The Power Stone has already been taken from an Orb.",
   "message.flash.infinity.eye_taken": "The Time Stone has already been taken from an Eye of Agamotto.",
-  "message.flash.infinity.no_gauntlet": "You must be wearing the Infinity Gauntlet."
+  "message.flash.infinity.no_gauntlet": "You must be wearing the Infinity Gauntlet.",
+  "item.flash.infinity_tracker.tracking": "Tracking: %s",
+  "message.flash.infinity.tesseract_nowhere": "The Tesseract finds nowhere safe to go.",
+  "message.flash.infinity.tesseract_to": "The Tesseract takes you to %s"
 }

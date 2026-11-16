@@ -1,0 +1,42 @@
+{
+  "item": "flash:aether",
+  "release": {
+    "items": [
+      "flash:reality_stone"
+    ],
+    "color": "#FF261A",
+    "opening": {
+      "effect": "plume",
+      "duration": 100,
+      "colors": [
+        "#C81828",
+        "#F85060"
+      ],
+      "model": "flash:item/aether_open",
+      "parts": [
+        {
+          "model": "flash:item/aether_lid_left",
+          "pivot": [
+            5,
+            9,
+            8
+          ],
+          "axis": "z",
+          "angle": 75,
+          "ticks": 20
+        },
+        {
+          "model": "flash:item/aether_lid_right",
+          "pivot": [
+            11,
+            9,
+            8
+          ],
+          "axis": "z",
+          "angle": -75,
+          "ticks": 20
+        }
+      ]
+    }
+  }
+}

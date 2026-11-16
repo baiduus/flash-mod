@@ -154,6 +154,8 @@ public final class InfinityItems {
             PUGMEOWLA::get);
     public static final java.util.List<java.util.function.Supplier<Item>> TAB_RESOURCES = java.util.List.of(
             HAMMER::get,
+            () -> InfinityTracker.TRACKER.get(),
+            () -> TempleBeacon.ITEM.get(),
             INJECTION::get,
             COAL_DUST::get,
             () -> DWARF_STAR_METEOR.get().asItem(),

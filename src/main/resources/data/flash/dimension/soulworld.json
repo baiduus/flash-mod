@@ -1,0 +1,19 @@
+{
+  "type": "flash:soulworld",
+  "generator": {
+    "settings": {
+      "layers": [
+        {
+          "block": "minecraft:smooth_red_sandstone",
+          "height": 200
+        },
+        {
+          "block": "minecraft:water",
+          "height": 1
+        }
+      ],
+      "biome": "flash:soulworld"
+    },
+    "type": "minecraft:flat"
+  }
+}

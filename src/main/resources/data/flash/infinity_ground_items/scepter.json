@@ -1,0 +1,10 @@
+{
+  "item": "flash:scepter",
+  "release": {
+    "items": [
+      "flash:mind_stone",
+      "flash:empty_scepter"
+    ],
+    "color": "#FFE61A"
+  }
+}

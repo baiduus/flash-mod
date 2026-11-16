@@ -1,0 +1,1 @@
+give @s flash:best_friends_soul{display:{Name:'{"text":"Best Friends Soul","color":"dark_purple","italic":false}',Lore:['{"text":"How Could You","color":"gold","italic":true}']}} 1

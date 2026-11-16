@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:jigsaw",
+  "start_pool": "flash:uru_meteor/uru_meteor",
+  "size": 1,
+  "biomes": "flash:svartelheim",
+  "step": "surface_structures",
+  "max_distance_from_center": 100,
+  "terrain_adaptation": "beard_thin",
+  "use_expansion_hack": false,
+  "project_start_to_heightmap": "WORLD_SURFACE_WG",
+  "start_height": {
+    "absolute": -5
+  },
+  "spawn_overrides": {}
+}

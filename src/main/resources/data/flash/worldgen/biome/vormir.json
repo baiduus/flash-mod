@@ -1,0 +1,41 @@
+{
+  "temperature": 0.4,
+  "downfall": 0,
+  "has_precipitation": false,
+  "effects": {
+    "sky_color": 4915635,
+    "fog_color": 2883610,
+    "water_color": 3806253,
+    "water_fog_color": 1969944,
+    "particle": {
+      "options": {
+        "type": "minecraft:dust",
+        "value": {
+          "r": 0.5,
+          "g": 0.1,
+          "b": 0.2,
+          "scale": 1.5
+        }
+      },
+      "probability": 1
+    }
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "flash:vormir"
+    ]
+  ]
+}

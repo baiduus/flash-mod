@@ -1,0 +1,11 @@
+{
+  "item": "flash:eye_of_agamotto",
+  "power": "flash:eye_of_agamotto_ground",
+  "slot": "head",
+  "release": {
+    "items": [
+      "flash:time_stone"
+    ],
+    "color": "#33FF4D"
+  }
+}

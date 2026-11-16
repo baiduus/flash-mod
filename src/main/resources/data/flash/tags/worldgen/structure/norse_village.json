@@ -1,1 +1,6 @@
-{ "replace": false, "values": ["flash:norse_village"] }
+{
+  "replace": false,
+  "values": [
+    "flash:norse_village"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "flash:sanctuary_fake/sanctuary_fake",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "location": "flash:sanctuary_fake/sanctuary_fake",
+        "processors": "minecraft:empty",
+        "projection": "rigid",
+        "element_type": "minecraft:single_pool_element"
+      }
+    }
+  ]
+}

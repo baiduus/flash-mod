@@ -1,1 +1,6 @@
-{ "replace": false, "values": ["flash:morag_temple"] }
+{
+  "replace": false,
+  "values": [
+    "flash:morag_temple"
+  ]
+}

@@ -1830,5 +1830,8 @@
   "message.flash.infinity.burn_healed": "A queimadura do Estalo sarou.",
   "message.flash.infinity.orb_taken": "A Joia do Poder já foi tirada de um Orbe.",
   "message.flash.infinity.eye_taken": "A Joia do Tempo já foi tirada de um Olho de Agamotto.",
-  "message.flash.infinity.no_gauntlet": "Você precisa estar usando a Manopla do Infinito."
+  "message.flash.infinity.no_gauntlet": "Você precisa estar usando a Manopla do Infinito.",
+  "item.flash.infinity_tracker.tracking": "Rastreando: %s",
+  "message.flash.infinity.tesseract_nowhere": "O Tesseract não encontra nenhum lugar seguro.",
+  "message.flash.infinity.tesseract_to": "O Tesseract te leva para %s"
 }

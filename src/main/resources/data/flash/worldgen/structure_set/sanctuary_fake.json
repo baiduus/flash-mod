@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "flash:sanctuary_fake",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "salt": 69431,
+    "frequency": 0.01,
+    "spacing": 100,
+    "separation": 50,
+    "type": "minecraft:random_spread"
+  }
+}
