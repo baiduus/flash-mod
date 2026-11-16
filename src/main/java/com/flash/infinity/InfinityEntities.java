@@ -22,9 +22,9 @@ public final class InfinityEntities {
             () -> EntityType.Builder.<SpacePortal>of(SpacePortal::new, MobCategory.MISC).sized(1.6F, 2.5F)
                     .clientTrackingRange(10).updateInterval(20).fireImmune().build("space_portal"));
 
-    public static final RegistryObject<EntityType<BlackHole>> BLACK_HOLE = TYPES.register("black_hole",
+    public static final RegistryObject<EntityType<BlackHole>> BLACK_HOLE = TYPES.register("infinity_black_hole",
             () -> EntityType.Builder.<BlackHole>of(BlackHole::new, MobCategory.MISC).sized(1.0F, 1.0F)
-                    .clientTrackingRange(16).updateInterval(1).fireImmune().build("black_hole"));
+                    .clientTrackingRange(16).updateInterval(1).fireImmune().build("infinity_black_hole"));
 
     /** The Power Stone's blasts and rockets. */
     public static final RegistryObject<EntityType<com.flash.infinity.entity.PowerShot>> POWER_SHOT = TYPES.register(

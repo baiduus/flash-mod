@@ -1906,5 +1906,6 @@
   "gui.flash.infinity.souls": "Souls",
   "gui.flash.infinity.power_level": "Power Level",
   "gui.flash.infinity.time_flow": "Flow of time",
-  "entity.flash.power_shot": "Energy Blast"
+  "entity.flash.power_shot": "Energy Blast",
+  "entity.flash.infinity_black_hole": "Black Hole (Space Stone)"
 }

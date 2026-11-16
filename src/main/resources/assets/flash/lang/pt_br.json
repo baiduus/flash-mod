@@ -1822,5 +1822,6 @@
   "gui.flash.infinity.souls": "Almas",
   "gui.flash.infinity.power_level": "Nível de Poder",
   "gui.flash.infinity.time_flow": "Fluxo do tempo",
-  "entity.flash.power_shot": "Rajada de Energia"
+  "entity.flash.power_shot": "Rajada de Energia",
+  "entity.flash.infinity_black_hole": "Buraco Negro (Joia do Espaço)"
 }
