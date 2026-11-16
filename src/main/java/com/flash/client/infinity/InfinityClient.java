@@ -215,6 +215,10 @@ public final class InfinityClient {
             return false;
         }
         for (String p : powers) {
+            // the Snap's burn stays a day after the Gauntlet is off: it is no reason for the stones' screen
+            if ("burn".equals(p)) {
+                continue;
+            }
             InfPowers.Power pw = InfPowers.get(p);
             if (pw != null && !pw.abilities.isEmpty()) {
                 return true;
