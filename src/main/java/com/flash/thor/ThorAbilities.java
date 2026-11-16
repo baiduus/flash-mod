@@ -122,9 +122,13 @@ public final class ThorAbilities {
     // The weapon (Mjolnir, MCU Mjolnir, Cosmic King Mjolnir or Stormbreaker: it follows the suit)
     // ------------------------------------------------------------------
 
+    /**
+     * Armed for his powers: the weapon in hand, or not transformed at all (as Superman, his powers are his own:
+     * flight and every ability work in civil clothes too, the lightning from his hands).
+     */
     public static boolean holdingHammer(ServerPlayer player) {
         return player.getMainHandItem().getItem() instanceof MjolnirItem
-                || player.getOffhandItem().getItem() instanceof MjolnirItem;
+                || player.getOffhandItem().getItem() instanceof MjolnirItem || !ThorPowers.suited(player);
     }
 
     private static boolean hasHammerItem(ServerPlayer player) {

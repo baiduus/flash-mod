@@ -406,6 +406,13 @@ public final class InfinityClient {
             return;
         }
         if (!Screen.hasAltDown()) {
+            // Hand of God's hold (the Space Stone's, as Yas'): the wheel brings it closer / sends it farther
+            if (tkWas && com.flash.client.YasAbilities.stoneHolding()) {
+                event.setCanceled(true);
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(
+                        new com.flash.network.YasTelekinesisPacket(event.getScrollDelta() > 0.0D ? 1 : -1));
+                return;
+            }
             // telekinesis holds something: closer / farther
             if (anyOn("flash:telekinesis")) {
                 event.setCanceled(true);

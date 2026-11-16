@@ -506,7 +506,10 @@ public final class ScarletAbilities {
     // The dismemberment of five seconds (and no implosion)
     // ------------------------------------------------------------------
 
-    private record Torn(ResourceKey<Level> dim, CompoundTag tag, Vec3 at, long back, UUID player) {
+    /** Torn by the Space Stone (its light blue, no runes): StoneFx instead of hers. */
+    private static final Set<UUID> STONE_TEAR = new java.util.HashSet<>();
+
+    private record Torn(ResourceKey<Level> dim, CompoundTag tag, Vec3 at, long back, UUID player, boolean stone) {
     }
 
     private static final List<Torn> TORN = new ArrayList<>();
@@ -576,6 +579,9 @@ public final class ScarletAbilities {
 
     private static void tear(ServerPlayer p, LivingEntity e) {
         HELD.put(e.getUUID(), p.level().getGameTime());
+        if (com.flash.infinity.HogBridge.tkHolder(p)) {
+            STONE_TEAR.add(e.getUUID());
+        }
         if (e instanceof ServerPlayer victim) {
             SPARED.add(victim.getUUID());
         }
@@ -657,7 +663,8 @@ public final class ScarletAbilities {
         tag.remove("Passengers");
         tag.remove("DeathTime");
         tag.putShort("HurtTime", (short) 0);
-        TORN.add(new Torn(level.dimension(), tag, e.position(), level.getGameTime() + 100L, null));
+        TORN.add(new Torn(level.dimension(), tag, e.position(), level.getGameTime() + 100L, null,
+                STONE_TEAR.remove(e.getUUID())));
         // what it dropped right now goes back with it
         for (Entity drop : level.getEntities(e, e.getBoundingBox().inflate(2.5D),
                 d -> (d instanceof net.minecraft.world.entity.item.ItemEntity
@@ -692,7 +699,7 @@ public final class ScarletAbilities {
         victim.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0, false, false));
         victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 255, false, false));
         TORN.add(new Torn(victim.level().dimension(), null, victim.position(), victim.level().getGameTime() + 100L,
-                victim.getUUID()));
+                victim.getUUID(), STONE_TEAR.remove(victim.getUUID())));
         torn(victim, 100);
     }
 
@@ -732,7 +739,11 @@ public final class ScarletAbilities {
                     v.setDeltaMovement(Vec3.ZERO);
                 }
                 if (level.getGameTime() % 4 == 0) {
-                    ScarletPowers.vfx(level, t.at().hashCode(), ScarletFxPacket.TORN, t.at(), t.at(), 1.0F);
+                    if (t.stone()) {
+                        com.flash.infinity.StoneFx.send(level, com.flash.infinity.StoneFx.TORN, null, t.at(), t.at());
+                    } else {
+                        ScarletPowers.vfx(level, t.at().hashCode(), ScarletFxPacket.TORN, t.at(), t.at(), 1.0F);
+                    }
                 }
                 continue;
             }
@@ -760,7 +771,11 @@ public final class ScarletAbilities {
                     level.addFreshEntity(le);
                 }
             }
-            ScarletPowers.vfx(level, t.at().hashCode(), ScarletFxPacket.WHOLE, t.at(), t.at(), 1.0F);
+            if (t.stone()) {
+                com.flash.infinity.StoneFx.send(level, com.flash.infinity.StoneFx.JUMP, null, t.at(), t.at());
+            } else {
+                ScarletPowers.vfx(level, t.at().hashCode(), ScarletFxPacket.WHOLE, t.at(), t.at(), 1.0F);
+            }
             ScarletPowers.play(level, t.at(), "poeira_volta", SoundEvents.ZOMBIE_VILLAGER_CURE, 1.6F);
         }
     }

@@ -175,10 +175,16 @@ public final class HogBridge {
         Long last = TEAR_COOLDOWN.get(p.getUUID());
         if (last == null || now - last >= 40L) {
             TEAR_COOLDOWN.put(p.getUUID(), now);
+            Integer id = TK.get(p.getUUID());
+            if (id != null) {
+                KEEP_BLUE.put(id, now + 60L);
+            }
             com.flash.scarlet.ScarletAbilities.dismemberBy(p);
         }
         return true;
     }
+
+    private static final java.util.Map<Integer, Long> KEEP_BLUE = new java.util.HashMap<>();
 
     /** Every tick: what each holder holds, light blue for everyone (BlueTk mixins). */
     @net.minecraftforge.eventbus.api.SubscribeEvent
@@ -186,13 +192,25 @@ public final class HogBridge {
         if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || !tkReady()) {
             return;
         }
+        long t = event.getServer().overworld().getGameTime();
+        KEEP_BLUE.entrySet().removeIf(en -> {
+            if (t < en.getValue()) {
+                return false;
+            }
+            com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.ALL.noArg(),
+                    new com.flash.network.SoulGrayPacket(-2 - en.getKey(), false));
+            return true;
+        });
         for (ServerPlayer p : event.getServer().getPlayerList().getPlayers()) {
             net.minecraft.world.entity.LivingEntity held = tkHolder(p) ? com.flash.yas.YasTelekinesis.held(p) : null;
             Integer was = TK.get(p.getUUID());
             int now = held == null ? -1 : held.getId();
             if (was != null && was != now) {
-                blue(p, was, false);
                 TK.remove(p.getUUID());
+                Long keep = KEEP_BLUE.get(was);
+                if (keep == null) {
+                    blue(p, was, false);
+                }
             }
             if (now >= 0 && (was == null || was != now)) {
                 TK.put(p.getUUID(), now);

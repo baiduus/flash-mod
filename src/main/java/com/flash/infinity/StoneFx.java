@@ -16,6 +16,8 @@ public final class StoneFx {
     public static final byte MIND = 6;
     public static final byte TIME = 7;
     public static final byte ROCKETS = 8;
+    /** Torn apart by the Space Stone: light-blue sparks swirling where the pieces are (no runes). */
+    public static final byte TORN = 9;
 
     private StoneFx() {
     }

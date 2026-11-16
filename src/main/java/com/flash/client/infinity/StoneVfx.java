@@ -57,6 +57,7 @@ public final class StoneVfx {
             case StoneFx.MIND -> 14;
             case StoneFx.TIME -> 26;
             case StoneFx.ROCKETS -> 10;
+            case StoneFx.TORN -> 8;
             default -> 10;
         };
         if (FX.size() < 64) {
@@ -296,6 +297,15 @@ public final class StoneVfx {
                             TIME[1], TIME[2], fade);
                 }
                 VfxDraw.glow(buf, m, c, left, up, 1.5D * fade, TIME[0], TIME[1], TIME[2], 0.4F * fade);
+            }
+            case StoneFx.TORN -> {
+                Vec3 c = f.a().add(0.0D, 0.8D, 0.0D);
+                for (int s = 0; s < 3; s++) {
+                    double ang = age * 0.3D + s * 2.1D;
+                    Vec3 o = c.add(Math.cos(ang) * 0.8D, Math.sin(age * 0.2D + s) * 0.4D, Math.sin(ang) * 0.8D);
+                    VfxDraw.glow(buf, m, o, left, up, 0.18D, 0.45F, 0.85F, 1.0F, 0.8F * fade);
+                }
+                VfxDraw.glow(buf, m, c, left, up, 1.1D, 0.4F, 0.8F, 1.0F, 0.2F * fade);
             }
             default -> {
             }
