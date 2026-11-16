@@ -411,6 +411,40 @@ public final class InfinityGauntlet {
     }
 
     // ------------------------------------------------------------------
+    // The Gauntlet's fist: much more than a punch (more with every stone in it)
+    // ------------------------------------------------------------------
+
+    public static final float PUNCH_BASE = 12.0F;
+    public static final float PUNCH_PER_STONE = 4.0F;
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void onPunch(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (!(event.getSource().getEntity() instanceof ServerPlayer p) || event.getSource().getDirectEntity() != p
+                || !event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) {
+            return;
+        }
+        ItemStack g = worn(p);
+        if (g.isEmpty()) {
+            return;
+        }
+        int n = stones(g).size();
+        event.setAmount(event.getAmount() + PUNCH_BASE + PUNCH_PER_STONE * n);
+        LivingEntity t = event.getEntity();
+        net.minecraft.world.phys.Vec3 push = t.position().subtract(p.position()).multiply(1.0D, 0.0D, 1.0D);
+        if (push.lengthSqr() > 1.0E-4D) {
+            push = push.normalize().scale(0.6D + 0.15D * n);
+            t.push(push.x, 0.25D + 0.03D * n, push.z);
+            t.hurtMarked = true;
+        }
+        if (p.level() instanceof ServerLevel level) {
+            level.sendParticles(ParticleTypes.EXPLOSION, t.getX(), t.getY() + t.getBbHeight() * 0.5D, t.getZ(), 1,
+                    0.0D, 0.0D, 0.0D, 0.0D);
+            level.playSound(null, t.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_LAND,
+                    SoundSource.PLAYERS, 0.35F, 0.6F);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // The Snap
     // ------------------------------------------------------------------
 

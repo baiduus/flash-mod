@@ -101,7 +101,12 @@ public final class SoulStone {
         Vec3 eye = p.getEyePosition();
         Vec3 end = eye.add(p.getLookAngle().scale(16.0D));
         EntityHitResult eh = ProjectileUtil.getEntityHitResult(p, eye, end, p.getBoundingBox().expandTowards(
-                end.subtract(eye)).inflate(1.0D), e -> e instanceof Mob, eye.distanceToSqr(end));
+                end.subtract(eye)).inflate(1.0D), e -> e instanceof Mob || e instanceof ServerPlayer o
+                && !o.isCreative() && !o.isSpectator(), eye.distanceToSqr(end));
+        if (eh != null && eh.getEntity() instanceof ServerPlayer target) {
+            drainPlayer(p, target);
+            return;
+        }
         if (eh == null || !(eh.getEntity() instanceof Mob m) || m instanceof StoneClone
                 || m.getType().is(TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,
                 new ResourceLocation("forge", "bosses"))) || InfinityImmunity.immune(m, "soul")) {
@@ -130,6 +135,60 @@ public final class SoulStone {
             Vec3 at = p.isShiftKeyDown() ? b.lerp(a, i / 12.0D) : a.lerp(b, i / 12.0D);
             level.sendParticles(ParticleTypes.SOUL, at.x, at.y, at.z, 1, 0.05D, 0.05D, 0.05D, 0.0D);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // A player's soul: pulled out for ten seconds (the body left frozen and hollow), stored in the stone
+    // ------------------------------------------------------------------
+
+    private static final String SOULLESS = "flash_soulless_until";
+    private static final int SOULLESS_TICKS = 200;
+
+    public static boolean soulless(net.minecraft.world.entity.player.Player t) {
+        return t.getPersistentData().getLong(SOULLESS) > t.level().getGameTime();
+    }
+
+    static void drainPlayer(ServerPlayer p, ServerPlayer t) {
+        ServerLevel level = p.serverLevel();
+        boolean giveBack = p.isShiftKeyDown();
+        if (giveBack) {
+            if (!soulless(t) || souls(p) < 1) {
+                return;
+            }
+            addSouls(p, -1);
+            t.getPersistentData().remove(SOULLESS);
+            for (var e : new net.minecraft.world.effect.MobEffect[] {MobEffects.MOVEMENT_SLOWDOWN, MobEffects.JUMP,
+                    MobEffects.DIG_SLOWDOWN, MobEffects.WEAKNESS, MobEffects.BLINDNESS}) {
+                t.removeEffect(e);
+            }
+        } else {
+            if (soulless(t) || InfinityImmunity.immune(t, "soul")) {
+                return;
+            }
+            t.getPersistentData().putLong(SOULLESS, level.getGameTime() + SOULLESS_TICKS);
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SOULLESS_TICKS,
+                    255, false, false, true));
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.JUMP, SOULLESS_TICKS, 250, false,
+                    false, false));
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.DIG_SLOWDOWN, SOULLESS_TICKS, 4,
+                    false, false, true));
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.WEAKNESS, SOULLESS_TICKS, 4, false,
+                    false, true));
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, false,
+                    true));
+            t.hurt(level.damageSources().indirectMagic(p, p), 6.0F);
+            t.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.flash.infinity.soul_taken", p.getDisplayName()), true);
+            addSouls(p, 1);
+        }
+        SpaceStone.sound(level, t.position(), "soul_stone", 1.0F, giveBack ? 1.4F : 0.6F);
+        Vec3 a = t.position().add(0.0D, t.getBbHeight() * 0.5D, 0.0D);
+        Vec3 b = p.position().add(0.0D, 1.0D, 0.0D);
+        for (int i = 0; i <= 16; i++) {
+            Vec3 at = giveBack ? b.lerp(a, i / 16.0D) : a.lerp(b, i / 16.0D);
+            level.sendParticles(ParticleTypes.SOUL, at.x, at.y, at.z, 2, 0.08D, 0.08D, 0.08D, 0.0D);
+        }
+        level.sendParticles(ParticleTypes.SCULK_SOUL, a.x, a.y, a.z, 12, 0.3D, 0.5D, 0.3D, 0.02D);
     }
 
     /** /infinity soul zombies: up to 6, each one a soul. */

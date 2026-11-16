@@ -17,7 +17,6 @@
       }
     }
   },
-
   "abilities": {
     "tick": {
       "type": "palladium:command",
@@ -29,15 +28,21 @@
       "hidden": true,
       "hidden_in_bar": true,
       "list_index": 0,
-      "gui_position": [0, -1],
+      "gui_position": [
+        0,
+        -1
+      ],
       "description": "Pacify hostile mobs around you",
-      "first_tick_commands": ["scoreboard players set @s timestonesidebar 0"],
-      "last_tick_commands": ["scoreboard players set @s tickrateCycle 0"],
+      "first_tick_commands": [
+        "scoreboard players set @s timestonesidebar 0"
+      ],
+      "last_tick_commands": [
+        "scoreboard players set @s tickrateCycle 0"
+      ],
       "conditions": {
         "enabling": []
       }
     },
-
     "description": {
       "type": "palladium:dummy",
       "persistent_data": true,
@@ -47,7 +52,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0.5, 1.5],
+      "gui_position": [
+        0.5,
+        1.5
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.remove_time_stone.description"
       }
@@ -58,7 +66,10 @@
       "title": " ",
       "hidden": false,
       "hidden_in_bar": true,
-      "gui_position": [0.5, 2]
+      "gui_position": [
+        0.5,
+        2
+      ]
     },
     "screen_toggle": {
       "type": "flash:toggle",
@@ -69,7 +80,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [-0.5, 0],
+      "gui_position": [
+        -0.5,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.screen_toggle.description"
       },
@@ -83,7 +97,7 @@
         ]
       },
       "setting": "time_stone.screen"
-},
+    },
     "daylight_cycle_toggle": {
       "type": "flash:toggle",
       "icon": "minecraft:command_block",
@@ -93,7 +107,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [1.5, 0],
+      "gui_position": [
+        1.5,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.daylight_cycle_toggle.description"
       },
@@ -112,7 +129,7 @@
         ]
       },
       "gamerule": "doDaylightCycle"
-},
+    },
     "slow_time_dummy": {
       "type": "palladium:dummy",
       "persistent_data": true,
@@ -122,7 +139,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0.5, 0.5],
+      "gui_position": [
+        0.5,
+        0.5
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.slow_time_dummy.description"
       },
@@ -130,7 +150,9 @@
         "unlocking": [
           {
             "type": "palladium:item_buyable",
-            "ingredient": { "item": "flash:aspects_of_existance" },
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
             "amount": 12
           },
           {
@@ -150,7 +172,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0.5, 1],
+      "gui_position": [
+        0.5,
+        1
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.time_freeze_dummy.description"
       },
@@ -158,7 +183,9 @@
         "unlocking": [
           {
             "type": "palladium:item_buyable",
-            "ingredient": { "item": "flash:aspects_of_existance" },
+            "ingredient": {
+              "item": "flash:aspects_of_existance"
+            },
             "amount": 32
           },
           {
@@ -169,7 +196,6 @@
         ]
       }
     },
-
     "slow_time": {
       "type": "flash:time_flow_change",
       "amount": 1,
@@ -217,7 +243,9 @@
       "commands": [],
       "hidden": true,
       "hidden_in_bar": true,
-      "first_tick_commands": ["playsound flash:infinity.use_infinity_gauntlet block @s"],
+      "first_tick_commands": [
+        "playsound flash:infinity.use_infinity_gauntlet block @s"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -275,7 +303,9 @@
       "commands": [],
       "hidden": true,
       "hidden_in_bar": true,
-      "first_tick_commands": ["playsound flash:infinity.use_infinity_gauntlet block @s"],
+      "first_tick_commands": [
+        "playsound flash:infinity.use_infinity_gauntlet block @s"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -322,7 +352,9 @@
       "commands": [],
       "hidden": true,
       "hidden_in_bar": true,
-      "first_tick_commands": ["playsound flash:infinity.time_stone block @s"],
+      "first_tick_commands": [
+        "playsound flash:infinity.time_stone block @s"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -342,7 +374,10 @@
       "hidden": true,
       "hidden_in_bar": false,
       "list_index": 3,
-      "gui_position": [2, 2],
+      "gui_position": [
+        2,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.time_freeze_dummy.description"
       },
@@ -370,8 +405,12 @@
       "commands": [],
       "hidden": true,
       "hidden_in_bar": true,
-      "first_tick_commands": ["playsound flash:infinity.time_stone block @s"],
-      "last_tick_commands": ["playsound flash:infinity.time_stone block @s"],
+      "first_tick_commands": [
+        "playsound flash:infinity.time_stone block @s"
+      ],
+      "last_tick_commands": [
+        "playsound flash:infinity.time_stone block @s"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -397,19 +436,26 @@
       }
     },
     "fast_forward": {
-      "type": "palladium:command",
+      "type": "flash:hog_time",
       "icon": "minecraft:clock",
-      "title": "Fast Forward Daylight Cycle",
+      "title": "Fast Forward Time",
       "bar_color": "lime",
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 0,
-      "gui_position": [0.5, 0],
+      "gui_position": [
+        0.5,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.fast_forward.description"
       },
-      "first_tick_commands": ["playsound flash:infinity.time_stone block @s"],
-      "commands": ["time add 100"],
+      "first_tick_commands": [
+        "playsound flash:infinity.time_stone block @s"
+      ],
+      "commands": [
+        "time add 100"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -430,7 +476,6 @@
         ]
       }
     },
-
     "aim": {
       "type": "palladium:aim",
       "hidden": true,
@@ -477,7 +522,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 1,
-      "gui_position": [0, 0],
+      "gui_position": [
+        0,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.projectile_stop.description"
       },
@@ -512,7 +560,9 @@
       "commands": [],
       "hidden": true,
       "hidden_in_bar": true,
-      "first_tick_commands": ["playsound flash:infinity.time_stone block @s"],
+      "first_tick_commands": [
+        "playsound flash:infinity.time_stone block @s"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -531,7 +581,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": -1,
-      "gui_position": [1, 0],
+      "gui_position": [
+        1,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.time_stone.time_set.description"
       },
@@ -604,9 +657,21 @@
       "texture": "flash:textures/gui/time.png",
       "texture_width": 200,
       "texture_height": 200,
-      "translate": [0, 0, 0],
-      "rotate": [0, 0, 0],
-      "scale": [1, 1, 1],
+      "translate": [
+        0,
+        0,
+        0
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
       "alignment": "stretch",
       "conditions": {
         "enabling": [
@@ -633,7 +698,10 @@
           }
         ],
         "unlocking": [
-          {"type": "flash:setting", "setting": "time_stone.screen"}
+          {
+            "type": "flash:setting",
+            "setting": "time_stone.screen"
+          }
         ]
       }
     },
@@ -651,7 +719,10 @@
       "arm": "left_arm",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_arm", "arm": "left"},
+          {
+            "type": "flash:gauntlet_arm",
+            "arm": "left"
+          },
           {
             "type": "palladium:ability_enabled",
             "ability": "render_layer_time2"
@@ -673,7 +744,10 @@
       "arm": "right_arm",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_arm", "arm": "right"},
+          {
+            "type": "flash:gauntlet_arm",
+            "arm": "right"
+          },
           {
             "type": "palladium:ability_enabled",
             "ability": "render_layer_time2"

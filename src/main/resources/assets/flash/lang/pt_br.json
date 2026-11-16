@@ -1719,7 +1719,7 @@
   "ability.infinity.time_stone.accelerate_time.description": "Acelera a passagem do tempo, fazendo com que o mundo se mova mais rápido que o normal.",
   "ability.infinity.time_stone.reset_time_speed.description": "Restaura o fluxo do tempo ao seu estado natural.",
   "ability.infinity.time_stone.time_freeze_dummy.description": "O Mundo! Pare o Tempo! Pressione uma vez para congelar o tempo e novamente para retomá-lo.",
-  "ability.infinity.time_stone.fast_forward.description": "Acelera rapidamente o ciclo de dia e noite.",
+  "ability.infinity.time_stone.fast_forward.description": "Segure para acelerar o próprio tempo, como a Yas: o sol e a lua disparam pelo céu e o mundo inteiro corre (só no Overworld).",
   "ability.infinity.time_stone.stop_time.description": "Interrompe completamente o ciclo de dia e noite até ser reativado.",
   "ability.infinity.time_stone.start_time.description": "Reinicia o ciclo de dia e noite.",
   "ability.infinity.time_stone.projectile_stop.description": "Para todos os projéteis no ar. Assim que você sair da área, eles irão recuperar o impulso.",
@@ -1843,5 +1843,8 @@
   "gui.flash.infinity.short_toggle": "ligar",
   "gui.flash.infinity.short_held": "segurar",
   "gui.flash.infinity.short_double_action": "usar 2x",
-  "gui.flash.infinity.short_double_toggle": "ligar 2x"
+  "gui.flash.infinity.short_double_toggle": "ligar 2x",
+  "ability.infinity.reality_stone.size_toggle.description": "Segure para carregar e solte para reescrever a realidade ao seu redor, trocando o bioma como a Yas e a Feiticeira Escarlate. Use de novo para desfazer.",
+  "message.flash.infinity.soul_taken": "%s arrancou sua alma! Você está paralisado.",
+  "ability.infinity.soul_stone.soul_drain.description": "Mire num mob ou jogador para arrancar a alma dele e guardá-la na joia. O mob fica parado para sempre; o jogador leva dano e fica paralisado e sem forças por 10 segundos. Agachado, devolve a alma."
 }

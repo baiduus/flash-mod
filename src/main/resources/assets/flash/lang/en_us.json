@@ -1708,7 +1708,7 @@
   "ability.infinity.soul_stone.locateplayer_command.description": "Use /infinity soul locateentity <name> to find the player or closest entity with that name. Also lets Mind Reading show where its target is and read minds by name from anywhere",
   "ability.infinity.soul_stone.soul_storage.description": "Stores the soul of every entity you kill, up to 50, shown on the soul bar.",
   "ability.infinity.soul_stone.soul_heal.description": "Spends 1 stored soul to restore 2 hearts.",
-  "ability.infinity.soul_stone.soul_drain.description": "Drains the soul of the entity you look at, leaving it brain dead and storing 1 soul. Sneak while using it to give a drained entity its soul back for 1 stored soul.",
+  "ability.infinity.soul_stone.soul_drain.description": "Aim at a mob or player to tear out its soul and keep it in the stone. A mob stays frozen for good; a player takes damage and is left frozen and powerless for 10 seconds. Crouch to give the soul back.",
   "ability.infinity.space_stone.teleport.description": "Teleport to wherever you are looking",
   "ability.infinity.space_stone.water_breathing.description": "Allows you to breathe underwater",
   "ability.infinity.space_stone.telekinesis.description": "Use telekinesis to grab and move entities or blocks from a distance",
@@ -1722,7 +1722,7 @@
   "ability.infinity.time_stone.accelerate_time.description": "Accelerates the passage of time, causing the world to move faster than normal.",
   "ability.infinity.time_stone.reset_time_speed.description": "Resets the flow of time back to its natural state.",
   "ability.infinity.time_stone.time_freeze_dummy.description": "Completely halts time. Press once to freeze time, and again to resume it.",
-  "ability.infinity.time_stone.fast_forward.description": "Rapidly advances the daylight cycle.",
+  "ability.infinity.time_stone.fast_forward.description": "Hold to speed up time itself, like Yas: the sun and moon race across the sky and the whole world rushes (Overworld only).",
   "ability.infinity.time_stone.projectile_stop.description": "Stops all projectiles in midair. Once you leave the area, they will eventually regain momentum.",
   "ability.infinity.time_stone.time_set.description": "Grants access to the /infinity time set command, allowing direct control over the world's time.",
   "ability.infinity.time_stone.remove_time_stone.description": "Removes the Time Stone from the Eye of Agamotto. (Shift Left Click from Eye of Agamotto)",
@@ -1926,5 +1926,7 @@
   "gui.flash.infinity.short_toggle": "toggle",
   "gui.flash.infinity.short_held": "hold",
   "gui.flash.infinity.short_double_action": "use x2",
-  "gui.flash.infinity.short_double_toggle": "toggle x2"
+  "gui.flash.infinity.short_double_toggle": "toggle x2",
+  "ability.infinity.reality_stone.size_toggle.description": "Hold to charge and release to rewrite reality around you, changing the biome like Yas and the Scarlet Witch. Use again to undo.",
+  "message.flash.infinity.soul_taken": "%s tore out your soul! You can not move."
 }

@@ -154,6 +154,9 @@ public final class InfinityStoneAbilities {
                     InfinityOrb.eye(p, a.id);
                 }
             }
+            // Yas' powers, borrowed (Hand of God)
+            case "flash:hog_time" -> HogBridge.time(p, a, on, was);
+            case "flash:hog_reality" -> HogBridge.reality(p, a, on, was);
             // the Cosmi-Rod
             case "flash:shockwave" -> {
                 if (start) {

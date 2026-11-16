@@ -117,6 +117,11 @@ public final class YasRealityWave {
         if (!(YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p)) || p.level().dimension() == Level.OVERWORLD) {
             return;
         }
+        startFor(p);
+    }
+
+    /** The wave for anyone allowed it (the Reality Stone too), anywhere Hand of God cannot reach. */
+    public static void startFor(ServerPlayer p) {
         long now = p.level().getGameTime();
         Long last = LAST.get(p.getUUID());
         if (last != null && now - last < 20L) {
