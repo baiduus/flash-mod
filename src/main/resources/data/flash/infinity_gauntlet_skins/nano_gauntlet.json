@@ -1,0 +1,9 @@
+{
+  "title": "Nano Gauntlet Skin",
+  "unlock_item": "minecraft:echo_shard",
+  "apply_sound": "flash:nano_gauntlet",
+  "bar_color": "red",
+  "gui_position": [-1, 2.5],
+  "can_replace": ["gauntlet_burn"],
+  "apply_commands": ["tag @s remove burn_texture"]
+}

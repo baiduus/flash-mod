@@ -1,0 +1,11 @@
+{
+  "title": "Endosymbiotic Gauntlet",
+  "unlock_item": "flash:endosym_ingot",
+  "gui_position": [0, 3],
+  "render": {
+    "model": "flash:geo/infinity/endosym_gauntlet",
+    "glow": {
+      "enchantment_glint": true
+    }
+  }
+}

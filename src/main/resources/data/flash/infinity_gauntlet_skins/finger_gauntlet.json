@@ -1,0 +1,11 @@
+{
+  "title": "Gauntlet with Fingers",
+  "unlock_item": "minecraft:chicken",
+  "apply_sound": "minecraft:entity.generic.eat",
+  "apply_on": "hold",
+  "gui_position": [1, 2.5],
+  "render": {
+    "model": "flash:geo/infinity/finger_gauntlet",
+    "texture": "flash:textures/infinity_models/gauntlet.png"
+  }
+}

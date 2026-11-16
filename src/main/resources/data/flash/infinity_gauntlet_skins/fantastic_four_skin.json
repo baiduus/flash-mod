@@ -1,0 +1,7 @@
+{
+  "title": "Fantastic Four Skin",
+  "unlock_item": "minecraft:shears",
+  "bar_color": "light_blue",
+  "hidden_in_bar": true,
+  "gui_position": [-0.5, 2.5]
+}

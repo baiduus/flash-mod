@@ -1,0 +1,9 @@
+{
+  "title": "Blaze Inc Gauntlet",
+  "unlock_item": "minecraft:quartz_block",
+  "bar_color": "white",
+  "gui_position": [-0.5, 4],
+  "render": {
+    "model": "flash:geo/infinity/blaze_inc_gauntlet"
+  }
+}

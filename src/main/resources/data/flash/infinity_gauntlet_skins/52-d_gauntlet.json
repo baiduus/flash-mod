@@ -1,0 +1,12 @@
+{
+  "title": "(NP-Λ52) Enchanced Gauntlet",
+  "unlock_item": "flash:52-d_unit",
+  "apply_sound": "flash:np52",
+  "gui_position": [1, 3.5],
+  "render": {
+    "model": "flash:geo/infinity/52-d_gauntlet",
+    "glow": {
+      "enchantment_glint": true
+    }
+  }
+}

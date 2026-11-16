@@ -1,0 +1,8 @@
+{
+  "title": "Ultron Gauntlet",
+  "unlock_item": "minecraft:recovery_compass",
+  "gui_position": [-0.5, 3.5],
+  "render": {
+    "model": "flash:geo/infinity/ultron_gauntlet"
+  }
+}

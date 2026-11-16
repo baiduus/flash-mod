@@ -1,0 +1,8 @@
+{
+  "title": "Ferro-Titanium-Gold Alloy Gauntlet",
+  "unlock_item": "flash:ferro-titanium-gold_alloy_ingot",
+  "gui_position": [1, 3],
+  "render": {
+    "model": "flash:geo/infinity/ftg_gauntlet"
+  }
+}

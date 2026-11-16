@@ -1,0 +1,9 @@
+{
+  "title": "Panther Gauntlet",
+  "unlock_item": "minecraft:amethyst_shard",
+  "gui_position": [0, 3.5],
+  "render": {
+    "model": "flash:geo/infinity/panther_gauntlet",
+    "glow": true
+  }
+}

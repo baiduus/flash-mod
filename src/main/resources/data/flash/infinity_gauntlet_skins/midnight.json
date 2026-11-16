@@ -1,0 +1,15 @@
+{
+  "title": "Midnight",
+  "unlock_item": "minecraft:black_dye",
+  "gui_position": [-1, 3.5],
+  "render": {
+    "glow": {
+      "positions": ["worn"],
+      "conditions": [
+        {
+          "type": "palladium:night"
+        }
+      ]
+    }
+  }
+}

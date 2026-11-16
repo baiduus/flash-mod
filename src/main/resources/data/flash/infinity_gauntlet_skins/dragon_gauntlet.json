@@ -1,0 +1,12 @@
+{
+  "title": "Dragon Gauntlet",
+  "unlock_item": "minecraft:dragon_head",
+  "bar_color": "purple",
+  "gui_position": [0, 4],
+  "render": {
+    "model": "flash:geo/infinity/dragon_gauntlet",
+    "glow": {
+      "enchantment_glint": true
+    }
+  }
+}

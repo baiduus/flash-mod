@@ -1,0 +1,16 @@
+{
+  "title": "Cheeselander Gauntlet",
+  "unlock_item": "minecraft:sponge",
+  "apply_sound": "minecraft:block.anvil.land",
+  "apply_on": "right_click",
+  "bar_color": "yellow",
+  "hidden_in_bar": false,
+  "gui_position": [1, 4],
+  "description": "Unlock by right-clicking with a Sponge in your main hand.\nMade for the main suit from the Rangers SuperHeros mod.",
+  "render": {
+    "texture": "flash:textures/infinity_models/cheeselander.png",
+    "model": "flash:geo/infinity/gauntlet",
+    "glow": false,
+    "layers": {}
+  }
+}
