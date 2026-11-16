@@ -21,11 +21,8 @@ public class InfinityGauntletItem extends Item {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player p, InteractionHand hand) {
-        ItemStack s = p.getItemInHand(hand);
-        if (p instanceof ServerPlayer sp) {
-            GauntletMenu.open(sp, hand);
-        }
-        return InteractionResultHolder.sidedSuccess(s, level.isClientSide);
+        // its menu opens with the Open Gauntlet key (G), not with the right click
+        return InteractionResultHolder.pass(p.getItemInHand(hand));
     }
 
     @Override

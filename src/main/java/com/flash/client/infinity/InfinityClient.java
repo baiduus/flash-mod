@@ -525,15 +525,17 @@ public final class InfinityClient {
         }
         InfPowers.Ability a = selected();
         boolean down = a != null && FlashKeys.YAS_USE.isDown() && mc.screen == null;
-        // Pull the Sun: Yas' Celestial (Hand of God's own gesture, its key held with R)
-        boolean sun = down && takesKeys() && "flash:hog_sun".equals(a.type);
-        if (sun || sunWas) {
-            net.minecraft.client.KeyMapping k = com.flash.client.YasAbilities.hogKey("celeste");
-            if (k != null) {
-                k.setDown(sun);
-            }
+        // Pull the Sun: Yas' Celestial (Hand of God's own gesture, its key on R as in her mode)
+        boolean sun = takesKeys() && a != null && "flash:hog_sun".equals(a.type);
+        boolean tkMode = takesKeys() && a != null && "flash:telekinesis".equals(a.type);
+        String hog = sun ? "CELESTE" : tkMode ? "TELECINESE" : null;
+        if (hog != null || sunWas) {
+            com.flash.client.YasAbilities.stoneMode(hog);
         }
-        sunWas = sun;
+        sunWas = hog != null;
+        if (sun) {
+            down = false;
+        }
         // Telekinesis (Space Stone): Yas' own (Hand of God's hold, the same presses: lift, charge, throw)
         boolean tk = takesKeys() && a != null && "flash:telekinesis".equals(a.type)
                 && com.flash.client.YasAbilities.hogKey("telecinese") != null;

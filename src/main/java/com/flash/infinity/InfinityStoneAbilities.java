@@ -131,9 +131,7 @@ public final class InfinityStoneAbilities {
                 if (start) {
                     fx(p, StoneFx.TIME, p.position(), p.position());
                 }
-                if (!HogBridge.freeze(p, on, was)) {
-                    TimeStone.freeze(p, on, was);
-                }
+                TimeStone.freeze(p, on, was);
             }
             case "flash:projectile_stop" -> TimeStone.projectileStop(p, on);
             case "palladium:water_walk" -> TimeStone.waterWalk(p, on);

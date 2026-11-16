@@ -763,6 +763,37 @@ public final class YasAbilities {
         return tkHeld >= THROW_AFTER ? Math.min(1.0F, (tkHeld - THROW_AFTER) / (float) THROW_FULL) : -1.0F;
     }
 
+    private static InputConstants.Key stoneCelesteOriginal;
+
+    /**
+     * The stones borrow Yas' powers of Hand of God: its power chosen as hers would be (TELECINESE, CELESTE) and,
+     * for Celestial, its key put on R as in her mode; null: back to the player's own key.
+     */
+    public static void stoneMode(String power) {
+        if (power != null && ready()) {
+            for (int i = 0; i < POWERS.length; i++) {
+                if (POWERS[i].equals(power) && hogSelected() != i) {
+                    hogSelect(i);
+                }
+            }
+        }
+        KeyMapping k = hogKey("celeste");
+        if (k == null) {
+            return;
+        }
+        if ("CELESTE".equals(power)) {
+            if (stoneCelesteOriginal == null) {
+                stoneCelesteOriginal = k.getKey();
+                k.setKey(FlashKeys.YAS_USE.getKey());
+                KeyMapping.resetMapping();
+            }
+        } else if (stoneCelesteOriginal != null) {
+            k.setKey(stoneCelesteOriginal);
+            stoneCelesteOriginal = null;
+            KeyMapping.resetMapping();
+        }
+    }
+
     /** The Space Stone's telekinesis: Yas' own, the same keys and gesture (InfinityClient). */
     public static void stoneTelekinesis(Minecraft mc, boolean on) {
         telekinesis(mc, on);

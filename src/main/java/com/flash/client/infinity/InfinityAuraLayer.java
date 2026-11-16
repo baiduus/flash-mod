@@ -18,8 +18,8 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class InfinityAuraLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
-    private static final ResourceLocation ENERGY = new ResourceLocation("minecraft",
-            "textures/entity/creeper/creeper_armor.png");
+    private static final ResourceLocation ENERGY = new ResourceLocation("flash",
+            "textures/entity/stone_flight_energy.png");
     private final PlayerModel<AbstractClientPlayer> shell;
 
     public InfinityAuraLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
@@ -44,7 +44,7 @@ public class InfinityAuraLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         float t = age * 0.01F;
         var buffer = buffers.getBuffer(RenderType.energySwirl(ENERGY, t % 1.0F, (t * 0.7F) % 1.0F));
         float pulse = 0.75F + 0.25F * (float) Math.sin(age * 0.3F);
-        this.shell.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, 0.45F * pulse, 0.85F * pulse,
+        this.shell.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, 1.0F * pulse, 1.0F * pulse,
                 1.0F * pulse, 1.0F);
     }
 }
