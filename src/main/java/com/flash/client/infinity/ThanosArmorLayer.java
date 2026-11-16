@@ -24,6 +24,16 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
     private static final Map<String, GeoModel> MODELS = new HashMap<>();
     private static final String[] BONES = {"head", "body", "right_arm", "left_arm", "right_leg", "left_leg"};
 
+    private static final ResourceLocation EYE_GLOW = new ResourceLocation("flash",
+            "textures/infinity_models/eye_of_agamotto_e.png");
+
+    private static void hide(GeoModel m, String name, boolean hidden) {
+        GeoModel.Bone b = m.bone(name);
+        if (b != null) {
+            b.visible = !hidden;
+        }
+    }
+
     public ThanosArmorLayer(RenderLayerParent<T, M> parent) {
         super(parent);
     }
@@ -56,7 +66,7 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
         for (EquipmentSlot slot : new EquipmentSlot[] {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
                 EquipmentSlot.FEET}) {
             ItemStack s = entity.getItemBySlot(slot);
-            if (!(s.getItem() instanceof InfinityExtras.ThanosArmor a)) {
+            if (!(s.getItem() instanceof InfinityExtras.GeoArmor a)) {
                 continue;
             }
             GeoModel m = model(a.model);
@@ -64,6 +74,17 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 continue;
             }
             m.reset();
+            boolean eye = s.is(com.flash.infinity.InfinityItems.EYE_OF_AGAMOTTO.get())
+                    || s.is(com.flash.infinity.InfinityItems.EMPTY_EYE_OF_AGAMOTTO.get());
+            boolean stone = false;
+            if (eye) {
+                // the Eye: its lids open while it is open, its stone only when there is one
+                boolean open = com.flash.infinity.InfinityContainers.eyeOpen(s);
+                stone = com.flash.infinity.InfinityContainers.stoneIn(s) != null;
+                hide(m, "upper_lid", open);
+                hide(m, "lower_lid", open);
+                hide(m, "time_stone", !stone);
+            }
             var vc = buffers.getBuffer(RenderType.armorCutoutNoCull(new ResourceLocation(a.texture)));
             for (String name : BONES) {
                 GeoModel.Bone bone = m.bone(name);
@@ -78,6 +99,10 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 }
                 pose.translate(-bone.pivotX() / 16.0F, -bone.pivotY() / 16.0F, -bone.pivotZ() / 16.0F);
                 m.renderBone(bone, pose, vc, light, OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                if (eye && stone) {
+                    m.renderBone(bone, pose, buffers.getBuffer(RenderType.eyes(EYE_GLOW)), 0xF000F0,
+                            OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                }
                 if (s.hasFoil()) {
                     m.renderBone(bone, pose, buffers.getBuffer(RenderType.armorEntityGlint()), light,
                             OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);

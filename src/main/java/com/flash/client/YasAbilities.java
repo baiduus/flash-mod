@@ -570,9 +570,7 @@ public final class YasAbilities {
             DoomClient.tickMode(mc, null, false);
             WonderClient.tickMode(mc, null, false);
             ScarletClient.tickMode(mc, null, false);
-            while (FlashKeys.YAS_VARIANT.consumeClick()) {
-                // not the hero's second ability
-            }
+            // Z is the stones' now (the mode's next ability: InfinityClient)
             return;
         }
         if (mc.player != null && storm()) {

@@ -80,12 +80,8 @@ public final class InfinityServer {
 
         @Override
         public boolean purchased(String key) {
-            for (Tag e : data().getList("bought", Tag.TAG_STRING)) {
-                if (e.getAsString().equals(key)) {
-                    return true;
-                }
-            }
-            return false;
+            // every ability comes with its stone, like the other heroes' powers (no buying)
+            return true;
         }
 
         void buy(String key) {

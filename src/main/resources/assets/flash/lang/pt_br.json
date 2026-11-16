@@ -1835,5 +1835,7 @@
   "message.flash.infinity.tesseract_nowhere": "O Tesseract não encontra nenhum lugar seguro.",
   "message.flash.infinity.tesseract_to": "O Tesseract te leva para %s",
   "message.flash.infinity.guardian_called": "O Guardião das Almas atendeu ao chamado.",
-  "message.flash.infinity.guardian_unreachable": "O Guardião das Almas não pode ser alcançado."
+  "message.flash.infinity.guardian_unreachable": "O Guardião das Almas não pode ser alcançado.",
+  "message.flash.infinity.mode": "Modo: %s",
+  "gui.flash.infinity.next": "próxima"
 }

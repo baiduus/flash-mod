@@ -1,5 +1,7 @@
 package com.flash.client.infinity;
 
+import com.flash.infinity.InfinityStone;
+
 import com.flash.FlashMod;
 import com.flash.client.FlashKeys;
 import com.flash.infinity.InfPowers;
@@ -172,7 +174,8 @@ public final class InfinityClient {
 
         @Override
         public boolean purchased(String key) {
-            return BOUGHT.contains(key);
+            // every ability comes with its stone, like the other heroes' powers
+            return true;
         }
 
         @Override
@@ -257,24 +260,73 @@ public final class InfinityClient {
         return (int) (long) COOLDOWN_LEN.getOrDefault(key, 1L);
     }
 
-    /** The abilities that can be used now, in the bar's order (power by power). */
-    public static List<InfPowers.Ability> bar() {
+    /** The stones' order of the modes, then everything else (the Gauntlet, the containers...). */
+    private static final List<String> MODE_ORDER = List.of("space_stone", "mind_stone", "reality_stone",
+            "power_stone", "time_stone", "soul_stone", "infinity_gauntlet");
+    /** The mode now: one power (a stone) and its abilities. */
+    private static String mode;
+
+    /** Every ability that can be used now, power by power. */
+    public static List<InfPowers.Ability> allBar() {
         List<InfPowers.Ability> out = new ArrayList<>();
         if (Minecraft.getInstance().player == null) {
             return out;
         }
-        for (String pid : powers) {
-            InfPowers.Power pw = InfPowers.get(pid);
-            if (pw == null) {
-                continue;
-            }
-            for (InfPowers.Ability a : pw.bar()) {
-                if (InfinityPowers.unlocked(VIEW, a)) {
-                    out.add(a);
-                }
+        for (String pid : modes()) {
+            out.addAll(barOf(pid));
+        }
+        return out;
+    }
+
+    private static List<InfPowers.Ability> barOf(String pid) {
+        List<InfPowers.Ability> out = new ArrayList<>();
+        InfPowers.Power pw = InfPowers.get(pid);
+        if (pw == null) {
+            return out;
+        }
+        for (InfPowers.Ability a : pw.bar()) {
+            if (InfinityPowers.unlocked(VIEW, a)) {
+                out.add(a);
             }
         }
         return out;
+    }
+
+    /** The modes there are now: each power (stone) with something to use, the stones first. */
+    public static List<String> modes() {
+        List<String> out = new ArrayList<>();
+        if (Minecraft.getInstance().player == null) {
+            return out;
+        }
+        List<String> ps = new ArrayList<>(powers);
+        ps.sort(java.util.Comparator.comparingInt(pid -> {
+            int i = MODE_ORDER.indexOf(pid);
+            return i < 0 ? 100 : i;
+        }));
+        for (String pid : ps) {
+            if (!out.contains(pid) && !barOf(pid).isEmpty()) {
+                out.add(pid);
+            }
+        }
+        return out;
+    }
+
+    /** The mode now (null: none). */
+    public static String mode() {
+        List<String> ms = modes();
+        if (ms.isEmpty()) {
+            return null;
+        }
+        if (mode == null || !ms.contains(mode)) {
+            mode = ms.get(0);
+        }
+        return mode;
+    }
+
+    /** The abilities of the mode now, in its order. */
+    public static List<InfPowers.Ability> bar() {
+        String m = mode();
+        return m == null ? new ArrayList<>() : barOf(m);
     }
 
     public static InfPowers.Ability selected() {
@@ -289,6 +341,33 @@ public final class InfinityClient {
         }
         selected = bar.get(0).key();
         return bar.get(0);
+    }
+
+    /** The mode's name: its power's. */
+    public static String modeName(String pid) {
+        InfinityStone st = InfinityStone.byId(pid);
+        if (st != null) {
+            return new net.minecraft.world.item.ItemStack(st.item()).getHoverName().getString();
+        }
+        InfPowers.Power pw = pid == null ? null : InfPowers.get(pid);
+        return pw == null ? "" : pw.name;
+    }
+
+    private static void step(int dir) {
+        List<InfPowers.Ability> bar = bar();
+        if (bar.isEmpty()) {
+            return;
+        }
+        InfPowers.Ability cur = selected();
+        int i = Math.max(0, bar.indexOf(cur));
+        InfPowers.Ability next = bar.get(Math.floorMod(i + dir, bar.size()));
+        selected = next.key();
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.player.displayClientMessage(Component.translatable("message.flash.infinity.selected",
+                    InfinityScreen.title(next)), true);
+            mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, 1.6F);
+        }
     }
 
     /** The stones have the keys now (Alt + scroll and R). */
@@ -333,21 +412,23 @@ public final class InfinityClient {
             }
             return;
         }
-        List<InfPowers.Ability> bar = bar();
-        if (bar.isEmpty()) {
+        // Alt + scroll: the next stone's mode
+        List<String> ms = modes();
+        if (ms.isEmpty()) {
             return;
         }
         event.setCanceled(true);
-        InfPowers.Ability cur = selected();
-        int i = Math.max(0, bar.indexOf(cur));
-        int dir = event.getScrollDelta() > 0.0D ? 1 : -1;
-        InfPowers.Ability next = bar.get(Math.floorMod(i + dir, bar.size()));
-        selected = next.key();
+        int i = Math.max(0, ms.indexOf(mode()));
+        int dir = event.getScrollDelta() > 0.0D ? -1 : 1;
+        mode = ms.get(Math.floorMod(i + dir, ms.size()));
+        selected = null;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            mc.player.displayClientMessage(Component.translatable("message.flash.infinity.selected",
-                    InfinityScreen.title(next)), true);
-            mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, 1.6F);
+            InfinityStone st = InfinityStone.byId(mode);
+            mc.player.displayClientMessage(Component.translatable("message.flash.infinity.mode",
+                    Component.literal(modeName(mode)).withStyle(s -> s.withColor(st == null ? 0xE0C080 : st.glint))),
+                    true);
+            mc.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.3F, 1.2F);
         }
     }
 
@@ -416,6 +497,14 @@ public final class InfinityClient {
         if (mc.player == null) {
             pressed = null;
             return;
+        }
+        // Z: the mode's next ability (Shift: the one before)
+        if (takesKeys()) {
+            while (FlashKeys.YAS_VARIANT.consumeClick()) {
+                if (mc.screen == null) {
+                    step(Screen.hasShiftDown() ? -1 : 1);
+                }
+            }
         }
         InfPowers.Ability a = selected();
         boolean down = a != null && FlashKeys.YAS_USE.isDown() && mc.screen == null;

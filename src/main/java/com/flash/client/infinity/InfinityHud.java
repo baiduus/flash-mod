@@ -27,32 +27,43 @@ public final class InfinityHud implements IGuiOverlay {
             return;
         }
         InfPowers.Ability sel = InfinityClient.selected();
-        int i = Math.max(0, bar.indexOf(sel));
+        String mode = InfinityClient.mode();
+        com.flash.infinity.InfinityStone st = com.flash.infinity.InfinityStone.byId(mode);
+        int color = st == null ? 0xFFE0C080 : 0xFF000000 | st.glint;
         Font font = mc.font;
-        int w = 150;
+        int shown = Math.min(bar.size(), 8);
+        int w = 156;
         int x = 6;
-        int y = height - 74;
-        g.fill(x, y, x + w, y + 46, 0xA0101018);
-        g.fill(x, y, x + 2, y + 46, 0xFFB088FF);
-        Component name = InfinityScreen.title(sel);
-        g.drawString(font, font.plainSubstrByWidth(name.getString(), w - 34), x + 6, y + 4, 0xFFFFFFFF, true);
-        String key = FlashKeys.YAS_USE.getTranslatedKeyMessage().getString();
-        String kind = Component.translatable("gui.flash.infinity.key_" + sel.key.name().toLowerCase()).getString();
-        g.drawString(font, font.plainSubstrByWidth("[" + key + "] " + kind, w - 10), x + 6, y + 15, 0xFF9AD0FF,
-                false);
-        int left = InfinityClient.cooldownLeft(sel.key());
-        boolean on = InfinityClient.on(sel.key()) || InfinityClient.toggled(sel.key());
-        if (left > 0) {
-            int len = Math.max(1, InfinityClient.cooldownLength(sel.key()));
-            g.fill(x + 6, y + 27, x + w - 6, y + 29, 0xFF303040);
-            g.fill(x + 6, y + 27, x + 6 + (w - 12) * (len - left) / len, y + 29, 0xFFB088FF);
-        } else if (on) {
-            g.drawString(font, Component.translatable("gui.flash.infinity.active"), x + 6, y + 25, 0xFFFFE060, false);
+        int h = 30 + shown * 10;
+        int y = height - 34 - h;
+        g.fill(x, y, x + w, y + h, 0xA0101018);
+        g.fill(x, y, x + 2, y + h, color);
+        // the mode (the stone) and how to change it
+        g.drawString(font, font.plainSubstrByWidth(InfinityClient.modeName(mode), w - 60), x + 6, y + 4, color, true);
+        String nav = (InfinityClient.modes().indexOf(mode) + 1) + "/" + InfinityClient.modes().size() + " Alt+scroll";
+        g.drawString(font, nav, x + w - 4 - font.width(nav), y + 4, 0xFF8080A0, false);
+        // its abilities: the chosen one marked
+        int first = Math.max(0, Math.min(bar.indexOf(sel) - shown / 2, bar.size() - shown));
+        for (int k = 0; k < shown; k++) {
+            InfPowers.Ability a = bar.get(first + k);
+            int ly = y + 16 + k * 10;
+            boolean chosen = a == sel;
+            boolean on = InfinityClient.on(a.key()) || InfinityClient.toggled(a.key());
+            int left = InfinityClient.cooldownLeft(a.key());
+            if (chosen) {
+                g.fill(x + 4, ly - 1, x + w - 4, ly + 9, 0x50FFFFFF & (color | 0x50000000));
+            }
+            String name = InfinityScreen.title(a).getString();
+            int tc = chosen ? 0xFFFFFFFF : left > 0 ? 0xFF707080 : 0xFFB0B0C0;
+            g.drawString(font, font.plainSubstrByWidth((chosen ? "> " : "  ") + name, w - 40), x + 6, ly, tc, false);
+            String tag = left > 0 ? ((left + 19) / 20) + "s" : on ? Component.translatable("gui.flash.infinity.active")
+                    .getString() : "";
+            g.drawString(font, tag, x + w - 6 - font.width(tag), ly, on ? 0xFFFFE060 : 0xFF8080A0, false);
         }
-        String nav = (i + 1) + "/" + bar.size() + "  Alt+scroll";
-        g.drawString(font, nav, x + 6, y + 35, 0xFF8080A0, false);
-        String power = InfPowers.get(sel.power.id) == null ? "" : sel.power.name;
-        g.drawString(font, font.plainSubstrByWidth(power, 60), x + w - 4 - Math.min(60, font.width(power)), y + 35,
-                0xFFE0C080, false);
+        String keys = "[" + FlashKeys.YAS_USE.getTranslatedKeyMessage().getString() + "] "
+                + Component.translatable("gui.flash.infinity.key_" + sel.key.name().toLowerCase()).getString()
+                + "  [" + FlashKeys.YAS_VARIANT.getTranslatedKeyMessage().getString() + "] "
+                + Component.translatable("gui.flash.infinity.next").getString();
+        g.drawString(font, font.plainSubstrByWidth(keys, w - 10), x + 6, y + h - 11, 0xFF9AD0FF, false);
     }
 }

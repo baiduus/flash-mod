@@ -69,11 +69,11 @@ public final class InfinityItems {
     public static final RegistryObject<Item> DWARF_STAR_ALLOY_NUGGET = ITEMS.register("dwarf_star_alloy_nugget", () -> new Item(props(64, Rarity.COMMON, false)));
     public static final RegistryObject<Item> DWARF_STAR_ALLOY_PLATE = ITEMS.register("dwarf_star_alloy_plate", () -> new Item(props(64, Rarity.COMMON, true)));
     public static final RegistryObject<Item> EMPTY_AETHER = ITEMS.register("empty_aether", () -> new Item(props(1, Rarity.EPIC, true)));
-    public static final RegistryObject<Item> EMPTY_EYE_OF_AGAMOTTO = ITEMS.register("empty_eye_of_agamotto", () -> new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.CHESTPLATE, props(64, Rarity.EPIC, true)));
+    public static final RegistryObject<Item> EMPTY_EYE_OF_AGAMOTTO = ITEMS.register("empty_eye_of_agamotto", () -> new InfinityExtras.GeoArmor(ArmorMaterials.IRON, ArmorItem.Type.CHESTPLATE, props(1, Rarity.EPIC, true), "flash:geo/infinity/eye_of_agamotto", "flash:textures/infinity_models/empty_eye_of_agamotto.png"));
     public static final RegistryObject<Item> EMPTY_SCEPTER = ITEMS.register("empty_scepter", () -> new SwordItem(Tiers.IRON, 3, -2.4F, props(1, Rarity.EPIC, true)));
     public static final RegistryObject<Item> EMPTY_TESSERACT = ITEMS.register("empty_tesseract", () -> new Item(props(1, Rarity.EPIC, true)));
     public static final RegistryObject<Item> ENDOSYM_INGOT = ITEMS.register("endosym_ingot", () -> new Item(props(64, Rarity.COMMON, true)));
-    public static final RegistryObject<Item> EYE_OF_AGAMOTTO = ITEMS.register("eye_of_agamotto", () -> new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.CHESTPLATE, props(64, Rarity.EPIC, true)));
+    public static final RegistryObject<Item> EYE_OF_AGAMOTTO = ITEMS.register("eye_of_agamotto", () -> new InfinityExtras.GeoArmor(ArmorMaterials.IRON, ArmorItem.Type.CHESTPLATE, props(1, Rarity.EPIC, true), "flash:geo/infinity/eye_of_agamotto", "flash:textures/infinity_models/eye_of_agamotto.png"));
     public static final RegistryObject<Item> FANCY_BOTTLE = ITEMS.register("fancy_bottle", () -> new Item(props(1, Rarity.EPIC, true)));
     public static final RegistryObject<Item> FERRO_TITANIUM_GOLD_ALLOY_INGOT = ITEMS.register("ferro-titanium-gold_alloy_ingot", () -> new Item(props(64, Rarity.COMMON, false)));
     public static final RegistryObject<Item> GOLD_DUST = ITEMS.register("gold_dust", () -> new Item(props(64, Rarity.COMMON, false)));

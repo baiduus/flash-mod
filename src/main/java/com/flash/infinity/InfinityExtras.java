@@ -70,12 +70,19 @@ public final class InfinityExtras {
     // Thanos' armours (Classic and MCU): netherite, drawn by their models (client ThanosArmorLayer)
     // ------------------------------------------------------------------
 
-    public static final class ThanosArmor extends ArmorItem {
+    /** Armour drawn by its own model (Thanos' armours, the Eye of Agamotto worn on the chest). */
+    public static final class GeoArmor extends ArmorItem {
         public final String model;
         public final String texture;
 
-        ThanosArmor(Type type, String model, String texture) {
-            super(ArmorMaterials.NETHERITE, type, new Item.Properties().rarity(Rarity.EPIC).fireResistant());
+        GeoArmor(Type type, String model, String texture) {
+            this(ArmorMaterials.NETHERITE, type, new Item.Properties().rarity(Rarity.EPIC).fireResistant(), model,
+                    texture);
+        }
+
+        public GeoArmor(net.minecraft.world.item.ArmorMaterial m, Type type, Item.Properties p, String model,
+                        String texture) {
+            super(m, type, p);
             this.model = model;
             this.texture = texture;
         }
@@ -88,7 +95,7 @@ public final class InfinityExtras {
 
     private static RegistryObject<Item> armor(String set, String piece, ArmorItem.Type type) {
         String tex = "classic".equals(set) && "boots".equals(piece) ? "thanos_classic_boots" : "thanos_" + set;
-        return ITEMS.register("thanos_" + set + "_" + piece, () -> new ThanosArmor(type,
+        return ITEMS.register("thanos_" + set + "_" + piece, () -> new GeoArmor(type,
                 "flash:geo/infinity/thanos_" + set + "_" + piece, "flash:textures/infinity_models/" + tex + ".png"));
     }
 

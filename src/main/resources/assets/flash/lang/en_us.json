@@ -1918,5 +1918,7 @@
   "message.flash.infinity.tesseract_nowhere": "The Tesseract finds nowhere safe to go.",
   "message.flash.infinity.tesseract_to": "The Tesseract takes you to %s",
   "message.flash.infinity.guardian_called": "The Soul Guardian answers your call.",
-  "message.flash.infinity.guardian_unreachable": "The Soul Guardian can not be reached."
+  "message.flash.infinity.guardian_unreachable": "The Soul Guardian can not be reached.",
+  "message.flash.infinity.mode": "Mode: %s",
+  "gui.flash.infinity.next": "next"
 }
