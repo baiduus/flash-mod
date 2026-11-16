@@ -147,8 +147,24 @@ public final class InfinityPowers {
         int timer(String key);
     }
 
+    private static final Set<String> STONE_POWERS = Set.of("space_stone", "mind_stone", "reality_stone",
+            "power_stone", "time_stone", "soul_stone");
+    private static final java.util.Map<String, Set<String>> SNAP_HIDDEN = java.util.Map.of("space_stone",
+            Set.of("teleport", "jump_teleport"), "power_stone", Set.of("radiation_texture_toggle", "power_blast_aim"));
+
+    /** The Snap's lockout (SnapLockout): burnt by the Snap, the stones' abilities are out of reach until it heals. */
+    static boolean snapLocked(View v, InfPowers.Ability a) {
+        if (!v.player().getTags().contains("burn") || !STONE_POWERS.contains(a.power.id)) {
+            return false;
+        }
+        return !a.hidden || SNAP_HIDDEN.getOrDefault(a.power.id, Set.of()).contains(a.id);
+    }
+
     public static boolean unlocked(View v, InfPowers.Ability a) {
         if (!a.buys.isEmpty() && !v.purchased(a.key())) {
+            return false;
+        }
+        if (snapLocked(v, a)) {
             return false;
         }
         return all(v, a, a.unlocking);

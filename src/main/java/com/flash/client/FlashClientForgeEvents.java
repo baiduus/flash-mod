@@ -80,6 +80,13 @@ public final class FlashClientForgeEvents {
             decrease = false;
         }
 
+        while (FlashKeys.OPEN_GAUNTLET.consumeClick()) {
+            if (net.minecraft.client.Minecraft.getInstance().player != null && !com.flash.infinity.InfinityGauntlet
+                    .worn(net.minecraft.client.Minecraft.getInstance().player).isEmpty()) {
+                com.flash.network.FlashNetwork.CHANNEL.sendToServer(new com.flash.network.InfinityActionPacket(
+                        com.flash.infinity.InfinityServer.OPEN_GAUNTLET, ""));
+            }
+        }
         while (FlashKeys.OPEN_PROGRESS.consumeClick()) {
             if (minecraft.screen == null) {
                 // holding a stone: its ability tree (the hero's screen from there)

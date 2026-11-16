@@ -114,6 +114,16 @@ public final class InfinityClient {
         for (String k : sc.getAllKeys()) {
             SCORES.put(k, sc.getInt(k));
         }
+        com.flash.infinity.InfinityOrb.clientTaken = t.getBoolean("orb_taken");
+        com.flash.infinity.InfinityOrb.clientEyeTaken = t.getBoolean("eye_taken");
+        // the player's tags (the burn, the clones...): the conditions read them on this side too
+        if (Minecraft.getInstance().player != null && t.contains("tags")) {
+            Set<String> own = Minecraft.getInstance().player.getTags();
+            own.clear();
+            for (Tag e : t.getList("tags", Tag.TAG_STRING)) {
+                own.add(e.getAsString());
+            }
+        }
         TIMERS.clear();
         CompoundTag tm = t.getCompound("timers");
         for (String k : tm.getAllKeys()) {

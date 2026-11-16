@@ -18,6 +18,9 @@ public final class ModMenus {
                     (windowId, inventory, data) ->
                             new PotionContainerMenu(windowId, inventory, data.readBlockPos())));
 
+    public static final RegistryObject<MenuType<com.flash.infinity.GauntletMenu>> INFINITY_GAUNTLET =
+            MENUS.register("infinity_gauntlet", () -> IForgeMenuType.create(com.flash.infinity.GauntletMenu::new));
+
     private ModMenus() {
     }
 }

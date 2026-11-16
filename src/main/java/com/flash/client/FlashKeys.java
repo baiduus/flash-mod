@@ -97,6 +97,14 @@ public final class FlashKeys {
             CATEGORY
     );
 
+    /** The Infinity Gauntlet's stone menu while it is worn (the original's Open Gauntlet, default G). */
+    public static final KeyMapping OPEN_GAUNTLET = new KeyMapping(
+            "key.infinity.open_gauntlet",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            CATEGORY
+    );
+
     private FlashKeys() {
     }
 
@@ -111,5 +119,6 @@ public final class FlashKeys {
         event.register(YAS_USE);
         event.register(YAS_VARIANT);
         event.register(YAS_PATH);
+        event.register(OPEN_GAUNTLET);
     }
 }

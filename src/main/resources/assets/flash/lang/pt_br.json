@@ -1823,5 +1823,12 @@
   "gui.flash.infinity.power_level": "Nível de Poder",
   "gui.flash.infinity.time_flow": "Fluxo do tempo",
   "entity.flash.power_shot": "Rajada de Energia",
-  "entity.flash.infinity_black_hole": "Buraco Negro (Joia do Espaço)"
+  "entity.flash.infinity_black_hole": "Buraco Negro (Joia do Espaço)",
+  "key.infinity.open_gauntlet": "Abrir Manopla",
+  "tooltip.flash.infinity.skin": "Skin: %s",
+  "message.flash.infinity.snap": "%s estalou os dedos.",
+  "message.flash.infinity.burn_healed": "A queimadura do Estalo sarou.",
+  "message.flash.infinity.orb_taken": "A Joia do Poder já foi tirada de um Orbe.",
+  "message.flash.infinity.eye_taken": "A Joia do Tempo já foi tirada de um Olho de Agamotto.",
+  "message.flash.infinity.no_gauntlet": "Você precisa estar usando a Manopla do Infinito."
 }

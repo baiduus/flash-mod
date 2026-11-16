@@ -143,6 +143,17 @@ public final class InfinityStoneAbilities {
             }
             case "palladium:energy_beam" -> InfinityBeams.tick(p, a, on, a.json.has("damage")
                     ? a.json.get("damage").getAsFloat() : 5.0F, false);
+            // the Gauntlet and the Eye of Agamotto
+            case "flash:set_gauntlet_skin" -> {
+                if (start) {
+                    InfinityGauntlet.setSkinAbility(p, a);
+                }
+            }
+            case "flash:eye_of_agamotto" -> {
+                if (start) {
+                    InfinityOrb.eye(p, a.id);
+                }
+            }
             default -> {
             }
         }

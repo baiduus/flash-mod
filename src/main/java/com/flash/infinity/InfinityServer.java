@@ -202,6 +202,7 @@ public final class InfinityServer {
     public static final int PORTAL = 7;
     public static final int DISGUISE = 8;
     public static final int MIND_NAME = 9;
+    public static final int OPEN_GAUNTLET = 10;
 
     public static void handle(ServerPlayer p, int op, String key) {
         switch (op) {
@@ -219,6 +220,10 @@ public final class InfinityServer {
             }
             case DISGUISE -> {
                 MindStone.setDisguise(p, key.trim());
+                return;
+            }
+            case OPEN_GAUNTLET -> {
+                GauntletMenu.open(p);
                 return;
             }
             case MIND_NAME -> {
@@ -507,6 +512,13 @@ public final class InfinityServer {
             sc.putInt(o, score(p, o));
         }
         t.put("scores", sc);
+        t.putBoolean("orb_taken", InfinityOrb.taken(p.server));
+        t.putBoolean("eye_taken", InfinityOrb.eyeTaken(p.server));
+        ListTag tags = new ListTag();
+        for (String x : p.getTags()) {
+            tags.add(StringTag.valueOf(x));
+        }
+        t.put("tags", tags);
         CompoundTag tm = new CompoundTag();
         for (Map.Entry<String, Integer> e : s.timers.entrySet()) {
             tm.putInt(e.getKey(), e.getValue());

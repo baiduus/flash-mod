@@ -27,6 +27,8 @@ public final class FlashClientEvents {
             // Force the custom Forge ArmPose to be created during client
             // setup, before any player model is rendered.
             FlashAbilityPoses.WIND_HANDS.name();
+            MenuScreens.register(ModMenus.INFINITY_GAUNTLET.get(),
+                    com.flash.client.infinity.GauntletScreen::new);
             MenuScreens.register(
                     ModMenus.POTION_CONTAINER.get(),
                     PotionContainerScreen::new

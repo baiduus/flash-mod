@@ -1907,5 +1907,11 @@
   "gui.flash.infinity.power_level": "Power Level",
   "gui.flash.infinity.time_flow": "Flow of time",
   "entity.flash.power_shot": "Energy Blast",
-  "entity.flash.infinity_black_hole": "Black Hole (Space Stone)"
+  "entity.flash.infinity_black_hole": "Black Hole (Space Stone)",
+  "tooltip.flash.infinity.skin": "Skin: %s",
+  "message.flash.infinity.snap": "%s snapped their fingers.",
+  "message.flash.infinity.burn_healed": "The Snap burn has healed.",
+  "message.flash.infinity.orb_taken": "The Power Stone has already been taken from an Orb.",
+  "message.flash.infinity.eye_taken": "The Time Stone has already been taken from an Eye of Agamotto.",
+  "message.flash.infinity.no_gauntlet": "You must be wearing the Infinity Gauntlet."
 }

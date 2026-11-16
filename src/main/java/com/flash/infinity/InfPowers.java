@@ -174,7 +174,13 @@ public final class InfPowers {
             this.persistent = bool(o, "persistent_data", false);
             if (o.has("abilities")) {
                 for (Map.Entry<String, JsonElement> e : o.getAsJsonObject("abilities").entrySet()) {
-                    if (e.getValue().isJsonObject()) {
+                    if (e.getValue().isJsonObject() && "gauntlet_skins".equals(str(e.getValue().getAsJsonObject(),
+                            "flash:generate", null))) {
+                        // the gauntlet skin files' abilities, generated in their place (GauntletSkinAbilities)
+                        for (Map.Entry<String, JsonObject> g : InfinityGauntlet.generatedAbilities().entrySet()) {
+                            this.abilities.put(g.getKey(), new Ability(this, g.getKey(), g.getValue()));
+                        }
+                    } else if (e.getValue().isJsonObject()) {
                         this.abilities.put(e.getKey(), new Ability(this, e.getKey(), e.getValue().getAsJsonObject()));
                     }
                 }

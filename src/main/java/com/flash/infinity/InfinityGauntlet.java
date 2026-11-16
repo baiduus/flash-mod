@@ -209,52 +209,31 @@ public final class InfinityGauntlet {
         return SKINS;
     }
 
-    /** Right-clicking (or holding) a skin's item with the gauntlet worn: that skin, the item kept to give back. */
-    static boolean tryApplySkin(ServerPlayer p, boolean holdOnly) {
+    /** A skin with apply_on "hold": applied as soon as its item is held in the main hand with the gauntlet worn. */
+    static void tryHoldSkin(ServerPlayer p) {
         ItemStack g = worn(p);
         ItemStack held = p.getMainHandItem();
         if (g.isEmpty() || g == held || held.isEmpty()) {
-            return false;
+            return;
         }
         for (Map.Entry<String, JsonObject> en : skins().entrySet()) {
             JsonObject o = en.getValue();
+            if (!"hold".equals(InfPowers.str(o, "apply_on", "right_click"))) {
+                continue;
+            }
             Item it = ForgeRegistries.ITEMS.getValue(new ResourceLocation(InfPowers.str(o, "unlock_item", "air")));
             if (it == null || !held.is(it)) {
                 continue;
             }
-            boolean hold = "hold".equals(InfPowers.str(o, "apply_on", "right_click"));
-            if (hold != holdOnly) {
-                continue;
-            }
             String cur = skin(g);
-            if (en.getKey().equals(cur)) {
-                return false;
+            if (en.getKey().equals(cur) || !cur.isEmpty() && !InfinityPowers.strings(o.get("can_replace"))
+                    .contains(cur)) {
+                return;
             }
-            // a burnt gauntlet only takes a skin that can replace the burn
-            if (!cur.isEmpty() && "gauntlet_burn".equals(cur) && p.getTags().contains("burn")
-                    && !InfinityPowers.strings(o.get("can_replace")).contains("gauntlet_burn")) {
-                return false;
-            }
-            giveBack(p, g);
-            ItemStack one = held.split(1);
-            g.getOrCreateTag().putString(SKIN, en.getKey());
-            g.getOrCreateTag().put(SKIN_ITEM, one.save(new CompoundTag()));
-            String snd = InfPowers.str(o, "apply_sound", "minecraft:item.armor.equip_netherite");
-            SoundEvent se = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(snd.replace("flash:",
-                    "flash:infinity.")));
-            if (se == null) {
-                se = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(snd));
-            }
-            if (se != null) {
-                p.level().playSound(null, p.blockPosition(), se, SoundSource.PLAYERS, 1.0F, 1.0F);
-            }
+            apply(p, g, held, en.getKey(), o);
             InfinityAbilities.commands(p, o.get("apply_commands"));
-            if ("nano_gauntlet".equals(en.getKey())) {
-                p.getPersistentData().putLong("flash_nano_since", p.level().getGameTime());
-            }
-            return true;
+            return;
         }
-        return false;
     }
 
     private static void giveBack(ServerPlayer p, ItemStack g) {
@@ -276,15 +255,159 @@ public final class InfinityGauntlet {
         }
         giveBack(p, g);
         g.getOrCreateTag().remove(SKIN);
+        if (a != null) {
+            InfinityAbilities.commands(p, a.json.get("commands"));
+        }
+    }
+
+    /** flash:set_gauntlet_skin: 'skin' on the worn gauntlet (the unlock item in the main hand used up), or none. */
+    static void setSkinAbility(ServerPlayer p, InfPowers.Ability a) {
+        String id = InfPowers.str(a.json, "skin", "");
+        if (id.isEmpty()) {
+            clearSkin(p, a);
+            return;
+        }
+        JsonObject o = skins().get(id);
+        ItemStack g = worn(p);
+        ItemStack held = p.getMainHandItem();
+        if (o == null || g.isEmpty() || g == held) {
+            return;
+        }
+        Item it = ForgeRegistries.ITEMS.getValue(new ResourceLocation(InfPowers.str(o, "unlock_item", "air")));
+        if (it == null || !held.is(it) || id.equals(skin(g))) {
+            return;
+        }
+        apply(p, g, held, id, o);
         InfinityAbilities.commands(p, a.json.get("commands"));
     }
 
-    @SubscribeEvent
-    public static void onRightClick(PlayerInteractEvent.RightClickItem event) {
-        if (event.getEntity() instanceof ServerPlayer p && event.getHand() == InteractionHand.MAIN_HAND
-                && tryApplySkin(p, false)) {
-            event.setCanceled(true);
+    private static void apply(ServerPlayer p, ItemStack g, ItemStack held, String id, JsonObject o) {
+        giveBack(p, g);
+        ItemStack one = held.split(1);
+        g.getOrCreateTag().putString(SKIN, id);
+        g.getOrCreateTag().put(SKIN_ITEM, one.save(new CompoundTag()));
+        String snd = InfPowers.str(o, "apply_sound", "minecraft:item.armor.equip_netherite");
+        SoundEvent se = snd.startsWith("flash:") && !snd.startsWith("flash:infinity.")
+                ? InfinitySounds.get(snd.substring(6)) : ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(snd));
+        if (se != null) {
+            p.level().playSound(null, p.blockPosition(), se, SoundSource.PLAYERS, 1.0F, 1.0F);
         }
+        if ("nano_gauntlet".equals(id)) {
+            p.getPersistentData().putLong("flash_nano_since", p.level().getGameTime());
+        }
+    }
+
+    /** The abilities the skin files generate into the gauntlet's power (the original's GauntletSkinAbilities). */
+    static Map<String, JsonObject> generatedAbilities() {
+        Map<String, JsonObject> out = new LinkedHashMap<>();
+        java.util.Set<String> used = new java.util.HashSet<>();
+        int free = 0;
+        int index = 0;
+        for (Map.Entry<String, JsonObject> en : skins().entrySet()) {
+            String id = en.getKey();
+            JsonObject o = en.getValue();
+            com.google.gson.JsonArray pos = o.has("gui_position") && o.get("gui_position").isJsonArray()
+                    ? o.getAsJsonArray("gui_position").deepCopy() : null;
+            if (pos == null) {
+                double x;
+                double y;
+                do {
+                    x = -1.0D + (free % 5) * 0.5D;
+                    y = 2.5D + (free / 5) * 1.0D;
+                    free++;
+                } while (used.contains(x + "," + y));
+                pos = new com.google.gson.JsonArray();
+                pos.add(x);
+                pos.add(y);
+            }
+            used.add(pos.get(0).getAsDouble() + "," + pos.get(1).getAsDouble());
+            String icon = "flash:textures/item/gauntlet_skins/" + id + ".png";
+            String title = InfPowers.str(o, "title", id);
+            boolean secret = InfPowers.bool(o, "hidden", false);
+            boolean hold = "hold".equals(InfPowers.str(o, "apply_on", "right_click"));
+            if (!hold) {
+                JsonObject ab = new JsonObject();
+                ab.addProperty("type", "flash:set_gauntlet_skin");
+                ab.addProperty("skin", id);
+                ab.addProperty("icon", icon);
+                ab.addProperty("title", title);
+                ab.addProperty("bar_color", InfPowers.str(o, "bar_color", "light_gray"));
+                ab.addProperty("hidden", true);
+                ab.addProperty("hidden_in_bar", true);
+                ab.addProperty("list_index", index++);
+                ab.add("gui_position", pos.deepCopy());
+                if (o.has("description")) {
+                    ab.add("description", o.get("description").deepCopy());
+                }
+                ab.add("commands", o.has("apply_commands") ? o.get("apply_commands").deepCopy()
+                        : new com.google.gson.JsonArray());
+                JsonObject cond = new JsonObject();
+                com.google.gson.JsonArray enabling = new com.google.gson.JsonArray();
+                JsonObject act = new JsonObject();
+                act.addProperty("type", "palladium:action");
+                act.addProperty("cooldown", 0);
+                act.addProperty("key_type", "right_click");
+                act.addProperty("needs_empty_hand", false);
+                act.addProperty("allow_scrolling_when_crouching", true);
+                enabling.add(act);
+                com.google.gson.JsonArray unlocking = new com.google.gson.JsonArray();
+                List<String> over = InfinityPowers.strings(o.get("can_replace"));
+                if (over.isEmpty()) {
+                    unlocking.add(skinCondition(""));
+                } else {
+                    JsonObject or = new JsonObject();
+                    or.addProperty("type", "palladium:or");
+                    com.google.gson.JsonArray l = new com.google.gson.JsonArray();
+                    l.add(skinCondition(""));
+                    for (String r : over) {
+                        l.add(skinCondition(r));
+                    }
+                    or.add("conditions", l);
+                    unlocking.add(or);
+                }
+                JsonObject inSlot = new JsonObject();
+                inSlot.addProperty("type", "palladium:item_in_slot");
+                JsonObject item = new JsonObject();
+                item.addProperty("item", InfPowers.str(o, "unlock_item", "minecraft:air"));
+                inSlot.add("item", item);
+                inSlot.addProperty("slot", "mainhand");
+                unlocking.add(inSlot);
+                cond.add("enabling", enabling);
+                cond.add("unlocking", unlocking);
+                ab.add("conditions", cond);
+                out.put(id.replace('-', '_'), ab);
+            }
+            if (!secret) {
+                JsonObject tree = new JsonObject();
+                tree.addProperty("type", "palladium:dummy");
+                tree.addProperty("icon", icon);
+                tree.addProperty("title", title);
+                tree.addProperty("bar_color", "light_gray");
+                tree.addProperty("hidden", false);
+                tree.addProperty("hidden_in_bar", true);
+                tree.add("gui_position", pos.deepCopy());
+                if (o.has("description")) {
+                    tree.add("description", o.get("description").deepCopy());
+                } else {
+                    tree.addProperty("description", "Hold " + InfPowers.str(o, "unlock_item", "?") + " and "
+                            + (hold ? "keep it in your main hand" : "right-click") + " with the gauntlet worn.");
+                }
+                JsonObject cond = new JsonObject();
+                com.google.gson.JsonArray unlocking = new com.google.gson.JsonArray();
+                unlocking.add(skinCondition(id));
+                cond.add("unlocking", unlocking);
+                tree.add("conditions", cond);
+                out.put(id.replace('-', '_') + "_tree", tree);
+            }
+        }
+        return out;
+    }
+
+    private static JsonObject skinCondition(String skin) {
+        JsonObject c = new JsonObject();
+        c.addProperty("type", "flash:gauntlet_skin");
+        c.addProperty("skin", skin);
+        return c;
     }
 
     // ------------------------------------------------------------------
@@ -395,21 +518,31 @@ public final class InfinityGauntlet {
         p.getPersistentData().putLong("flash_burn_expires", p.level().getGameTime() + 24000L);
         halfHeart(p);
         ItemStack g = worn(p);
+        boolean off = !g.isEmpty() && g == p.getOffhandItem();
+        HumanoidArm arm = off ? p.getMainArm().getOpposite() : p.getMainArm();
+        if (arm == HumanoidArm.RIGHT) {
+            p.addTag("burn_right");
+        } else {
+            p.removeTag("burn_right");
+        }
         if (!g.isEmpty()) {
             giveBack(p, g);
             g.getOrCreateTag().putString(SKIN, "gauntlet_burn");
         }
     }
 
+    /** Half a heart of maximum health, whatever else changes it (re-applied every second). */
     private static void halfHeart(Player p) {
         AttributeInstance h = p.getAttribute(Attributes.MAX_HEALTH);
-        if (h != null && h.getModifier(BURN) == null) {
-            h.addPermanentModifier(new AttributeModifier(BURN, "Snap burn", -1.0D,
-                    AttributeModifier.Operation.MULTIPLY_TOTAL));
-            h.removeModifier(BURN);
-            double base = h.getValue();
-            h.addPermanentModifier(new AttributeModifier(BURN, "Snap burn", 1.0D - base,
-                    AttributeModifier.Operation.ADDITION));
+        if (h != null) {
+            AttributeModifier cur = h.getModifier(BURN);
+            double without = h.getValue() - (cur == null ? 0.0D : cur.getAmount());
+            double want = 1.0D - without;
+            if (cur == null || Math.abs(cur.getAmount() - want) > 1.0E-4D) {
+                h.removeModifier(BURN);
+                h.addPermanentModifier(new AttributeModifier(BURN, "Snap burn", want,
+                        AttributeModifier.Operation.ADDITION));
+            }
         }
         if (p.getHealth() > 1.0F) {
             p.setHealth(1.0F);
@@ -419,6 +552,7 @@ public final class InfinityGauntlet {
     private static void heal(ServerPlayer p) {
         p.removeTag("burn");
         p.removeTag("burn_texture");
+        p.removeTag("burn_right");
         p.getPersistentData().remove("flash_burn_expires");
         AttributeInstance h = p.getAttribute(Attributes.MAX_HEALTH);
         if (h != null) {
@@ -446,7 +580,7 @@ public final class InfinityGauntlet {
                 && p.level().getGameTime() - p.getPersistentData().getLong("flash_nano_since") >= 24000L) {
             heal(p);
         }
-        tryApplySkin(p, true);
+        tryHoldSkin(p);
     }
 
     @SubscribeEvent
@@ -465,19 +599,6 @@ public final class InfinityGauntlet {
     // ------------------------------------------------------------------
     // Destroying the stones
     // ------------------------------------------------------------------
-
-    static void destroyTick(ServerPlayer p, InfinityServer.State s, InfPowers.Ability a) {
-        int t = s.timer(a.key());
-        if (t % 10 == 0) {
-            p.serverLevel().sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0D, p.getZ(), 30, 0.5D, 0.8D,
-                    0.5D, 0.15D);
-        }
-        int max = a.json.has("max_value") ? a.json.get("max_value").getAsInt() : 140;
-        if (t >= max) {
-            destroyStones(p);
-            s.untoggle(a.key());
-        }
-    }
 
     public static void destroyStones(ServerPlayer p) {
         ItemStack g = worn(p);
@@ -499,6 +620,7 @@ public final class InfinityGauntlet {
                 0.0D, 0.0D);
         level.playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
                 2.0F, 0.6F);
+        InfinityOrb.destroyStone(p.server);
         InfinityAdvancements.grant(p, "destroy_stones");
         burn(p);
     }

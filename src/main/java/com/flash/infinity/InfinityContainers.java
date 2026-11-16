@@ -56,7 +56,21 @@ public final class InfinityContainers {
         if (tag != null && tag.contains(STONE)) {
             return InfinityStone.byId(tag.getString(STONE));
         }
+        if (s.is(InfinityItems.ORB.get())) {
+            // an untouched Orb holds the world's one Power Stone until it is taken from any Orb
+            return InfinityOrb.worldTaken() ? null : InfinityStone.POWER;
+        }
+        if (s.is(InfinityItems.EYE_OF_AGAMOTTO.get())) {
+            return InfinityOrb.worldEyeTaken() ? null : InfinityStone.TIME;
+        }
         return defaultStone(s);
+    }
+
+    /** A copy of the container with nothing inside (its stone destroyed). */
+    public static ItemStack emptied(ItemStack s) {
+        ItemStack c = s.copy();
+        setStone(c, null);
+        return c;
     }
 
     public static void setStone(ItemStack s, InfinityStone stone) {
@@ -85,6 +99,14 @@ public final class InfinityContainers {
                 if (st != null) {
                     out.add(st.power());
                 }
+            }
+        }
+        // an open Orb held: its stone's power (HandStonePowerProvider's open-orb validator)
+        if (p instanceof net.minecraft.server.level.ServerPlayer sp && InfinityServer.state(sp).toggledOn(
+                "orb/open_close_dummy")) {
+            InfinityStone st = stoneIn(InfinityOrb.held(p, null));
+            if (st != null) {
+                out.add(st.power());
             }
         }
         InfinityGauntlet.addPowers(p, out);

@@ -121,7 +121,7 @@ public final class InfinityItems {
     public static final RegistryObject<Item> COSMI_ROD = ITEMS.register("cosmi-rod", () -> new Item(props(1,
             Rarity.EPIC, true)));
     /** The Infinity Gauntlet (its stones, the Snap: InfinityGauntlet). */
-    public static final RegistryObject<Item> INFINITY_GAUNTLET = ITEMS.register("infinity_gauntlet", () -> new Item(props(1, Rarity.EPIC, true)));
+    public static final RegistryObject<Item> INFINITY_GAUNTLET = ITEMS.register("infinity_gauntlet", () -> new InfinityGauntletItem(props(1, Rarity.EPIC, true)));
 
     /** The original's creative tabs, in its order. */
     public static final java.util.List<java.util.function.Supplier<Item>> TAB_STONES = java.util.List.of(
