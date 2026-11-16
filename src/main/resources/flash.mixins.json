@@ -7,7 +7,9 @@
     "LevelChunkGuardMixin",
     "HandOfGodBossMixin",
     "PlayerIntangibleMixin",
-    "ServerTickRateMixin"
+    "ServerTickRateMixin",
+    "HogHandServerMixin",
+    "HogSunServerMixin"
   ],
   "client": [
     "PedacosMixin",
@@ -17,7 +19,9 @@
     "SoulGlowMixin",
     "SoulGrayMixin",
     "BlueTkSkinMixin",
-    "BlueTkHandMixin"
+    "BlueTkHandMixin",
+    "HogHandClientMixin",
+    "HogSunClientMixin"
   ],
   "injectors": {
     "defaultRequire": 0
