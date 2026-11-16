@@ -120,15 +120,17 @@ public final class SoulStone {
             addSouls(p, -1);
             m.getPersistentData().remove(DRAINED);
             m.setNoAi(false);
+            gray(m, false);
         } else {
             if (drained(m) || m.isNoAi()) {
                 return;
             }
             m.getPersistentData().putBoolean(DRAINED, true);
             m.setNoAi(true);
+            gray(m, true);
             addSouls(p, 1);
         }
-        SpaceStone.sound(level, m.position(), "soul_stone", 1.0F, p.isShiftKeyDown() ? 1.4F : 0.6F);
+        drainSound(level, m.position(), p.isShiftKeyDown());
         Vec3 a = m.position().add(0.0D, m.getBbHeight() * 0.5D, 0.0D);
         Vec3 b = p.position().add(0.0D, 1.0D, 0.0D);
         for (int i = 0; i <= 12; i++) {
@@ -142,12 +144,44 @@ public final class SoulStone {
     // ------------------------------------------------------------------
 
     private static final String SOULLESS = "flash_soulless_until";
+    private static final String SOUL_RETURN = "flash_soul_return";
     private static final int SOULLESS_TICKS = 200;
 
     public static boolean soulless(net.minecraft.world.entity.player.Player t) {
-        return t.getPersistentData().getLong(SOULLESS) > t.level().getGameTime();
+        return t.getPersistentData().contains(SOUL_RETURN);
     }
 
+    /** Greyish for everyone who sees it (SoulGray, client). */
+    static void gray(Entity e, boolean on) {
+        com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY
+                .with(() -> e), new com.flash.network.SoulGrayPacket(e.getId(), on));
+    }
+
+    @SubscribeEvent
+    public static void onTrack(net.minecraftforge.event.entity.player.PlayerEvent.StartTracking event) {
+        Entity e = event.getTarget();
+        if (event.getEntity() instanceof ServerPlayer sp && (drained(e) || e.getTags().contains(BODY))) {
+            com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER
+                    .with(() -> sp), new com.flash.network.SoulGrayPacket(e.getId(), true));
+        }
+    }
+
+    /** The drain's sound: three seconds, the soul's moan sliding as it leaves (or comes back). */
+    private record Moan(ServerLevel level, Vec3 at, boolean back, int[] t) {
+    }
+
+    private static final java.util.List<Moan> MOANS = new java.util.ArrayList<>();
+
+    static void drainSound(ServerLevel level, Vec3 at, boolean back) {
+        MOANS.add(new Moan(level, at, back, new int[1]));
+    }
+
+    public static final String BODY = "flash_soul_body";
+
+    /**
+     * A player's soul: torn out to the Soulworld for ten seconds, the body left standing where it was (still,
+     * greyish), the soul kept in the stone; it comes back to the body when the time is up (crouching: given back).
+     */
     static void drainPlayer(ServerPlayer p, ServerPlayer t) {
         ServerLevel level = p.serverLevel();
         boolean giveBack = p.isShiftKeyDown();
@@ -156,39 +190,112 @@ public final class SoulStone {
                 return;
             }
             addSouls(p, -1);
-            t.getPersistentData().remove(SOULLESS);
-            for (var e : new net.minecraft.world.effect.MobEffect[] {MobEffects.MOVEMENT_SLOWDOWN, MobEffects.JUMP,
-                    MobEffects.DIG_SLOWDOWN, MobEffects.WEAKNESS, MobEffects.BLINDNESS}) {
-                t.removeEffect(e);
-            }
-        } else {
-            if (soulless(t) || InfinityImmunity.immune(t, "soul")) {
-                return;
-            }
-            t.getPersistentData().putLong(SOULLESS, level.getGameTime() + SOULLESS_TICKS);
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SOULLESS_TICKS,
-                    255, false, false, true));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.JUMP, SOULLESS_TICKS, 250, false,
-                    false, false));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.DIG_SLOWDOWN, SOULLESS_TICKS, 4,
-                    false, false, true));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.WEAKNESS, SOULLESS_TICKS, 4, false,
-                    false, true));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, false,
-                    true));
-            t.hurt(level.damageSources().indirectMagic(p, p), 6.0F);
-            t.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                    "message.flash.infinity.soul_taken", p.getDisplayName()), true);
-            addSouls(p, 1);
+            returnSoul(t);
+            drainSound(level, t.position(), true);
+            return;
         }
-        SpaceStone.sound(level, t.position(), "soul_stone", 1.0F, giveBack ? 1.4F : 0.6F);
+        if (soulless(t) || InfinityImmunity.immune(t, "soul")) {
+            return;
+        }
+        ServerLevel soul = p.server.getLevel(SOULWORLD);
+        if (soul == null) {
+            return;
+        }
         Vec3 a = t.position().add(0.0D, t.getBbHeight() * 0.5D, 0.0D);
         Vec3 b = p.position().add(0.0D, 1.0D, 0.0D);
         for (int i = 0; i <= 16; i++) {
-            Vec3 at = giveBack ? b.lerp(a, i / 16.0D) : a.lerp(b, i / 16.0D);
+            Vec3 at = a.lerp(b, i / 16.0D);
             level.sendParticles(ParticleTypes.SOUL, at.x, at.y, at.z, 2, 0.08D, 0.08D, 0.08D, 0.0D);
         }
         level.sendParticles(ParticleTypes.SCULK_SOUL, a.x, a.y, a.z, 12, 0.3D, 0.5D, 0.3D, 0.02D);
+        drainSound(level, t.position(), false);
+        t.hurt(level.damageSources().indirectMagic(p, p), 6.0F);
+        if (!t.isAlive()) {
+            addSouls(p, 1);
+            return;
+        }
+        // the body stays
+        StoneClone body = StoneClone.create(level, t, SOULLESS_TICKS + 40, 20.0F);
+        body.setNoAi(true);
+        body.setInvulnerable(true);
+        body.addTag(BODY);
+        body.moveTo(t.getX(), t.getY(), t.getZ(), t.getYRot(), t.getXRot());
+        body.setYHeadRot(t.getYHeadRot());
+        body.yBodyRot = t.yBodyRot;
+        level.addFreshEntity(body);
+        // where the soul goes back to
+        CompoundTag r = new CompoundTag();
+        r.putString("Dim", level.dimension().location().toString());
+        r.putDouble("X", t.getX());
+        r.putDouble("Y", t.getY());
+        r.putDouble("Z", t.getZ());
+        r.putFloat("Yaw", t.getYRot());
+        r.putFloat("Pitch", t.getXRot());
+        r.putUUID("Body", body.getUUID());
+        r.putLong("Until", level.getGameTime() + SOULLESS_TICKS);
+        t.getPersistentData().put(SOUL_RETURN, r);
+        t.teleportTo(soul, 1000.5D + (level.random.nextDouble() - 0.5D) * 4.0D, 78.0D,
+                1000.5D + (level.random.nextDouble() - 0.5D) * 4.0D, t.getYRot(), t.getXRot());
+        t.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.flash.infinity.soul_taken",
+                p.getDisplayName()), true);
+        addSouls(p, 1);
+    }
+
+    /** The soul back in its body (or where the body stood). */
+    public static void returnSoul(ServerPlayer t) {
+        CompoundTag r = t.getPersistentData().getCompound(SOUL_RETURN);
+        t.getPersistentData().remove(SOUL_RETURN);
+        if (r.isEmpty()) {
+            return;
+        }
+        ServerLevel to = t.server.getLevel(net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.DIMENSION, new ResourceLocation(r.getString("Dim"))));
+        if (to == null) {
+            to = t.server.overworld();
+        }
+        double x = r.getDouble("X");
+        double y = r.getDouble("Y");
+        double z = r.getDouble("Z");
+        if (r.hasUUID("Body") && to.getEntity(r.getUUID("Body")) instanceof StoneClone body) {
+            x = body.getX();
+            y = body.getY();
+            z = body.getZ();
+            body.discard();
+        }
+        t.teleportTo(to, x, y, z, r.getFloat("Yaw"), r.getFloat("Pitch"));
+        to.sendParticles(ParticleTypes.SOUL, x, y + 1.0D, z, 20, 0.3D, 0.6D, 0.3D, 0.03D);
+        drainSound(to, new Vec3(x, y, z), true);
+    }
+
+    @SubscribeEvent
+    public static void onSoulTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) {
+            return;
+        }
+        for (java.util.Iterator<Moan> it = MOANS.iterator(); it.hasNext(); ) {
+            Moan m = it.next();
+            int t = m.t()[0]++;
+            if (t % 10 == 0) {
+                float f = t / 60.0F;
+                float pitch = m.back() ? 0.6F + f * 0.9F : 1.3F - f * 0.8F;
+                SpaceStone.sound(m.level(), m.at(), "soul_stone", 0.9F, pitch);
+                m.level().playSound(null, m.at().x, m.at().y, m.at().z,
+                        net.minecraft.sounds.SoundEvents.SOUL_ESCAPE, net.minecraft.sounds.SoundSource.PLAYERS, 1.0F,
+                        pitch);
+            }
+            if (t >= 60) {
+                it.remove();
+            }
+        }
+        if (event.getServer().getTickCount() % 10 != 0) {
+            return;
+        }
+        for (ServerPlayer t : event.getServer().getPlayerList().getPlayers()) {
+            if (soulless(t) && event.getServer().overworld().getGameTime() >= t.getPersistentData()
+                    .getCompound(SOUL_RETURN).getLong("Until") - 0L) {
+                returnSoul(t);
+            }
+        }
     }
 
     /** /infinity soul zombies: up to 6, each one a soul. */

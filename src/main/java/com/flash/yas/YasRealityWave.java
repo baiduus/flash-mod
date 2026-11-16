@@ -92,6 +92,11 @@ public final class YasRealityWave {
         return "minecraft:desert";
     }
 
+    /** Hand of God's target biome from where this player stands (the Reality Stone, before its gesture). */
+    public static void aimHog(ServerPlayer p) {
+        setHogBiome(target(p.level().getBiome(p.blockPosition())));
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void setHogBiome(String biome) {
         if (biome.equals(lastBiome)) {

@@ -113,7 +113,7 @@ public final class InfinityGauntlet {
 
     static void addPowers(Player p, Set<String> out) {
         ItemStack g = worn(p);
-        if (g.isEmpty()) {
+        if (g.isEmpty() || broken(p.level(), g)) {
             return;
         }
         for (InfinityStone s : stones(g)) {
@@ -513,13 +513,18 @@ public final class InfinityGauntlet {
         for (ServerPlayer o : server.getPlayerList().getPlayers()) {
             o.displayClientMessage(Component.translatable("message.flash.infinity.snap", p.getDisplayName()), false);
         }
-        burn(p);
+        breakGauntlet(p);
         return true;
     }
 
     /** Dust: the snapped fade away over five seconds (players to the Soulworld, the rest gone). */
     private static void dust(Session s, Entity e) {
         if (!(e.level() instanceof ServerLevel level) || !e.isAlive()) {
+            return;
+        }
+        // Hand of God's dust (the same as Yas'), when it is there
+        if (e instanceof LivingEntity l && HogBridge.dust(level, l, s.tick, s.snapper.getGameProfile().getName())) {
+            e.addTag("snapped");
             return;
         }
         level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.45F, 0.35F,
@@ -600,6 +605,14 @@ public final class InfinityGauntlet {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0) {
             return;
         }
+        for (ItemStack it : p.getInventory().items) {
+            if (isGauntlet(it)) {
+                mend(p, it);
+            }
+        }
+        if (isGauntlet(p.getOffhandItem())) {
+            mend(p, p.getOffhandItem());
+        }
         if (p.getTags().contains("burn")) {
             long exp = p.getPersistentData().getLong("flash_burn_expires");
             if (exp > 0 && p.level().getGameTime() >= exp) {
@@ -636,15 +649,23 @@ public final class InfinityGauntlet {
 
     public static void destroyStones(ServerPlayer p) {
         ItemStack g = worn(p);
+        List<InfinityStone> gone = new ArrayList<>();
         if (!g.isEmpty()) {
+            gone.addAll(stones(g));
             setSlots(g, new InfinityStone[SLOTS]);
         }
         for (var list : List.of(p.getInventory().items, p.getInventory().offhand, p.getInventory().armor)) {
             for (int i = 0; i < list.size(); i++) {
                 ItemStack st = list.get(i);
                 if (InfinityStone.of(st) != null) {
+                    if (!gone.contains(InfinityStone.of(st))) {
+                        gone.add(InfinityStone.of(st));
+                    }
                     list.set(i, ItemStack.EMPTY);
                 } else if (InfinityContainers.isContainer(st) && InfinityContainers.stoneIn(st) != null) {
+                    if (!gone.contains(InfinityContainers.stoneIn(st))) {
+                        gone.add(InfinityContainers.stoneIn(st));
+                    }
                     list.set(i, InfinityContainers.emptied(st));
                 }
             }
@@ -654,9 +675,74 @@ public final class InfinityGauntlet {
                 0.0D, 0.0D);
         level.playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
                 2.0F, 0.6F);
-        InfinityOrb.destroyStone(p.server);
         InfinityAdvancements.grant(p, "destroy_stones");
-        burn(p);
+        breakGauntlet(p);
+        scatter(p, gone);
+    }
+
+    // ------------------------------------------------------------------
+    // The price now: the Gauntlet broken for 20 minutes (a Minecraft day); the stones it destroyed are flung far
+    // across the Overworld, to be found again (the Infinity Tracker knows where they fell)
+    // ------------------------------------------------------------------
+
+    public static final String BROKEN = "flash_broken_until";
+    public static final long BROKEN_TICKS = 24000L;
+
+    public static boolean broken(net.minecraft.world.level.Level level, ItemStack g) {
+        CompoundTag t = g.getTag();
+        return t != null && t.getLong(BROKEN) > level.getGameTime();
+    }
+
+    static void breakGauntlet(ServerPlayer p) {
+        ItemStack g = worn(p);
+        if (g.isEmpty()) {
+            return;
+        }
+        CompoundTag t = g.getOrCreateTag();
+        t.putLong(BROKEN, p.level().getGameTime() + BROKEN_TICKS);
+        if (!"gauntlet_burn".equals(t.getString(SKIN))) {
+            t.putString("flash_skin_before", t.getString(SKIN));
+        }
+        t.putString(SKIN, "gauntlet_burn");
+        p.displayClientMessage(Component.translatable("message.flash.infinity.gauntlet_broken"), false);
+    }
+
+    /** A broken Gauntlet mended: its skin back. */
+    private static void mend(ServerPlayer p, ItemStack g) {
+        CompoundTag t = g.getTag();
+        if (t == null || !t.contains(BROKEN) || broken(p.level(), g)) {
+            return;
+        }
+        t.remove(BROKEN);
+        String before = t.getString("flash_skin_before");
+        t.remove("flash_skin_before");
+        if (before.isEmpty()) {
+            t.remove(SKIN);
+        } else {
+            t.putString(SKIN, before);
+        }
+        p.displayClientMessage(Component.translatable("message.flash.infinity.gauntlet_mended"), true);
+    }
+
+    private static void scatter(ServerPlayer p, List<InfinityStone> stones) {
+        ServerLevel ow = p.server.overworld();
+        var rnd = p.getRandom();
+        for (InfinityStone st : stones) {
+            double ang = rnd.nextDouble() * Math.PI * 2.0D;
+            double dist = 1500.0D + rnd.nextDouble() * 3500.0D;
+            int x = (int) (p.getX() + Math.cos(ang) * dist);
+            int z = (int) (p.getZ() + Math.sin(ang) * dist);
+            var border = ow.getWorldBorder();
+            net.minecraft.core.BlockPos c = border.clampToBounds(x, 64, z);
+            ow.getChunk(c.getX() >> 4, c.getZ() >> 4);
+            int y = ow.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, c.getX(), c.getZ());
+            GroundItems.spawn(ow, new net.minecraft.world.phys.Vec3(c.getX() + 0.5D, y + 0.5D, c.getZ() + 0.5D),
+                    new ItemStack(st.item()), net.minecraft.world.phys.Vec3.ZERO);
+            InfinityTracker.sighted(p.server, st, ow, new net.minecraft.core.BlockPos(c.getX(), y, c.getZ()));
+        }
+        if (!stones.isEmpty()) {
+            p.displayClientMessage(Component.translatable("message.flash.infinity.stones_scattered"), false);
+        }
     }
 
     @SubscribeEvent

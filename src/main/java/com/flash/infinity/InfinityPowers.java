@@ -118,6 +118,11 @@ public final class InfinityPowers {
             }
         }
         InfinityContainers.addPowers(p, out);
+        // a broken Gauntlet (after the Snap) gives nothing for 20 minutes
+        ItemStack g = InfinityGauntlet.worn(p);
+        if (!g.isEmpty() && InfinityGauntlet.broken(p.level(), g)) {
+            out.remove("infinity_gauntlet");
+        }
         if (p.getTags().contains("burn")) {
             out.add("burn");
         }

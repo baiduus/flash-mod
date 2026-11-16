@@ -249,6 +249,19 @@ public final class InfinityTracker {
         d.setDirty();
     }
 
+    /** A stone known to be somewhere (flung by the destruction of the stones). */
+    static void sighted(MinecraftServer server, InfinityStone s, Level level, BlockPos at) {
+        CompoundTag t = new CompoundTag();
+        t.putString("Dimension", level.dimension().location().toString());
+        t.putInt("X", at.getX());
+        t.putInt("Y", at.getY());
+        t.putInt("Z", at.getZ());
+        t.putBoolean("Shielded", false);
+        Data d = data(server);
+        d.seen.put(s.id, t);
+        d.setDirty();
+    }
+
     static void updateTarget(ServerPlayer p, ItemStack s) {
         InfinityStone st = tracking(s);
         CompoundTag seen = data(p.server).seen.getCompound(st.id);

@@ -14,7 +14,8 @@
     "SpiderPoseMixin",
     "LocalPlayerIntangibleMixin",
     "DisguiseSkinMixin",
-    "SoulGlowMixin"
+    "SoulGlowMixin",
+    "SoulGrayMixin"
   ],
   "injectors": {
     "defaultRequire": 0

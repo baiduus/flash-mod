@@ -46,7 +46,11 @@ public class InfinityScreen extends Screen {
         if (t.startsWith("{")) {
             return Component.literal(a.id);
         }
-        return Component.literal(t);
+        // translated where the language has it (English: the original's own titles)
+        String key = "infinity.ability." + t.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        return net.minecraft.client.resources.language.I18n.exists(key) ? Component.translatable(key)
+                : Component.literal(t);
     }
 
     static Component desc(InfPowers.Ability a) {

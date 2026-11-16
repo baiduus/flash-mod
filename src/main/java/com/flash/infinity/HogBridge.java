@@ -71,15 +71,48 @@ public final class HogBridge {
     /** flash:hog_reality (held): charge while held, rewrite the land when let go (again: undo). */
     static void reality(ServerPlayer p, InfPowers.Ability a, boolean on, boolean was) {
         lookup();
-        boolean hog = gesto != null && p.level().dimension() == Level.OVERWORLD;
+        // Hand of God wants the main hand empty: with something in it, the mod's own wave
+        boolean hog = gesto != null && p.level().dimension() == Level.OVERWORLD && p.getMainHandItem().isEmpty();
         if (on && !was) {
+            REALITY_HOG.put(p.getUUID(), hog);
             if (hog) {
+                com.flash.yas.YasRealityWave.aimHog(p);
                 call(gesto, p, 0);
             } else {
                 com.flash.yas.YasRealityWave.startFor(p);
             }
-        } else if (!on && was && hog) {
+        } else if (!on && was && Boolean.TRUE.equals(REALITY_HOG.remove(p.getUUID()))) {
             call(gesto, p, 1);
         }
     }
+
+    private static boolean lookedDust;
+    private static Method desfazer;
+
+    /** Hand of God's disintegration (its dust, as Yas'), on any creature: false when it is not there. */
+    static boolean dust(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.LivingEntity e,
+                        int group, String owner) {
+        if (!lookedDust) {
+            lookedDust = true;
+            try {
+                desfazer = Class.forName("handofgod.desintegracao.Desintegracao").getDeclaredMethod("desfazer",
+                        net.minecraft.server.level.ServerLevel.class, net.minecraft.world.entity.LivingEntity.class,
+                        int.class, String.class);
+                desfazer.setAccessible(true);
+            } catch (ReflectiveOperationException | LinkageError | RuntimeException ex) {
+                desfazer = null;
+            }
+        }
+        if (desfazer == null) {
+            return false;
+        }
+        try {
+            desfazer.invoke(null, level, e, group, owner);
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            return false;
+        }
+    }
+
+    private static final java.util.Map<java.util.UUID, Boolean> REALITY_HOG = new java.util.HashMap<>();
 }

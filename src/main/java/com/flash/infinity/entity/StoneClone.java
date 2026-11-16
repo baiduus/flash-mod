@@ -98,6 +98,13 @@ public class StoneClone extends PathfinderMob {
         if (this.level().isClientSide) {
             return;
         }
+        if (this.getTags().contains(com.flash.infinity.SoulStone.BODY)) {
+            // a body whose soul is away: it just stands there (the soul comes back to it)
+            if (--this.life <= 0) {
+                this.discard();
+            }
+            return;
+        }
         Player o = ownerPlayer();
         if (--this.life <= 0 || o == null || !o.isAlive()) {
             vanish();
