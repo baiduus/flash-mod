@@ -32,6 +32,8 @@ public class PowerShot extends AbstractHurtingProjectile {
     private static final EntityDataAccessor<Boolean> ROCKET = SynchedEntityData.defineId(PowerShot.class,
             EntityDataSerializers.BOOLEAN);
     private float damage = 3.0F;
+    /** The Energy Blast seeks its prey too (as the rockets), but bursts without breaking anything. */
+    public boolean homing;
     private LivingEntity prey;
 
     public PowerShot(EntityType<? extends PowerShot> type, Level level) {
@@ -99,7 +101,7 @@ public class PowerShot extends AbstractHurtingProjectile {
         level.sendParticles(new DustParticleOptions(new Vector3f(((c >> 16) & 255) / 255.0F, ((c >> 8) & 255)
                 / 255.0F, (c & 255) / 255.0F), rocket() ? 1.0F : 1.5F), this.getX(), this.getY(), this.getZ(), 2,
                 0.05D, 0.05D, 0.05D, 0.0D);
-        if (rocket() && this.tickCount > 5) {
+        if ((rocket() || this.homing) && this.tickCount > 3) {
             if (this.prey == null || !this.prey.isAlive()) {
                 Entity owner = this.getOwner();
                 List<LivingEntity> near = level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox()
@@ -142,6 +144,21 @@ public class PowerShot extends AbstractHurtingProjectile {
             if (rocket()) {
                 this.level().explode(this, this.getX(), this.getY(), this.getZ(), 1.5F,
                         Level.ExplosionInteraction.NONE);
+            } else if (this.level() instanceof ServerLevel level) {
+                // the blast bursts: a ring of purple light and a push
+                level.sendParticles(new DustParticleOptions(new Vector3f(0.75F, 0.2F, 1.0F), 2.0F), this.getX(),
+                        this.getY(), this.getZ(), 40, 0.6D, 0.6D, 0.6D, 0.1D);
+                level.sendParticles(net.minecraft.core.particles.ParticleTypes.FLASH, this.getX(), this.getY(),
+                        this.getZ(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                level.playSound(null, this.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE,
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.5F);
+                Entity owner = this.getOwner();
+                for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(2.5D),
+                        e -> e != owner && e.isAlive())) {
+                    Vec3 push = e.position().subtract(this.position()).normalize().scale(0.9D);
+                    e.push(push.x, 0.35D, push.z);
+                    e.hurtMarked = true;
+                }
             }
             this.discard();
         }

@@ -149,9 +149,11 @@ public final class PowerStone {
     }
 
     static void energyBlast(ServerPlayer p, InfPowers.Ability a) {
-        float base = a.json.has("damage") ? a.json.get("damage").getAsFloat() : 3.0F;
+        float base = Math.max(16.0F, a.json.has("damage") ? a.json.get("damage").getAsFloat() : 3.0F);
         float speed = a.json.has("speed") ? a.json.get("speed").getAsFloat() : 1.5F;
-        PowerShot.shoot(p, hand(p), p.getLookAngle(), speed, Math.min(2.1474836E9F, base * damage(p)), COLOR, false);
+        PowerShot s = PowerShot.shoot(p, hand(p), p.getLookAngle(), Math.max(1.4F, speed),
+                Math.min(2.1474836E9F, base * Math.max(1.0F, damage(p))), COLOR, false);
+        s.homing = true;
         SpaceStone.sound(p.level(), p.position(), "energy_blast", 1.0F, 1.0F);
         p.swing(InteractionHand.OFF_HAND, true);
     }

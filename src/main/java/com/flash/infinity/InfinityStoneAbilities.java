@@ -108,7 +108,8 @@ public final class InfinityStoneAbilities {
                     PowerStone.meteorStorm(p, a);
                 }
             }
-            case "flash:power_blast" -> InfinityBeams.tick(p, a, on, PowerStone.damage(p), PowerStone.maxed(p));
+            case "flash:power_blast" -> InfinityBeams.tick(p, a, on, Math.max(10.0F, 10.0F * PowerStone.damage(p)),
+                    PowerStone.maxed(p));
             // the Time Stone
             case "flash:time_flow" -> TimeStone.flow(p, a, on, was);
             case "flash:time_flow_change" -> {
@@ -116,7 +117,11 @@ public final class InfinityStoneAbilities {
                     TimeStone.flowChange(p, a);
                 }
             }
-            case "flash:time_freeze" -> TimeStone.freeze(p, on, was);
+            case "flash:time_freeze" -> {
+                if (!HogBridge.freeze(p, on, was)) {
+                    TimeStone.freeze(p, on, was);
+                }
+            }
             case "flash:projectile_stop" -> TimeStone.projectileStop(p, on);
             case "palladium:water_walk" -> TimeStone.waterWalk(p, on);
             // the Soul Stone

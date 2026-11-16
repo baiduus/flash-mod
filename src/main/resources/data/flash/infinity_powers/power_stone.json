@@ -1112,9 +1112,9 @@
       }
     },
     "meteor_storm": {
-      "type": "flash:meteor_storm",
+      "type": "flash:hog_sun",
       "icon": "flash:textures/icon/meteor.png",
-      "title": "Meteor Storm",
+      "title": "Pull the Sun",
       "bar_color": "purple",
       "persistent_data": true,
       "hidden": false,
@@ -1130,11 +1130,10 @@
       "conditions": {
         "enabling": [
           {
-            "type": "palladium:action",
+            "type": "palladium:held",
             "cooldown": 0,
             "key_type": "key_bind",
-            "needs_empty_hand": false,
-            "allow_scrolling_when_crouching": true
+            "needs_empty_hand": false
           }
         ],
         "unlocking": [

@@ -505,7 +505,7 @@ public final class YasAbilities {
     // The keys
     // ------------------------------------------------------------------
 
-    private static KeyMapping hogKey(String name) {
+    public static KeyMapping hogKey(String name) {
         String full = "key.hand_of_god." + name;
         for (KeyMapping m : Minecraft.getInstance().options.keyMappings) {
             if (m.getName().equals(full)) {

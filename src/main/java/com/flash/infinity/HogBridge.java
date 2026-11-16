@@ -242,5 +242,43 @@ public final class HogBridge {
                 new com.flash.network.SoulGrayPacket(-2 - target, on));
     }
 
+    private static boolean lookedSlow;
+    private static Method slowKey;
+    private static Method slowOn;
+
+    /**
+     * The Time Stone's Time Freeze: Yas' (Hand of God's Super speed: the world all but stopped around her, blows and
+     * explosions held in time) toggled with the ability. False: Hand of God is not there (the stone's own freeze).
+     */
+    static boolean freeze(ServerPlayer p, boolean on, boolean was) {
+        if (!lookedSlow) {
+            lookedSlow = true;
+            try {
+                Class<?> c = Class.forName("handofgod.tempo.CameraLenta");
+                slowKey = c.getMethod("tecla", ServerPlayer.class);
+                slowOn = c.getMethod("ativa", ServerPlayer.class);
+            } catch (ReflectiveOperationException | LinkageError e) {
+                slowKey = null;
+            }
+        }
+        if (slowKey == null) {
+            return false;
+        }
+        try {
+            boolean active = (Boolean) slowOn.invoke(null, p);
+            if ((on && !was && !active) || (!on && was && active)) {
+                slowKey.invoke(null, p);
+            }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return false;
+        }
+        return true;
+    }
+
+    /** Holding the Power Stone (its Pull the Sun: Hand of God's Celestial, YasHandOfGod). */
+    public static boolean sunHolder(ServerPlayer p) {
+        return InfinityServer.state(p).powers.contains("power_stone");
+    }
+
     private static final java.util.Map<java.util.UUID, Boolean> REALITY_HOG = new java.util.HashMap<>();
 }

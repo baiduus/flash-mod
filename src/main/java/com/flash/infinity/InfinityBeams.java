@@ -38,6 +38,29 @@ public final class InfinityBeams {
         return p.getUUID() + "/" + a.key();
     }
 
+    /** The Power Blast locks on: the nearest creature within 25 degrees of the aim, in sight (client draws the same). */
+    public static LivingEntity lock(net.minecraft.world.level.Level level, net.minecraft.world.entity.player.Player p,
+                                    Vec3 eye, Vec3 look, double max) {
+        LivingEntity best = null;
+        double bestDot = Math.cos(Math.toRadians(25.0D));
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(max),
+                e -> e != p && e.isAlive() && !e.isSpectator() && !(e instanceof net.minecraft.world.entity.decoration
+                        .ArmorStand) && !(e instanceof net.minecraft.world.entity.player.Player pl && pl.isCreative()))) {
+            Vec3 to = e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D).subtract(eye);
+            double d = to.length();
+            if (d > max || d < 0.5D) {
+                continue;
+            }
+            double dot = to.scale(1.0D / d).dot(look);
+            if (dot > bestDot && level.clip(new ClipContext(eye, eye.add(to), ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE, p)).getType() == HitResult.Type.MISS) {
+                bestDot = dot;
+                best = e;
+            }
+        }
+        return best;
+    }
+
     static void tick(ServerPlayer p, InfPowers.Ability a, boolean on, float damage, boolean maxed) {
         String k = key(p, a);
         if (!on) {
@@ -51,7 +74,15 @@ public final class InfinityBeams {
         LENGTH.put(k, len);
         ServerLevel level = p.serverLevel();
         Vec3 eye = p.getEyePosition();
-        Vec3 end = eye.add(p.getLookAngle().scale(len));
+        Vec3 aim = p.getLookAngle();
+        if ("flash:power_blast".equals(a.type)) {
+            LivingEntity locked = lock(level, p, eye, aim, max);
+            if (locked != null) {
+                aim = locked.position().add(0.0D, locked.getBbHeight() * 0.5D, 0.0D).subtract(eye).normalize();
+                len = max;
+            }
+        }
+        Vec3 end = eye.add(aim.scale(len));
         BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
                 p));
         Vec3 stop = block.getType() == HitResult.Type.MISS ? end : block.getLocation();

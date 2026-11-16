@@ -134,6 +134,12 @@ public final class InfinityBeamRenderer {
         double max = a.json.has("max_distance") ? a.json.get("max_distance").getAsDouble() : 30.0D;
         Vec3 eye = p.getEyePosition(pt);
         Vec3 look = p.getViewVector(pt);
+        boolean blast = "flash:power_blast".equals(a.type);
+        net.minecraft.world.entity.LivingEntity locked = blast
+                ? com.flash.infinity.InfinityBeams.lock(mc.level, p, eye, look, max) : null;
+        if (locked != null) {
+            look = locked.getPosition(pt).add(0.0D, locked.getBbHeight() * 0.5D, 0.0D).subtract(eye).normalize();
+        }
         HitResult hit = mc.level.clip(new ClipContext(eye, eye.add(look.scale(max)), ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, p));
         Vec3 end = hit.getType() == HitResult.Type.MISS ? eye.add(look.scale(max)) : hit.getLocation();
@@ -167,7 +173,21 @@ public final class InfinityBeamRenderer {
         float cr = ((core >> 16) & 255) / 255.0F;
         float cg = ((core >> 8) & 255) / 255.0F;
         float cb = (core & 255) / 255.0F;
-        if (b.has("type") && b.get("type").getAsString().endsWith("lightning")) {
+        if (blast) {
+            // the Power Blast: a torrent of violet power, a white-hot heart, lightning coiling around it
+            float pulse = 0.85F + 0.15F * (float) Math.sin(t * 0.9F);
+            VfxDraw.energy(buf, m, from, end, w * 3.2F * pulse, 0.45F, 0.05F, 0.8F, 0.35F);
+            VfxDraw.energy(buf, m, from, end, w * 1.6F, 0.75F, 0.25F, 1.0F, 0.9F);
+            VfxDraw.energy(buf, m, from, end, w * 0.55F, 1.0F, 0.95F, 1.0F, 1.0F);
+            long seed = (long) (t * 3.0F) + p.getId() * 31L;
+            VfxDraw.path(buf, m, VfxDraw.jagged(from, end, seed, 0.35D, 5), w * 0.3F, 0.9F, 0.55F, 1.0F, 0.9F);
+            VfxDraw.path(buf, m, VfxDraw.jagged(from, end, seed + 13, 0.35D, 5), w * 0.25F, 1.0F, 0.8F, 1.0F, 0.8F);
+            Vec3 lv = end.subtract(from).normalize();
+            VfxDraw.ring(buf, m, from.add(lv.scale(0.3D)), lv, w * 4.0D, w * 0.8D, t * 0.3F, 0.8F, 0.4F, 1.0F, 0.8F);
+            Vec3 l2 = new Vec3(camera.getLeftVector());
+            Vec3 u2 = new Vec3(camera.getUpVector());
+            VfxDraw.burst(buf, m, end, l2, u2, (float) (w * 9.0D) * pulse, 0.85F, 0.4F, 1.0F, 0.8F, t * 0.2F);
+        } else if (b.has("type") && b.get("type").getAsString().endsWith("lightning")) {
             long seed = (long) (t * 2.0F) + p.getId() * 31L;
             VfxDraw.path(buf, m, VfxDraw.jagged(from, end, seed, 0.25D, 4), w, gr, gg, gb, 0.9F);
             VfxDraw.path(buf, m, VfxDraw.jagged(from, end, seed + 7, 0.15D, 4), w * 0.35F, cr, cg, cb, 1.0F);

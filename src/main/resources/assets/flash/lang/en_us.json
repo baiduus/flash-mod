@@ -1682,7 +1682,7 @@
   "ability.infinity.power_stone.super_punch.description": "Right-click to punch a shockwave forward that hurts and flings everything in its path and smashes blocks. Only works while Damage Control is switched on: turn it on to super punch, turn it off and right-click goes back to normal. Its damage, size, reach and force grow with the Power Stone level, into a huge blast at the maximum.",
   "ability.infinity.power_stone.insert_power_stone.description": "Puts the stone in your other hand into the empty Orb: the Power Stone, or any other stone.",
   "ability.infinity.power_stone.remove_power_stone.description": "Takes the stone out of the Orb.",
-  "ability.infinity.power_stone.meteor_storm.description": "The Power Stone shatters a distant moon, while the Space Stone pulls the fragments toward the target. Using them together creates a devastating, large-scale attack that requires both stones. (Don't spam, it might cause lag)",
+  "ability.infinity.power_stone.meteor_storm.description": "Hold while looking at the sun or moon to pull it down from the sky into your hand, like Yas; let go to hurl it (empty main hand, Overworld).",
   "ability.infinity.cosmi_rod.shockwave.description": "Fires a concussive blast from the hand, flinging and hurting everything in front of you.",
   "ability.infinity.eye_of_agamotto.open.description": "Open the Eye of Agamotto, like Doctor Strange, uncovering the Time Stone.",
   "ability.infinity.eye_of_agamotto.close.description": "Close the Eye of Agamotto.",

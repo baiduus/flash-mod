@@ -125,6 +125,28 @@ public final class YasHandOfGod {
         }
     }
 
+    private static Method buy;
+    private static Method allowed;
+    private static Object celeste;
+
+    /** Celestial (only it) for the Power Stone's holder: true when that is all he has. */
+    private static boolean celestial(ServerPlayer p, int count) throws ReflectiveOperationException {
+        if (buy == null) {
+            Class<?> poder = Class.forName("handofgod.Poder");
+            Class<?> c = Class.forName(CLASS);
+            buy = c.getMethod("comprar", ServerPlayer.class, poder);
+            allowed = c.getMethod("liberado", ServerPlayer.class, poder);
+            celeste = poder.getField("CELESTE").get(null);
+        }
+        boolean has = (Boolean) allowed.invoke(null, p, celeste);
+        if (!has && count == 0) {
+            buy.invoke(null, p, celeste);
+            sync.invoke(null, p);
+            return true;
+        }
+        return has && count <= 1;
+    }
+
     /** Every tick: nobody but Yas keeps a power of Hand of God (the levels he paid for it come back). */
     public static void guard(ServerPlayer p, boolean yas) {
         if (!present()) {
@@ -138,6 +160,12 @@ public final class YasHandOfGod {
         try {
             boolean hasFull = (Boolean) full.invoke(null, p);
             int count = (Integer) bought.invoke(null, p);
+            // the Power Stone pulls the sun as Yas does: Hand of God's Celestial alone, while it is held
+            if (!hasFull && com.flash.infinity.HogBridge.sunHolder(p)) {
+                if (celestial(p, count)) {
+                    return;
+                }
+            }
             if (hasFull || count > 0) {
                 setFull.invoke(null, p, false);
                 clear.invoke(null, p);

@@ -269,6 +269,7 @@ public final class InfinityClient {
             "power_stone", "time_stone", "soul_stone", "infinity_gauntlet");
     /** The mode now: one power (a stone) and its abilities. */
     private static String mode;
+    private static boolean sunWas;
 
     /** Every ability that can be used now, power by power. */
     public static List<InfPowers.Ability> allBar() {
@@ -512,6 +513,15 @@ public final class InfinityClient {
         }
         InfPowers.Ability a = selected();
         boolean down = a != null && FlashKeys.YAS_USE.isDown() && mc.screen == null;
+        // Pull the Sun: Yas' Celestial (Hand of God's own gesture, its key held with R)
+        boolean sun = down && takesKeys() && "flash:hog_sun".equals(a.type);
+        if (sun || sunWas) {
+            net.minecraft.client.KeyMapping k = com.flash.client.YasAbilities.hogKey("celeste");
+            if (k != null) {
+                k.setDown(sun);
+            }
+        }
+        sunWas = sun;
         if (down && pressed == null) {
             pressed = a.key();
             if (VIEW.cooling(pressed) && a.key != InfPowers.Key.TOGGLE) {
