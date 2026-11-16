@@ -6,13 +6,13 @@
       "item": "flash:steel_plate"
     },
     "Q": {
-      "item": "palladium:quartz_circuit"
+      "item": "minecraft:quartz"
     },
     "L": {
-      "item": "palladium:lead_circuit"
+      "item": "minecraft:redstone_torch"
     },
     "V": {
-      "item": "palladium:vibranium_ingot"
+      "item": "minecraft:amethyst_shard"
     },
     "G": {
       "item": "flash:gold_plate"

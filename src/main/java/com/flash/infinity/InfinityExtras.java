@@ -169,6 +169,24 @@ public final class InfinityExtras {
     }
 
     // ------------------------------------------------------------------
+    // The Infinity Gauntlet's cast: in village weaponsmiths' chests
+    // ------------------------------------------------------------------
+
+    @SubscribeEvent
+    public static void onLootLoad(net.minecraftforge.event.LootTableLoadEvent event) {
+        if (new ResourceLocation("minecraft", "chests/village/village_weaponsmith").equals(event.getName())) {
+            event.getTable().addPool(net.minecraft.world.level.storage.loot.LootPool.lootPool()
+                    .name("flash_infinity_gauntlet_cast")
+                    .setRolls(net.minecraft.world.level.storage.loot.providers.number.ConstantValue.exactly(1.0F))
+                    .when(net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition
+                            .randomChance(0.2F))
+                    .add(net.minecraft.world.level.storage.loot.entries.LootItem.lootTableItem(
+                            InfinityItems.INFINITY_GAUNTLET_CAST.get()))
+                    .build());
+        }
+    }
+
+    // ------------------------------------------------------------------
     // The Hammer: given back by the plates, dusts and blades it forges
     // ------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
-      "item": "palladium:vibranium_ingot"
+      "item": "minecraft:amethyst_shard"
     },
     {
       "item": "minecraft:egg"

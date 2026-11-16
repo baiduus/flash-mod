@@ -1,10 +1,21 @@
 {
-  "type": "minecraft:smelting",
-  "ingredient":
-  {
-    "item":"palladium:raw_titanium"
-  },
-  "result":"flash:titanium_ingot",
-  "experience":1,
-  "cookingtime":100
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:quartz"
+    },
+    {
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "result": {
+    "item": "flash:titanium_ingot",
+    "count": 1
+  }
 }

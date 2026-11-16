@@ -6,13 +6,13 @@
       "item": "flash:dwarf_star_alloy_plate"
     },
     "C": {
-      "item": "palladium:vibranium_circuit"
+      "item": "minecraft:comparator"
     },
     "S": {
       "tag": "forge:blocks/steel"
     },
     "H": {
-      "item": "palladium:vibranium_flux_capacitor"
+      "item": "minecraft:echo_shard"
     },
     "G": {
       "item": "flash:vormir_sand"

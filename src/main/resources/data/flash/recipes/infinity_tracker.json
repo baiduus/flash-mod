@@ -15,11 +15,11 @@
       "item": "minecraft:echo_shard"
     },
     "C": {
-      "item": "palladium:vibranium_circuit"
+      "item": "minecraft:comparator"
     }
   },
   "result": {
-    "item": "infinity_tracker:infinity_tracker",
+    "item": "flash:infinity_tracker",
     "count": 1
   }
 }
