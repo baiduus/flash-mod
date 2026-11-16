@@ -105,6 +105,7 @@ public final class FlashClientEvents {
                 player.addLayer(new YasLayer<>(player));
                 player.addLayer(new ScarletLayer(player));
                 player.addLayer(new SupermanAuraLayer(player));
+                player.addLayer(new com.flash.client.infinity.GauntletRender.Layer(player));
             }
         }
     }

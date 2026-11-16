@@ -249,11 +249,11 @@ public final class InfPowers {
         }
     }
 
-    static String str(JsonObject o, String k, String def) {
+    public static String str(JsonObject o, String k, String def) {
         return o.has(k) && o.get(k).isJsonPrimitive() ? o.get(k).getAsString() : def;
     }
 
-    static boolean bool(JsonObject o, String k, boolean def) {
+    public static boolean bool(JsonObject o, String k, boolean def) {
         return o.has(k) && o.get(k).isJsonPrimitive() ? o.get(k).getAsBoolean() : def;
     }
 }
