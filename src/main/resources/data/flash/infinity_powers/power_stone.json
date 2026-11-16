@@ -17,7 +17,6 @@
       }
     }
   },
-
   "abilities": {
     "radiation_texture_toggle": {
       "type": "flash:toggle",
@@ -28,7 +27,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [1.5, 2],
+      "gui_position": [
+        1.5,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.radiation_texture_toggle.description"
       },
@@ -42,15 +44,32 @@
         ]
       },
       "setting": "power_stone.radiation_texture"
-},
+    },
     "power_level": {
       "type": "flash:power_level",
       "objective": "DamageCycle",
       "max_level": 11,
-      "unlock_abilities": ["unlock1_dummy", "unlock2_dummy", "unlock3_dummy", "unlock4_dummy", "unlock5_dummy", "unlock6_dummy",
-        "unlock7_dummy", "unlock8_dummy", "unlock9_dummy", "unlock10_dummy", "unlock11_dummy"],
+      "unlock_abilities": [
+        "unlock1_dummy",
+        "unlock2_dummy",
+        "unlock3_dummy",
+        "unlock4_dummy",
+        "unlock5_dummy",
+        "unlock6_dummy",
+        "unlock7_dummy",
+        "unlock8_dummy",
+        "unlock9_dummy",
+        "unlock10_dummy",
+        "unlock11_dummy"
+      ],
       "scale_attack_damage": true,
-      "max_requires_powers": ["flash:mind_stone", "flash:space_stone", "flash:reality_stone", "flash:time_stone", "flash:soul_stone"]
+      "max_requires_powers": [
+        "flash:mind_stone",
+        "flash:space_stone",
+        "flash:reality_stone",
+        "flash:time_stone",
+        "flash:soul_stone"
+      ]
     },
     "size_toggle": {
       "type": "palladium:command",
@@ -86,7 +105,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [1, 1],
+      "gui_position": [
+        1,
+        1
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.super_punch.description"
       }
@@ -98,7 +120,13 @@
       "bar_color": "purple",
       "hidden": true,
       "hidden_in_bar": true,
-      "power_level_scales": ["damage", "range", "size", "knockback", "recoil"],
+      "power_level_scales": [
+        "damage",
+        "range",
+        "size",
+        "knockback",
+        "recoil"
+      ],
       "max_multiplier": 5.0,
       "description": {
         "translate": "ability.infinity.power_stone.super_punch.description"
@@ -190,7 +218,6 @@
         ]
       }
     },
-
     "unlock1_dummy": {
       "type": "palladium:dummy",
       "icon": "flash:power_stone",
@@ -199,7 +226,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 2],
+      "gui_position": [
+        0,
+        2
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -220,7 +250,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 1.5],
+      "gui_position": [
+        0,
+        1.5
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -246,7 +279,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 1],
+      "gui_position": [
+        0,
+        1
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -272,7 +308,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 0.5],
+      "gui_position": [
+        0,
+        0.5
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -298,7 +337,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 0],
+      "gui_position": [
+        0,
+        0
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -324,7 +366,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0.5, 0],
+      "gui_position": [
+        0.5,
+        0
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -350,7 +395,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [1, 0],
+      "gui_position": [
+        1,
+        0
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -376,7 +424,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [1.5, 0],
+      "gui_position": [
+        1.5,
+        0
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -402,7 +453,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [2, 0.5],
+      "gui_position": [
+        2,
+        0.5
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -428,7 +482,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [2, 1],
+      "gui_position": [
+        2,
+        1
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -454,7 +511,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [2, 1.5],
+      "gui_position": [
+        2,
+        1.5
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -478,9 +538,7 @@
       "hidden": true,
       "hidden_in_bar": true,
       "gui_position": "null",
-      "first_tick_commands": [
-        "advancement grant @s only infinity:power_upgrade"
-      ],
+      "first_tick_commands": [],
       "conditions": {
         "unlocking": [
           {
@@ -500,7 +558,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 1,
-      "gui_position": [0, 2.5],
+      "gui_position": [
+        0,
+        2.5
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.power_blast_aim.description"
       },
@@ -538,8 +599,14 @@
       "arm": "left_arm",
       "conditions": {
         "enabling": [
-          {"type": "palladium:ability_enabled", "ability": "power_blast_aim"},
-          {"type": "flash:gauntlet_arm", "arm": "left"}
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "power_blast_aim"
+          },
+          {
+            "type": "flash:gauntlet_arm",
+            "arm": "left"
+          }
         ]
       }
     },
@@ -552,8 +619,14 @@
       "arm": "right_arm",
       "conditions": {
         "enabling": [
-          {"type": "palladium:ability_enabled", "ability": "power_blast_aim"},
-          {"type": "flash:gauntlet_arm", "arm": "right"}
+          {
+            "type": "palladium:ability_enabled",
+            "ability": "power_blast_aim"
+          },
+          {
+            "type": "flash:gauntlet_arm",
+            "arm": "right"
+          }
         ]
       }
     },
@@ -567,9 +640,14 @@
       "hidden": true,
       "hidden_in_bar": true,
       "list_index": 0,
-      "gui_position": [0, -1],
+      "gui_position": [
+        0,
+        -1
+      ],
       "description": "Pacify hostile mobs around you",
-      "first_tick_commands": ["playsound flash:infinity.power_stone_beam1 block @s"],
+      "first_tick_commands": [
+        "playsound flash:infinity.power_stone_beam1 block @s"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -595,7 +673,9 @@
       "set_on_fire_seconds": 1,
       "cause_fire": true,
       "smelt_blocks": true,
-      "commands_on_block_hit": ["particle minecraft:lava"],
+      "commands_on_block_hit": [
+        "particle minecraft:lava"
+      ],
       "max_explosion_power": 4.0,
       "conditions": {
         "enabling": [
@@ -616,7 +696,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 0,
-      "gui_position": [0.5, 2],
+      "gui_position": [
+        0.5,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.impower.description"
       },
@@ -650,7 +733,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [1, 2],
+      "gui_position": [
+        1,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.knockback.description"
       },
@@ -695,7 +781,14 @@
               {
                 "type": "palladium:or",
                 "conditions": [
-                  {"type": "flash:gauntlet_slot", "item": [{"item": "flash:power_stone"}]},
+                  {
+                    "type": "flash:gauntlet_slot",
+                    "item": [
+                      {
+                        "item": "flash:power_stone"
+                      }
+                    ]
+                  },
                   {
                     "type": "flash:stone_equipped",
                     "stone": "flash:power_stone"
@@ -740,14 +833,19 @@
       "hidden": true,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, -1],
+      "gui_position": [
+        0,
+        -1
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.explosion.description"
       },
       "first_tick_commands": [
         "playsound flash:infinity.power_stone_explode block @s"
       ],
-      "commands": ["effect give @s minecraft:wither 1 1 true"],
+      "commands": [
+        "effect give @s minecraft:wither 1 1 true"
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -786,7 +884,10 @@
       "hidden": true,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, -1.5],
+      "gui_position": [
+        0,
+        -1.5
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.explosion.description"
       },
@@ -819,7 +920,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 3],
+      "gui_position": [
+        0,
+        3
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.explosion2.description"
       },
@@ -894,11 +998,20 @@
           }
         ],
         "unlocking": [
-          {"type": "palladium:ability_unlocked", "power": "null", "ability": "explosion2"},
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "explosion2"
+          },
           {
             "type": "palladium:not",
             "conditions": [
-              {"type": "palladium:objective_score", "objective": "DamageCycle", "min_score": 11, "max_score": 11}
+              {
+                "type": "palladium:objective_score",
+                "objective": "DamageCycle",
+                "min_score": 11,
+                "max_score": 11
+              }
             ]
           }
         ]
@@ -914,8 +1027,16 @@
           {
             "type": "palladium:or",
             "conditions": [
-              {"type": "palladium:ability_enabled", "power": "null", "ability": "power_cyclone"},
-              {"type": "palladium:ability_enabled", "power": "null", "ability": "unprotected_cyclone"}
+              {
+                "type": "palladium:ability_enabled",
+                "power": "null",
+                "ability": "power_cyclone"
+              },
+              {
+                "type": "palladium:ability_enabled",
+                "power": "null",
+                "ability": "unprotected_cyclone"
+              }
             ]
           }
         ]
@@ -943,8 +1064,17 @@
           }
         ],
         "unlocking": [
-          {"type": "palladium:ability_unlocked", "power": "null", "ability": "explosion2"},
-          {"type": "palladium:objective_score", "objective": "DamageCycle", "min_score": 11, "max_score": 11}
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "explosion2"
+          },
+          {
+            "type": "palladium:objective_score",
+            "objective": "DamageCycle",
+            "min_score": 11,
+            "max_score": 11
+          }
         ]
       }
     },
@@ -958,14 +1088,24 @@
       "list_index": -1,
       "gui_position": "null",
       "description": "null",
-      "damage_sources": ["minecraft:is_explosion"],
+      "damage_sources": [
+        "minecraft:is_explosion"
+      ],
       "conditions": {
         "unlocking": [
           {
             "type": "palladium:or",
             "conditions": [
-              {"type": "palladium:ability_enabled", "power": "null", "ability": "rocket_burst"},
-              {"type": "palladium:ability_enabled", "power": "null", "ability": "power_cyclone"}
+              {
+                "type": "palladium:ability_enabled",
+                "power": "null",
+                "ability": "rocket_burst"
+              },
+              {
+                "type": "palladium:ability_enabled",
+                "power": "null",
+                "ability": "power_cyclone"
+              }
             ]
           }
         ]
@@ -980,7 +1120,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 3,
-      "gui_position": [0, 3.5],
+      "gui_position": [
+        0,
+        3.5
+      ],
       "description": {
         "translate": "ability.infinity.power_stone.meteor_storm.description"
       },
@@ -1124,7 +1267,10 @@
             "min": 1,
             "max": 1000
           },
-          {"type": "flash:setting", "setting": "power_stone.radiation_texture"}
+          {
+            "type": "flash:setting",
+            "setting": "power_stone.radiation_texture"
+          }
         ]
       }
     }

@@ -207,10 +207,16 @@ public final class InfinityServer {
                 return;
             }
             case ATTACK -> {
+                if (HogBridge.attack(p)) {
+                    return;
+                }
                 SpaceStone.attack(p);
                 return;
             }
             case USE -> {
+                if (HogBridge.use(p)) {
+                    return;
+                }
                 SpaceStone.useWhileHolding(p);
                 return;
             }
@@ -532,6 +538,13 @@ public final class InfinityServer {
             InfPowers.Ability a = InfPowers.ability(x);
             if (a != null && VISUAL.contains(a.type)) {
                 vis.add(StringTag.valueOf(x));
+            } else if (a != null && a.json.has("attribute")
+                    && "palladium:flight_speed".equals(a.json.get("attribute").getAsString())) {
+                // the stones' flight: a hero's (its pose, its aura) for everyone around
+                vis.add(StringTag.valueOf("flash:flyer"));
+                if (p.getAbilities().flying) {
+                    vis.add(StringTag.valueOf("flash:flying"));
+                }
             }
         }
         if (!vis.equals(s.sentVisual)) {

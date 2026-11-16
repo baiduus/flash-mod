@@ -459,7 +459,7 @@ public final class ThorFx {
                         VfxDraw.ring(buf, m, a.add(0.0D, 0.15D, 0.0D), yUp, Math.max(0.3D, r), 0.3D, 0.0F, c[0], c[1],
                                 c[2], 0.7F * fade);
                         VfxDraw.wall(buf, m, a, Math.max(0.3D, r), 1.4D * fade, c[0], c[1], c[2], 0.3F * fade);
-                        VfxDraw.runeRing(buf, m, a, 1.6D, 12, time * 0.04F, c[0], c[1], c[2], fade);
+                        // (no runes)
                     }
                     case ThorFxPacket.WAVE -> {
                         Vec3 dir = f.b();
@@ -479,7 +479,7 @@ public final class ThorFx {
                                 0.4D * fade + 0.05D, 0.0F, c[0], c[1], c[2], 0.8F * fade);
                         VfxDraw.burst(buf, m, a.add(0.0D, 0.8D, 0.0D), left, up, f.scale() * (0.6F + grow), c[0], c[1],
                                 c[2], 0.8F * fade, time * 0.2F);
-                        VfxDraw.runeRing(buf, m, a, f.scale() * 0.45D, 16, time * 0.03F, c[0], c[1], c[2], fade);
+                        // (no runes)
                         if (age < 1.0F) {
                             impactScreen(a, 2, 16, 1.2F);
                         }
@@ -496,7 +496,7 @@ public final class ThorFx {
                             VfxDraw.ring(buf, m, a.add(0.0D, 0.06D + i * 0.01D, 0.0D), yUp, r * (1.1D + i * 0.18D),
                                     0.12D, time * 0.05F, col[0], col[1], col[2], 0.7F * al);
                         }
-                        VfxDraw.runeRing(buf, m, a, r * 2.4D, 24, time * 0.02F, 1.0F, 0.95F, 0.8F, al);
+                        // (no runes)
                         VfxDraw.burst(buf, m, a.add(0.0D, 1.0D, 0.0D), left, up, (float) r * 3.0F, 1.0F, 1.0F, 1.0F,
                                 0.5F * al, time * 0.1F);
                     }
@@ -505,7 +505,7 @@ public final class ThorFx {
                         VfxDraw.sphere(buf, m, a, f.scale(), cam, 0.6F, 0.25F, 1.0F, 0.5F * al, time, 1.6D);
                         VfxDraw.ring(buf, m, a.add(0.0D, 0.1D, 0.0D), yUp, f.scale(), 0.4D, 0.0F, 0.6F, 0.25F, 1.0F,
                                 0.7F * al);
-                        VfxDraw.runeRing(buf, m, a, f.scale() * 0.7D, 20, time * 0.03F, 0.7F, 0.4F, 1.0F, al);
+                        // (no runes)
                     }
                     case ThorFxPacket.BEAM -> {
                         Vec3 b = f.b();
@@ -559,7 +559,7 @@ public final class ThorFx {
                             0.7F);
                     VfxDraw.ring(buf, m, pos.add(0.0D, 1.55D, 0.0D), yUp, 1.0D, 0.06D, -time * 0.26F, c[0], c[1], c[2],
                             0.6F);
-                    VfxDraw.runeRing(buf, m, pos, 1.9D, 10, time * 0.05F, c[0], c[1], c[2], 0.8F);
+                    // (no runes)
                     VfxDraw.glow(buf, m, pos.add(0.0D, 1.0D, 0.0D), left, up, 1.8D, c[0], c[1], c[2], 0.2F);
                 }
                 boolean me = p == Minecraft.getInstance().getCameraEntity()

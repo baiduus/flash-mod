@@ -557,12 +557,24 @@ public final class ScarletAbilities {
         return holds != null;
     }
 
+    /** The Space Stone's telekinesis tears apart the same way (its own cooldown: HogBridge). */
+    public static void dismemberBy(ServerPlayer p) {
+        LivingEntity e = com.flash.yas.YasTelekinesis.held(p);
+        if (e != null && ready()) {
+            tear(p, e);
+        }
+    }
+
     /** Her R-click on what she holds: Hand of God's tearing apart (its pieces), and whole again in 5 s. */
     private static void dismember(ServerPlayer p) {
         LivingEntity e = com.flash.yas.YasTelekinesis.held(p);
         if (e == null || !ready() || !ready(p, "dismember")) {
             return;
         }
+        tear(p, e);
+    }
+
+    private static void tear(ServerPlayer p, LivingEntity e) {
         HELD.put(e.getUUID(), p.level().getGameTime());
         if (e instanceof ServerPlayer victim) {
             SPARED.add(victim.getUUID());
@@ -603,7 +615,8 @@ public final class ScarletAbilities {
         long now = event.getServer().overworld().getGameTime();
         for (Object hold : all.values()) {
             try {
-                if (!(owner.get(hold) instanceof ServerPlayer p) || !ScarletPowers.has(p)) {
+                if (!(owner.get(hold) instanceof ServerPlayer p)
+                        || !(ScarletPowers.has(p) || com.flash.infinity.HogBridge.tkHolder(p))) {
                     continue;
                 }
                 if (target.get(hold) instanceof LivingEntity e) {

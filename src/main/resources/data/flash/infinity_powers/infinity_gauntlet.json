@@ -1,7 +1,9 @@
 {
   "name": "Infinity Gauntlet",
   "background": "flash:textures/block/gold_titanium_alloy_block.png",
-  "icon": {"type": "flash:gauntlet"},
+  "icon": {
+    "type": "flash:gauntlet"
+  },
   "ability_bar_texture": "flash:textures/gui/ability_bars/infinity_ability_bar.png",
   "gui_display_type": "tree",
   "persistent_data": true,
@@ -16,7 +18,9 @@
       "hidden_in_bar": true,
       "gui_position": "null",
       "description": "Insert Time Stone",
-      "last_tick_commands": ["clear @s infinity:eye_of_agamotto"],
+      "last_tick_commands": [
+        "clear @s infinity:eye_of_agamotto"
+      ],
       "conditions": {
         "unlocking": [
           {
@@ -52,7 +56,6 @@
       "hidden_in_bar": true,
       "gui_position": "null",
       "first_tick_commands": [
-        "advancement grant @s only infinity:6_stones",
         "tag @s add InfinityGauntlet"
       ],
       "last_tick_commands": [
@@ -60,26 +63,69 @@
       ],
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:mind_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:power_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:space_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:reality_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:time_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:soul_stone"}]}
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:mind_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:power_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:space_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:reality_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:time_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:soul_stone"
+              }
+            ]
+          }
         ]
       }
     },
     "kill_half": {
       "type": "palladium:command",
-      "icon": {"type": "flash:gauntlet"},
+      "icon": {
+        "type": "flash:gauntlet"
+      },
       "title": "Kill Half of All Entities",
       "bar_color": "yellow",
       "hidden": true,
       "hidden_in_bar": false,
       "list_index": 0,
       "commands": [
-        "infinity gauntlet snap",
-        "advancement grant @s only infinity:snap"
+        "infinity gauntlet snap"
       ],
       "conditions": {
         "enabling": [
@@ -488,7 +534,10 @@
       "bar_color": "light_gray",
       "hidden": true,
       "hidden_in_bar": true,
-      "commands": ["playsound minecraft:entity.firework_rocket.blast master @a ~ ~ ~ 1.5 2", "infinity gauntlet snap destroy_stones"],
+      "commands": [
+        "playsound minecraft:entity.firework_rocket.blast master @a ~ ~ ~ 1.5 2",
+        "infinity gauntlet snap destroy_stones"
+      ],
       "conditions": {
         "enabling": [
           {
@@ -508,7 +557,10 @@
       "hidden": true,
       "hidden_in_bar": false,
       "list_index": 4,
-      "gui_position": [0, 0.5],
+      "gui_position": [
+        0,
+        0.5
+      ],
       "description": {
         "translate": "ability.infinity.gauntlet.normal_gauntlet.description"
       },
@@ -563,16 +615,61 @@
       "bar_color": "light_gray",
       "hidden": true,
       "hidden_in_bar": true,
-      "gui_position": [0, 1],
+      "gui_position": [
+        0,
+        1
+      ],
       "description": "Open Black Panther's Suit",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:mind_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:power_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:space_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:reality_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:time_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:soul_stone"}]}
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:mind_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:power_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:space_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:reality_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:time_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:soul_stone"
+              }
+            ]
+          }
         ]
       }
     },
@@ -584,16 +681,61 @@
       "bar_color": "light_gray",
       "hidden": true,
       "hidden_in_bar": true,
-      "gui_position": [0, 1],
+      "gui_position": [
+        0,
+        1
+      ],
       "description": "Open Black Panther's Suit",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:mind_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:power_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:space_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:reality_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:time_stone"}]},
-          {"type": "flash:gauntlet_slot", "item": [{"item": "flash:soul_stone"}]}
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:mind_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:power_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:space_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:reality_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:time_stone"
+              }
+            ]
+          },
+          {
+            "type": "flash:gauntlet_slot",
+            "item": [
+              {
+                "item": "flash:soul_stone"
+              }
+            ]
+          }
         ]
       }
     },
@@ -604,7 +746,10 @@
       "bar_color": "light_gray",
       "hidden": false,
       "hidden_in_bar": false,
-      "gui_position": [-0.5, 1.5],
+      "gui_position": [
+        -0.5,
+        1.5
+      ],
       "description": {
         "translate": "ability.infinity.gauntlet.offhand_desc.description"
       }
@@ -616,7 +761,10 @@
       "bar_color": "light_gray",
       "hidden": false,
       "hidden_in_bar": false,
-      "gui_position": [0, 1.5],
+      "gui_position": [
+        0,
+        1.5
+      ],
       "description": {
         "translate": "ability.infinity.gauntlet.trinkets_desc.description"
       }
@@ -628,19 +776,27 @@
       "bar_color": "light_gray",
       "hidden": false,
       "hidden_in_bar": false,
-      "gui_position": [0.5, 1.5],
+      "gui_position": [
+        0.5,
+        1.5
+      ],
       "description": {
         "translate": "ability.infinity.gauntlet.omni_desc.description"
       }
     },
     "snap_desc": {
       "type": "palladium:dummy",
-      "icon": {"type": "flash:gauntlet"},
+      "icon": {
+        "type": "flash:gauntlet"
+      },
       "title": "The Snap, and aftermath",
       "bar_color": "light_gray",
       "hidden": false,
       "hidden_in_bar": false,
-      "gui_position": [0, 2],
+      "gui_position": [
+        0,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.gauntlet.snap_desc.description"
       }
@@ -652,13 +808,33 @@
       "position": "worn",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_visible"},
+          {
+            "type": "flash:gauntlet_visible"
+          },
           {
             "type": "palladium:or",
             "conditions": [
-              {"type": "palladium:item_in_slot", "item": {"item": "flash:infinity_gauntlet"}, "slot": "offhand"},
-              {"type": "palladium:item_in_slot", "item": {"item": "flash:infinity_gauntlet"}, "slot": "curios:hands"},
-              {"type": "palladium:item_in_slot", "item": {"item": "flash:infinity_gauntlet"}, "slot": "trinkets:offhand/glove"}
+              {
+                "type": "palladium:item_in_slot",
+                "item": {
+                  "item": "flash:infinity_gauntlet"
+                },
+                "slot": "offhand"
+              },
+              {
+                "type": "palladium:item_in_slot",
+                "item": {
+                  "item": "flash:infinity_gauntlet"
+                },
+                "slot": "curios:hands"
+              },
+              {
+                "type": "palladium:item_in_slot",
+                "item": {
+                  "item": "flash:infinity_gauntlet"
+                },
+                "slot": "trinkets:offhand/glove"
+              }
             ]
           }
         ]
@@ -671,7 +847,13 @@
       "position": "mainhand",
       "conditions": {
         "enabling": [
-          {"type": "palladium:item_in_slot", "item": {"item": "flash:infinity_gauntlet"}, "slot": "mainhand"}
+          {
+            "type": "palladium:item_in_slot",
+            "item": {
+              "item": "flash:infinity_gauntlet"
+            },
+            "slot": "mainhand"
+          }
         ]
       }
     },
@@ -682,7 +864,9 @@
       "position": "custom",
       "conditions": {
         "enabling": [
-          {"type": "flash:custom_gauntlet"}
+          {
+            "type": "flash:custom_gauntlet"
+          }
         ]
       }
     },
@@ -715,7 +899,9 @@
       "position": "worn",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_visible"},
+          {
+            "type": "flash:gauntlet_visible"
+          },
           {
             "type": "palladium:or",
             "conditions": [

@@ -15,7 +15,9 @@
     "LocalPlayerIntangibleMixin",
     "DisguiseSkinMixin",
     "SoulGlowMixin",
-    "SoulGrayMixin"
+    "SoulGrayMixin",
+    "BlueTkSkinMixin",
+    "BlueTkHandMixin"
   ],
   "injectors": {
     "defaultRequire": 0

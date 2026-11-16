@@ -12,7 +12,23 @@ public final class SoulGray {
     private SoulGray() {
     }
 
+    private static final IntOpenHashSet BLUE = new IntOpenHashSet();
+
+    /** The Space Stone's telekinesis (holder and held): Hand of God's energy in light blue (BlueTkMixin). */
+    public static boolean blue(Entity e) {
+        return e != null && !BLUE.isEmpty() && BLUE.contains(e.getId());
+    }
+
     public static void set(int id, boolean on) {
+        if (id <= -2) {
+            int real = -2 - id;
+            if (on) {
+                BLUE.add(real);
+            } else {
+                BLUE.remove(real);
+            }
+            return;
+        }
         if (on) {
             IDS.add(id);
         } else {

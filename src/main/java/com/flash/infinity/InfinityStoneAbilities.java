@@ -15,7 +15,7 @@ public final class InfinityStoneAbilities {
         boolean start = on && !was;
         switch (a.type) {
             // the Space Stone
-            case "flash:telekinesis" -> SpaceStone.telekinesis(p, s, a, on, was);
+            case "flash:telekinesis" -> HogBridge.telekinesis(p, s, a, on, was);
             case "flash:black_hole" -> SpaceStone.blackHoleToggle(p, on, was);
             case "flash:jump_portal" -> {
                 if (start) {
@@ -175,9 +175,10 @@ public final class InfinityStoneAbilities {
         }
         var ab = p.getAbilities();
         if (on) {
-            if (!ab.mayfly || ab.getFlyingSpeed() != 0.1F) {
+            // a hero's flight: speed 0 here, steered by the aimed flight (SupermanClient) as the others'
+            if (!ab.mayfly || ab.getFlyingSpeed() != 0.0F) {
                 ab.mayfly = true;
-                ab.setFlyingSpeed(0.1F);
+                ab.setFlyingSpeed(0.0F);
                 p.onUpdateAbilities();
             }
             if (ab.flying) {

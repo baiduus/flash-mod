@@ -114,5 +114,133 @@ public final class HogBridge {
         }
     }
 
+    // ------------------------------------------------------------------
+    // The Space Stone's telekinesis: the Scarlet Witch's (Hand of God's hold, no implosion, torn apart for five
+    // seconds by right-click), light blue (BlueTk, client)
+    // ------------------------------------------------------------------
+
+    private static boolean lookedTk;
+    private static Method grab;
+    private static Method letGo;
+    private static final java.util.Map<java.util.UUID, Integer> TK = new java.util.HashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> TEAR_COOLDOWN = new java.util.HashMap<>();
+
+    private static boolean tkReady() {
+        if (!lookedTk) {
+            lookedTk = true;
+            try {
+                Class<?> t = Class.forName("handofgod.telecinese.Telecinese");
+                grab = t.getDeclaredMethod("agarrar", ServerPlayer.class, int.class);
+                grab.setAccessible(true);
+                letGo = t.getDeclaredMethod("soltar", ServerPlayer.class);
+                letGo.setAccessible(true);
+            } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+                grab = null;
+            }
+        }
+        return grab != null;
+    }
+
+    /** Holding something by the stone's telekinesis now (Hand of God's hold). */
+    public static boolean tkHolder(ServerPlayer p) {
+        return TK.containsKey(p.getUUID());
+    }
+
+    static void telekinesis(ServerPlayer p, InfinityServer.State s, InfPowers.Ability a, boolean on, boolean was) {
+        if (!tkReady() || (was && !TK.containsKey(p.getUUID()) && on)) {
+            SpaceStone.telekinesis(p, s, a, on, was);
+            return;
+        }
+        if (on && !was) {
+            net.minecraft.world.entity.Entity t = aimed(p, 32.0D);
+            if (t == null) {
+                s.untoggle(a.key());
+                return;
+            }
+            try {
+                grab.invoke(null, p, t.getId());
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                // refused
+            }
+            if (com.flash.yas.YasTelekinesis.held(p) == null) {
+                // Hand of God would not take it: the stone's own hold
+                SpaceStone.telekinesis(p, s, a, true, false);
+                return;
+            }
+            TK.put(p.getUUID(), t.getId());
+            blue(p, t.getId(), true);
+            return;
+        }
+        Integer id = TK.get(p.getUUID());
+        if (!on && was) {
+            release(p);
+            return;
+        }
+        if (on && id != null && com.flash.yas.YasTelekinesis.held(p) == null) {
+            // thrown, torn apart or gone: the hold is over
+            TK.remove(p.getUUID());
+            blue(p, id, false);
+            s.untoggle(a.key());
+        }
+    }
+
+    static void release(ServerPlayer p) {
+        Integer id = TK.remove(p.getUUID());
+        if (id == null) {
+            return;
+        }
+        blue(p, id, false);
+        try {
+            letGo.invoke(null, p);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            // already free
+        }
+    }
+
+    /** Attack: thrown where she looks (Hand of God lets it fly). */
+    static boolean attack(ServerPlayer p) {
+        if (!TK.containsKey(p.getUUID())) {
+            return false;
+        }
+        net.minecraft.world.entity.LivingEntity e = com.flash.yas.YasTelekinesis.held(p);
+        release(p);
+        if (e != null) {
+            e.setDeltaMovement(p.getLookAngle().scale(2.5D));
+            e.hurtMarked = true;
+        }
+        return true;
+    }
+
+    /** Right-click: torn apart, whole again five seconds later. */
+    static boolean use(ServerPlayer p) {
+        if (!TK.containsKey(p.getUUID())) {
+            return false;
+        }
+        long now = p.level().getGameTime();
+        Long last = TEAR_COOLDOWN.get(p.getUUID());
+        if (last == null || now - last >= 40L) {
+            TEAR_COOLDOWN.put(p.getUUID(), now);
+            com.flash.scarlet.ScarletAbilities.dismemberBy(p);
+        }
+        return true;
+    }
+
+    private static net.minecraft.world.entity.Entity aimed(ServerPlayer p, double range) {
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        net.minecraft.world.phys.Vec3 end = eye.add(p.getLookAngle().scale(range));
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, end,
+                p.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0D),
+                e -> e instanceof net.minecraft.world.entity.LivingEntity && e.isAlive() && !e.isSpectator()
+                        && !InfinityImmunity.immune(e, "telekinesis"), eye.distanceToSqr(end));
+        return hit == null ? null : hit.getEntity();
+    }
+
+    private static void blue(ServerPlayer p, int target, boolean on) {
+        com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.ALL.noArg(),
+                new com.flash.network.SoulGrayPacket(-2 - p.getId(), on));
+        com.flash.network.FlashNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.ALL.noArg(),
+                new com.flash.network.SoulGrayPacket(-2 - target, on));
+    }
+
     private static final java.util.Map<java.util.UUID, Boolean> REALITY_HOG = new java.util.HashMap<>();
 }

@@ -37,8 +37,7 @@ public final class InfinityLayers {
         BufferBuilder buf = null;
         try {
             for (Player p : mc.level.players()) {
-                boolean firstPerson = p == mc.player && mc.options.getCameraType().isFirstPerson();
-                if (firstPerson || p.isInvisible()) {
+                if (p.isInvisible() && p != mc.player) {
                     continue;
                 }
                 if (InfinityClient.visibleKey(p, "space_stone/render_layer_space_stone_shield")) {
@@ -50,9 +49,14 @@ public final class InfinityLayers {
                     Matrix4f m = ps.last().pose();
                     float t = p.tickCount + pt;
                     Vec3 c = p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
-                    VfxDraw.sphere(buf, m, c, 1.35D, cam, 0.2F, 0.45F, 1.0F, 0.7F, t, 2.2D);
-                    VfxDraw.hexCircle(buf, m, p.getPosition(pt).add(0.0D, 0.05D, 0.0D), 1.35D, t, 0.3F, 0.6F, 1.0F,
-                            0.4F);
+                    // a blue bubble (as Doom's field, without its runes), seen from inside too
+                    double r = 1.9D;
+                    float pulse = 0.5F + 0.15F * (float) Math.sin(t * 0.25F);
+                    VfxDraw.sphere(buf, m, c, r, cam, 0.25F, 0.6F, 1.0F, 0.55F, t, 2.6D);
+                    VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r + 0.04D, 0.05D, t * 0.05F, 0.45F, 0.8F,
+                            1.0F, pulse);
+                    VfxDraw.ring(buf, m, c, new Vec3(1.0D, 0.0D, 0.0D), r + 0.02D, 0.03D, t * -0.04F, 0.45F, 0.8F,
+                            1.0F, pulse * 0.6F);
                 }
             }
         } finally {
