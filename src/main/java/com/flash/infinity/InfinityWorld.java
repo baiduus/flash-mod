@@ -87,6 +87,8 @@ public final class InfinityWorld {
         TempleBeacon.ITEMS.register(modBus);
         TempleBeacon.BLOCK_ENTITIES.register(modBus);
         InfinityTracker.ITEMS.register(modBus);
+        InfinityExtras.ITEMS.register(modBus);
+        InfinityExtras.SERIALIZERS.register(modBus);
     }
 
     // ------------------------------------------------------------------

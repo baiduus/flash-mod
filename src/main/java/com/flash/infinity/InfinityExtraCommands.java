@@ -72,6 +72,6 @@ final class InfinityExtraCommands {
     }
 
     static LiteralArgumentBuilder<CommandSourceStack> soulGuardian() {
-        return Commands.literal("soulguardian");
+        return InfinityExtras.soulGuardian();
     }
 }

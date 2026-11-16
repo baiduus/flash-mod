@@ -122,6 +122,9 @@ public final class InfinityTravel {
                         SoundSource.PLAYERS, 1.0F, 1.4F);
                 to.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, land.x, land.y + 1.0D, land.z,
                         40, 0.4D, 0.8D, 0.4D, 0.1D);
+                if (to.getBiome(p.blockPosition()).is(net.minecraft.world.level.biome.Biomes.DESERT)) {
+                    InfinityAdvancements.grant(p, "lowkey");
+                }
                 p.displayClientMessage(Component.translatable("message.flash.infinity.tesseract_to",
                         to.dimension().location().toString()), true);
                 return;

@@ -75,6 +75,7 @@ public final class InfinityCommands {
                         }))))
                 .then(InfinityExtraCommands.orb())
                 .then(InfinityExtraCommands.gauntlet())
-                .then(InfinityExtraCommands.soulGuardian()));
+                .then(InfinityExtraCommands.soulGuardian())
+                .then(InfinityExtras.summon()));
     }
 }

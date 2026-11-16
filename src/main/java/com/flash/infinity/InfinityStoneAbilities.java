@@ -154,6 +154,12 @@ public final class InfinityStoneAbilities {
                     InfinityOrb.eye(p, a.id);
                 }
             }
+            // the Cosmi-Rod
+            case "flash:shockwave" -> {
+                if (start) {
+                    InfinityExtras.shockwave(p, a);
+                }
+            }
             default -> {
             }
         }
