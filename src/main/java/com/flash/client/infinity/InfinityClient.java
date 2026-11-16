@@ -242,6 +242,10 @@ public final class InfinityClient {
         return false;
     }
 
+    public static Set<String> visualKeys(net.minecraft.world.entity.Entity e) {
+        return VISUAL.get(e.getId());
+    }
+
     public static boolean visibleKey(net.minecraft.world.entity.Entity e, String key) {
         Set<String> v = VISUAL.get(e.getId());
         return v != null && v.contains(key);
@@ -270,6 +274,7 @@ public final class InfinityClient {
     /** The mode now: one power (a stone) and its abilities. */
     private static String mode;
     private static boolean sunWas;
+    private static boolean tkWas;
 
     /** Every ability that can be used now, power by power. */
     public static List<InfPowers.Ability> allBar() {
@@ -469,6 +474,13 @@ public final class InfinityClient {
                 return;
             }
         }
+        // holding by Hand of God's telekinesis: right-click tears it apart (5 s), as the Scarlet Witch's
+        if (event.isUseItem() && tkWas && com.flash.client.YasAbilities.stoneHolding()) {
+            event.setCanceled(true);
+            event.setSwingHand(true);
+            send(InfinityServer.USE, "");
+            return;
+        }
         if (event.isAttack() && (anyOn("flash:telekinesis") || anyOn("flash:black_hole"))) {
             event.setCanceled(true);
             event.setSwingHand(true);
@@ -522,6 +534,16 @@ public final class InfinityClient {
             }
         }
         sunWas = sun;
+        // Telekinesis (Space Stone): Yas' own (Hand of God's hold, the same presses: lift, charge, throw)
+        boolean tk = takesKeys() && a != null && "flash:telekinesis".equals(a.type)
+                && com.flash.client.YasAbilities.hogKey("telecinese") != null;
+        if (tk || tkWas) {
+            com.flash.client.YasAbilities.stoneTelekinesis(mc, tk);
+        }
+        tkWas = tk;
+        if (tk) {
+            down = false;
+        }
         if (down && pressed == null) {
             pressed = a.key();
             if (VIEW.cooling(pressed) && a.key != InfPowers.Key.TOGGLE) {

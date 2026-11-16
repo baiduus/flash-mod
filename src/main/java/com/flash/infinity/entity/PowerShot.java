@@ -105,7 +105,8 @@ public class PowerShot extends AbstractHurtingProjectile {
             if (this.prey == null || !this.prey.isAlive()) {
                 Entity owner = this.getOwner();
                 List<LivingEntity> near = level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox()
-                        .inflate(20.0D), e -> e != owner && e.isAlive() && !(e instanceof StoneClone));
+                        .inflate(this.homing ? 32.0D : 20.0D), e -> e != owner && e.isAlive() && !(e instanceof StoneClone)
+                        && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand));
                 double best = Double.MAX_VALUE;
                 Vec3 dir = this.getDeltaMovement().normalize();
                 for (LivingEntity e : near) {
@@ -118,8 +119,9 @@ public class PowerShot extends AbstractHurtingProjectile {
             }
             if (this.prey != null) {
                 Vec3 want = this.prey.position().add(0.0D, this.prey.getBbHeight() * 0.5D, 0.0D)
-                        .subtract(this.position()).normalize().scale(this.getDeltaMovement().length());
-                this.setDeltaMovement(this.getDeltaMovement().lerp(want, 0.25D));
+                        .subtract(this.position()).normalize().scale(Math.max(1.2D, this.getDeltaMovement().length()));
+                this.setDeltaMovement(this.getDeltaMovement().lerp(want, this.homing ? 0.45D : 0.25D));
+                this.hurtMarked = true;
             }
         }
     }

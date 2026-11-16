@@ -54,12 +54,21 @@ public class BlackHoleRenderer extends EntityRenderer<BlackHole> {
         Vec3 camRel = cam.getPosition().subtract(e.getPosition(pt));
         BufferBuilder buf = VfxDraw.begin();
         try {
-            Vec3 up = new Vec3(0.2D, 1.0D, 0.1D).normalize();
-            for (int k = 0; k < 3; k++) {
-                VfxDraw.ring(buf, m, Vec3.ZERO, up, r * (1.4D + k * 0.45D), r * 0.25D, t * (0.15F - k * 0.03F),
-                        k == 1 ? 0.38F : 0.69F, k == 1 ? 0.78F : 0.52F, k == 1 ? 0.22F : 1.0F, 0.75F - k * 0.15F);
+            // the accretion disc: hot bands from white to orange to deep red, the photon ring, two jets
+            Vec3 up = new Vec3(0.15D, 1.0D, 0.08D).normalize();
+            float[][] bands = {{1.0F, 0.95F, 0.8F}, {1.0F, 0.7F, 0.25F}, {1.0F, 0.45F, 0.1F}, {0.8F, 0.2F, 0.08F},
+                    {0.5F, 0.1F, 0.15F}};
+            for (int k = 0; k < bands.length; k++) {
+                VfxDraw.ring(buf, m, Vec3.ZERO, up, r * (1.35D + k * 0.38D), r * 0.22D, t * (0.22F - k * 0.035F),
+                        bands[k][0], bands[k][1], bands[k][2], 0.85F - k * 0.12F);
             }
-            VfxDraw.sphere(buf, m, Vec3.ZERO, r * 1.15D, camRel, 0.69F, 0.52F, 1.0F, 0.6F, t, 3.0D);
+            VfxDraw.sphere(buf, m, Vec3.ZERO, r * 1.08D, camRel, 0.75F, 0.85F, 1.0F, 0.55F, t, 4.0D);
+            Vec3 l = new Vec3(Minecraft.getInstance().gameRenderer.getMainCamera().getLeftVector());
+            Vec3 u = new Vec3(Minecraft.getInstance().gameRenderer.getMainCamera().getUpVector());
+            VfxDraw.glow(buf, m, Vec3.ZERO, l, u, r * 4.0D, 1.0F, 0.55F, 0.2F, 0.18F);
+            float jet = 0.6F + 0.2F * (float) Math.sin(t * 0.4F);
+            VfxDraw.energy(buf, m, up.scale(r), up.scale(r * 6.0D), (float) (r * 0.18D), 0.6F, 0.75F, 1.0F, jet);
+            VfxDraw.energy(buf, m, up.scale(-r), up.scale(-r * 6.0D), (float) (r * 0.18D), 0.6F, 0.75F, 1.0F, jet);
         } finally {
             VfxDraw.end(buf);
         }

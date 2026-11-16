@@ -192,8 +192,17 @@ public final class InfinityBeamRenderer {
             VfxDraw.path(buf, m, VfxDraw.jagged(from, end, seed, 0.25D, 4), w, gr, gg, gb, 0.9F);
             VfxDraw.path(buf, m, VfxDraw.jagged(from, end, seed + 7, 0.15D, 4), w * 0.35F, cr, cg, cb, 1.0F);
         } else {
+            // the stones' beams (the Soul Stone's): a core of their light, two coils of it winding round
+            VfxDraw.energy(buf, m, from, end, w * 1.8F, gr, gg, gb, 0.45F);
             VfxDraw.energy(buf, m, from, end, w, gr, gg, gb, 0.9F);
             VfxDraw.energy(buf, m, from, end, w * 0.4F, cr, cg, cb, 1.0F);
+            double turns = from.distanceTo(end) / 2.5D;
+            VfxDraw.path(buf, m, VfxDraw.helix(from, end, w * 2.2D, turns, t * 0.5D, 60), w * 0.35F,
+                    Math.min(1.0F, gr + 0.3F), Math.min(1.0F, gg + 0.3F), Math.min(1.0F, gb + 0.3F), 0.8F);
+            VfxDraw.path(buf, m, VfxDraw.helix(from, end, w * 2.2D, turns, t * 0.5D + Math.PI, 60), w * 0.35F,
+                    Math.min(1.0F, gr + 0.3F), Math.min(1.0F, gg + 0.3F), Math.min(1.0F, gb + 0.3F), 0.8F);
+            VfxDraw.burst(buf, m, end, new Vec3(camera.getLeftVector()), new Vec3(camera.getUpVector()),
+                    (float) (w * 6.0D), gr, gg, gb, 0.7F, t * 0.25F);
         }
         Vec3 left = new Vec3(camera.getLeftVector());
         Vec3 up = new Vec3(camera.getUpVector());

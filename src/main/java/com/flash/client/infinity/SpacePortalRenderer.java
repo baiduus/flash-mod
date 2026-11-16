@@ -45,20 +45,36 @@ public class SpacePortalRenderer extends EntityRenderer<SpacePortal> {
         Matrix4f m = pose.last().pose();
         BufferBuilder buf = VfxDraw.begin();
         try {
-            VfxDraw.disc(buf, m, c0, right, up, 1.0D, r, g, b, r * 0.4F + 0.3F, g * 0.4F + 0.3F, b * 0.4F + 0.4F,
-                    0.85F);
-            int seg = 40;
-            Vec3[] rim = new Vec3[seg + 1];
-            for (int i = 0; i <= seg; i++) {
-                double a = i / (double) seg * Math.PI * 2.0D;
-                rim[i] = c0.add(right.scale(Math.cos(a))).add(up.scale(Math.sin(a)));
+            // a vortex: a deep centre, arms of light winding into it, rims turning against each other
+            VfxDraw.disc(buf, m, c0, right, up, 1.0D, r, g, b, r * 0.15F, g * 0.15F, b * 0.25F + 0.05F, 0.9F);
+            for (int arm = 0; arm < 4; arm++) {
+                Vec3[] sp = new Vec3[24];
+                for (int i = 0; i < sp.length; i++) {
+                    double f = i / (double) (sp.length - 1);
+                    double a = t * 0.18D + arm * Math.PI / 2.0D + f * Math.PI * 2.2D;
+                    double rad = 1.0D - f * 0.9D;
+                    sp[i] = c0.add(right.scale(Math.cos(a) * rad)).add(up.scale(Math.sin(a) * rad));
+                }
+                VfxDraw.path(buf, m, sp, 0.06F, Math.min(1.0F, r + 0.3F), Math.min(1.0F, g + 0.3F),
+                        Math.min(1.0F, b + 0.2F), 0.75F);
             }
-            VfxDraw.path(buf, m, rim, 0.09F, r, g, b, 1.0F);
-            for (int k = 0; k < 6; k++) {
-                double a = t * 0.12D + k * Math.PI / 3.0D;
-                Vec3 s = c0.add(right.scale(Math.cos(a) * 1.05D)).add(up.scale(Math.sin(a) * 1.05D));
-                VfxDraw.glow(buf, m, s, right.normalize(), new Vec3(0.0D, 1.0D, 0.0D), 0.18D, 1.0F, 1.0F, 1.0F, 0.8F);
+            for (int ringI = 0; ringI < 3; ringI++) {
+                int seg = 48;
+                Vec3[] rim = new Vec3[seg + 1];
+                double sc = 1.0D + ringI * 0.07D;
+                double wob = Math.sin(t * 0.2D + ringI) * 0.02D;
+                for (int i = 0; i <= seg; i++) {
+                    double a = i / (double) seg * Math.PI * 2.0D;
+                    rim[i] = c0.add(right.scale(Math.cos(a) * (sc + wob))).add(up.scale(Math.sin(a) * (sc + wob)));
+                }
+                VfxDraw.path(buf, m, rim, ringI == 0 ? 0.1F : 0.04F, r, g, b, ringI == 0 ? 1.0F : 0.6F);
             }
+            for (int k = 0; k < 10; k++) {
+                double a = t * (k % 2 == 0 ? 0.14D : -0.1D) + k * Math.PI / 5.0D;
+                Vec3 s = c0.add(right.scale(Math.cos(a) * 1.12D)).add(up.scale(Math.sin(a) * 1.12D));
+                VfxDraw.glow(buf, m, s, right.normalize(), new Vec3(0.0D, 1.0D, 0.0D), 0.14D, 1.0F, 1.0F, 1.0F, 0.85F);
+            }
+            VfxDraw.glow(buf, m, c0, right.normalize(), new Vec3(0.0D, 1.0D, 0.0D), 2.2D * open, r, g, b, 0.25F);
         } finally {
             VfxDraw.end(buf);
         }

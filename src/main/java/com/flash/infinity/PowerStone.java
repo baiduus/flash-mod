@@ -151,7 +151,12 @@ public final class PowerStone {
     static void energyBlast(ServerPlayer p, InfPowers.Ability a) {
         float base = Math.max(16.0F, a.json.has("damage") ? a.json.get("damage").getAsFloat() : 3.0F);
         float speed = a.json.has("speed") ? a.json.get("speed").getAsFloat() : 1.5F;
-        PowerShot s = PowerShot.shoot(p, hand(p), p.getLookAngle(), Math.max(1.4F, speed),
+        Vec3 aim = p.getLookAngle();
+        net.minecraft.world.entity.LivingEntity locked = InfinityBeams.lock(p.level(), p, p.getEyePosition(), aim, 48.0D);
+        if (locked != null) {
+            aim = locked.position().add(0.0D, locked.getBbHeight() * 0.5D, 0.0D).subtract(hand(p)).normalize();
+        }
+        PowerShot s = PowerShot.shoot(p, hand(p), aim, Math.max(1.4F, speed),
                 Math.min(2.1474836E9F, base * Math.max(1.0F, damage(p))), COLOR, false);
         s.homing = true;
         SpaceStone.sound(p.level(), p.position(), "energy_blast", 1.0F, 1.0F);

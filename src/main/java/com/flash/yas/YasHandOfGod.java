@@ -125,26 +125,38 @@ public final class YasHandOfGod {
         }
     }
 
-    private static Method buy;
-    private static Method allowed;
-    private static Object celeste;
+    private static Method data;
+    private static Class<?> poder;
 
-    /** Celestial (only it) for the Power Stone's holder: true when that is all he has. */
-    private static boolean celestial(ServerPlayer p, int count) throws ReflectiveOperationException {
-        if (buy == null) {
-            Class<?> poder = Class.forName("handofgod.Poder");
-            Class<?> c = Class.forName(CLASS);
-            buy = c.getMethod("comprar", ServerPlayer.class, poder);
-            allowed = c.getMethod("liberado", ServerPlayer.class, poder);
-            celeste = poder.getField("CELESTE").get(null);
+    /**
+     * The stones' borrowed powers of Hand of God (the Power Stone: Celestial; the Space Stone: Telekinesis), given
+     * for free (its unlocked bits, no levels asked) while the stone is held: true when that is all he has.
+     */
+    private static boolean stoneAccess(ServerPlayer p) throws ReflectiveOperationException {
+        if (data == null) {
+            poder = Class.forName("handofgod.Poder");
+            data = Class.forName(CLASS).getDeclaredMethod("dados", net.minecraft.world.entity.player.Player.class);
+            data.setAccessible(true);
         }
-        boolean has = (Boolean) allowed.invoke(null, p, celeste);
-        if (!has && count == 0) {
-            buy.invoke(null, p, celeste);
-            sync.invoke(null, p);
+        int allowed = 0;
+        if (com.flash.infinity.HogBridge.sunHolder(p)) {
+            allowed |= 1 << ((Enum<?>) poder.getField("CELESTE").get(null)).ordinal();
+        }
+        if (com.flash.infinity.HogBridge.tkHolder(p)) {
+            allowed |= 1 << ((Enum<?>) poder.getField("TELECINESE").get(null)).ordinal();
+        }
+        if (allowed == 0) {
+            return false;
+        }
+        net.minecraft.nbt.CompoundTag d = (net.minecraft.nbt.CompoundTag) data.invoke(null, p);
+        int have = d.getInt("desbloqueados");
+        if (have == allowed) {
             return true;
         }
-        return has && count <= 1;
+        // exactly what the stones give (what else he had, or a stone let go, goes)
+        d.putInt("desbloqueados", allowed);
+        sync.invoke(null, p);
+        return true;
     }
 
     /** Every tick: nobody but Yas keeps a power of Hand of God (the levels he paid for it come back). */
@@ -160,11 +172,9 @@ public final class YasHandOfGod {
         try {
             boolean hasFull = (Boolean) full.invoke(null, p);
             int count = (Integer) bought.invoke(null, p);
-            // the Power Stone pulls the sun as Yas does: Hand of God's Celestial alone, while it is held
-            if (!hasFull && com.flash.infinity.HogBridge.sunHolder(p)) {
-                if (celestial(p, count)) {
-                    return;
-                }
+            // the stones borrow Yas' powers: Celestial (Power Stone), Telekinesis (Space Stone), while held
+            if (!hasFull && stoneAccess(p)) {
+                return;
             }
             if (hasFull || count > 0) {
                 setFull.invoke(null, p, false);

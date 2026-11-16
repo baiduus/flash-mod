@@ -40,7 +40,11 @@ public final class InfinityLayers {
                 if (p.isInvisible() && p != mc.player) {
                     continue;
                 }
-                if (InfinityClient.visibleKey(p, "space_stone/render_layer_space_stone_shield")) {
+                boolean me = p == mc.player;
+                if (InfinityClient.visibleKey(p, "space_stone/force_field")
+                        || InfinityClient.visibleKey(p, "space_stone/render_layer_space_stone_shield")
+                        || me && (InfinityClient.on("space_stone/force_field")
+                        || InfinityClient.toggled("space_stone/force_field"))) {
                     if (buf == null) {
                         ps.pushPose();
                         ps.translate(-cam.x, -cam.y, -cam.z);

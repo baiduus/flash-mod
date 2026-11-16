@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
  * does): Temporal's fast-forward (held) and Reality's rewriting of the land (hold to charge, let go to cast). Off
  * the Overworld, or without Hand of God, the stones fall back on their own (time add / the mod's reality wave).
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.flash.FlashMod.MODID)
 public final class HogBridge {
 
     private static boolean looked;
@@ -141,79 +142,33 @@ public final class HogBridge {
         return grab != null;
     }
 
-    /** Holding something by the stone's telekinesis now (Hand of God's hold). */
+    /** The Space Stone's holder: Hand of God's telekinesis is his too (YasHandOfGod), as Yas'. */
     public static boolean tkHolder(ServerPlayer p) {
-        return TK.containsKey(p.getUUID());
+        return InfinityServer.state(p).powers.contains("space_stone") && !com.flash.yas.YasPowers.has(p)
+                && !com.flash.scarlet.ScarletPowers.has(p);
     }
 
     static void telekinesis(ServerPlayer p, InfinityServer.State s, InfPowers.Ability a, boolean on, boolean was) {
-        if (!tkReady() || (was && !TK.containsKey(p.getUUID()) && on)) {
+        if (!tkReady()) {
+            // no Hand of God: the stone's own hold
             SpaceStone.telekinesis(p, s, a, on, was);
-            return;
-        }
-        if (on && !was) {
-            net.minecraft.world.entity.Entity t = aimed(p, 32.0D);
-            if (t == null) {
-                s.untoggle(a.key());
-                return;
-            }
-            try {
-                grab.invoke(null, p, t.getId());
-            } catch (ReflectiveOperationException | RuntimeException e) {
-                // refused
-            }
-            if (com.flash.yas.YasTelekinesis.held(p) == null) {
-                // Hand of God would not take it: the stone's own hold
-                SpaceStone.telekinesis(p, s, a, true, false);
-                return;
-            }
-            TK.put(p.getUUID(), t.getId());
-            blue(p, t.getId(), true);
-            return;
-        }
-        Integer id = TK.get(p.getUUID());
-        if (!on && was) {
-            release(p);
-            return;
-        }
-        if (on && id != null && com.flash.yas.YasTelekinesis.held(p) == null) {
-            // thrown, torn apart or gone: the hold is over
-            TK.remove(p.getUUID());
-            blue(p, id, false);
-            s.untoggle(a.key());
         }
     }
 
     static void release(ServerPlayer p) {
         Integer id = TK.remove(p.getUUID());
-        if (id == null) {
-            return;
-        }
-        blue(p, id, false);
-        try {
-            letGo.invoke(null, p);
-        } catch (ReflectiveOperationException | RuntimeException e) {
-            // already free
+        if (id != null) {
+            blue(p, id, false);
         }
     }
 
-    /** Attack: thrown where she looks (Hand of God lets it fly). */
     static boolean attack(ServerPlayer p) {
-        if (!TK.containsKey(p.getUUID())) {
-            return false;
-        }
-        net.minecraft.world.entity.LivingEntity e = com.flash.yas.YasTelekinesis.held(p);
-        release(p);
-        if (e != null) {
-            e.setDeltaMovement(p.getLookAngle().scale(2.5D));
-            e.hurtMarked = true;
-        }
-        return true;
+        return false;
     }
 
     /** Right-click: torn apart, whole again five seconds later. */
     static boolean use(ServerPlayer p) {
-        if (!TK.containsKey(p.getUUID())) {
+        if (!tkHolder(p) || com.flash.yas.YasTelekinesis.held(p) == null) {
             return false;
         }
         long now = p.level().getGameTime();
@@ -223,6 +178,27 @@ public final class HogBridge {
             com.flash.scarlet.ScarletAbilities.dismemberBy(p);
         }
         return true;
+    }
+
+    /** Every tick: what each holder holds, light blue for everyone (BlueTk mixins). */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || !tkReady()) {
+            return;
+        }
+        for (ServerPlayer p : event.getServer().getPlayerList().getPlayers()) {
+            net.minecraft.world.entity.LivingEntity held = tkHolder(p) ? com.flash.yas.YasTelekinesis.held(p) : null;
+            Integer was = TK.get(p.getUUID());
+            int now = held == null ? -1 : held.getId();
+            if (was != null && was != now) {
+                blue(p, was, false);
+                TK.remove(p.getUUID());
+            }
+            if (now >= 0 && (was == null || was != now)) {
+                TK.put(p.getUUID(), now);
+                blue(p, now, true);
+            }
+        }
     }
 
     private static net.minecraft.world.entity.Entity aimed(ServerPlayer p, double range) {
@@ -277,7 +253,7 @@ public final class HogBridge {
 
     /** Holding the Power Stone (its Pull the Sun: Hand of God's Celestial, YasHandOfGod). */
     public static boolean sunHolder(ServerPlayer p) {
-        return InfinityServer.state(p).powers.contains("power_stone");
+        return InfinityServer.state(p).powers.contains("power_stone") && !com.flash.yas.YasPowers.has(p);
     }
 
     private static final java.util.Map<java.util.UUID, Boolean> REALITY_HOG = new java.util.HashMap<>();

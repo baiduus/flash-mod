@@ -146,7 +146,7 @@ public final class InfinityServer {
     static final Set<String> VISUAL = Set.of("palladium:render_layer", "palladium:invisibility",
             "palladium:intangibility", "flash:dynamic_scale", "flash:force_field", "palladium:energy_beam",
             "flash:power_blast", "flash:power_radiation", "palladium:aim", "flash:power_cyclone", "flash:telekinesis",
-            "palladium:vibrate", "palladium:animation_timer", "palladium:entity_glow");
+            "palladium:vibrate", "palladium:animation_timer", "palladium:entity_glow", "flash:time_freeze");
 
     private InfinityServer() {
     }
@@ -536,7 +536,7 @@ public final class InfinityServer {
         ListTag vis = new ListTag();
         for (String x : s.enabled) {
             InfPowers.Ability a = InfPowers.ability(x);
-            if (a != null && VISUAL.contains(a.type)) {
+            if (a != null && (VISUAL.contains(a.type) || "force_field".equals(a.id))) {
                 vis.add(StringTag.valueOf(x));
             } else if (a != null && a.json.has("attribute")
                     && "palladium:flight_speed".equals(a.json.get("attribute").getAsString())) {

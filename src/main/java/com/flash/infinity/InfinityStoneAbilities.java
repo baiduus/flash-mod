@@ -1,6 +1,7 @@
 package com.flash.infinity;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * The stones' own ability types (the original's infinity:* and the palladium ones that need code): the Mind Stone's
@@ -19,7 +20,9 @@ public final class InfinityStoneAbilities {
             case "flash:black_hole" -> SpaceStone.blackHoleToggle(p, on, was);
             case "flash:jump_portal" -> {
                 if (start) {
+                    Vec3 from = p.position();
                     SpaceStone.jump(p, a.json.has("range") ? a.json.get("range").getAsDouble() : 256.0D);
+                    fx(p, StoneFx.JUMP, from, p.position());
                 }
             }
             case "flash:portal" -> {
@@ -33,11 +36,13 @@ public final class InfinityStoneAbilities {
             case "flash:clones" -> {
                 if (start) {
                     MindStone.clones(p, a);
+                    fx(p, StoneFx.CLONES, p.position(), p.position());
                 }
             }
             case "flash:mind_reading" -> {
                 if (start) {
                     MindStone.readMind(p);
+                    fx(p, StoneFx.MIND, p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(16.0D)));
                 }
             }
             case "flash:disguise" -> {
@@ -49,11 +54,13 @@ public final class InfinityStoneAbilities {
             case "flash:reality_copy" -> {
                 if (start) {
                     RealityStone.copy(p, s, a);
+                    fx(p, StoneFx.REALITY, aimedBlock(p), p.position());
                 }
             }
             case "flash:reality_paste" -> {
                 if (start) {
                     RealityStone.paste(p, a);
+                    fx(p, StoneFx.REALITY, aimedBlock(p), p.position());
                 }
             }
             case "flash:dynamic_scale" -> RealityStone.scale(p, a, on);
@@ -87,11 +94,13 @@ public final class InfinityStoneAbilities {
             case "flash:rocket_burst" -> {
                 if (start) {
                     PowerStone.rocketBurst(p, a);
+                    fx(p, StoneFx.ROCKETS, PowerStone.hand(p), p.getLookAngle());
                 }
             }
             case "flash:super_punch" -> {
                 if (start) {
                     PowerStone.superPunch(p, a);
+                    fx(p, StoneFx.PUNCH, PowerStone.hand(p), p.getLookAngle());
                 }
             }
             case "flash:power_cyclone" -> {
@@ -115,9 +124,13 @@ public final class InfinityStoneAbilities {
             case "flash:time_flow_change" -> {
                 if (start) {
                     TimeStone.flowChange(p, a);
+                    fx(p, StoneFx.TIME, p.position(), p.position());
                 }
             }
             case "flash:time_freeze" -> {
+                if (start) {
+                    fx(p, StoneFx.TIME, p.position(), p.position());
+                }
                 if (!HogBridge.freeze(p, on, was)) {
                     TimeStone.freeze(p, on, was);
                 }
@@ -128,11 +141,14 @@ public final class InfinityStoneAbilities {
             case "flash:soul_heal" -> {
                 if (start) {
                     SoulStone.heal(p, a);
+                    fx(p, StoneFx.HEAL, p.position(), p.position());
                 }
             }
             case "flash:soul_drain" -> {
                 if (start) {
                     SoulStone.drain(p);
+                    fx(p, StoneFx.DRAIN, p.getEyePosition().add(p.getLookAngle().scale(10.0D)),
+                            p.position().add(0.0D, 1.0D, 0.0D));
                 }
             }
             case "flash:effect_immunity" -> SoulStone.effectImmunity(p, a, start);
@@ -171,6 +187,17 @@ public final class InfinityStoneAbilities {
             default -> {
             }
         }
+    }
+
+    private static void fx(ServerPlayer p, byte kind, Vec3 a, Vec3 b) {
+        StoneFx.send(p.serverLevel(), kind, p, a, b);
+    }
+
+    private static Vec3 aimedBlock(ServerPlayer p) {
+        var hit = p.pick(8.0D, 0.0F, false);
+        return hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
+                ? Vec3.atCenterOf(((net.minecraft.world.phys.BlockHitResult) hit).getBlockPos())
+                : p.getEyePosition().add(p.getLookAngle().scale(4.0D));
     }
 
     /** The Mind Stone's flight (the original's flight speed attribute): free flight while on. */

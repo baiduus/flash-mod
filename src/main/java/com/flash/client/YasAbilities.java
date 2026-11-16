@@ -763,6 +763,15 @@ public final class YasAbilities {
         return tkHeld >= THROW_AFTER ? Math.min(1.0F, (tkHeld - THROW_AFTER) / (float) THROW_FULL) : -1.0F;
     }
 
+    /** The Space Stone's telekinesis: Yas' own, the same keys and gesture (InfinityClient). */
+    public static void stoneTelekinesis(Minecraft mc, boolean on) {
+        telekinesis(mc, on);
+    }
+
+    public static boolean stoneHolding() {
+        return grabbing();
+    }
+
     private static void telekinesis(Minecraft mc, boolean on) {
         KeyMapping k = hogKey("telecinese");
         if (k == null) {

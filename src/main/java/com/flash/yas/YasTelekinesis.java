@@ -87,7 +87,7 @@ public final class YasTelekinesis {
     }
 
     private static boolean allowed(ServerPlayer p) {
-        return YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p);
+        return YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p) || com.flash.infinity.HogBridge.tkHolder(p);
     }
 
     private static Object hold(ServerPlayer p) throws ReflectiveOperationException {

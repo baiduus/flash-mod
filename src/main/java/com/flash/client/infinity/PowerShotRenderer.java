@@ -63,9 +63,20 @@ public class PowerShotRenderer extends EntityRenderer<PowerShot> {
                 }
                 return;
             }
-            VfxDraw.glow(buf, pose.last().pose(), Vec3.ZERO, left, up, e.rocket() ? 0.3D : 0.5D, r, g, b, 1.0F);
-            VfxDraw.glow(buf, pose.last().pose(), Vec3.ZERO, left, up, 0.15D, 1.0F, 1.0F, 1.0F, 1.0F);
-            VfxDraw.energy(buf, pose.last().pose(), back, Vec3.ZERO, e.rocket() ? 0.08F : 0.15F, r, g, b, 0.8F);
+            // a rocket of power: a hot head, a flame from violet to orange behind it
+            var m = pose.last().pose();
+            float t = e.tickCount + pt;
+            VfxDraw.glow(buf, m, Vec3.ZERO, left, up, 0.45D, 0.8F, 0.35F, 1.0F, 0.9F);
+            VfxDraw.glow(buf, m, Vec3.ZERO, left, up, 0.16D, 1.0F, 1.0F, 1.0F, 1.0F);
+            Vec3 d = back.normalize();
+            for (int i = 0; i < 6; i++) {
+                double a = i * 0.35D;
+                double b2 = (i + 1) * 0.35D;
+                float f = i / 6.0F;
+                float w = 0.12F * (1.0F - f) + 0.02F * (float) Math.sin(t * 1.3F + i);
+                VfxDraw.energy(buf, m, d.scale(a), d.scale(b2), w, 0.75F + 0.25F * f, 0.25F + 0.35F * f,
+                        1.0F - 0.8F * f, 0.9F * (1.0F - f));
+            }
         } finally {
             VfxDraw.end(buf);
         }
