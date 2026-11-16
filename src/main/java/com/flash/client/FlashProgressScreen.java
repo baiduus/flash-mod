@@ -1568,6 +1568,12 @@ public class FlashProgressScreen extends Screen {
     private static final int GUIDE_ROW_H = 19;
     private static final int GUIDE_ROW_GAP = 1;
     private static int guideHero;
+    /** How far the hero list is scrolled (pixels). */
+    private static int guideScroll;
+
+    private static int guideMaxScroll() {
+        return Math.max(0, GUIDE.length * (GUIDE_ROW_H + GUIDE_ROW_GAP) - GUIDE_ROW_GAP - (CONTENT_BOTTOM - CONTENT_Y));
+    }
 
     private static net.minecraft.world.item.ItemStack guideIcon(int i) {
         return new net.minecraft.world.item.ItemStack(switch (i) {
@@ -1587,14 +1593,22 @@ public class FlashProgressScreen extends Screen {
     }
 
     private static int guideRowY(int i) {
-        return CONTENT_Y + i * (GUIDE_ROW_H + GUIDE_ROW_GAP);
+        return CONTENT_Y + i * (GUIDE_ROW_H + GUIDE_ROW_GAP) - guideScroll;
     }
 
     private void drawHeroGuide(GuiGraphics g, int mx, int my) {
-        // the list
+        // the list (scrolls: the wheel over it, or dragging nothing: the bar shows where it is)
+        guideScroll = Math.max(0, Math.min(guideMaxScroll(), guideScroll));
+        g.enableScissor(Math.round((this.leftPos + PAD) * this.uiScale), Math.round((this.topPos + CONTENT_Y)
+                * this.uiScale), Math.round((this.leftPos + PAD + GUIDE_LIST_W) * this.uiScale),
+                Math.round((this.topPos + CONTENT_BOTTOM) * this.uiScale));
+        boolean overList = inside(mx, my, PAD, CONTENT_Y, GUIDE_LIST_W, CONTENT_BOTTOM - CONTENT_Y);
         for (int i = 0; i < GUIDE.length; i++) {
             int y = guideRowY(i);
-            boolean hover = inside(mx, my, PAD, y, GUIDE_LIST_W, GUIDE_ROW_H);
+            if (y + GUIDE_ROW_H < CONTENT_Y || y > CONTENT_BOTTOM) {
+                continue;
+            }
+            boolean hover = overList && inside(mx, my, PAD, y, GUIDE_LIST_W, GUIDE_ROW_H);
             boolean sel = i == guideHero;
             card(g, PAD, y, GUIDE_LIST_W, GUIDE_ROW_H, sel ? 1.0F : hover ? 0.5F : 0.0F);
             if (sel) {
@@ -1608,6 +1622,16 @@ public class FlashProgressScreen extends Screen {
             if (HeroProgressClient.has(GUIDE[i])) {
                 g.drawString(this.font, "✔", PAD + GUIDE_LIST_W - 14, y + (GUIDE_ROW_H - 8) / 2, accent(), false);
             }
+        }
+        g.disableScissor();
+        int max = guideMaxScroll();
+        if (max > 0) {
+            int track = CONTENT_BOTTOM - CONTENT_Y;
+            int thumb = Math.max(16, track * track / (track + max));
+            int ty = CONTENT_Y + (track - thumb) * guideScroll / max;
+            int bx = PAD + GUIDE_LIST_W + 2;
+            g.fill(bx, CONTENT_Y, bx + 3, CONTENT_BOTTOM, 0x40FFFFFF);
+            g.fill(bx, ty, bx + 3, ty + thumb, accent());
         }
         // the manual of the hero picked
         int x = PAD + GUIDE_LIST_W + 8;
@@ -1763,6 +1787,9 @@ public class FlashProgressScreen extends Screen {
 
     /** Click in the hero guide: picks a hero. */
     private boolean clickHeroGuide(int mx, int my) {
+        if (my < CONTENT_Y || my > CONTENT_BOTTOM) {
+            return false;
+        }
         for (int i = 0; i < GUIDE.length; i++) {
             if (inside(mx, my, PAD, guideRowY(i), GUIDE_LIST_W, GUIDE_ROW_H)) {
                 if (guideHero != i) {
@@ -2640,6 +2667,14 @@ public class FlashProgressScreen extends Screen {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (!Screen.hasAltDown() && !FlashClientData.hasPowers() && delta != 0.0D) {
+            double mx = mouseX / this.uiScale - this.leftPos;
+            double my = mouseY / this.uiScale - this.topPos;
+            if (inside((int) mx, (int) my, PAD, CONTENT_Y, GUIDE_LIST_W + 6, CONTENT_BOTTOM - CONTENT_Y)) {
+                guideScroll = Math.max(0, Math.min(guideMaxScroll(), guideScroll - (int) Math.signum(delta) * 20));
+                return true;
+            }
+        }
         if ((FlashClientConfig.SCROLL_MODE.get() || PowerTheme.localHulk())
                 && minecraft.player != null
                 && Screen.hasAltDown()
