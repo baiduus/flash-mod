@@ -393,7 +393,7 @@ public final class GroundItems {
         float done = 1.0F - left / (float) Math.max(1, d.duration());
         if ("plume".equals(d.effect())) {
             // squares burst out and pour upward
-            level.sendParticles(dust(d.color(), 1.5F), true, at.x, at.y + 0.5D, at.z, 6 + (int) (done * 14), 0.2D,
+            level.sendParticles(dust(d.color(), 1.5F), at.x, at.y + 0.5D, at.z, 6 + (int) (done * 14), 0.2D,
                     0.6D + done, 0.2D, 0.05D);
             if (left % 10 == 0) {
                 level.playSound(null, at.x, at.y, at.z, SoundEvents.LAVA_POP, SoundSource.BLOCKS, 0.8F, 0.6F);
@@ -403,10 +403,10 @@ public final class GroundItems {
             double r = 0.3D + done * 1.5D;
             for (int i = 0; i < 10; i++) {
                 double a = (left * 0.21D + i * Math.PI * 2.0D / 10.0D);
-                level.sendParticles(dust(d.color(), 1.0F), true, at.x + Math.cos(a) * r * 0.3D, at.y + 0.3D + done,
+                level.sendParticles(dust(d.color(), 1.0F), at.x + Math.cos(a) * r * 0.3D, at.y + 0.3D + done,
                         at.z + Math.sin(a) * r * 0.3D, 1, Math.cos(a) * r, 0.0D, Math.sin(a) * r, 0.0D);
             }
-            level.sendParticles(ParticleTypes.END_ROD, true, at.x, at.y + 0.3D + done, at.z, 2, 0.1D, 0.1D, 0.1D,
+            level.sendParticles(ParticleTypes.END_ROD, at.x, at.y + 0.3D + done, at.z, 2, 0.1D, 0.1D, 0.1D,
                     0.05D * (1.0D + done));
             if (left % 20 == 0) {
                 level.playSound(null, at.x, at.y, at.z, SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 1.0F, 1.5F);
@@ -421,9 +421,9 @@ public final class GroundItems {
         if (box != null) {
             box.discard();
         }
-        level.sendParticles(dust(d.color(), 2.0F), true, at.x, at.y, at.z, 60, 0.4D, 0.4D, 0.4D, 0.1D);
+        level.sendParticles(dust(d.color(), 2.0F), at.x, at.y, at.z, 60, 0.4D, 0.4D, 0.4D, 0.1D);
         if ("plume".equals(d.effect())) {
-            level.sendParticles(ParticleTypes.EXPLOSION, true, at.x, at.y, at.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 0.8F, 1.2F);
         } else {
             level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.BLOCKS, 1.0F,

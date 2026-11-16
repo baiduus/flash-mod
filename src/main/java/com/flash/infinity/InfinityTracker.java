@@ -200,7 +200,9 @@ public final class InfinityTracker {
             p.getInventory().items.forEach(c);
             p.getInventory().armor.forEach(c);
             p.getInventory().offhand.forEach(c);
-            p.getEnderChestInventory().getItems().forEach(c);
+            for (int i = 0; i < p.getEnderChestInventory().getContainerSize(); i++) {
+                c.accept(p.getEnderChestInventory().getItem(i));
+            }
         } else if (e instanceof ItemEntity ie) {
             c.accept(ie.getItem());
         } else if (e instanceof LivingEntity l) {
