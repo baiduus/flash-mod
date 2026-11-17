@@ -125,6 +125,7 @@ public final class YasHandOfGod {
         }
     }
 
+    private static final java.util.Set<java.util.UUID> STONE_GRANTED = new java.util.HashSet<>();
     private static Method data;
     private static Class<?> poder;
 
@@ -174,12 +175,18 @@ public final class YasHandOfGod {
             int count = (Integer) bought.invoke(null, p);
             // the stones borrow Yas' powers: Celestial (Power Stone), Telekinesis (Space Stone), while held
             if (!hasFull && stoneAccess(p)) {
+                STONE_GRANTED.add(p.getUUID());
                 return;
             }
             if (hasFull || count > 0) {
                 setFull.invoke(null, p, false);
                 clear.invoke(null, p);
                 sync.invoke(null, p);
+                if (STONE_GRANTED.remove(p.getUUID()) && !hasFull) {
+                    // only what a stone lent him, taken back quietly when he let it go
+                    LEVELS.put(p.getUUID(), p.experienceLevel);
+                    return;
+                }
                 if (before != null && before > level && !p.isCreative()) {
                     p.giveExperienceLevels(before - level);
                 }
