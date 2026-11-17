@@ -89,7 +89,7 @@ public final class InfinityItems {
     public static final RegistryObject<Item> IRON_DUST = ITEMS.register("iron_dust", () -> new Item(props(64, Rarity.COMMON, false)));
     public static final RegistryObject<Item> IRON_PLATE = ITEMS.register("iron_plate", () -> new Item(props(64, Rarity.COMMON, false)));
     public static final RegistryObject<Item> MIND_STONE = ITEMS.register("mind_stone", () -> new InfinityStoneItem(InfinityStone.MIND, props(1, Rarity.EPIC, true)));
-    public static final RegistryObject<Item> ORB = ITEMS.register("orb", () -> new Item(props(1, Rarity.EPIC, true)));
+    public static final RegistryObject<Item> ORB = ITEMS.register("orb", () -> new OrbItem(props(1, Rarity.EPIC, true)));
     public static final RegistryObject<Item> PORTAL = ITEMS.register("portal", () -> new Item(props(1, Rarity.EPIC, true)));
     public static final RegistryObject<Item> POWER_STONE = ITEMS.register("power_stone", () -> new InfinityStoneItem(InfinityStone.POWER, props(1, Rarity.EPIC, true)));
     public static final RegistryObject<Item> PUGMEOWLA = ITEMS.register("pugmeowla", () -> new Item(props(1, Rarity.EPIC, true)));

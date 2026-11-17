@@ -27,6 +27,41 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
     private static final ResourceLocation EYE_GLOW = new ResourceLocation("flash",
             "textures/infinity_models/eye_of_agamotto_e.png");
 
+    private static final ResourceLocation EYE_ANIMS = new ResourceLocation("flash",
+            "animations/infinity/eye_of_agamotto.animation.json");
+    private static Map<String, com.flash.client.geo.GeoAnimation> eyeAnims;
+    /** Per entity: {open (1/0), game time the Eye last opened or closed}. */
+    private static final Map<Integer, double[]> EYE_STATE = new HashMap<>();
+
+    private static com.flash.client.geo.GeoAnimation eyeAnim(String name) {
+        if (eyeAnims == null) {
+            eyeAnims = com.flash.client.geo.GeoAnimation.load(EYE_ANIMS);
+        }
+        return eyeAnims.get(name);
+    }
+
+    /** The Eye's lids and blades: the original's open / close animations, held on their last frame. */
+    private static void animateEye(GeoModel m, LivingEntity e, boolean open, float partial) {
+        double now = e.level().getGameTime() + partial;
+        double[] st = EYE_STATE.get(e.getId());
+        if (st == null) {
+            // first seen: already in place
+            st = new double[] {open ? 1 : 0, now - 400.0D};
+            if (EYE_STATE.size() > 256) {
+                EYE_STATE.clear();
+            }
+            EYE_STATE.put(e.getId(), st);
+        } else if ((st[0] == 1) != open) {
+            st[0] = open ? 1 : 0;
+            st[1] = now;
+        }
+        float seconds = (float) ((now - st[1]) / 20.0D);
+        com.flash.client.geo.GeoAnimation a = eyeAnim(open ? "open" : "close");
+        if (a != null) {
+            a.apply(m, seconds);
+        }
+    }
+
     private static void hide(GeoModel m, String name, boolean hidden) {
         GeoModel.Bone b = m.bone(name);
         if (b != null) {
@@ -74,6 +109,7 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 continue;
             }
             m.reset();
+            GeoModel chain = null;
             boolean eye = s.is(com.flash.infinity.InfinityItems.EYE_OF_AGAMOTTO.get())
                     || s.is(com.flash.infinity.InfinityItems.EMPTY_EYE_OF_AGAMOTTO.get());
             boolean stone = false;
@@ -81,9 +117,13 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 // the Eye: its lids open while it is open, its stone only when there is one
                 boolean open = com.flash.infinity.InfinityContainers.eyeOpen(s);
                 stone = com.flash.infinity.InfinityContainers.stoneIn(s) != null;
-                hide(m, "upper_lid", open);
-                hide(m, "lower_lid", open);
+                animateEye(m, entity, open, partial);
                 hide(m, "time_stone", !stone);
+                // the chain round the neck (the original's armour model layer)
+                chain = model("flash:geo/infinity/eye_of_agamotto_chain");
+                if (chain != null) {
+                    chain.reset();
+                }
             }
             var vc = buffers.getBuffer(RenderType.armorCutoutNoCull(new ResourceLocation(a.texture)));
             for (String name : BONES) {
@@ -99,6 +139,10 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 }
                 pose.translate(-bone.pivotX() / 16.0F, -bone.pivotY() / 16.0F, -bone.pivotZ() / 16.0F);
                 m.renderBone(bone, pose, vc, light, OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                GeoModel.Bone cb = chain != null ? chain.bone(name) : null;
+                if (cb != null) {
+                    chain.renderBone(cb, pose, vc, light, OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                }
                 if (eye && stone) {
                     m.renderBone(bone, pose, buffers.getBuffer(RenderType.eyes(EYE_GLOW)), 0xF000F0,
                             OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);

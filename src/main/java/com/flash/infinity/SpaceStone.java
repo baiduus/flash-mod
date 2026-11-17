@@ -169,6 +169,10 @@ public final class SpaceStone {
         pair(p, to, dest, 140L, false);
     }
 
+    private static final net.minecraft.server.level.TicketType<net.minecraft.world.level.ChunkPos> PORTAL_TICKET =
+            net.minecraft.server.level.TicketType.create("flash_space_portal",
+                    java.util.Comparator.comparingLong(net.minecraft.world.level.ChunkPos::toLong), 600);
+
     private static void pair(ServerPlayer p, ServerLevel to, Vec3 dest, long life, boolean jump) {
         ServerLevel here = p.serverLevel();
         Vec3 look = p.getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
@@ -177,6 +181,12 @@ public final class SpaceStone {
         SpacePortal near = SpacePortal.create(here, nearAt, yaw, PORTAL_COLOR, false);
         SpacePortal far = SpacePortal.create(to, dest, p.getYRot(), PORTAL_COLOR, false);
         to.getChunk(BlockPos.containing(dest));
+        // both ends kept loaded and ticking while open: in another dimension the far end's chunk is not loaded by
+        // anybody, so the far portal could not be found and nothing crossed
+        net.minecraft.world.level.ChunkPos farChunk = new net.minecraft.world.level.ChunkPos(BlockPos.containing(dest));
+        net.minecraft.world.level.ChunkPos nearChunk = new net.minecraft.world.level.ChunkPos(BlockPos.containing(nearAt));
+        to.getChunkSource().addRegionTicket(PORTAL_TICKET, farChunk, 2, farChunk);
+        here.getChunkSource().addRegionTicket(PORTAL_TICKET, nearChunk, 2, nearChunk);
         near.link(far);
         far.link(near);
         long end = here.getGameTime() + life + SpacePortal.OPEN_TICKS;

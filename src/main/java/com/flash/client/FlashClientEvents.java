@@ -96,6 +96,11 @@ public final class FlashClientEvents {
 
     @SubscribeEvent
     public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
+        // the Eye of Agamotto and Thanos' armours also on armour stands (the Sanctum's stand)
+        if (event.getRenderer(net.minecraft.world.entity.EntityType.ARMOR_STAND)
+                instanceof net.minecraft.client.renderer.entity.ArmorStandRenderer stand) {
+            stand.addLayer(new com.flash.client.infinity.ThanosArmorLayer<>(stand));
+        }
         for (String skin : new String[] {"default", "slim"}) {
             net.minecraft.client.renderer.entity.EntityRenderer<?> renderer = event.getSkin(skin);
             if (renderer instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer player) {
@@ -132,5 +137,6 @@ public final class FlashClientEvents {
             event.register(m);
         }
         event.register(MjolnirItemRenderer.STORMBREAKER_LIT);
+        event.register(com.flash.client.infinity.OrbItemRenderer.STATIC);
     }
 }
