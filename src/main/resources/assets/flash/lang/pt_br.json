@@ -1956,5 +1956,6 @@
   "infinity.ability.unlock_2048_attack_damage": "Liberar 2048 de dano",
   "message.flash.infinity.gauntlet_broken": "A Manopla do Infinito ficou danificada e não pode ser usada por 20 minutos.",
   "message.flash.infinity.gauntlet_mended": "A Manopla do Infinito se recuperou.",
-  "message.flash.infinity.stones_scattered": "As joias foram arremessadas para longe pelo mundo. Use o Rastreador do Infinito para encontrá-las."
+  "message.flash.infinity.stones_scattered": "As joias foram arremessadas para longe pelo mundo. Use o Rastreador do Infinito para encontrá-las.",
+  "message.flash.meteor_falling": "Um meteoro está caindo por perto!"
 }
