@@ -119,6 +119,15 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 stone = com.flash.infinity.InfinityContainers.stoneIn(s) != null;
                 animateEye(m, entity, open, partial);
                 hide(m, "time_stone", !stone);
+                GeoModel.Bone ts = m.bone("time_stone");
+                if (ts != null && stone) {
+                    // bigger than the original's (under a pixel): 1.6x closed, 2.5x open, a hair back
+                    float k = open ? 2.5F : 1.6F;
+                    ts.sx *= k;
+                    ts.sy *= k;
+                    ts.sz *= k;
+                    ts.az += 0.15F;
+                }
                 // the chain round the neck (the original's armour model layer)
                 chain = model("flash:geo/infinity/eye_of_agamotto_chain");
                 if (chain != null) {
@@ -156,6 +165,12 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                     } else if (pass == 1) {
                         m.renderBone(bone, pose, buffers.getBuffer(RenderType.eyes(EYE_GLOW)), 0xF000F0,
                                 OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                        GeoModel.Bone ts = "body".equals(name) ? m.bone("time_stone") : null;
+                        if (ts != null) {
+                            // the stone's shimmer (the original's stone glint layers)
+                            m.renderBone(ts, pose, buffers.getBuffer(RenderType.armorEntityGlint()), 0xF000F0,
+                                    OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                        }
                     } else {
                         m.renderBone(bone, pose, buffers.getBuffer(RenderType.armorEntityGlint()), light,
                                 OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
