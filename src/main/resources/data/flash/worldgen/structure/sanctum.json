@@ -2,7 +2,7 @@
   "type": "minecraft:jigsaw",
   "start_pool": "flash:sanctum/sanctum",
   "size": 1,
-  "biomes": "#flash:has_structure/sanctum",
+  "biomes": "#flash:has_structure/infinity_unique",
   "step": "surface_structures",
   "max_distance_from_center": 50,
   "terrain_adaptation": "beard_thin",

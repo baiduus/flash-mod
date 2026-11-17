@@ -2,7 +2,7 @@
   "placement": {
     "type": "minecraft:concentric_rings",
     "count": 1,
-    "distance": 420,
+    "distance": 48,
     "preferred_biomes": "#flash:has_structure/norse_village",
     "salt": 62211,
     "spread": 1
