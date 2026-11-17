@@ -69,7 +69,7 @@ public final class NaturalMeteors {
                 over.sendParticles(ParticleTypes.LARGE_SMOKE, fb.getX(), fb.getY() + 1.0D, fb.getZ(), 3, 0.4D, 0.4D,
                         0.4D, 0.01D);
                 if (fb.onGround() || fb.isRemoved() || fb.tickCount > 600) {
-                    land(over, fb.blockPosition(), fb.getRandom());
+                    land(over, fb.blockPosition(), over.getRandom());
                     fb.discard();
                 }
             }
