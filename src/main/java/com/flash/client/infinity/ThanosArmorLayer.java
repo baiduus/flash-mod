@@ -125,33 +125,43 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                     chain.reset();
                 }
             }
-            var vc = buffers.getBuffer(RenderType.armorCutoutNoCull(new ResourceLocation(a.texture)));
-            for (String name : BONES) {
-                GeoModel.Bone bone = m.bone(name);
-                if (bone == null) {
+            RenderType main = RenderType.armorCutoutNoCull(new ResourceLocation(a.texture));
+            // each pass takes its buffer right before drawing: asking for another render type ends the shared
+            // buffer of the one before, so a kept consumer would draw into the wrong pass (the Eye with its stone
+            // came out with only the glow)
+            for (int pass = 0; pass < 3; pass++) {
+                if (pass == 1 && !(eye && stone) || pass == 2 && !s.hasFoil()) {
                     continue;
                 }
-                ModelPart p = part(name);
-                pose.pushPose();
-                pose.translate(p.x / 16.0F, p.y / 16.0F, p.z / 16.0F);
-                if (p.xRot != 0.0F || p.yRot != 0.0F || p.zRot != 0.0F) {
-                    pose.mulPose(new Quaternionf().rotationZYX(p.zRot, p.yRot, p.xRot));
+                for (String name : BONES) {
+                    GeoModel.Bone bone = m.bone(name);
+                    if (bone == null) {
+                        continue;
+                    }
+                    ModelPart p = part(name);
+                    pose.pushPose();
+                    pose.translate(p.x / 16.0F, p.y / 16.0F, p.z / 16.0F);
+                    if (p.xRot != 0.0F || p.yRot != 0.0F || p.zRot != 0.0F) {
+                        pose.mulPose(new Quaternionf().rotationZYX(p.zRot, p.yRot, p.xRot));
+                    }
+                    pose.translate(-bone.pivotX() / 16.0F, -bone.pivotY() / 16.0F, -bone.pivotZ() / 16.0F);
+                    if (pass == 0) {
+                        m.renderBone(bone, pose, buffers.getBuffer(main), light, OverlayTexture.NO_OVERLAY, 0,
+                                1.0F, 1.0F, 1.0F, 1.0F, true);
+                        GeoModel.Bone cb = chain != null ? chain.bone(name) : null;
+                        if (cb != null) {
+                            chain.renderBone(cb, pose, buffers.getBuffer(main), light, OverlayTexture.NO_OVERLAY, 0,
+                                    1.0F, 1.0F, 1.0F, 1.0F, true);
+                        }
+                    } else if (pass == 1) {
+                        m.renderBone(bone, pose, buffers.getBuffer(RenderType.eyes(EYE_GLOW)), 0xF000F0,
+                                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                    } else {
+                        m.renderBone(bone, pose, buffers.getBuffer(RenderType.armorEntityGlint()), light,
+                                OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
+                    }
+                    pose.popPose();
                 }
-                pose.translate(-bone.pivotX() / 16.0F, -bone.pivotY() / 16.0F, -bone.pivotZ() / 16.0F);
-                m.renderBone(bone, pose, vc, light, OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
-                GeoModel.Bone cb = chain != null ? chain.bone(name) : null;
-                if (cb != null) {
-                    chain.renderBone(cb, pose, vc, light, OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
-                }
-                if (eye && stone) {
-                    m.renderBone(bone, pose, buffers.getBuffer(RenderType.eyes(EYE_GLOW)), 0xF000F0,
-                            OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
-                }
-                if (s.hasFoil()) {
-                    m.renderBone(bone, pose, buffers.getBuffer(RenderType.armorEntityGlint()), light,
-                            OverlayTexture.NO_OVERLAY, 0, 1.0F, 1.0F, 1.0F, 1.0F, true);
-                }
-                pose.popPose();
             }
         }
     }
