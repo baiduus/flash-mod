@@ -9,7 +9,8 @@
     "PlayerIntangibleMixin",
     "ServerTickRateMixin",
     "HogHandServerMixin",
-    "HogSunServerMixin"
+    "HogSunServerMixin",
+    "HogRealityServerMixin"
   ],
   "client": [
     "PedacosMixin",
@@ -22,7 +23,8 @@
     "BlueTkHandMixin",
     "BlueTkPiecesMixin",
     "HogHandClientMixin",
-    "HogSunClientMixin"
+    "HogSunClientMixin",
+    "HogRealityClientMixin"
   ],
   "injectors": {
     "defaultRequire": 0

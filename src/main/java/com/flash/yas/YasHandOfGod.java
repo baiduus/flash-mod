@@ -146,6 +146,9 @@ public final class YasHandOfGod {
         if (com.flash.infinity.HogBridge.tkHolder(p)) {
             allowed |= 1 << ((Enum<?>) poder.getField("TELECINESE").get(null)).ordinal();
         }
+        if (com.flash.infinity.HogBridge.realityHolder(p)) {
+            allowed |= 1 << ((Enum<?>) poder.getField("REALIDADE").get(null)).ordinal();
+        }
         if (allowed == 0) {
             return false;
         }

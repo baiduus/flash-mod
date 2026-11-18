@@ -119,7 +119,8 @@ public final class YasRealityWave {
 
     /** R on the ground where Hand of God cannot (not the Overworld): the wave starts at her feet. */
     public static void start(ServerPlayer p) {
-        if (!(YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p)) || p.level().dimension() == Level.OVERWORLD) {
+        if (!(YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p)
+                || com.flash.infinity.HogBridge.realityHolder(p)) || p.level().dimension() == Level.OVERWORLD) {
             return;
         }
         startFor(p);

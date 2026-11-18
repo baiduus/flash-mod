@@ -799,6 +799,11 @@ public final class YasAbilities {
         telekinesis(mc, on);
     }
 
+    /** The Reality Stone's Change Reality: the Scarlet Witch's / Yas' own (the land by Hand of God, R on a creature). */
+    public static void stoneReality(Minecraft mc, boolean on) {
+        reality(mc, on);
+    }
+
     public static boolean stoneHolding() {
         return grabbing();
     }

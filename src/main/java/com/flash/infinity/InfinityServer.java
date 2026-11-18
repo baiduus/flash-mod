@@ -51,6 +51,8 @@ public final class InfinityServer {
         final Map<String, Long> cooldown = new HashMap<>();
         final Set<String> enabled = new HashSet<>();
         final Set<String> wasEnabled = new HashSet<>();
+        /** While the enabled abilities are being worked out: the last pass's, read by "ability_enabled". */
+        Set<String> lookup;
         /** Ticks an ability has been on (the original's animation timers). */
         final Map<String, Integer> timers = new HashMap<>();
         CompoundTag sent;
@@ -113,7 +115,7 @@ public final class InfinityServer {
 
         @Override
         public boolean enabled(String key) {
-            return this.enabled.contains(key);
+            return (this.lookup != null ? this.lookup : this.enabled).contains(key);
         }
 
         @Override
@@ -386,36 +388,46 @@ public final class InfinityServer {
             }
             return;
         }
-        s.enabled.clear();
         long time = p.level().getGameTime();
-        for (String pid : now) {
-            InfPowers.Power power = InfPowers.get(pid);
-            if (power == null) {
-                continue;
+        // abilities switched on by other abilities ("ability_enabled"): worked out again until nothing changes, so
+        // the order they come in does not matter (the force field's protection, the flow of time's steps...)
+        s.lookup = new HashSet<>(s.wasEnabled);
+        for (int pass = 0; pass < 4; pass++) {
+            s.enabled.clear();
+            for (String pid : now) {
+                InfPowers.Power power = InfPowers.get(pid);
+                if (power == null) {
+                    continue;
+                }
+                for (InfPowers.Ability a : power.abilities.values()) {
+                    String key = a.key();
+                    boolean on = InfinityPowers.unlocked(s, a);
+                    if (on) {
+                        on = switch (a.key) {
+                            case NONE -> true;
+                            case ACTION, DOUBLE_ACTION -> s.pulse.contains(key);
+                            case HELD -> s.held.contains(key);
+                            case TOGGLE, DOUBLE_TOGGLE -> s.toggled.contains(key);
+                        };
+                    }
+                    if (on) {
+                        on = InfinityPowers.all(s, a, a.enabling);
+                    }
+                    if (!on && (a.key == InfPowers.Key.TOGGLE || a.key == InfPowers.Key.DOUBLE_TOGGLE)
+                            && s.toggled.contains(key) && !InfinityPowers.unlocked(s, a)) {
+                        s.toggled.remove(key);
+                    }
+                    if (on) {
+                        s.enabled.add(key);
+                    }
+                }
             }
-            for (InfPowers.Ability a : power.abilities.values()) {
-                String key = a.key();
-                boolean on = InfinityPowers.unlocked(s, a);
-                if (on) {
-                    on = switch (a.key) {
-                        case NONE -> true;
-                        case ACTION, DOUBLE_ACTION -> s.pulse.contains(key);
-                        case HELD -> s.held.contains(key);
-                        case TOGGLE, DOUBLE_TOGGLE -> s.toggled.contains(key);
-                    };
-                }
-                if (on) {
-                    on = InfinityPowers.all(s, a, a.enabling);
-                }
-                if (!on && (a.key == InfPowers.Key.TOGGLE || a.key == InfPowers.Key.DOUBLE_TOGGLE)
-                        && s.toggled.contains(key) && !InfinityPowers.unlocked(s, a)) {
-                    s.toggled.remove(key);
-                }
-                if (on) {
-                    s.enabled.add(key);
-                }
+            if (s.enabled.equals(s.lookup)) {
+                break;
             }
+            s.lookup = new HashSet<>(s.enabled);
         }
+        s.lookup = null;
         // the original's animation timers: up to their max while on, back down while off
         for (String pid : now) {
             InfPowers.Power power = InfPowers.get(pid);

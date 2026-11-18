@@ -275,6 +275,7 @@ public final class InfinityClient {
     private static String mode;
     private static boolean sunWas;
     private static boolean tkWas;
+    private static boolean rlWas;
 
     /** Every ability that can be used now, power by power. */
     public static List<InfPowers.Ability> allBar() {
@@ -449,6 +450,17 @@ public final class InfinityClient {
         }
     }
 
+    /** Its "ability_enabled" conditions met (the flow of time's wheel only while the flow is switched on). */
+    private static boolean switchedOn(InfPowers.Ability a) {
+        for (com.google.gson.JsonObject c : a.enabling) {
+            if (c.has("type") && "palladium:ability_enabled".equals(c.get("type").getAsString())
+                    && !InfinityPowers.test(VIEW, a, c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** The unlocked abilities used by that key type now (scroll_up, scroll_down, right_click). */
     static List<InfPowers.Ability> byKeyType(String keyType) {
         List<InfPowers.Ability> out = new ArrayList<>();
@@ -459,7 +471,7 @@ public final class InfinityClient {
             }
             for (InfPowers.Ability a : pw.abilities.values()) {
                 if (keyType.equals(a.keyType) && a.key != InfPowers.Key.NONE && InfinityPowers.unlocked(VIEW, a)
-                        && !VIEW.cooling(a.key())) {
+                        && !VIEW.cooling(a.key()) && switchedOn(a)) {
                     out.add(a);
                 }
             }
@@ -535,7 +547,9 @@ public final class InfinityClient {
         // Pull the Sun: Yas' Celestial (Hand of God's own gesture, its key on R as in her mode)
         boolean sun = takesKeys() && a != null && "flash:hog_sun".equals(a.type);
         boolean tkMode = takesKeys() && a != null && "flash:telekinesis".equals(a.type);
-        String hog = sun ? "CELESTE" : tkMode ? "TELECINESE" : null;
+        boolean rlMode = takesKeys() && a != null && "flash:hog_reality".equals(a.type)
+                && com.flash.client.YasAbilities.hogKey("realidade") != null;
+        String hog = sun ? "CELESTE" : tkMode ? "TELECINESE" : rlMode ? "REALIDADE" : null;
         if (hog != null || sunWas) {
             com.flash.client.YasAbilities.stoneMode(hog);
         }
@@ -551,6 +565,14 @@ public final class InfinityClient {
         }
         tkWas = tk;
         if (tk) {
+            down = false;
+        }
+        // Change Reality (Reality Stone): the Scarlet Witch's (the land rewritten while R is held, a creature changed)
+        if (rlMode || rlWas) {
+            com.flash.client.YasAbilities.stoneReality(mc, rlMode);
+        }
+        rlWas = rlMode;
+        if (rlMode) {
             down = false;
         }
         if (down && pressed == null) {

@@ -153,7 +153,8 @@ public final class YasReality {
 
     /** R on a creature: the change starts (a second of charge). */
     public static void start(ServerPlayer p, int id) {
-        if (!(YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p))) {
+        if (!(YasPowers.has(p) || com.flash.scarlet.ScarletPowers.has(p)
+                || com.flash.infinity.HogBridge.realityHolder(p))) {
             return;
         }
         Entity target = p.level().getEntity(id);

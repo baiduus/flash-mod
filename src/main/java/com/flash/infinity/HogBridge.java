@@ -270,6 +270,12 @@ public final class HogBridge {
     }
 
     /** Holding the Power Stone (its Pull the Sun: Hand of God's Celestial, YasHandOfGod). */
+    /** The Reality Stone's holder: Yas' (and the Scarlet Witch's) Manipulation of Reality, by Hand of God. */
+    public static boolean realityHolder(ServerPlayer p) {
+        return InfinityServer.state(p).powers.contains("reality_stone") && !com.flash.yas.YasPowers.has(p)
+                && !com.flash.scarlet.ScarletPowers.has(p);
+    }
+
     public static boolean sunHolder(ServerPlayer p) {
         return InfinityServer.state(p).powers.contains("power_stone") && !com.flash.yas.YasPowers.has(p);
     }
