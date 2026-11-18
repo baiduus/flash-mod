@@ -1959,5 +1959,7 @@
   "message.flash.infinity.stones_scattered": "As joias foram arremessadas para longe pelo mundo. Use o Rastreador do Infinito para encontrá-las.",
   "message.flash.meteor_falling": "Um meteoro está caindo por perto!",
   "message.flash.infinity.pacified": "%s criaturas pacificadas",
-  "message.flash.infinity.unpacified": "%s criaturas voltaram ao normal"
+  "message.flash.infinity.unpacified": "%s criaturas voltaram ao normal",
+  "message.flash.morph": "%s te transformou em %s por 10 segundos!",
+  "message.flash.morph_yas": "%s te transformou em %s até você morrer!"
 }

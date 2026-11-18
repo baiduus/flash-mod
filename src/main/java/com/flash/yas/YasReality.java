@@ -158,6 +158,13 @@ public final class YasReality {
             return;
         }
         Entity target = p.level().getEntity(id);
+        // a player: an animal of the farm (the Scarlet Witch's for 10 s, Yas' till death or her gesture again)
+        if (target instanceof ServerPlayer victim) {
+            if (victim.distanceToSqr(p) <= RANGE * RANGE) {
+                PlayerMorph.cast(p, victim);
+            }
+            return;
+        }
         if (!(target instanceof Mob mob) || !mob.isAlive() || mob.distanceToSqr(p) > RANGE * RANGE
                 || into(mob) == null) {
             return;

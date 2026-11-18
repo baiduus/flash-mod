@@ -2041,5 +2041,7 @@
   "message.flash.infinity.stones_scattered": "The stones were flung far across the world. Use the Infinity Tracker to find them.",
   "message.flash.meteor_falling": "A meteor is falling nearby!",
   "message.flash.infinity.pacified": "%s creatures pacified",
-  "message.flash.infinity.unpacified": "%s creatures back to normal"
+  "message.flash.infinity.unpacified": "%s creatures back to normal",
+  "message.flash.morph": "%s turned you into a %s for 10 seconds!",
+  "message.flash.morph_yas": "%s turned you into a %s until you die!"
 }

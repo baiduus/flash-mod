@@ -701,6 +701,10 @@ public final class YasAbilities {
         boolean overworld = mc.level != null && mc.level.dimension() == net.minecraft.world.level.Level.OVERWORLD;
         if (pressed) {
             net.minecraft.world.entity.Entity target = creatureAimed(mc, 64.0D);
+            if (target == null && (scarlet() || PowerTheme.localYas())) {
+                // another player: he becomes an animal (PlayerMorph)
+                target = playerAimed(mc, 64.0D);
+            }
             rlOnCreature = target != null;
             if (target == null && !overworld) {
                 // where Hand of God cannot rewrite the land, the mod's own wave does
@@ -720,6 +724,27 @@ public final class YasAbilities {
         if (on || k.isDown()) {
             k.setDown(down && !rlOnCreature);
         }
+    }
+
+    /** Another player under the crosshair, up to {@code range} blocks, walls in the way. */
+    public static net.minecraft.world.entity.Entity playerAimed(Minecraft mc, double range) {
+        var p = mc.player;
+        if (p == null) {
+            return null;
+        }
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        net.minecraft.world.phys.Vec3 end = eye.add(p.getLookAngle().scale(range));
+        var block = p.level().clip(new net.minecraft.world.level.ClipContext(eye, end,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE,
+                p));
+        if (block.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+            end = block.getLocation();
+        }
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, end,
+                p.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0D),
+                e -> e instanceof net.minecraft.world.entity.player.Player && e != p && e.isAlive(),
+                eye.distanceToSqr(end));
+        return hit == null ? null : hit.getEntity();
     }
 
     /** The creature (not a player) under the crosshair, up to {@code range} blocks, walls in the way. */
