@@ -48,6 +48,10 @@ public final class InfinityAbilities {
             case "palladium:command" -> {
                 if (on && !was) {
                     commands(p, j.get("first_tick_commands"));
+                    // the Mind Stone's Passive / Un-Passive: every hostile creature around, at once
+                    if ("passive".equals(a.id) || "un-passive".equals(a.id)) {
+                        pacify(p, "passive".equals(a.id));
+                    }
                 }
                 if (on) {
                     commands(p, j.get("commands"));
@@ -72,6 +76,46 @@ public final class InfinityAbilities {
             }
             default -> InfinityStoneAbilities.run(p, s, a, on, was);
         }
+    }
+
+    /**
+     * The Mind Stone's Passive: the creatures within 16 blocks join him in the "peaceful" team (allies don't target
+     * each other) and forget whom they were after; Un-Passive lets them go again.
+     */
+    private static void pacify(ServerPlayer p, boolean on) {
+        var board = p.getScoreboard();
+        var team = board.getPlayerTeam("peaceful");
+        if (team == null) {
+            team = board.addPlayerTeam("peaceful");
+        }
+        team.setAllowFriendlyFire(true);
+        if (on) {
+            board.addPlayerToTeam(p.getScoreboardName(), team);
+        }
+        int n = 0;
+        for (net.minecraft.world.entity.Mob m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                p.getBoundingBox().inflate(16.0D), m -> m.isAlive() && !m.getTags().contains("infinity_mental_immune")
+                        && !(m instanceof net.minecraft.world.entity.boss.wither.WitherBoss)
+                        && !(m instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon))) {
+            String id = m.getStringUUID();
+            if (on) {
+                board.addPlayerToTeam(id, team);
+                m.setTarget(null);
+                m.setLastHurtByMob(null);
+                if (m instanceof net.minecraft.world.entity.NeutralMob neutral) {
+                    neutral.stopBeingAngry();
+                }
+                p.serverLevel().sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                        new org.joml.Vector3f(1.0F, 0.9F, 0.1F), 2.0F), m.getX(), m.getY() + 1.0D, m.getZ(), 12, 0.4D,
+                        0.6D, 0.4D, 0.0D);
+                n++;
+            } else if (board.getPlayersTeam(id) == team) {
+                board.removePlayerFromTeam(id, team);
+                n++;
+            }
+        }
+        p.displayClientMessage(net.minecraft.network.chat.Component.translatable(on
+                ? "message.flash.infinity.pacified" : "message.flash.infinity.unpacified", n), true);
     }
 
     // ------------------------------------------------------------------
