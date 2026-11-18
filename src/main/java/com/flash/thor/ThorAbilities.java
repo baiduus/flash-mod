@@ -1821,11 +1821,14 @@ public final class ThorAbilities {
             bolt.setVisualOnly(true);
             level.addFreshEntity(bolt);
         }
+        // the strike burns the dropped items where it lands
+        com.flash.power.ItemZap.around(level, at, 2.0D);
     }
 
     /** A drawn lightning bolt between two points (seen by everyone around; purple for a Cosmic King). */
     public static void bolt(ServerLevel level, Vec3 a, Vec3 b, float scale) {
         fx(level, ThorFxPacket.BOLT, a, b, scale);
+        com.flash.power.ItemZap.line(level, a, b, 0.6D + 0.3D * scale);
     }
 
     /** One of the effects drawn by ThorFx (rings, impacts, the Bifrost...), seen by everyone around. */

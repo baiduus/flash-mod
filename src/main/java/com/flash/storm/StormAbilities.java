@@ -119,6 +119,13 @@ public final class StormAbilities {
     }
 
     public static void fx(ServerPlayer p, int type, Vec3 a, Vec3 b, float power) {
+        // her lightning burns the dropped items it passes through
+        if (type == StormFxPacket.SKY || type == StormFxPacket.ARC || type == StormFxPacket.BEAM) {
+            com.flash.power.ItemZap.line(p.serverLevel(), a, b, type == StormFxPacket.BEAM ? 1.0D : 0.8D);
+            if (type == StormFxPacket.SKY) {
+                com.flash.power.ItemZap.around(p.serverLevel(), b, 2.0D);
+            }
+        }
         FlashNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p),
                 new StormFxPacket(p.getId(), type, a, b, power, p.getRandom().nextLong()));
     }

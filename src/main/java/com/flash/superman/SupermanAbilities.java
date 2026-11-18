@@ -463,6 +463,8 @@ public final class SupermanAbilities {
     private static void heatVision(ServerPlayer player, ServerLevel level, Session s, boolean laser) {
         HitResult hit = trace(player, HEAT_RANGE);
         float power = SupermanPowers.power(player);
+        // the beam burns the dropped items it crosses
+        com.flash.power.ItemZap.line(level, player.getEyePosition(), hit.getLocation(), laser ? 0.6D : 0.45D);
         if (hit instanceof EntityHitResult eh) {
             Entity target = eh.getEntity();
             if (player.tickCount % (laser ? 3 : 4) == 0) {
