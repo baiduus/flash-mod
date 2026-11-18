@@ -70,6 +70,7 @@ public final class PlayerMorph {
         Morph m = new Morph(String.valueOf(ForgeRegistries.ENTITY_TYPES.getKey(into)), yas ? -1L : now + SCARLET_TICKS,
                 caster.getUUID());
         MORPHS.put(victim.getUUID(), m);
+        victim.refreshDimensions();
         send(victim, m.type);
         wave(victim.serverLevel(), victim);
         victim.displayClientMessage(Component.translatable(yas ? "message.flash.morph_yas" : "message.flash.morph",
@@ -86,6 +87,7 @@ public final class PlayerMorph {
         if (MORPHS.remove(p.getUUID()) == null) {
             return;
         }
+        p.refreshDimensions();
         send(p, "");
         if (fx) {
             wave(p.serverLevel(), p);
@@ -110,6 +112,7 @@ public final class PlayerMorph {
             }
             if (e.getValue().until >= 0 && p.level().getGameTime() >= e.getValue().until) {
                 it.remove();
+                p.refreshDimensions();
                 send(p, "");
                 wave(p.serverLevel(), p);
             }
@@ -151,6 +154,25 @@ public final class PlayerMorph {
             // a new entity id on the other side
             send(p, MORPHS.get(p.getUUID()).type);
         }
+    }
+
+    /** The animal's size: hitbox and eyes (MorphClient does the same on the client). */
+    @SubscribeEvent
+    public static void onSize(net.minecraftforge.event.entity.EntityEvent.Size event) {
+        if (!(event.getEntity() instanceof ServerPlayer p)) {
+            return;
+        }
+        Morph m = MORPHS.get(p.getUUID());
+        EntityType<?> t = m == null ? null : ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(m.type));
+        if (t != null) {
+            resize(event, t);
+        }
+    }
+
+    public static void resize(net.minecraftforge.event.entity.EntityEvent.Size event, EntityType<?> t) {
+        net.minecraft.world.entity.EntityDimensions d = t.getDimensions();
+        event.setNewSize(d);
+        event.setNewEyeHeight(d.height * 0.85F);
     }
 
     // an animal can't fight, build or use things

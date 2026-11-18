@@ -5,7 +5,6 @@
   "persistent_data": true,
   "gui_display_type": "tree",
   "ability_bar_texture": "flash:textures/gui/ability_bars/space_ability_bar.png",
-
   "abilities": {
     "dummy1": {
       "type": "palladium:dummy",
@@ -13,7 +12,10 @@
       "title": " ",
       "hidden": false,
       "hidden_in_bar": true,
-      "gui_position": [0.5, 2]
+      "gui_position": [
+        0.5,
+        2
+      ]
     },
     "jump_teleport": {
       "type": "flash:jump_portal",
@@ -24,7 +26,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 1,
-      "gui_position": [1, 1],
+      "gui_position": [
+        1,
+        1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.teleport.description"
       },
@@ -63,7 +68,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 4,
-      "gui_position": [1, 1.5],
+      "gui_position": [
+        1,
+        1.5
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.teleport.description"
       },
@@ -102,7 +110,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 2,
-      "gui_position": [0, 1],
+      "gui_position": [
+        0,
+        1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.telekinesis.description"
       },
@@ -140,7 +151,10 @@
       "persistent_data": true,
       "hidden": false,
       "hidden_in_bar": true,
-      "gui_position": [0, 2],
+      "gui_position": [
+        0,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.spatial_lock.description"
       },
@@ -170,7 +184,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 3,
-      "gui_position": [1, 2],
+      "gui_position": [
+        1,
+        2
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.black_hole.description"
       },
@@ -218,15 +235,25 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 1,
-      "gui_position": [0, 0.5],
+      "gui_position": [
+        0,
+        0.5
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.water_breathing.description"
       },
-      "first_tick_commands": ["effect give @s minecraft:water_breathing infinite 0 true"],
-      "last_tick_commands": ["effect clear @s minecraft:water_breathing"],
+      "first_tick_commands": [
+        "effect give @s minecraft:water_breathing infinite 0 true"
+      ],
+      "last_tick_commands": [
+        "effect clear @s minecraft:water_breathing"
+      ],
       "conditions": {
         "enabling": [
-          {"type": "flash:setting", "setting": "space_stone.water_breathing"}
+          {
+            "type": "flash:setting",
+            "setting": "space_stone.water_breathing"
+          }
         ],
         "unlocking": [
           {
@@ -239,7 +266,6 @@
         ]
       }
     },
-
     "render_layer_space_stone_shield": {
       "type": "palladium:render_layer",
       "hidden": true,
@@ -255,18 +281,6 @@
         ]
       }
     },
-    "movement_lock": {
-      "type": "flash:movement_lock",
-      "hidden": true,
-      "hidden_in_bar": true,
-      "list_index": -1,
-      "lock_hotbar": false,
-      "conditions": {
-        "enabling": [
-          {"type": "palladium:ability_enabled", "ability": "force_field"}
-        ]
-      }
-    },
     "telekinesis_aim": {
       "type": "palladium:aim",
       "hidden": true,
@@ -276,12 +290,21 @@
       "arm": "left_arm",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_arm", "arm": "left"},
+          {
+            "type": "flash:gauntlet_arm",
+            "arm": "left"
+          },
           {
             "type": "palladium:or",
             "conditions": [
-              {"type": "palladium:ability_enabled", "ability": "telekinesis"},
-              {"type": "palladium:ability_enabled", "ability": "black_hole"}
+              {
+                "type": "palladium:ability_enabled",
+                "ability": "telekinesis"
+              },
+              {
+                "type": "palladium:ability_enabled",
+                "ability": "black_hole"
+              }
             ]
           }
         ]
@@ -296,12 +319,21 @@
       "arm": "right_arm",
       "conditions": {
         "enabling": [
-          {"type": "flash:gauntlet_arm", "arm": "right"},
+          {
+            "type": "flash:gauntlet_arm",
+            "arm": "right"
+          },
           {
             "type": "palladium:or",
             "conditions": [
-              {"type": "palladium:ability_enabled", "ability": "telekinesis"},
-              {"type": "palladium:ability_enabled", "ability": "black_hole"}
+              {
+                "type": "palladium:ability_enabled",
+                "ability": "telekinesis"
+              },
+              {
+                "type": "palladium:ability_enabled",
+                "ability": "black_hole"
+              }
             ]
           }
         ]
@@ -323,7 +355,6 @@
         ]
       }
     },
-
     "force_field": {
       "type": "palladium:attribute_modifier",
       "icon": "flash:textures/icon/force_field.png",
@@ -333,7 +364,10 @@
       "hidden": false,
       "hidden_in_bar": false,
       "list_index": 0,
-      "gui_position": [0.5, 1],
+      "gui_position": [
+        0.5,
+        1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.force_field.description"
       },
@@ -409,7 +443,10 @@
       "hidden": true,
       "hidden_in_bar": true,
       "list_index": 0,
-      "gui_position": [0, -1],
+      "gui_position": [
+        0,
+        -1
+      ],
       "description": "Pacify hostile mobs around you",
       "first_tick_commands": [
         "playsound flash:infinity.space_stone_forcefield block @s"
@@ -432,14 +469,22 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0, 0],
+      "gui_position": [
+        0,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.fall_immunity.description"
       },
-      "damage_sources": ["minecraft:is_fall"],
+      "damage_sources": [
+        "minecraft:is_fall"
+      ],
       "conditions": {
         "enabling": [
-          {"type": "flash:setting", "setting": "space_stone.fall_immunity"}
+          {
+            "type": "flash:setting",
+            "setting": "space_stone.fall_immunity"
+          }
         ],
         "unlocking": [
           {
@@ -461,7 +506,10 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [0.5, 0],
+      "gui_position": [
+        0.5,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.step_assist.description"
       },
@@ -471,7 +519,10 @@
       "uuid": "498be4fb-af04-42f2-8948-e6ccdc0d99e1",
       "conditions": {
         "enabling": [
-          {"type": "flash:setting", "setting": "space_stone.step_assist"}
+          {
+            "type": "flash:setting",
+            "setting": "space_stone.step_assist"
+          }
         ],
         "unlocking": [
           {
@@ -498,7 +549,10 @@
       "persistent_data": true,
       "hidden_in_bar": true,
       "list_index": -1,
-      "gui_position": [1, 0],
+      "gui_position": [
+        1,
+        0
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.speed.description"
       },
@@ -508,7 +562,10 @@
       "uuid": "498be4fb-af04-42f2-8948-e6ccdc0d99e1",
       "conditions": {
         "enabling": [
-          {"type": "flash:setting", "setting": "space_stone.speed"}
+          {
+            "type": "flash:setting",
+            "setting": "space_stone.speed"
+          }
         ],
         "unlocking": [
           {
@@ -530,18 +587,29 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [-0.25, -1],
+      "gui_position": [
+        -0.25,
+        -1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.speed_toggle.description"
       },
       "conditions": {
         "unlocking": [
-          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
-          {"type": "palladium:ability_unlocked", "power": "null", "ability": "speed"}
+          {
+            "type": "palladium:experience_level_buyable",
+            "xp_level": 0,
+            "flat_levels": true
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "speed"
+          }
         ]
       },
       "setting": "space_stone.speed"
-},
+    },
     "step_assist_toggle": {
       "type": "flash:toggle",
       "icon": "flash:textures/icon/step.png",
@@ -551,18 +619,29 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [0.25, -1],
+      "gui_position": [
+        0.25,
+        -1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.step_assist_toggle.description"
       },
       "conditions": {
         "unlocking": [
-          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
-          {"type": "palladium:ability_unlocked", "power": "null", "ability": "step_assist"}
+          {
+            "type": "palladium:experience_level_buyable",
+            "xp_level": 0,
+            "flat_levels": true
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "step_assist"
+          }
         ]
       },
       "setting": "space_stone.step_assist"
-},
+    },
     "fall_immunity_toggle": {
       "type": "flash:toggle",
       "icon": "minecraft:diamond_boots",
@@ -572,18 +651,29 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [0.75, -1],
+      "gui_position": [
+        0.75,
+        -1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.fall_immunity_toggle.description"
       },
       "conditions": {
         "unlocking": [
-          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
-          {"type": "palladium:ability_unlocked", "power": "null", "ability": "fall_immunity"}
+          {
+            "type": "palladium:experience_level_buyable",
+            "xp_level": 0,
+            "flat_levels": true
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "fall_immunity"
+          }
         ]
       },
       "setting": "space_stone.fall_immunity"
-},
+    },
     "water_breathing_toggle": {
       "type": "flash:toggle",
       "icon": "minecraft:textures/mob_effect/water_breathing.png",
@@ -593,17 +683,28 @@
       "hidden": false,
       "hidden_in_bar": true,
       "list_index": 1,
-      "gui_position": [1.25, -1],
+      "gui_position": [
+        1.25,
+        -1
+      ],
       "description": {
         "translate": "ability.infinity.space_stone.water_breathing_toggle.description"
       },
       "conditions": {
         "unlocking": [
-          {"type": "palladium:experience_level_buyable", "xp_level": 0, "flat_levels": true},
-          {"type": "palladium:ability_unlocked", "power": "null", "ability": "water_breathing"}
+          {
+            "type": "palladium:experience_level_buyable",
+            "xp_level": 0,
+            "flat_levels": true
+          },
+          {
+            "type": "palladium:ability_unlocked",
+            "power": "null",
+            "ability": "water_breathing"
+          }
         ]
       },
       "setting": "space_stone.water_breathing"
-}
+    }
   }
 }

@@ -53,14 +53,13 @@ public final class InfinityLayers {
                     Matrix4f m = ps.last().pose();
                     float t = p.tickCount + pt;
                     Vec3 c = p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
-                    // a blue bubble (as Doom's field, without its runes), seen from inside too
-                    double r = 1.9D;
-                    float pulse = 0.5F + 0.15F * (float) Math.sin(t * 0.25F);
-                    VfxDraw.sphere(buf, m, c, r, cam, 0.25F, 0.6F, 1.0F, 0.55F, t, 2.6D);
-                    VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r + 0.04D, 0.05D, t * 0.05F, 0.45F, 0.8F,
-                            1.0F, pulse);
-                    VfxDraw.ring(buf, m, c, new Vec3(1.0D, 0.0D, 0.0D), r + 0.02D, 0.03D, t * -0.04F, 0.45F, 0.8F,
-                            1.0F, pulse * 0.6F);
+                    // Doom's field (his sphere, the hexagons on the ground, the turning ring) in the Space Stone's blue
+                    double r = com.flash.doom.DoomAbilities.FIELD_RADIUS;
+                    VfxDraw.sphere(buf, m, c, r, cam, 0.3F, 0.65F, 1.0F, 0.5F, t, 2.6D);
+                    VfxDraw.hexCircle(buf, m, c.add(0.0D, -p.getBbHeight() * 0.5D + 0.05D, 0.0D), r, t, 0.3F, 0.65F,
+                            1.0F, 0.45F);
+                    VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r + 0.05D, 0.05D, t * 0.05F, 0.3F, 0.65F,
+                            1.0F, 0.5F + 0.2F * (float) Math.sin(t * 0.3F));
                 }
             }
         } finally {

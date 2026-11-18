@@ -94,22 +94,34 @@ public final class SpaceStone {
         if (!(event.getEntity() instanceof ServerPlayer p)) {
             return;
         }
-        InfPowers.Ability ff = first(p, "flash:force_field");
-        Entity src = event.getSource().getEntity();
-        if (ff != null && src != null) {
-            float threshold = ff.json.has("damage_threshold") ? ff.json.get("damage_threshold").getAsFloat() : 23.0F;
-            String id = String.valueOf(net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(
-                    src.getType()));
-            if (event.getAmount() < threshold || ALWAYS_BLOCKED.contains(id)) {
-                event.setCanceled(true);
-                sound(p.level(), p.position(), "space_stone_forcefield", 0.6F, 1.4F);
-                return;
+        // the force field, as Doctor Doom's: what hits him barely reaches him (15%, explosions half that)
+        if (fieldOn(p) && !event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            float f = com.flash.doom.DoomPowers.SHIELD_FACTOR;
+            if (event.getSource().is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)) {
+                f *= 0.5F;
             }
+            event.setAmount(event.getAmount() * f);
+            com.flash.doom.DoomAbilities.shieldHit(p);
+            sound(p.level(), p.position(), "space_stone_forcefield", 0.6F, 1.4F);
         }
         InfPowers.Ability inv = first(p, "flash:invulnerability");
         if (inv != null) {
             event.setCanceled(true);
             p.invulnerableTime = 20;
+        }
+    }
+
+    /** The Space Stone's force field is up. */
+    public static boolean fieldOn(net.minecraft.world.entity.player.Player p) {
+        return p instanceof ServerPlayer sp && first(sp, "flash:force_field") != null;
+    }
+
+    /** Doom's barrier around the field: whoever comes inside is pushed back to its edge. */
+    @SubscribeEvent
+    public static void onFieldTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.END && event.player instanceof ServerPlayer p
+                && fieldOn(p) && !com.flash.doom.DoomAbilities.shielded(p)) {
+            com.flash.doom.DoomAbilities.barrier(p);
         }
     }
 

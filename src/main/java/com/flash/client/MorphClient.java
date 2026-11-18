@@ -31,11 +31,27 @@ public final class MorphClient {
         BODIES.remove(id);
         if (type == null || type.isEmpty()) {
             TYPES.remove(id);
-            return;
+        } else {
+            EntityType<?> t = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(type));
+            if (t != null) {
+                TYPES.put(id, t);
+            }
         }
-        EntityType<?> t = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(type));
-        if (t != null) {
-            TYPES.put(id, t);
+        Minecraft mc = Minecraft.getInstance();
+        Entity e = mc.level != null ? mc.level.getEntity(id) : null;
+        if (e != null) {
+            e.refreshDimensions();
+        }
+    }
+
+    /** The animal's size on the client too (the local player's collisions and camera). */
+    @SubscribeEvent
+    public static void onSize(net.minecraftforge.event.entity.EntityEvent.Size event) {
+        if (event.getEntity() instanceof Player p && p.level().isClientSide) {
+            EntityType<?> t = TYPES.get(p.getId());
+            if (t != null) {
+                com.flash.yas.PlayerMorph.resize(event, t);
+            }
         }
     }
 

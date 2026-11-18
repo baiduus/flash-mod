@@ -375,7 +375,7 @@ public final class DoomAbilities {
     /**
      * The force field keeps everyone out: whoever comes inside is pushed gently back to its edge (not thrown far).
      */
-    private static void barrier(ServerPlayer p) {
+    public static void barrier(ServerPlayer p) {
         ServerLevel level = p.serverLevel();
         Vec3 c = p.position().add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(FIELD_RADIUS + 0.5D),
@@ -407,7 +407,7 @@ public final class DoomAbilities {
         }
     }
 
-    static void shieldHit(ServerPlayer p) {
+    public static void shieldHit(ServerPlayer p) {
         p.serverLevel().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS,
                 0.8F, 1.6F);
         fx(p, FX_SHIELD_HIT, p.position(), p.position(), 1.0F, -1);
@@ -417,7 +417,7 @@ public final class DoomAbilities {
     @SubscribeEvent
     public static void onProjectile(ProjectileImpactEvent event) {
         if (event.getRayTraceResult() instanceof EntityHitResult eh && eh.getEntity() instanceof ServerPlayer p
-                && shielded(p) && event.getProjectile().getOwner() != p) {
+                && (shielded(p) || com.flash.infinity.SpaceStone.fieldOn(p)) && event.getProjectile().getOwner() != p) {
             Projectile pr = event.getProjectile();
             event.setCanceled(true);
             pr.setDeltaMovement(pr.getDeltaMovement().scale(-0.4D));
