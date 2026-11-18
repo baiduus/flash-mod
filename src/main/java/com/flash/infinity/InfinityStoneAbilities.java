@@ -199,11 +199,24 @@ public final class InfinityStoneAbilities {
     }
 
     /** The Mind Stone's flight (the original's flight speed attribute): free flight while on. */
+    private static final java.util.Set<java.util.UUID> FLYERS = new java.util.HashSet<>();
+
+    /** The stones' flight is on for him (FlightGuard leaves his zeroed flying speed alone). */
+    public static boolean stoneFlight(ServerPlayer p) {
+        return FLYERS.contains(p.getUUID());
+    }
+
     static void flight(ServerPlayer p, InfPowers.Ability a, boolean on) {
         if (p.isCreative() || p.isSpectator() || com.flash.power.HeroPowers.hasAny(p)) {
+            FLYERS.remove(p.getUUID());
             return;
         }
         var ab = p.getAbilities();
+        if (on) {
+            FLYERS.add(p.getUUID());
+        } else {
+            FLYERS.remove(p.getUUID());
+        }
         if (on) {
             // a hero's flight: speed 0 here, steered by the aimed flight (SupermanClient) as the others'
             if (!ab.mayfly || ab.getFlyingSpeed() != 0.0F) {

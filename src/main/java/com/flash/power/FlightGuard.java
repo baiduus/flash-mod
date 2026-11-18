@@ -34,7 +34,7 @@ public final class FlightGuard {
                 return;
             }
         }
-        if (com.flash.lex.LexSuit.active(p)) {
+        if (com.flash.lex.LexSuit.active(p) || com.flash.infinity.InfinityStoneAbilities.stoneFlight(p)) {
             return;
         }
         ab.setFlyingSpeed(VANILLA);
