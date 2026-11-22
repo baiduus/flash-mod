@@ -588,7 +588,8 @@ public final class ThorPowers {
     private static void keepFlight(ServerPlayer player) {
         var abilities = player.getAbilities();
         // with the weapon in hand Thor can fly: double jump takes off (as Superman), the flight key too
-        boolean can = ThorAbilities.holdingHammer(player);
+        // Thor flies with or without the hammer in hand
+        boolean can = true;
         if (can && !flag(player, F_FLIGHT)) {
             setFlag(player, F_FLIGHT, true);
         }

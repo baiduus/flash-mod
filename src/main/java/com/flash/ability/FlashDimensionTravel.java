@@ -137,8 +137,6 @@ public final class FlashDimensionTravel {
                 Component.translatable("message.flash.dimension_entered"), true);
         // something always follows a speedster into the Acceleration Force
         com.flash.entity.AccelerationPhantom.scheduleHunt(player);
-        target.playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 1.0F, 0.7F);
         target.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                 player.getX(), player.getY() + 1.0D, player.getZ(),
                 40, 0.8D, 1.2D, 0.8D, 0.12D);
@@ -185,8 +183,6 @@ public final class FlashDimensionTravel {
         teleport(player, target, exitX, y, exitZ);
         player.displayClientMessage(
                 Component.translatable("message.flash.dimension_exited"), true);
-        target.playSound(null, exitX, y, exitZ,
-                SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 1.0F, 0.8F);
         target.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                 exitX, y + 1.0D, exitZ, 40, 0.8D, 1.2D, 0.8D, 0.12D);
         return true;
@@ -252,7 +248,36 @@ public final class FlashDimensionTravel {
 
     private static void teleport(ServerPlayer player, ServerLevel target,
                                  double x, double y, double z) {
-        player.teleportTo(target, x, y, z, player.getYRot(), player.getXRot());
+        if (player.level() == target) {
+            player.teleportTo(target, x, y, z, player.getYRot(), player.getXRot());
+        } else {
+            // across dimensions without the vanilla portal whoosh
+            float yaw = player.getYRot();
+            float pitch = player.getXRot();
+            player.changeDimension(target, new net.minecraftforge.common.util.ITeleporter() {
+                @Override
+                public net.minecraft.world.entity.Entity placeEntity(net.minecraft.world.entity.Entity entity,
+                        ServerLevel current, ServerLevel destination, float rot,
+                        java.util.function.Function<Boolean, net.minecraft.world.entity.Entity> repositionEntity) {
+                    net.minecraft.world.entity.Entity e = repositionEntity.apply(false);
+                    e.moveTo(x, y, z, yaw, pitch);
+                    return e;
+                }
+
+                @Override
+                public net.minecraft.world.level.portal.PortalInfo getPortalInfo(
+                        net.minecraft.world.entity.Entity entity, ServerLevel destination,
+                        java.util.function.Function<ServerLevel, net.minecraft.world.level.portal.PortalInfo> def) {
+                    return new net.minecraft.world.level.portal.PortalInfo(new Vec3(x, y, z), Vec3.ZERO, yaw, pitch);
+                }
+
+                @Override
+                public boolean playTeleportSound(ServerPlayer p, ServerLevel from, ServerLevel to) {
+                    return false;
+                }
+            });
+            player.connection.teleport(x, y, z, yaw, pitch);
+        }
         player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0F;
         LAST_POSITIONS.remove(player.getUUID());

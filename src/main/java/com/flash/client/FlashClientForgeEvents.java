@@ -70,6 +70,7 @@ public final class FlashClientForgeEvents {
             }
         }
         FlashWallRun.tick(minecraft);
+        FlashGroundSnap.tick(minecraft);
 
         boolean increase = drain(FlashKeys.INCREASE_SPEED);
         boolean decrease = drain(FlashKeys.DECREASE_SPEED);
