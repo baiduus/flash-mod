@@ -119,10 +119,13 @@ public final class SpaceTravel {
         ServerLevel level = p.serverLevel();
         long now = level.getGameTime();
         long cd = p.getPersistentData().getLong(COOLDOWN);
+        // only going up takes him out: coming back down from space (dropped high over the ground) never does
+        boolean rising = p.getY() > p.yo + 0.05D || p.getDeltaMovement().y > 0.05D;
+        long upCd = rising ? cd : Long.MAX_VALUE;
         // with the Lanterns mod: its space for everybody (its planets, sun and moon), as its ring bearers go,
         // from the same height (130 over the ceiling) and from any of its worlds
         if (ModList.get().isLoaded("lanternasverdes")) {
-            if (p.getY() > level.getMaxBuildHeight() + 130 && now >= cd && !lantern(p)
+            if (p.getY() > level.getMaxBuildHeight() + 130 && now >= upCd && !lantern(p)
                     && lanternEnter(p, level, now)) {
                 p.getPersistentData().putLong(COOLDOWN, now + 40L);
                 if (!powered(p)) {
@@ -130,7 +133,7 @@ public final class SpaceTravel {
                 }
                 return;
             }
-        } else if (level.dimension() == Level.OVERWORLD && p.getY() > level.getMaxBuildHeight() && now >= cd) {
+        } else if (level.dimension() == Level.OVERWORLD && p.getY() > level.getMaxBuildHeight() && now >= upCd) {
             boolean adAstra = ModList.get().isLoaded("ad_astra");
             ServerLevel to = p.server.getLevel(adAstra ? AD_ASTRA_ORBIT : SPACE);
             if (to == null) {
@@ -168,6 +171,18 @@ public final class SpaceTravel {
             p.setTicksFrozen(Math.min(p.getTicksRequiredToFreeze() + 40, p.getTicksFrozen() + 4));
             if (p.getAirSupply() <= -20 && now % 20L == 0L) {
                 p.hurt(p.damageSources().drown(), 3.0F);
+            }
+        }
+    }
+
+    /** Back on a world from space: a while before he can be taken up again (he arrives high in the sky). */
+    @SubscribeEvent
+    public static void onChangedDimension(net.minecraftforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) {
+            String from = event.getFrom().location().toString();
+            if (from.equals(SPACE.location().toString()) || from.equals(LANTERN_SPACE.location().toString())
+                    || from.startsWith("ad_astra:")) {
+                p.getPersistentData().putLong(COOLDOWN, p.serverLevel().getGameTime() + 200L);
             }
         }
     }
