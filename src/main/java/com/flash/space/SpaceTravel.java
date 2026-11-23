@@ -113,6 +113,7 @@ public final class SpaceTravel {
     }
 
     private static boolean lanternFailLogged;
+    private static final java.util.Map<java.util.UUID, Double> LAST_Y = new java.util.HashMap<>();
 
     /** Has powers: survives space. */
     public static boolean powered(ServerPlayer p) {
@@ -136,7 +137,9 @@ public final class SpaceTravel {
         long now = level.getGameTime();
         long cd = p.getPersistentData().getLong(COOLDOWN);
         // only going up takes him out: coming back down from space (dropped high over the ground) never does
-        boolean rising = p.getY() > p.yo + 0.05D || p.getDeltaMovement().y > 0.05D;
+        // (the server moves a player between its ticks, from his packets: his height a tick ago is kept here)
+        Double before = LAST_Y.put(p.getUUID(), p.getY());
+        boolean rising = before != null && p.getY() > before + 0.05D && level.dimension() == p.level().dimension();
         long upCd = rising ? cd : Long.MAX_VALUE;
         // with the Lanterns mod: its space for everybody (its planets, sun and moon), as its ring bearers go,
         // from the same height (130 over the ceiling) and from any of its worlds
@@ -196,6 +199,7 @@ public final class SpaceTravel {
     public static void onChangedDimension(net.minecraftforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer p) {
             String from = event.getFrom().location().toString();
+            LAST_Y.remove(p.getUUID());
             if (from.equals(SPACE.location().toString()) || from.equals(LANTERN_SPACE.location().toString())
                     || from.startsWith("ad_astra:")) {
                 p.getPersistentData().putLong(COOLDOWN, p.serverLevel().getGameTime() + 200L);
