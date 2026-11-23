@@ -72,7 +72,7 @@ public final class SpaceTravel {
     /** Has powers: survives space. */
     public static boolean powered(ServerPlayer p) {
         return p.isCreative() || p.isSpectator() || com.flash.power.HeroPowers.hasAny(p)
-                || !com.flash.infinity.InfinityServer.state(p).powers.isEmpty()
+                || com.flash.infinity.InfinityServer.hasAnyPower(p)
                 || com.flash.lex.LexSuit.active(p) || lantern(p);
     }
 

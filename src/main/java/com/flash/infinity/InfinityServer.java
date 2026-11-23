@@ -153,6 +153,11 @@ public final class InfinityServer {
     private InfinityServer() {
     }
 
+    /** Carries any Infinity power (a stone, the Gauntlet, the containers). */
+    public static boolean hasAnyPower(ServerPlayer p) {
+        return !state(p).powers.isEmpty();
+    }
+
     public static State state(ServerPlayer p) {
         State s = STATES.get(p.getUUID());
         if (s == null || s.player != p) {
