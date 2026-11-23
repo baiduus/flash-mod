@@ -121,12 +121,13 @@ public final class SupermanClient {
     // Aimed flight with three stages
     // ------------------------------------------------------------------
 
-    /** Flight speeds in blocks per tick: hover, walking, sprint, double sprint (scaled by the level). */
-    private static final double[] STAGE_SPEED = {0.0D, 0.45D, 1.1D, 2.4D};
-    /** Top flight speed of the heroes: 137 blocks a second (6.85 a tick). */
-    private static final double MAX_SPEED = 137.0D / 20.0D;
-    /** Yas: 200 blocks a second (10 a tick; YasSpeedPacket lets her through the server's check). */
-    private static final double YAS_MAX_SPEED = 200.0D / 20.0D;
+    /**
+     * Flight as the Green Lanterns' (Lanternas Verdes, rank 4, speed bar full): 137 blocks a second flying, 275
+     * holding sprint (and the double-sprint boost); Yas as the White Lantern: 220 and 439. The heroes who grow by
+     * level (Superman, Thor) start at a quarter of it, like a rank 1 Lantern.
+     */
+    private static final double CRUISE = 0.624D * 11.0D;
+    private static final double YAS_CRUISE = 0.9984D * 11.0D;
     private static int flightStage;
     private static boolean sprintWasDown;
     private static long lastSprintPress = -100L;
@@ -400,14 +401,24 @@ public final class SupermanClient {
             // the thrusters of his armour: as Storm on her winds
             scale = DoomClient.god(p) ? 5.0D : 3.4D;
         }
-        double maxSpeed = yasFlight ? YAS_MAX_SPEED : MAX_SPEED;
+        // share of the Lanterns' top speed: a quarter at level 1 up to all of it at level 10 (Superman, Thor)
+        double share = 1.0D;
+        if (superFlight || thorFlight) {
+            share = 0.25D + 0.75D * (Math.max(1, Math.min(10, heroLevel)) - 1) / 9.0D;
+        }
+        if (lexFlight) {
+            share = com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_OVERDRIVE) ? 1.0D : 0.8D;
+        }
+        double cruise = (yasFlight ? YAS_CRUISE : CRUISE) * share;
         Vec3 look = p.getLookAngle();
         Vec3 flatRight = new Vec3(-look.z, 0.0D, look.x);
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
         Vec3 target = Vec3.ZERO;
         if (forward > 0.0F) {
             // the boost is everyone's top speed (Yas 200 blocks a second, the others 137), whatever the level
-            target = look.scale(stage == 3 ? maxSpeed : Math.min(maxSpeed, STAGE_SPEED[stage] * scale));
+            // W: cruise; sprint: twice that; the boost: twice the top cruise, whatever the level
+            target = look.scale(stage == 3 ? 2.0D * (yasFlight ? YAS_CRUISE : CRUISE)
+                    : stage == 2 ? 2.0D * cruise : cruise);
         } else if (forward < 0.0F) {
             target = look.scale(-0.3D * scale);
         }
@@ -424,8 +435,8 @@ public final class SupermanClient {
         double k = target.lengthSqr() > cur.lengthSqr() ? 0.16D : 0.3D;
         p.setDeltaMovement(cur.add(target.subtract(cur).scale(k)));
         p.fallDistance = 0.0F;
-        // Yas' seven-times flight goes past the server's speed check: it is told her speed before her move
-        if (yasFlight && p.getDeltaMovement().lengthSqr() > 64.0D) {
+        // the fast flight goes past the server's speed check: it is told the speed before the move
+        if (p.getDeltaMovement().lengthSqr() > 64.0D) {
             Vec3 v = p.getDeltaMovement();
             com.flash.network.FlashNetwork.CHANNEL.sendToServer(
                     new com.flash.network.YasSpeedPacket((float) v.x, (float) v.y, (float) v.z));

@@ -27,7 +27,8 @@ public record YasSpeedPacket(float x, float y, float z) {
     public void handle(NetworkEvent.Context context) {
         context.setPacketHandled(true);
         ServerPlayer p = context.getSender();
-        if (p == null || !com.flash.yas.YasPowers.has(p) || !p.getAbilities().flying || p.isPassenger()) {
+        if (p == null || !(com.flash.power.HeroPowers.hasAny(p) || com.flash.lex.LexSuit.active(p)
+                || com.flash.infinity.InfinityServer.hasAnyPower(p)) || !p.getAbilities().flying || p.isPassenger()) {
             return;
         }
         Vec3 v = new Vec3(this.x, this.y, this.z);
