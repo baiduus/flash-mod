@@ -58,7 +58,7 @@ public final class InfinityTravel {
     private static final int SEARCH_STEP = 2;
     /** Dimensions the Tesseract never goes to (the Soulworld is the Soul Stone's; the Speed Force is Flash's). */
     private static final Set<String> NEVER = Set.of("flash:soulworld", "flash:acceleration_force",
-            "flash:negative_acceleration_force");
+            "flash:negative_acceleration_force", "flash:space");
     private static final Map<UUID, Long> PROTECTED = new HashMap<>();
 
     private InfinityTravel() {

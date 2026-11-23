@@ -2043,5 +2043,8 @@
   "message.flash.infinity.pacified": "%s creatures pacified",
   "message.flash.infinity.unpacified": "%s creatures back to normal",
   "message.flash.morph": "%s turned you into a %s for 10 seconds!",
-  "message.flash.morph_yas": "%s turned you into a %s until you die!"
+  "message.flash.morph_yas": "%s turned you into a %s until you die!",
+  "message.flash.space_in": "You entered space",
+  "message.flash.space_in_danger": "You entered space! Without powers there is no air here, get down fast!",
+  "message.flash.space_out": "Back in Earth's atmosphere"
 }
