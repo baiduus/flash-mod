@@ -80,8 +80,12 @@ public final class SpaceTravel {
             if (body == null || space == null) {
                 return false;
             }
-            Vec3 pos = (Vec3) body.getClass().getMethod("pos").invoke(body);
-            double radius = ((Number) body.getClass().getMethod("raio").invoke(body)).doubleValue();
+            Method posM = body.getClass().getMethod("pos");
+            Method raioM = body.getClass().getMethod("raio");
+            posM.setAccessible(true);
+            raioM.setAccessible(true);
+            Vec3 pos = (Vec3) posM.invoke(body);
+            double radius = ((Number) raioM.invoke(body)).doubleValue();
             // where to come back down (as the Lanterns mod keeps it)
             String dim = String.valueOf(level.dimension().location());
             p.getPersistentData().putDouble("lvVoltaX_" + dim, p.getX());
@@ -94,9 +98,21 @@ public final class SpaceTravel {
                     Component.translatable("espaco.lanternasverdes.espaco"), now);
             return true;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            if (!lanternFailLogged) {
+                lanternFailLogged = true;
+                com.mojang.logging.LogUtils.getLogger().warn("[flash] could not take {} into the Lanterns' space", p.getScoreboardName(), e);
+            }
+            // at least his space, over the same spot
+            ServerLevel own = p.server.getLevel(SPACE);
+            if (own != null) {
+                go(p, own, p.getX(), 200.0D, p.getZ(), now);
+                return true;
+            }
             return false;
         }
     }
+
+    private static boolean lanternFailLogged;
 
     /** Has powers: survives space. */
     public static boolean powered(ServerPlayer p) {
