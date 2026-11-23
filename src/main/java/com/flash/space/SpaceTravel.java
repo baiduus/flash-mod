@@ -69,6 +69,35 @@ public final class SpaceTravel {
         }
     }
 
+    /** Into the Lanterns' space over the planet he is on, the way its ring bearers go (by reflection). */
+    private static boolean lanternEnter(ServerPlayer p, ServerLevel level, long now) {
+        try {
+            Class<?> solar = Class.forName("com.lanternasverdes.data.SistemaSolar");
+            Object body = solar.getMethod("deDimensao", ResourceKey.class).invoke(null, level.dimension());
+            @SuppressWarnings("unchecked")
+            ResourceKey<Level> key = (ResourceKey<Level>) solar.getField("ESPACO").get(null);
+            ServerLevel space = key == null ? null : p.server.getLevel(key);
+            if (body == null || space == null) {
+                return false;
+            }
+            Vec3 pos = (Vec3) body.getClass().getMethod("pos").invoke(body);
+            double radius = ((Number) body.getClass().getMethod("raio").invoke(body)).doubleValue();
+            // where to come back down (as the Lanterns mod keeps it)
+            String dim = String.valueOf(level.dimension().location());
+            p.getPersistentData().putDouble("lvVoltaX_" + dim, p.getX());
+            p.getPersistentData().putDouble("lvVoltaZ_" + dim, p.getZ());
+            Method go = Class.forName("com.lanternasverdes.logic.Espaco").getDeclaredMethod("ir", ServerPlayer.class,
+                    ServerLevel.class, double.class, double.class, double.class, boolean.class, Component.class,
+                    long.class);
+            go.setAccessible(true);
+            go.invoke(null, p, space, pos.x, pos.y + radius + 45.0D, pos.z, true,
+                    Component.translatable("espaco.lanternasverdes.espaco"), now);
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            return false;
+        }
+    }
+
     /** Has powers: survives space. */
     public static boolean powered(ServerPlayer p) {
         return p.isCreative() || p.isSpectator() || com.flash.power.HeroPowers.hasAny(p)
@@ -90,9 +119,18 @@ public final class SpaceTravel {
         ServerLevel level = p.serverLevel();
         long now = level.getGameTime();
         long cd = p.getPersistentData().getLong(COOLDOWN);
-        // up: over the Overworld's ceiling
-        if (level.dimension() == Level.OVERWORLD && p.getY() > level.getMaxBuildHeight() && now >= cd
-                && !lantern(p)) {
+        // with the Lanterns mod: its space for everybody (its planets, sun and moon), as its ring bearers go,
+        // from the same height (130 over the ceiling) and from any of its worlds
+        if (ModList.get().isLoaded("lanternasverdes")) {
+            if (p.getY() > level.getMaxBuildHeight() + 130 && now >= cd && !lantern(p)
+                    && lanternEnter(p, level, now)) {
+                p.getPersistentData().putLong(COOLDOWN, now + 40L);
+                if (!powered(p)) {
+                    p.displayClientMessage(Component.translatable("message.flash.space_in_danger"), true);
+                }
+                return;
+            }
+        } else if (level.dimension() == Level.OVERWORLD && p.getY() > level.getMaxBuildHeight() && now >= cd) {
             boolean adAstra = ModList.get().isLoaded("ad_astra");
             ServerLevel to = p.server.getLevel(adAstra ? AD_ASTRA_ORBIT : SPACE);
             if (to == null) {
