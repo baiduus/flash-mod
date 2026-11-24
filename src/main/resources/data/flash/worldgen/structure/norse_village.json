@@ -2,7 +2,7 @@
   "type": "minecraft:jigsaw",
   "start_pool": "flash:norse_village/norse_village",
   "size": 1,
-  "biomes": "#flash:has_structure/infinity_unique",
+  "biomes": "#minecraft:is_overworld",
   "step": "surface_structures",
   "max_distance_from_center": 100,
   "terrain_adaptation": "beard_thin",
