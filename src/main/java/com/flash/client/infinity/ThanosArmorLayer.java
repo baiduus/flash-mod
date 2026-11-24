@@ -121,12 +121,12 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
                 hide(m, "time_stone", !stone);
                 GeoModel.Bone ts = m.bone("time_stone");
                 if (ts != null && stone) {
-                    // bigger than the original's (under a pixel): 1.6x closed, 2.5x open, a hair back
-                    float k = open ? 2.5F : 1.6F;
-                    ts.sx *= k;
-                    ts.sy *= k;
-                    ts.sz *= k;
-                    ts.az += 0.15F;
+                    // the stone fills the whole inside of the Eye (1.7 x 2 pixels, between the frame and its back
+                    // plate); the lids still close over it
+                    ts.sx *= 2.1F;
+                    ts.sy *= 2.5F;
+                    ts.sz *= 0.375F;
+                    ts.az -= 0.22F;
                 }
                 // the chain round the neck (the original's armour model layer)
                 chain = model("flash:geo/infinity/eye_of_agamotto_chain");

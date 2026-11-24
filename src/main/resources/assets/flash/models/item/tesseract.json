@@ -1,56 +1,322 @@
 {
-	"format_version": "1.9.0",
-	"credit": "Made with Blockbench",
-	"texture_size": [32, 16],
-	"textures": {
-		"0": "flash:item/tesseract_heroes",
-		"particle": "flash:item/tesseract_heroes"
-	},
-	"elements": [
-		{
-			"from": [5, 0, 5],
-			"to": [11, 6, 11],
-			"rotation": {"angle": 0, "axis": "y", "origin": [7, 2, 7]},
-			"shade": false,
-			"forge_data": {"block_light": 15, "sky_light": 15},
-			"faces": {
-				"north": {"uv": [3, 6, 6, 12], "texture": "#0"},
-				"east": {"uv": [6, 6, 9, 12], "texture": "#0"},
-				"south": {"uv": [9, 6, 12, 12], "texture": "#0"},
-				"west": {"uv": [0, 6, 3, 12], "texture": "#0"},
-				"up": {"uv": [3, 0, 6, 6], "texture": "#0"},
-				"down": {"uv": [6, 0, 9, 6], "texture": "#0"}
-			}
-		}
-	],
-	"display": {
-		"thirdperson_righthand": {
-			"translation": [0, 8, 0]
-		},
-		"thirdperson_lefthand": {
-			"translation": [0, 8, 0]
-		},
-		"firstperson_righthand": {
-			"translation": [0, 10, -2.25]
-		},
-		"firstperson_lefthand": {
-			"translation": [0, 10, -2.25]
-		},
-		"ground": {
-			"translation": [0, 5.75, 0]
-		},
-		"gui": {
-			"rotation": [45, 45, 0],
-			"translation": [0, 3.5, 0]
-		},
-		"head": {
-			"translation": [0, 14.75, 0]
-		},
-		"fixed": {
-			"translation": [0, 4.75, 0]
-		},
-		"on_shelf": {
-			"translation": [0, 8.25, -1]
-		}
-	}
+ "format_version": "1.9.0",
+ "credit": "Made with Blockbench",
+ "texture_size": [
+  32,
+  32
+ ],
+ "textures": {
+  "0": "flash:item/tesseract_cube",
+  "particle": "flash:item/tesseract_cube"
+ },
+ "elements": [
+  {
+   "from": [
+    7.25,
+    2.25,
+    7.25
+   ],
+   "to": [
+    8.75,
+    3.75,
+    8.75
+   ],
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     8,
+     3,
+     8
+    ]
+   },
+   "shade": false,
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "faces": {
+    "north": {
+     "uv": [
+      12,
+      0,
+      14,
+      2
+     ],
+     "texture": "#0"
+    },
+    "east": {
+     "uv": [
+      12,
+      0,
+      14,
+      2
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      12,
+      0,
+      14,
+      2
+     ],
+     "texture": "#0"
+    },
+    "west": {
+     "uv": [
+      12,
+      0,
+      14,
+      2
+     ],
+     "texture": "#0"
+    },
+    "up": {
+     "uv": [
+      12,
+      0,
+      14,
+      2
+     ],
+     "texture": "#0"
+    },
+    "down": {
+     "uv": [
+      12,
+      0,
+      14,
+      2
+     ],
+     "texture": "#0"
+    }
+   }
+  },
+  {
+   "from": [
+    6.5,
+    1.5,
+    6.5
+   ],
+   "to": [
+    9.5,
+    4.5,
+    9.5
+   ],
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     3,
+     8
+    ]
+   },
+   "shade": false,
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "faces": {
+    "north": {
+     "uv": [
+      8,
+      0,
+      12,
+      4
+     ],
+     "texture": "#0"
+    },
+    "east": {
+     "uv": [
+      8,
+      0,
+      12,
+      4
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      8,
+      0,
+      12,
+      4
+     ],
+     "texture": "#0"
+    },
+    "west": {
+     "uv": [
+      8,
+      0,
+      12,
+      4
+     ],
+     "texture": "#0"
+    },
+    "up": {
+     "uv": [
+      8,
+      0,
+      12,
+      4
+     ],
+     "texture": "#0"
+    },
+    "down": {
+     "uv": [
+      8,
+      0,
+      12,
+      4
+     ],
+     "texture": "#0"
+    }
+   }
+  },
+  {
+   "from": [
+    5,
+    0,
+    5
+   ],
+   "to": [
+    11,
+    6,
+    11
+   ],
+   "shade": false,
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#0"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#0"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#0"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#0"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#0"
+    }
+   }
+  }
+ ],
+ "display": {
+  "thirdperson_righthand": {
+   "translation": [
+    0,
+    8,
+    0
+   ]
+  },
+  "thirdperson_lefthand": {
+   "translation": [
+    0,
+    8,
+    0
+   ]
+  },
+  "firstperson_righthand": {
+   "translation": [
+    0,
+    10,
+    -2.25
+   ]
+  },
+  "firstperson_lefthand": {
+   "translation": [
+    0,
+    10,
+    -2.25
+   ]
+  },
+  "ground": {
+   "translation": [
+    0,
+    5.75,
+    0
+   ]
+  },
+  "gui": {
+   "rotation": [
+    45,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    3.5,
+    0
+   ]
+  },
+  "head": {
+   "translation": [
+    0,
+    14.75,
+    0
+   ]
+  },
+  "fixed": {
+   "translation": [
+    0,
+    4.75,
+    0
+   ]
+  },
+  "on_shelf": {
+   "translation": [
+    0,
+    8.25,
+    -1
+   ]
+  }
+ },
+ "render_type": "minecraft:translucent"
 }
