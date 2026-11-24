@@ -55,7 +55,9 @@ public class ThanosArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
             st[0] = open ? 1 : 0;
             st[1] = now;
         }
-        float seconds = (float) ((now - st[1]) / 20.0D);
+        // the original animations stand still for a while before moving (2.3 s opening, 1.4 s closing):
+        // that lead is skipped and the motion played twice as fast, so the Eye follows the state at once
+        float seconds = (open ? 2.3F : 1.4F) + (float) ((now - st[1]) / 20.0D) * 2.0F;
         com.flash.client.geo.GeoAnimation a = eyeAnim(open ? "open" : "close");
         if (a != null) {
             a.apply(m, seconds);
