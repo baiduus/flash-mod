@@ -175,6 +175,33 @@ public final class InfinityExtras {
         }
     }
 
+    /** The Aether: crouching, a right-click takes its stone out (the Reality Stone), leaving an Empty Aether. */
+    @SubscribeEvent
+    public static void onAetherUse(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
+        ItemStack s = event.getItemStack();
+        if (!s.is(InfinityItems.AETHER.get()) || !event.getEntity().isShiftKeyDown()) {
+            return;
+        }
+        event.setCanceled(true);
+        event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+        if (!(event.getEntity() instanceof ServerPlayer p)) {
+            return;
+        }
+        InfinityStone in = InfinityContainers.stoneIn(s);
+        ItemStack empty = new ItemStack(InfinityItems.EMPTY_AETHER.get());
+        p.setItemInHand(event.getHand(), empty);
+        if (in != null) {
+            ItemStack stone = new ItemStack(in.item());
+            if (!p.getInventory().add(stone)) {
+                p.drop(stone, false);
+            }
+        }
+        p.level().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0F,
+                0.8F);
+        p.serverLevel().sendParticles(net.minecraft.core.particles.DustParticleOptions.REDSTONE, p.getX(),
+                p.getY() + 1.2D, p.getZ(), 30, 0.4D, 0.4D, 0.4D, 0.0D);
+    }
+
     // ------------------------------------------------------------------
     // The Infinity Gauntlet's cast: in village weaponsmiths' chests
     // ------------------------------------------------------------------
