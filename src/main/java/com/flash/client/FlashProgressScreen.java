@@ -299,7 +299,11 @@ public class FlashProgressScreen extends Screen {
     private void drawHeader(GuiGraphics g) {
         g.fillGradient(0, 0, PW, HEADER_H + 8, withAlpha(accentDark(), 0.9F), 0x00000000);
         g.fill(0, 0, PW, 2, accent());
-        if (theme().icon() == PowerTheme.Icon.BOLT) {
+        // each hero his own symbol (the Flash's bolt, the Hulk's fist, Superman's shield, the others' below)
+        String[] own = HERO_ICONS.get(theme().id());
+        if (own != null) {
+            drawPixelIcon(g, 12, 9, own, accent(), heroIconSecond(theme().id()));
+        } else if (theme().icon() == PowerTheme.Icon.BOLT) {
             drawBolt(g, 14, 8, accent());
         } else if (theme().icon() == PowerTheme.Icon.FIST) {
             drawFist(g, 12, 9, accent());
@@ -1379,6 +1383,79 @@ public class FlashProgressScreen extends Screen {
     }
 
     /** Pixel shield (about 26 x 26): the diamond with an S. */
+    /**
+     * The heroes' own symbols, 13 x 13 drawn at 2 px: '#' the accent, '+' the second colour, 'o' white. Superman keeps
+     * his shield, the Flash his bolt, the Hulk his fist.
+     */
+    private static final java.util.Map<String, String[]> HERO_ICONS = java.util.Map.ofEntries(
+            java.util.Map.entry("thor", new String[] {
+                    ".###########.", ".#+++++++++#.", ".#+++++++++#.", ".###########.", "......o......",
+                    "......o......", "......#......", "......#......", "......#......", "......#......",
+                    "......#......", ".....###.....", "......#......"}),
+            java.util.Map.entry("yas", new String[] {
+                    "......#......", "......#......", "...#..#..#...", "....#+#+#....", ".....+o+.....",
+                    "##+++ooo+++##", ".....+o+.....", "....#+#+#....", "...#..#..#...", "......#......",
+                    "......#......", ".............", "............."}),
+            java.util.Map.entry("scarlet", new String[] {
+                    "......#......", ".....###.....", "#....#+#....#", "##..#+++#..##", "#+#.#+o+#.#+#",
+                    "#++##+++##++#", "#+++++++++++#", ".#+++++++++#.", "..#########..", ".............",
+                    ".............", ".............", "............."}),
+            java.util.Map.entry("storm", new String[] {
+                    "....####.....", "..##++++##...", ".#++++++++##.", "#++++++++++#.", "#++++++++++#.",
+                    ".##########..", "....##.......", "...##........", "..######.....", ".....##......",
+                    "....##.......", "...##........", "..#.........."}),
+            java.util.Map.entry("spider", new String[] {
+                    "#....#.#....#", ".#...#.#...#.", "..#..###..#..", "...#.###.#...", "....#####....",
+                    "#####+++#####", "....#+++#....", "...#.###.#...", "..#..###..#..", ".#...#.#...#.",
+                    "#....#.#....#", ".............", "............."}),
+            java.util.Map.entry("doom", new String[] {
+                    "..#########..", ".#+++++++++#.", "#+++++++++++#", "#+##+++++##+#", "#+o#+++++#o+#",
+                    "#+++++#+++++#", "#+++++#+++++#", "#++#######++#", "#++#.....#++#", ".#+#######+#.",
+                    "..#+++++++#..", "...#######...", "............."}),
+            java.util.Map.entry("doom_god", new String[] {
+                    "#..#..#..#..#", "##.##.#.##.##", "#############", "#+++++++++++#", "#+##+++++##+#",
+                    "#+o#+++++#o+#", "#+++++#+++++#", "#++#######++#", ".#+#.....#+#.", "..#########..",
+                    ".............", ".............", "............."}),
+            java.util.Map.entry("wonder", new String[] {
+                    "#...#...#...#", "#...#...#...#", ".#.#.#.#.#.#.", ".#.#.#.#.#.#.", "..#...#...#..",
+                    "..#...#...#..", ".............", "+++++++++++++", ".+++++++++++.", "..+++++++++..",
+                    "...+++++++...", ".............", "............."}),
+            java.util.Map.entry("lex", new String[] {
+                    "....#####....", "..##+++++##..", ".#++#++++++#.", "#+++#+++++++#", "#+++#+++++++#",
+                    "#+++#+++++++#", "#+++#+++++++#", "#+++######++#", ".#+++++++++#.", "..##+++++##..",
+                    "....#####....", ".............", "............."}),
+            java.util.Map.entry("ultron", new String[] {
+                    "....#.#.#....", "..#########..", ".#+++++++++#.", "#+++++#+++++#", "#+##++#++##+#",
+                    "#+o#++#++#o+#", "#+++++#+++++#", ".#+++###+++#.", ".#+#o#o#o#+#.", "..#+#####+#..",
+                    "...#+++++#...", "....#####....", "............."}));
+
+    private static int heroIconSecond(String id) {
+        return switch (id) {
+            case "thor" -> 0xFF9AA4B4;
+            case "yas" -> 0xFFFFF6D8;
+            case "scarlet" -> 0xFF8E1B2E;
+            case "storm" -> 0xFF5A6E88;
+            case "spider" -> 0xFF14234A;
+            case "doom", "doom_god" -> 0xFF3A4A3E;
+            case "wonder" -> 0xFFE8333C;
+            case "lex" -> 0xFF4A2A70;
+            case "ultron" -> 0xFF6A6E7A;
+            default -> 0xFF333333;
+        };
+    }
+
+    private static void drawPixelIcon(GuiGraphics g, int x, int y, String[] rows, int main, int second) {
+        for (int r = 0; r < rows.length; r++) {
+            for (int c = 0; c < rows[r].length(); c++) {
+                char ch = rows[r].charAt(c);
+                int col = ch == '#' ? main : ch == '+' ? second : ch == 'o' ? 0xFFFFFFFF : 0;
+                if (col != 0) {
+                    g.fill(x + c * 2, y + r * 2, x + c * 2 + 2, y + r * 2 + 2, col);
+                }
+            }
+        }
+    }
+
     private void drawShield(GuiGraphics g, int x, int y, int c) {
         int gold = 0xFFFFC21A;
         int red = 0xFFE8262E;
