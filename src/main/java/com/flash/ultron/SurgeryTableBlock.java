@@ -124,8 +124,19 @@ public class SurgeryTableBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         BlockPos head = headOf(pos, state);
-        if (!(level.getBlockEntity(head) instanceof SurgeryTableBlockEntity table)
-                || !(player instanceof ServerPlayer p)) {
+        if (!(player instanceof ServerPlayer p)) {
+            return InteractionResult.PASS;
+        }
+        BlockState hs = level.getBlockState(head);
+        if (!hs.is(this)) {
+            com.mojang.logging.LogUtils.getLogger().info("[flash] surgery table at {}: no head block at {}", pos, head);
+            return InteractionResult.PASS;
+        }
+        if (!(level.getBlockEntity(head) instanceof SurgeryTableBlockEntity)) {
+            // (lost: made again)
+            level.setBlockEntity(new SurgeryTableBlockEntity(head, hs));
+        }
+        if (!(level.getBlockEntity(head) instanceof SurgeryTableBlockEntity table)) {
             return InteractionResult.PASS;
         }
         if (table.busy()) {
@@ -136,7 +147,7 @@ public class SurgeryTableBlock extends BaseEntityBlock {
             p.displayClientMessage(Component.translatable("message.flash.surgery.nothing"), true);
             return InteractionResult.CONSUME;
         }
-        if (p.isSleeping() || p.isPassenger()) {
+        if (p.isSleeping()) {
             return InteractionResult.CONSUME;
         }
         table.start(p);

@@ -31,6 +31,8 @@ public class SurgeryTableBlockEntity extends BlockEntity {
     public static final int OPERATION_TICKS = 90;
     private static final DustParticleOptions RED = new DustParticleOptions(UltronPowers.RED, 0.8F);
 
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+
     private UUID patient;
     private int ticks = -1;
 
@@ -55,6 +57,8 @@ public class SurgeryTableBlockEntity extends BlockEntity {
         p.stopRiding();
         p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         p.startSleeping(this.worldPosition);
+        LOGGER.info("[flash] surgery started at {} on {} (sleeping={})", this.worldPosition,
+                p.getGameProfile().getName(), p.isSleeping());
         this.patient = p.getUUID();
         this.ticks = 0;
         level.setBlock(this.worldPosition, this.getBlockState().setValue(SurgeryTableBlock.OPERATING, true), 3);
@@ -75,14 +79,28 @@ public class SurgeryTableBlockEntity extends BlockEntity {
             return;
         }
         Player found = table.patient == null ? null : level.getPlayerByUUID(table.patient);
-        if (!(found instanceof ServerPlayer p) || !p.isAlive() || !p.isSleeping()
-                || !p.getSleepingPos().map(pos::equals).orElse(false) || !UltronPowers.has(p)) {
+        Vec3 bed = Vec3.atBottomCenterOf(pos);
+        String why = !(found instanceof ServerPlayer) ? "patient gone" : !found.isAlive() ? "dead"
+                : !UltronPowers.has(found) ? "not Ultron" : found.position().distanceToSqr(bed) > 9.0D ? "walked away"
+                : !found.isSleeping() && found.isShiftKeyDown() ? "got up" : null;
+        if (why != null) {
+            LOGGER.info("[flash] surgery at {} stopped: {}", pos, why);
             table.stop(level, pos);
             if (found instanceof ServerPlayer p2 && UltronPowers.has(p2)) {
                 p2.displayClientMessage(Component.translatable("message.flash.surgery.aborted"), true);
             }
             return;
         }
+        ServerPlayer p = (ServerPlayer) found;
+        // kept on the table whatever wakes him (the flight, the day...): only getting up with shift stops it
+        if (p.getAbilities().flying) {
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+        }
+        if (!p.isSleeping() || !p.getSleepingPos().map(pos::equals).orElse(false)) {
+            p.startSleeping(pos);
+        }
+        p.setDeltaMovement(Vec3.ZERO);
         int t = table.ticks++;
         // over the chest: sparks, the laser's burn, the whine of the tools
         Vec3 chest = p.position().add(0.0D, 0.35D, 0.0D);
