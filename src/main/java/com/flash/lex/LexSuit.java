@@ -719,9 +719,7 @@ public final class LexSuit {
     /** The suit takes about half of every hit. */
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
-        if (event.getEntity() instanceof Player p && !p.level().isClientSide && active(p)) {
-            event.setAmount(event.getAmount() * 0.5F);
-        }
+        // (the suit's resistance: the Lanterns', HeroBalance)
     }
 
     // ------------------------------------------------------------------

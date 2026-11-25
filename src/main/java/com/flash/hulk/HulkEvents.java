@@ -172,18 +172,10 @@ public final class HulkEvents {
                 event.setCanceled(true);
                 return;
             }
-            if (!event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-                event.setAmount(event.getAmount() * HulkPowers.damageFactor(victim));
-            }
             HulkPowers.addRage(victim, 7.0F);
         }
         if (event.getSource().getEntity() instanceof ServerPlayer attacker && HulkPowers.isTransformed(attacker)) {
             HulkPowers.addRage(attacker, 5.0F);
-        }
-        // the Hulk's blasts (abilities, rock, super throw) hurt others less than their size suggests
-        if (event.getSource().is(DamageTypeTags.IS_EXPLOSION) && event.getSource().getEntity() instanceof ServerPlayer
-                hulk && hulk != event.getEntity() && HulkPowers.isTransformed(hulk)) {
-            event.setAmount(event.getAmount() * 0.35F);
         }
         // whoever is held and hits the Hulk breaks free and falls
         if (event.getEntity() instanceof ServerPlayer hulk && event.getSource().getEntity() != null) {

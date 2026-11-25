@@ -207,7 +207,7 @@ public final class UltronPowers {
                 event.setCanceled(true);
                 return;
             }
-            event.setAmount(event.getAmount() * DAMAGE_FACTOR);
+            // (resistance: the Lanterns', HeroBalance)
         }
     }
 

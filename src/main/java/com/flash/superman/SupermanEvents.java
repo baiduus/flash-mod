@@ -83,7 +83,6 @@ public final class SupermanEvents {
     public static void onHurt(LivingHurtEvent event) {
         if (event.getEntity() instanceof ServerPlayer victim && SupermanPowers.isSuperman(victim)
                 && !event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            event.setAmount(event.getAmount() * SupermanPowers.damageFactor(victim));
             SupermanPowers.addXp(victim, 0.6F);
             // whoever is held and hits Superman breaks free
             if (event.getSource().getEntity() != null) {

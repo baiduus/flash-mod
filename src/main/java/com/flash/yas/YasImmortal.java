@@ -21,21 +21,17 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Yas is immortal, and set against the Green Lanterns mod (lanternasverdes):
+ * Yas, above everything (the other heroes are on the Green Lanterns' scale, HeroBalance):
  * <ul>
- * <li>she never dies: whatever would kill her (/kill and the void too) leaves her whole; fallen into the void, she
- * is put back on the ground above it;</li>
+ * <li>nothing hurts her: no hit lands, whatever it is (monsters, heroes, the ring, the void, /kill); should anything
+ * still get to her life, she never dies; fallen into the void, she is put back on the ground above it;</li>
+ * <li>every hit of hers takes off at least 1000 (BRUTAL), through bubbles, armour and every defence;</li>
  * <li>the Lanterns' ring forces its damage through every other mod's defence (its DanoAnel): not through the
- * heroes' of this mod (all of them, hero()): their own defences hold against the ring as against anything;</li>
- * <li>every hero's blow on a ring bearer takes off a set amount, whatever his ring, suit, bubble and armour:
- * five hearts for Superman's slap or the Hulk's punch, the others by the square root of their strength
- * (onLantern).</li>
+ * heroes' of this mod: their own defences hold against the ring as against anything.</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = FlashMod.MODID)
 public final class YasImmortal {
-
-    private static final Map<Integer, Float> RAW = new HashMap<>();
 
     private YasImmortal() {
     }
@@ -128,13 +124,9 @@ public final class YasImmortal {
         }
     }
 
-    /** Any hero of the mod (Yas, Superman, the Hulk, Thor, the Flash, the Scarlet Witch, Storm, Lex in his suit). */
+    /** Any hero of the mod (Yas, Superman, the Hulk, Thor, the Flash, the Scarlet Witch, Storm, Lex in his suit...). */
     public static boolean hero(Player p) {
-        return YasPowers.has(p) || com.flash.power.HeroBalance.isHero(p) || com.flash.scarlet.ScarletPowers.has(p)
-                || com.flash.storm.StormPowers.has(p) || com.flash.spider.SpiderPowers.has(p)
-                || com.flash.doom.DoomPowers.has(p) || com.flash.wonder.WonderPowers.has(p)
-                || com.flash.ultron.UltronPowers.has(p)
-                || com.flash.lex.LexSuit.active(p);
+        return com.flash.power.HeroBalance.hero(p);
     }
 
     /** The ring's forcing of its damage, taken off the heroes (it is noted there by its HIGHEST handler). */
@@ -153,102 +145,68 @@ public final class YasImmortal {
         }
     }
 
+    /** Yas behind a hit (her thrown things too). */
     private static ServerPlayer yasAttacker(DamageSource s) {
         Entity e = s.getEntity();
         if (e == null && s.getDirectEntity() instanceof Projectile pr) {
             e = pr.getOwner();
         }
-        return e instanceof ServerPlayer p && hero(p) ? p : null;
+        return e instanceof ServerPlayer p && YasPowers.has(p) ? p : null;
     }
 
-    private static boolean yasOnRing(LivingEntity victim, DamageSource s) {
-        ServerPlayer hero = yasAttacker(s);
-        // a ring bearer who is a hero himself is left to HeroBalance
-        return hero != null && hero != victim && !victim.level().isClientSide && ringBearer(victim)
-                && !(victim instanceof Player pv && hero(pv));
+    private static boolean yas(Entity e) {
+        return e instanceof ServerPlayer p && YasPowers.has(p);
     }
 
-    /** Through the bubble and whatever else a ring bearer has against a blow. */
-    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
-    public static void onAttackRing(LivingAttackEvent event) {
-        if (event.isCanceled() && yasOnRing(event.getEntity(), event.getSource())) {
-            event.setCanceled(false);
-        }
-    }
-
-    /** The Lanterns' punch with the suit on (1 + the ring's strength of 10): the top of their common blows. */
-    private static final float LANTERN_PUNCH = 11.0F;
-
-    /**
-     * A hero's blow on the Lanterns' scale: up to a Lantern's punch as it is, above it growing as the square root
-     * (Superman's 44 becomes 22, two Lantern punches; a 445 of a hero's strongest blow, 70 as the Lanterns'
-     * heaviest weapon), so every hero hits as hard as a ring does, the stronger still stronger.
-     */
-    public static float lanternScale(float amount) {
-        return amount <= LANTERN_PUNCH ? amount : LANTERN_PUNCH * (float) Math.sqrt(amount / LANTERN_PUNCH);
-    }
-
-    /**
-     * Every hero's damage on the Lanterns' scale (lanternScale), on anything; against a ring bearer below
-     * (onHurtRingFirst), and between heroes HeroBalance sets it as before.
-     */
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onHeroBlow(LivingHurtEvent event) {
-        LivingEntity victim = event.getEntity();
-        if (victim.level().isClientSide || yasAttacker(event.getSource()) == null
-                || victim instanceof Player pv && (hero(pv) || ringBearer(pv))) {
-            return;
-        }
-        event.setAmount(lanternScale(event.getAmount()));
-    }
-
-    /** Superman's slap at level 10 (HeroBalance's reference): on a Lantern it takes five hearts. */
-    private static final float SUPERMAN_SLAP = 44.0F;
-    private static final float SLAP_ON_LANTERN = 10.0F;
-
-    /**
-     * A hero's blow on a ring bearer, what it finally takes off: five hearts for Superman's slap (and the Hulk's
-     * punch, about the same), growing as the square root of the hero's raw blow (Yas' punch about six hearts, a
-     * strong ability seven or eight), whatever the Lantern's ring, suit, bubble and armour.
-     */
-    public static float onLantern(float raw) {
-        return SLAP_ON_LANTERN * (float) Math.sqrt(Math.max(0.0F, raw) / SUPERMAN_SLAP);
-    }
-
+    /** Nothing ever hurts her: no hit lands (the void, /kill and the ring included). */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onHurtRingFirst(LivingHurtEvent event) {
-        LivingEntity victim = event.getEntity();
-        RAW.remove(victim.getId());
-        if (yasOnRing(victim, event.getSource())) {
-            float v = onLantern(event.getAmount());
-            event.setAmount(v);
-            RAW.put(victim.getId(), v);
+    public static void onAttacked(LivingAttackEvent event) {
+        if (yas(event.getEntity())) {
+            event.setCanceled(true);
+            event.getEntity().clearFire();
         }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
-    public static void onHurtRingLast(LivingHurtEvent event) {
-        Float v = RAW.get(event.getEntity().getId());
-        if (v != null) {
-            event.setCanceled(false);
-            event.setAmount(v);
+    public static void onHurtYas(LivingHurtEvent event) {
+        if (yas(event.getEntity())) {
+            event.setCanceled(true);
         }
     }
 
-    /** After armour and everything: exactly that. */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
-    public static void onDamageRing(LivingDamageEvent event) {
-        Float v = RAW.remove(event.getEntity().getId());
-        if (v != null) {
-            event.setCanceled(false);
-            event.setAmount(v);
+    public static void onDamageYas(LivingDamageEvent event) {
+        if (yas(event.getEntity())) {
+            event.setCanceled(true);
+            event.setAmount(0.0F);
         }
     }
 
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END && !RAW.isEmpty()) {
-            RAW.clear();
+    /** Through the bubble and whatever else stops a blow: hers always land. */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onAttackBy(LivingAttackEvent event) {
+        if (event.isCanceled() && !yas(event.getEntity()) && yasAttacker(event.getSource()) != null) {
+            event.setCanceled(false);
         }
     }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onHurtBy(LivingHurtEvent event) {
+        if (!yas(event.getEntity()) && yasAttacker(event.getSource()) != null) {
+            event.setCanceled(false);
+            event.setAmount(Math.max(BRUTAL, event.getAmount()));
+        }
+    }
+
+    /** After armour, enchantments and every defence: at least 1000. */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onDamageBy(LivingDamageEvent event) {
+        if (!yas(event.getEntity()) && yasAttacker(event.getSource()) != null) {
+            event.setCanceled(false);
+            event.setAmount(Math.max(BRUTAL, event.getAmount()));
+        }
+    }
+
+    /** The least any hit of hers takes off. */
+    public static final float BRUTAL = 1000.0F;
 }

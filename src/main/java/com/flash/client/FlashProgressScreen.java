@@ -686,7 +686,7 @@ public class FlashProgressScreen extends Screen {
         g.drawString(this.font, Component.translatable("gui.flash.superman.strength"), PAD + 10, sy + 6, COLOR_MUTED, false);
         scaledText(g, Component.literal(String.format(java.util.Locale.ROOT, "x%.1f", punch)), PAD + 10, sy + 17,
                 1.4F, accent());
-        int resist = Math.round((1.0F - Math.max(0.15F, 0.45F - 0.03F * level)) * 100.0F);
+        int resist = com.flash.power.HeroBalance.suitedCut(level);
         Component dmg = Component.translatable("gui.flash.superman.punch_damage",
                 String.format(java.util.Locale.ROOT, "%.1f", punch),
                 String.format(java.util.Locale.ROOT, "%.1f", punch / 2.0D));
@@ -828,7 +828,7 @@ public class FlashProgressScreen extends Screen {
         g.drawString(this.font, Component.translatable("gui.flash.thor.strength"), PAD + 10, sy + 6, COLOR_MUTED, false);
         scaledText(g, Component.literal(String.format(java.util.Locale.ROOT, "x%.1f", punch)), PAD + 10, sy + 17,
                 1.4F, accent());
-        int resist = Math.round((1.0F - Math.max(0.24F, 0.64F - 0.04F * level)) * 100.0F);
+        int resist = com.flash.power.HeroBalance.suitedCut(level);
         Component dmg = Component.translatable("gui.flash.superman.punch_damage",
                 String.format(java.util.Locale.ROOT, "%.1f", punch),
                 String.format(java.util.Locale.ROOT, "%.1f", punch / 2.0D));

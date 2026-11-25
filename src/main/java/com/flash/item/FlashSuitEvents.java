@@ -27,6 +27,9 @@ public final class FlashSuitEvents {
                 || event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
+        if (com.flash.power.HeroBalance.hero(player)) {
+            return; // a hero in the suit: the Lanterns' resistance (HeroBalance)
+        }
         int pieces = FlashSuitItem.countWorn(player);
         if (pieces <= 0) {
             return;

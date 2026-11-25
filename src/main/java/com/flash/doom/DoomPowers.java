@@ -298,10 +298,8 @@ public final class DoomPowers {
                 || event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
-        float f = god(p) ? GOD_DAMAGE_FACTOR : DAMAGE_FACTOR;
-        if (event.getSource().is(DamageTypeTags.IS_EXPLOSION)) {
-            f *= 0.5F;
-        }
+        // the resistance is the Lanterns' (HeroBalance); the god form keeps its edge over it
+        float f = god(p) ? GOD_DAMAGE_FACTOR / DAMAGE_FACTOR : 1.0F;
         if (DoomAbilities.shielded(p)) {
             f *= SHIELD_FACTOR;
             DoomAbilities.shieldHit(p);

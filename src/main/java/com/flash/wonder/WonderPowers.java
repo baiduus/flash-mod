@@ -205,7 +205,7 @@ public final class WonderPowers {
     public static void onHurt(LivingHurtEvent event) {
         if (event.getEntity() instanceof ServerPlayer p && has(p)
                 && !event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            event.setAmount(event.getAmount() * DAMAGE_FACTOR);
+            // (resistance: the Lanterns', HeroBalance)
         }
     }
 

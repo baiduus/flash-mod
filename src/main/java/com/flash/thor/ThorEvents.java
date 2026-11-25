@@ -82,7 +82,7 @@ public final class ThorEvents {
     public static void onHurt(LivingHurtEvent event) {
         if (event.getEntity() instanceof ServerPlayer victim && ThorPowers.isThor(victim)
                 && !event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            float amount = event.getAmount() * ThorPowers.damageFactor(victim);
+            float amount = event.getAmount(); // (resistance: the Lanterns', HeroBalance)
             if (ThorPowers.flag(victim, ThorPowers.F_SPIN)) {
                 // the spinning hammer keeps most of it away
                 amount *= 0.3F;

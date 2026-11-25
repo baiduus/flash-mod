@@ -194,7 +194,7 @@ public final class ScarletPowers {
     public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
         if (event.getEntity() instanceof ServerPlayer victim && has(victim)
                 && !event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            event.setAmount(event.getAmount() * DAMAGE_FACTOR);
+            // (resistance: the Lanterns', HeroBalance)
         }
     }
 
