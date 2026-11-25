@@ -415,10 +415,9 @@ public final class SupermanClient {
         flatRight = flatRight.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : flatRight.normalize();
         Vec3 target = Vec3.ZERO;
         if (forward > 0.0F) {
-            // the boost is everyone's top speed (Yas 200 blocks a second, the others 137), whatever the level
-            // W: cruise; sprint: twice that; the boost: twice the top cruise, whatever the level
-            target = look.scale(stage == 3 ? 2.0D * (yasFlight ? YAS_CRUISE : CRUISE)
-                    : stage == 2 ? 2.0D * cruise : cruise);
+            // (as the Lanterns' rings: sprinting doubles the speed of the level, the boost goes no further; the top
+            // is a Rank 4 ring's, 137 blocks a second and 275 sprinting; Yas a White Lantern's, 220 and 439)
+            target = look.scale(stage >= 2 ? 2.0D * cruise : cruise);
         } else if (forward < 0.0F) {
             target = look.scale(-0.3D * scale);
         }
