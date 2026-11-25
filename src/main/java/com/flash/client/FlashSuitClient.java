@@ -74,6 +74,7 @@ public final class FlashSuitClient {
             SupermanSuitLayer.reset();
             MjolnirRenderer.reset();
             GammaChamberRenderer.reset();
+            TransformationChamberRenderer.reset();
             FlashRingLayer.reset();
         });
     }

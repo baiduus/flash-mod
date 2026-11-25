@@ -95,9 +95,17 @@ public class GammaChamberBlockEntity extends BlockEntity {
             HulkPowers.grant(occupant, true);
             occupant.displayClientMessage(Component.translatable("message.flash.gamma_exposed"), false);
             chamber.stop(level, pos, state, false);
-            // the chamber cannot hold the new Hulk: it blows up (he is left out of his own blast)
-            level.removeBlock(pos, false);
-            level.explode(occupant, cx, y0 + 1.0D, cz, 5.0F, Level.ExplosionInteraction.TNT);
+            // the new Hulk's burst blows up everything around (he is left out of his own blast); the chamber
+            // itself, built for it, stays whole
+            level.explode(occupant, null, new net.minecraft.world.level.ExplosionDamageCalculator() {
+                @Override
+                public boolean shouldBlockExplode(net.minecraft.world.level.Explosion explosion,
+                                                  net.minecraft.world.level.BlockGetter getter, BlockPos at,
+                                                  BlockState block, float power) {
+                    return !(block.getBlock() instanceof GammaChamberBlock) && super.shouldBlockExplode(explosion,
+                            getter, at, block, power);
+                }
+            }, cx, y0 + 1.0D, cz, 5.0F, false, Level.ExplosionInteraction.TNT);
         }
     }
 

@@ -613,4 +613,10 @@ public class TransformationChamberBlockEntity extends BlockEntity {
         }
         tag.putLong(TAG_ENTERED_AT, this.enteredAt);
     }
+
+    /** The model reaches about 2 blocks around the cabin and 5.4 up. */
+    @Override
+    public AABB getRenderBoundingBox() {
+        return new AABB(this.worldPosition).inflate(3.5D, 0.0D, 3.5D).expandTowards(0.0D, 5.5D, 0.0D);
+    }
 }
