@@ -204,6 +204,12 @@ public final class UltronFlight {
                 this.bodyPitch = value0.getX();
                 return value0;
             }
+            if ("rightLeg".equals(modelName) || "leftLeg".equals(modelName)) {
+                // Iron Man's legs: straight and together under the thrusters, never a walking stride
+                float drift = (float) Math.sin((this.player.tickCount + tickDelta) * 0.06F) * 0.025F;
+                return "rightLeg".equals(modelName) ? new Vec3f(0.08F + drift, 0.0F, 0.035F)
+                        : new Vec3f(0.02F - drift, 0.0F, -0.035F);
+            }
             if (!"rightArm".equals(modelName) && !"leftArm".equals(modelName)) {
                 return value0;
             }
