@@ -181,10 +181,7 @@ def ultron():
     m.save()
 
 
-if __name__ == "__main__":
-    g.R = g.R  # paths relative to the repo root
-    ultron()
-    print("ok")
+# (the body itself is now tools/gen_ultron_body.py; ultron() above was the first try)
 
 
 # ----------------------------------------------------------------------------------

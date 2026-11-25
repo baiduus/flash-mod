@@ -31,6 +31,8 @@ public final class UltronClient {
 
     public static void reset() {
         ULTRONS.clear();
+        UltronVfx.reset();
+        UltronFlight.reset();
     }
 
     public static void set(int entity, boolean has, int data) {
@@ -58,6 +60,11 @@ public final class UltronClient {
         return d != null && (d & UltronPowers.F_BEAM) != 0;
     }
 
+    public static boolean prime(Entity e) {
+        Integer d = ULTRONS.get(e.getId());
+        return d != null && (d & UltronPowers.F_PRIME) != 0;
+    }
+
     private static boolean useWas;
 
     /** Every tick from YasAbilities with his mode now (null: not him). */
@@ -78,6 +85,14 @@ public final class UltronClient {
                     use("u_beam", UltronAbilities.ANNIHILATE);
                 }
             }
+            case "combat_ultron" -> {
+                if (pressed) {
+                    use("u_charge", UltronAbilities.CHARGE);
+                }
+                if (variant) {
+                    use("u_grab", UltronAbilities.GRAB);
+                }
+            }
             case "legion" -> {
                 if (pressed) {
                     use("u_legion", UltronAbilities.LEGION);
@@ -86,7 +101,15 @@ public final class UltronClient {
                     use("u_command", UltronAbilities.COMMAND);
                 }
             }
-            case "control" -> {
+            case "core" -> {
+                if (pressed) {
+                    use("u_prime", UltronAbilities.PRIME);
+                }
+                if (variant) {
+                    use("u_nova", UltronAbilities.NOVA);
+                }
+            }
+            case "ultron_control" -> {
                 if (pressed) {
                     use("u_hack", UltronAbilities.HACK);
                 }

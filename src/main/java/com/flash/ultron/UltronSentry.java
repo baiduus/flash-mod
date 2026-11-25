@@ -3,8 +3,6 @@ package com.flash.ultron;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -19,44 +17,55 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * A sentry of Ultron's Legion: a smaller Ultron body built by him (UltronAbilities, the Legion). It follows him,
- * fights whatever he fights or whatever hits him, and hunts the monsters near him: punches up close, a red laser
- * from the eyes from afar. It lasts a minute, then falls apart; it is never saved and drops nothing.
+ * A drone of Ultron's Legion: a smaller Ultron body flying on its thrusters (UltronAbilities, the Legion). It flies
+ * around him, goes for whatever he fights or whatever hits him and hunts the monsters near him: it circles its prey
+ * shooting orange bolts from its palm and dives on it to strike. It lasts a minute and a half, then falls apart; it is
+ * never saved and drops nothing.
  */
 public class UltronSentry extends PathfinderMob {
 
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(UltronSentry.class,
             EntityDataSerializers.OPTIONAL_UUID);
-    private static final DustParticleOptions RED = new DustParticleOptions(UltronPowers.RED, 0.9F);
-    private int life = 1200;
-    private int laser = 20;
+    private int life = 1800;
+    private int shot = 30;
+    private int dive;
 
     public UltronSentry(EntityType<? extends UltronSentry> type, Level level) {
         super(type, level);
-        this.setMaxUpStep(1.0F);
+        this.moveControl = new FlyingMoveControl(this, 20, true);
+        this.setNoGravity(true);
     }
 
     public static AttributeSupplier.Builder attributes() {
         return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 30.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.33D).add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.ATTACK_DAMAGE, 6.0D).add(Attributes.ARMOR, 10.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.6D);
+                .add(Attributes.MOVEMENT_SPEED, 0.35D).add(Attributes.FLYING_SPEED, 0.7D)
+                .add(Attributes.FOLLOW_RANGE, 40.0D).add(Attributes.ATTACK_DAMAGE, 7.0D)
+                .add(Attributes.ARMOR, 10.0D).add(Attributes.KNOCKBACK_RESISTANCE, 0.6D);
     }
 
     public static UltronSentry create(ServerLevel level, ServerPlayer owner) {
         UltronSentry s = new UltronSentry(UltronRegistry.SENTRY.get(), level);
         s.entityData.set(OWNER, Optional.of(owner.getUUID()));
         return s;
+    }
+
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        FlyingPathNavigation nav = new FlyingPathNavigation(this, level);
+        nav.setCanOpenDoors(false);
+        nav.setCanFloat(true);
+        nav.setCanPassDoors(true);
+        return nav;
     }
 
     @Override
@@ -76,10 +85,8 @@ public class UltronSentry extends PathfinderMob {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.25D, true));
-        this.goalSelector.addGoal(3, new FollowOwner(this));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new Hunt(this));
+        this.goalSelector.addGoal(2, new Escort(this));
     }
 
     @Override
@@ -96,28 +103,12 @@ public class UltronSentry extends PathfinderMob {
         LivingEntity t = this.getTarget();
         if (t != null && (!t.isAlive() || UltronAbilities.friend(o.getUUID(), t))) {
             this.setTarget(null);
-            t = null;
         }
-        if (t == null && this.tickCount % 10 == 0) {
+        if (this.getTarget() == null && this.tickCount % 10 == 0) {
             this.setTarget(pickTarget(o));
-            t = this.getTarget();
         }
-        // the eye laser at a distance
-        if (t != null && --this.laser <= 0 && this.distanceToSqr(t) < 18.0D * 18.0D && this.distanceToSqr(t) > 9.0D
-                && this.hasLineOfSight(t)) {
-            this.laser = 30 + this.random.nextInt(10);
-            ServerLevel level = (ServerLevel) this.level();
-            Vec3 a = this.getEyePosition();
-            Vec3 b = t.getEyePosition().add(0.0D, -0.3D, 0.0D);
-            UltronAbilities.line(level, a, b, RED, 0.4D);
-            level.sendParticles(ParticleTypes.SMALL_FLAME, b.x, b.y, b.z, 3, 0.1D, 0.1D, 0.1D, 0.01D);
-            level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE,
-                    0.6F, 1.8F);
-            t.invulnerableTime = 0;
-            t.hurt(this.damageSources().indirectMagic(this, o), 4.0F);
-        }
-        if (this.distanceToSqr(o) > 40.0D * 40.0D && this.level() == o.level()) {
-            this.teleportTo(o.getX(), o.getY(), o.getZ());
+        if (this.distanceToSqr(o) > 48.0D * 48.0D && this.level() == o.level()) {
+            this.teleportTo(o.getX(), o.getY() + 2.0D, o.getZ());
         }
     }
 
@@ -133,8 +124,8 @@ public class UltronSentry extends PathfinderMob {
             return foe;
         }
         LivingEntity near = null;
-        double best = 16.0D * 16.0D;
-        for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(16.0D),
+        double best = 20.0D * 20.0D;
+        for (LivingEntity e : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(20.0D),
                 e -> e instanceof Enemy && e.isAlive() && !UltronAbilities.friend(o.getUUID(), e))) {
             double d = e.distanceToSqr(this);
             if (d < best) {
@@ -145,6 +136,20 @@ public class UltronSentry extends PathfinderMob {
         return near;
     }
 
+    /** A bolt from the palm. */
+    private void shoot(LivingEntity t) {
+        Player o = ownerPlayer();
+        if (o == null) {
+            return;
+        }
+        Vec3 a = this.position().add(0.0D, this.getBbHeight() * 0.6D, 0.0D);
+        Vec3 b = t.position().add(0.0D, t.getBbHeight() * 0.5D, 0.0D);
+        UltronAbilities.fx(this, UltronAbilities.FX_SHOT, a, b, 1.0F, t.getId());
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLAZE_SHOOT,
+                SoundSource.HOSTILE, 0.6F, 1.7F);
+        UltronAbilities.hurt(this, o, t, 5.0F);
+    }
+
     public void fallApart() {
         pieces();
         this.discard();
@@ -152,9 +157,10 @@ public class UltronSentry extends PathfinderMob {
 
     private void pieces() {
         if (this.level() instanceof ServerLevel level) {
-            level.sendParticles(RED, this.getX(), this.getY() + 0.8D, this.getZ(), 25, 0.3D, 0.6D, 0.3D, 0.0D);
-            level.sendParticles(ParticleTypes.SMOKE, this.getX(), this.getY() + 0.8D, this.getZ(), 15, 0.3D, 0.6D,
-                    0.3D, 0.02D);
+            UltronAbilities.fx(this, UltronAbilities.FX_HIT, this.position().add(0.0D, 0.7D, 0.0D), Vec3.ZERO, 0.6F,
+                    -1);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE, this.getX(), this.getY() + 0.7D,
+                    this.getZ(), 15, 0.3D, 0.5D, 0.3D, 0.02D);
             level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.IRON_GOLEM_DEATH,
                     SoundSource.HOSTILE, 0.6F, 1.6F);
         }
@@ -227,25 +233,62 @@ public class UltronSentry extends PathfinderMob {
         super.addAdditionalSaveData(tag);
     }
 
-    /** Follows Ultron as a tamed wolf does. */
-    private static final class FollowOwner extends Goal {
+    /** Circles its prey a few blocks up, shooting; now and then it dives on it and strikes. */
+    private static final class Hunt extends Goal {
         private final UltronSentry s;
 
-        FollowOwner(UltronSentry s) {
+        Hunt(UltronSentry s) {
             this.s = s;
             this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
         @Override
         public boolean canUse() {
-            Player o = this.s.ownerPlayer();
-            return o != null && this.s.getTarget() == null && this.s.distanceToSqr(o) > 36.0D;
+            return this.s.getTarget() != null && this.s.getTarget().isAlive();
         }
 
         @Override
-        public boolean canContinueToUse() {
-            Player o = this.s.ownerPlayer();
-            return o != null && this.s.getTarget() == null && this.s.distanceToSqr(o) > 6.0D;
+        public void tick() {
+            LivingEntity t = this.s.getTarget();
+            if (t == null) {
+                return;
+            }
+            this.s.getLookControl().setLookAt(t, 30.0F, 30.0F);
+            if (this.s.dive > 0) {
+                this.s.dive--;
+                this.s.getMoveControl().setWantedPosition(t.getX(), t.getY() + t.getBbHeight() * 0.5D, t.getZ(), 1.8D);
+                if (this.s.distanceToSqr(t) < 2.6D * 2.6D) {
+                    this.s.doHurtTarget(t);
+                    this.s.dive = 0;
+                }
+                return;
+            }
+            double a = (this.s.tickCount + this.s.getId() * 37) * 0.06D;
+            double r = 4.5D;
+            this.s.getMoveControl().setWantedPosition(t.getX() + Math.cos(a) * r, t.getY() + 2.5D + Math.sin(a * 0.7D),
+                    t.getZ() + Math.sin(a) * r, 1.2D);
+            if (--this.s.shot <= 0 && this.s.hasLineOfSight(t)) {
+                this.s.shot = 22 + this.s.random.nextInt(12);
+                this.s.shoot(t);
+                if (this.s.random.nextInt(4) == 0) {
+                    this.s.dive = 20;
+                }
+            }
+        }
+    }
+
+    /** Flies around Ultron's shoulders when there is nothing to fight. */
+    private static final class Escort extends Goal {
+        private final UltronSentry s;
+
+        Escort(UltronSentry s) {
+            this.s = s;
+            this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return this.s.getTarget() == null && this.s.ownerPlayer() != null;
         }
 
         @Override
@@ -254,8 +297,12 @@ public class UltronSentry extends PathfinderMob {
             if (o == null) {
                 return;
             }
-            this.s.getLookControl().setLookAt(o, 10.0F, this.s.getMaxHeadXRot());
-            this.s.getNavigation().moveTo(o, 1.2D);
+            double a = (this.s.tickCount + this.s.getId() * 53) * 0.04D;
+            double r = 2.5D + (this.s.getId() % 3) * 0.6D;
+            this.s.getMoveControl().setWantedPosition(o.getX() + Math.cos(a) * r, o.getY() + 2.2D
+                    + (this.s.getId() % 3) * 0.5D, o.getZ() + Math.sin(a) * r, 1.3D);
+            this.s.getLookControl().setLookAt(o.getX() + o.getLookAngle().x * 8.0D, o.getEyeY(),
+                    o.getZ() + o.getLookAngle().z * 8.0D);
         }
     }
 }

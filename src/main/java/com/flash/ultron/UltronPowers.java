@@ -52,6 +52,7 @@ public final class UltronPowers {
 
     public static final int F_FLYING = 1;
     public static final int F_BEAM = 2;
+    public static final int F_PRIME = 4;
 
     public static final Vector3f RED = new Vector3f(1.0F, 0.12F, 0.08F);
 
@@ -115,7 +116,8 @@ public final class UltronPowers {
         if (!has(p)) {
             return 0;
         }
-        return (p.getAbilities().flying ? F_FLYING : 0) | (UltronAbilities.beaming(p) ? F_BEAM : 0);
+        return (p.getAbilities().flying ? F_FLYING : 0) | (UltronAbilities.beaming(p) ? F_BEAM : 0)
+                | (UltronAbilities.prime(p) ? F_PRIME : 0);
     }
 
     public static void sync(ServerPlayer p) {

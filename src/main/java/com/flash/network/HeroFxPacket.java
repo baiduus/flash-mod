@@ -38,6 +38,8 @@ public record HeroFxPacket(int hero, int caster, int type, Vec3 from, Vec3 to, f
                         com.flash.client.SpiderClient.fx(this);
                     } else if (this.hero == HeroSyncPacket.WONDER) {
                         com.flash.client.WonderVfx.fx(this);
+                    } else if (this.hero == HeroSyncPacket.ULTRON) {
+                        com.flash.client.UltronVfx.fx(this);
                     } else {
                         com.flash.client.DoomVfx.fx(this);
                     }

@@ -47,6 +47,13 @@ public class SurgeryTableBlockEntity extends BlockEntity {
         if (level == null) {
             return;
         }
+        // out of the air and onto the table
+        if (p.getAbilities().flying) {
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+        }
+        p.stopRiding();
+        p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         p.startSleeping(this.worldPosition);
         this.patient = p.getUUID();
         this.ticks = 0;

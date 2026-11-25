@@ -339,7 +339,7 @@ public final class SupermanPose {
 
     /** Lex's suit on (no powers of his own): his moves play here too, with Iron Man's flight poses. */
     private static boolean lex(AbstractClientPlayer player) {
-        return com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_ON);
+        return com.flash.lex.LexState.flag(player, com.flash.lex.LexSuit.F_ON) || UltronClient.isUltron(player);
     }
 
 
