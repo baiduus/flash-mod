@@ -2000,7 +2000,7 @@
   "gui.flash.ultron.stat_toughness_value": "Corpo de vibrânio",
   "gui.flash.ultron.stat_toughness_hint": "quase indestrutível",
   "gui.flash.ultron.stat_flight": "Voo",
-  "gui.flash.ultron.stat_flight_value": "≈ Superman nv. 8",
+  "gui.flash.ultron.stat_flight_value": "≈ Superman nv. 10",
   "gui.flash.ultron.stat_flight_hint": "tecla de voo",
   "gui.flash.ultron.about": "Sobre",
   "gui.flash.ultron.about1": "Ultron, a inteligência artificial que decidiu salvar o mundo do seu jeito: um corpo de vibrânio, raios de energia, uma legião de robôs e a capacidade de hackear qualquer criatura.",
@@ -2038,5 +2038,8 @@
   "hud.flash.scarlet.row.u_nova": "Detonação do núcleo",
   "message.flash.ultron.grab_none": "Mire numa criatura perto para agarrar.",
   "message.flash.ultron.machine": "%s obedece ao Ultron.",
-  "message.flash.ultron.prime": "ULTRON PRIME: sobrecarga do núcleo!"
+  "message.flash.ultron.prime": "ULTRON PRIME: sobrecarga do núcleo!",
+  "commands.flash.ultron.cooldown_reset": "Recargas do Ultron de %s zeradas",
+  "commands.flash.ultron.cooldown_off": "%s: habilidades do Ultron sem recarga",
+  "commands.flash.ultron.cooldown_on": "%s: recargas do Ultron de volta ao normal"
 }

@@ -98,7 +98,27 @@ public final class ScarletAbilities {
         return until != null && p.level().getGameTime() < until;
     }
 
+    /** Clears a player's cooldowns whose id starts with {@code prefix} (the commands' "cooldown reset"). */
+    public static void clearCooldowns(ServerPlayer p, String prefix) {
+        String key = p.getUUID() + prefix;
+        java.util.List<String> ids = new java.util.ArrayList<>();
+        COOLDOWNS.keySet().removeIf(k -> {
+            if (k.startsWith(key)) {
+                ids.add(k.substring(p.getUUID().toString().length()));
+                return true;
+            }
+            return false;
+        });
+        for (String id : ids) {
+            FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p),
+                    new com.flash.network.ScarletCooldownPacket(id, 0));
+        }
+    }
+
     public static void start(ServerPlayer p, String id, int ticks) {
+        if (id.startsWith("u_") && p.getPersistentData().getBoolean(com.flash.ultron.UltronCommands.NO_COOLDOWNS)) {
+            ticks = 0; // /ultron cooldown off
+        }
         COOLDOWNS.put(p.getUUID() + id, p.level().getGameTime() + ticks);
         FlashNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> p),
                 new com.flash.network.ScarletCooldownPacket(id, ticks));

@@ -2082,7 +2082,7 @@
   "gui.flash.ultron.stat_toughness_value": "Vibranium body",
   "gui.flash.ultron.stat_toughness_hint": "almost indestructible",
   "gui.flash.ultron.stat_flight": "Flight",
-  "gui.flash.ultron.stat_flight_value": "≈ Superman lv. 8",
+  "gui.flash.ultron.stat_flight_value": "≈ Superman lv. 10",
   "gui.flash.ultron.stat_flight_hint": "flight key",
   "gui.flash.ultron.about": "About",
   "gui.flash.ultron.about1": "Ultron, the artificial intelligence that decided to save the world his own way: a vibranium body, energy beams, a legion of robots and the power to hack any creature.",
@@ -2120,5 +2120,8 @@
   "hud.flash.scarlet.row.u_nova": "Core detonation",
   "message.flash.ultron.grab_none": "Aim at a nearby creature to grab it.",
   "message.flash.ultron.machine": "%s obeys Ultron.",
-  "message.flash.ultron.prime": "ULTRON PRIME: core overcharge!"
+  "message.flash.ultron.prime": "ULTRON PRIME: core overcharge!",
+  "commands.flash.ultron.cooldown_reset": "Reset %s's Ultron cooldowns",
+  "commands.flash.ultron.cooldown_off": "%s: Ultron's abilities have no cooldown",
+  "commands.flash.ultron.cooldown_on": "%s: Ultron's cooldowns back to normal"
 }
