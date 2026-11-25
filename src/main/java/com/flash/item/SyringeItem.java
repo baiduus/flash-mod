@@ -93,7 +93,8 @@ public class SyringeItem extends Item {
                 return InteractionResultHolder.pass(stack);
             }
             if (!level.isClientSide && !com.flash.power.HeroPowers.canExtract(player)) {
-                player.displayClientMessage(Component.translatable("message.flash.extract_temporary"), true);
+                player.displayClientMessage(Component.translatable(com.flash.ultron.UltronPowers.has(player)
+                        ? "message.flash.extract_ultron" : "message.flash.extract_temporary"), true);
                 return InteractionResultHolder.fail(stack);
             }
         }

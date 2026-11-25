@@ -87,6 +87,9 @@ public final class FlashClientEvents {
                 AccelerationPortalRenderer::new
         );
         event.registerBlockEntityRenderer(ModBlockEntities.GAMMA_CHAMBER.get(), GammaChamberRenderer::new);
+        event.registerBlockEntityRenderer(com.flash.ultron.UltronRegistry.SURGERY_TABLE_BE.get(),
+                SurgeryTableRenderer::new);
+        event.registerEntityRenderer(com.flash.ultron.UltronRegistry.SENTRY.get(), UltronSentryRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TRANSFORMATION_CHAMBER.get(),
                 TransformationChamberRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MJOLNIR_STONE.get(), MjolnirStoneRenderer::new);
@@ -116,6 +119,7 @@ public final class FlashClientEvents {
                 player.addLayer(new DoomLayer(player));
                 player.addLayer(new WonderLayer(player));
                 player.addLayer(new LexSuitLayer<>(player));
+                player.addLayer(new UltronLayer<>(player));
                 player.addLayer(new YasLayer<>(player));
                 player.addLayer(new ScarletLayer(player));
                 player.addLayer(new com.flash.client.infinity.InfinityAuraLayer(player));

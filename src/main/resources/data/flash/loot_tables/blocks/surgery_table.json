@@ -1,0 +1,28 @@
+{
+ "type": "minecraft:block",
+ "pools": [
+  {
+   "rolls": 1,
+   "entries": [
+    {
+     "type": "minecraft:item",
+     "name": "flash:surgery_table",
+     "conditions": [
+      {
+       "condition": "minecraft:block_state_property",
+       "block": "flash:surgery_table",
+       "properties": {
+        "part": "head"
+       }
+      }
+     ]
+    }
+   ],
+   "conditions": [
+    {
+     "condition": "minecraft:survives_explosion"
+    }
+   ]
+  }
+ ]
+}

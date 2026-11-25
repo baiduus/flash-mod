@@ -253,6 +253,17 @@ public final class YasAbilities {
             {"....####....", "..##++++##..", ".#++####++#.", ".#+#+##+#+#.", "#+#+####+#+#", "#+##.##.##+#",
                     "#+##.##.##+#", "#+#+####+#+#", ".#+#+##+#+#.", ".#++####++#.", "..##++++##..", "....####...."}};
 
+    /** Ultron: Energy, the Legion, Control. */
+    public static final String[] ULTRON_MODES = {"ultron_energy", "legion", "control"};
+    private static final int[] ULTRON_COLORS = {0xFFFF3A2A, 0xFFC8CCD8, 0xFFFF6A4A};
+    private static final String[][] ULTRON_ICONS = {
+            {"............", "....####....", "..##++++##..", ".#++####++#.", ".#+#++++#+#.", "#+#+####+#+#",
+                    "#+#+####+#+#", ".#+#++++#+#.", ".#++####++#.", "..##++++##..", "....####....", "............"},
+            {"..##....##..", ".#++#..#++#.", ".#++#..#++#.", "..##....##..", ".####..####.", "#++++##++++#",
+                    "#++++##++++#", ".####..####.", ".#..#..#..#.", ".#..#..#..#.", ".##.#..#.##.", "............"},
+            {"#.#.#..#.#.#", ".#.#.##.#.#.", "#..........#", ".#..####..#.", "#..#++++#..#", "..#+#..#+#..",
+                    "..#+#..#+#..", "#..#++++#..#", ".#..####..#.", "#..........#", ".#.#.##.#.#.", "#.#.#..#.#.#"}};
+
     /** God Emperor Doom: his three modes and the Beyonders' power. */
     public static final String[] DOOM_GOD_MODES = {"gauntlets", "force", "sorcery", "beyonder"};
     private static final int[] DOOM_GOD_COLORS = {0xFF7FE8FF, 0xFF5AE07A, 0xFFA6FF5A, 0xFFFFD86A};
@@ -281,6 +292,7 @@ public final class YasAbilities {
     private static final Own DOOM_OWN = new Own("doom", DOOM_MODES, DOOM_COLORS, DOOM_ICONS);
     private static final Own DOOM_GOD_OWN = new Own("doom", DOOM_GOD_MODES, DOOM_GOD_COLORS, DOOM_GOD_ICONS);
     private static final Own WONDER_OWN = new Own("wonder", WONDER_MODES, WONDER_COLORS, WONDER_ICONS);
+    private static final Own ULTRON_OWN = new Own("ultron", ULTRON_MODES, ULTRON_COLORS, ULTRON_ICONS);
 
     /** The local hero's own modes (null: Yas, the Scarlet Witch or nobody). */
     private static Own own() {
@@ -292,6 +304,9 @@ public final class YasAbilities {
         }
         if (PowerTheme.localWonder()) {
             return WONDER_OWN;
+        }
+        if (PowerTheme.localUltron()) {
+            return ULTRON_OWN;
         }
         if (PowerTheme.localDoom()) {
             return DoomClient.god(Minecraft.getInstance().player) ? DOOM_GOD_OWN : DOOM_OWN;
@@ -569,6 +584,8 @@ public final class YasAbilities {
             SpiderClient.tickMode(mc, null, false);
             DoomClient.tickMode(mc, null, false);
             WonderClient.tickMode(mc, null, false);
+        UltronClient.tickMode(mc, null, false);
+            UltronClient.tickMode(mc, null, false);
             ScarletClient.tickMode(mc, null, false);
             // Z is the stones' now (the mode's next ability: InfinityClient)
             return;
@@ -589,6 +606,7 @@ public final class YasAbilities {
             SpiderClient.tickMode(mc, o == SPIDER_OWN ? mode : null, v);
             DoomClient.tickMode(mc, o == DOOM_OWN || o == DOOM_GOD_OWN ? mode : null, v);
             WonderClient.tickMode(mc, o == WONDER_OWN ? mode : null, v);
+            UltronClient.tickMode(mc, o == ULTRON_OWN ? mode : null, v);
             com.flash.client.godwand.GodWandClient.tickMode(mc, -1);
             com.flash.client.godwand.GodWandClient.tickPath(mc, false);
             return;
@@ -597,6 +615,7 @@ public final class YasAbilities {
         SpiderClient.tickMode(mc, null, false);
         DoomClient.tickMode(mc, null, false);
         WonderClient.tickMode(mc, null, false);
+        UltronClient.tickMode(mc, null, false);
         if (mc.player == null || !(PowerTheme.localYas() || PowerTheme.localScarlet()) || !ready()) {
             unbind();
             ScarletClient.tickMode(mc, null, false);

@@ -12,6 +12,7 @@ public record HeroSyncPacket(int hero, int entity, boolean has, int data) {
     public static final int SPIDER = 0;
     public static final int DOOM = 1;
     public static final int WONDER = 2;
+    public static final int ULTRON = 3;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeByte(this.hero);
@@ -32,6 +33,8 @@ public record HeroSyncPacket(int hero, int entity, boolean has, int data) {
                         com.flash.client.SpiderClient.set(this.entity, this.has, this.data);
                     } else if (this.hero == WONDER) {
                         com.flash.client.WonderClient.set(this.entity, this.has, this.data);
+                    } else if (this.hero == ULTRON) {
+                        com.flash.client.UltronClient.set(this.entity, this.has, this.data);
                     } else {
                         com.flash.client.DoomClient.set(this.entity, this.has, this.data);
                     }

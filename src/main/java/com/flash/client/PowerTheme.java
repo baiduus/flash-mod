@@ -81,6 +81,16 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
             0xFFFFC83C, 0xFF3A0C12, 0xFF1A0508,
             "gui.flash.theme.wonder.title", "gui.flash.theme.wonder.subtitle", Icon.SHIELD, true);
 
+    /** Ultron: his red light on vibranium grey. */
+    public static final PowerTheme ULTRON = new PowerTheme("ultron",
+            0xFFFF3A2A, 0xFF2A2C34, 0xFF121318,
+            "gui.flash.theme.ultron.title", "gui.flash.theme.ultron.subtitle", Icon.SHIELD, true);
+
+    public static boolean localUltron() {
+        net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+        return player != null && UltronClient.isUltron(player);
+    }
+
     public static boolean localWonder() {
         net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
         return player != null && WonderClient.isWonder(player);
@@ -103,7 +113,7 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
 
     /** One of the heroes with modes of their own on R / Z (Storm, Spider-Man, Doom: not Yas, not Wanda). */
     public static boolean localOwnModes() {
-        return localStorm() || localSpider() || localDoom() || localWonder();
+        return localStorm() || localSpider() || localDoom() || localWonder() || localUltron();
     }
 
     public static boolean localStorm() {
@@ -176,6 +186,9 @@ public record PowerTheme(String id, int accent, int accentDark, int accentSoft,
         }
         if (localWonder()) {
             return WONDER;
+        }
+        if (localUltron()) {
+            return ULTRON;
         }
         if (localThor()) {
             return THOR;

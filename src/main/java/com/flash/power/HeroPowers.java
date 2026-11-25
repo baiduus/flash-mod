@@ -53,7 +53,12 @@ public final class HeroPowers {
         /** Doctor Doom (the grimoire of Latveria, in a netherite armour). */
         DOOM("doom", com.flash.doom.DoomPowers.KEY, ModItems.DOOM_ESSENCE_CAPSULE),
         /** Wonder Woman (the Amazons' trial: a Ravager brought down with a sword and a shield). */
-        WONDER("wonderwoman", com.flash.wonder.WonderPowers.KEY, ModItems.WONDER_ESSENCE_CAPSULE);
+        WONDER("wonderwoman", com.flash.wonder.WonderPowers.KEY, ModItems.WONDER_ESSENCE_CAPSULE),
+        /**
+         * Ultron (his nanocore). Unlike the others he does not come out with the syringe: only the surgery table
+         * takes him out, and gives the nanocore back (UltronPowers.revoke).
+         */
+        ULTRON("ultron", com.flash.ultron.UltronPowers.KEY, () -> com.flash.ultron.UltronRegistry.NANOCORE.get());
 
         // Every power of the game is a Hero here: the empty syringe takes it out into its capsule and the capsule
         // in a syringe gives it back (SyringeContents). A new power: a value here, its capsule, its SyringeContent.
@@ -90,6 +95,7 @@ public final class HeroPowers {
                 case SPIDER -> com.flash.spider.SpiderPowers.has(p);
                 case DOOM -> com.flash.doom.DoomPowers.has(p);
                 case WONDER -> com.flash.wonder.WonderPowers.has(p);
+                case ULTRON -> com.flash.ultron.UltronPowers.has(p);
             };
         }
 
@@ -99,7 +105,7 @@ public final class HeroPowers {
                 case FLASH -> !FlashPowers.hasPermanentPowers(p) || FlashV9.isActive(p);
                 case HULK -> HulkPowers.isTemporary(p) || HulkPowers.boostTicks(p) > 0;
                 case SUPERMAN -> SupermanPowers.temporaryTicks(p) > 0;
-                case THOR, YAS, SCARLET, STORM, SPIDER, DOOM, WONDER -> false;
+                case THOR, YAS, SCARLET, STORM, SPIDER, DOOM, WONDER, ULTRON -> false;
             };
         }
 
@@ -109,7 +115,7 @@ public final class HeroPowers {
                 case HULK -> HulkPowers.level(p);
                 case SUPERMAN -> SupermanPowers.level(p);
                 case THOR -> ThorPowers.level(p);
-                case YAS, SCARLET, STORM, SPIDER, DOOM, WONDER -> 1;
+                case YAS, SCARLET, STORM, SPIDER, DOOM, WONDER, ULTRON -> 1;
             };
         }
 
@@ -140,6 +146,7 @@ public final class HeroPowers {
                 case SPIDER -> com.flash.spider.SpiderPowers.revoke(p);
                 case DOOM -> com.flash.doom.DoomPowers.revoke(p);
                 case WONDER -> com.flash.wonder.WonderPowers.revoke(p);
+                case ULTRON -> com.flash.ultron.UltronPowers.revoke(p);
             }
         }
 
@@ -159,6 +166,7 @@ public final class HeroPowers {
                 case SPIDER -> com.flash.spider.SpiderPowers.grant(p);
                 case DOOM -> com.flash.doom.DoomPowers.grant(p);
                 case WONDER -> com.flash.wonder.WonderPowers.grant(p);
+                case ULTRON -> com.flash.ultron.UltronPowers.grant(p);
             }
         }
 
@@ -188,6 +196,7 @@ public final class HeroPowers {
                 case SPIDER -> com.flash.spider.SpiderPowers.sync(p);
                 case DOOM -> com.flash.doom.DoomPowers.sync(p);
                 case WONDER -> com.flash.wonder.WonderPowers.sync(p);
+                case ULTRON -> com.flash.ultron.UltronPowers.sync(p);
             }
         }
 
@@ -258,7 +267,7 @@ public final class HeroPowers {
     /** Whether an empty syringe would take something out of this player (checked before the injection starts). */
     public static boolean canExtract(Player player) {
         Hero h = current(player);
-        return h != null && !h.temporary(player);
+        return h != null && !h.temporary(player) && h != Hero.ULTRON;
     }
 
     /** The empty syringe: the power goes into a capsule, the player is left without powers. */
@@ -270,6 +279,11 @@ public final class HeroPowers {
         }
         if (hero.temporary(player)) {
             player.displayClientMessage(Component.translatable("message.flash.extract_temporary"), true);
+            return false;
+        }
+        if (hero == Hero.ULTRON) {
+            // the nanocore is grown into the body: only the surgery table takes it out
+            player.displayClientMessage(Component.translatable("message.flash.extract_ultron"), true);
             return false;
         }
         int level = hero.level(player);

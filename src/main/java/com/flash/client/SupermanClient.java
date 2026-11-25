@@ -366,7 +366,7 @@ public final class SupermanClient {
                 && StormClient.isStorm(p);
         // Doctor Doom on his boot thrusters
         boolean doomFlight = !superFlight && !thorFlight && !lexFlight && !yasFlight && !scarletFlight
-                && !stormFlight && (DoomClient.isDoom(p) || WonderClient.isWonder(p) || com.flash.client.infinity.InfinityFly.is(p));
+                && !stormFlight && (DoomClient.isDoom(p) || WonderClient.isWonder(p) || UltronClient.isUltron(p) || com.flash.client.infinity.InfinityFly.is(p));
         if ((!superFlight && !thorFlight && !lexFlight && !yasFlight && !scarletFlight && !stormFlight && !doomFlight)
                 || !p.getAbilities().flying
                 || p.isPassenger()) {
@@ -482,7 +482,7 @@ public final class SupermanClient {
         }
         if (base == null || (!SupermanState.isSuperman(p) && !com.flash.thor.ThorState.isThor(p)
                 && !com.flash.lex.LexState.flag(p, com.flash.lex.LexSuit.F_ON) && !YasClient.isYas(p)
-                && !ScarletClient.isScarlet(p) && !StormClient.isStorm(p) && !(DoomClient.isDoom(p) || WonderClient.isWonder(p) || com.flash.client.infinity.InfinityFly.is(p)))) {
+                && !ScarletClient.isScarlet(p) && !StormClient.isStorm(p) && !(DoomClient.isDoom(p) || WonderClient.isWonder(p) || UltronClient.isUltron(p) || com.flash.client.infinity.InfinityFly.is(p)))) {
             LEANS.remove(p.getUUID());
             return;
         }
@@ -562,7 +562,7 @@ public final class SupermanClient {
         }
         // Yas, the Scarlet Witch and Storm fly with this very flight key too (only it: their other keys are theirs)
         boolean otherFlyer = !superman && (YasClient.isYas(mc.player) || ScarletClient.isScarlet(mc.player)
-                || StormClient.isStorm(mc.player) || (DoomClient.isDoom(mc.player) || WonderClient.isWonder(mc.player) || com.flash.client.infinity.InfinityFly.is(mc.player)));
+                || StormClient.isStorm(mc.player) || (DoomClient.isDoom(mc.player) || WonderClient.isWonder(mc.player) || UltronClient.isUltron(mc.player) || com.flash.client.infinity.InfinityFly.is(mc.player)));
         boolean active = (superman || otherFlyer) && mc.screen == null && !mc.player.isSpectator();
         SupermanAbility[] abilities = SupermanAbility.values();
         for (int i = 0; i < abilities.length; i++) {

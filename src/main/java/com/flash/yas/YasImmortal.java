@@ -133,6 +133,7 @@ public final class YasImmortal {
         return YasPowers.has(p) || com.flash.power.HeroBalance.isHero(p) || com.flash.scarlet.ScarletPowers.has(p)
                 || com.flash.storm.StormPowers.has(p) || com.flash.spider.SpiderPowers.has(p)
                 || com.flash.doom.DoomPowers.has(p) || com.flash.wonder.WonderPowers.has(p)
+                || com.flash.ultron.UltronPowers.has(p)
                 || com.flash.lex.LexSuit.active(p);
     }
 

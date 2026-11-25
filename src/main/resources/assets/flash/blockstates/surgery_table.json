@@ -1,0 +1,52 @@
+{
+ "variants": {
+  "facing=north,operating=false,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=north,operating=true,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=north,operating=false,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=north,operating=true,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=south,operating=false,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=south,operating=true,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=south,operating=false,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=south,operating=true,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=east,operating=false,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=east,operating=true,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=east,operating=false,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=east,operating=true,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=west,operating=false,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=west,operating=true,part=head": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=west,operating=false,part=foot": {
+   "model": "flash:block/surgery_table"
+  },
+  "facing=west,operating=true,part=foot": {
+   "model": "flash:block/surgery_table"
+  }
+ }
+}

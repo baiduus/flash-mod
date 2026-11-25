@@ -52,6 +52,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.ACCELERATION_STONE.get());
                         output.accept(ModItems.ACCELERATION_CRYSTAL.get());
                         output.accept(ModItems.TACHYON_EXTRACTOR.get());
+                        output.accept(com.flash.ultron.UltronRegistry.SURGERY_TABLE_ITEM.get());
                         output.accept(ModItems.TORN_SUIT.get());
                         output.accept(ModItems.TACHYON.get());
                         output.accept(ModItems.CORRUPTED_MATTER.get());

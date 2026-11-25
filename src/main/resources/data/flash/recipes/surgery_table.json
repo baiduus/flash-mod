@@ -1,0 +1,26 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "ICI",
+  "NBN",
+  "I I"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "C": {
+   "item": "minecraft:comparator"
+  },
+  "N": {
+   "item": "minecraft:netherite_scrap"
+  },
+  "B": {
+   "tag": "minecraft:beds"
+  }
+ },
+ "result": {
+  "item": "flash:surgery_table",
+  "count": 1
+ }
+}

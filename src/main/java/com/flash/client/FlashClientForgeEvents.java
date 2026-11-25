@@ -193,6 +193,7 @@ public final class FlashClientForgeEvents {
         SpiderClient.reset();
         DoomClient.reset();
         WonderClient.reset();
+        UltronClient.reset();
         com.flash.client.infinity.InfinityClient.reset();
         WonderLayer.resetModels();
         WonderItemRenderer.resetModels();
@@ -210,10 +211,11 @@ public final class FlashClientForgeEvents {
         boolean right = event.getArm() == net.minecraft.world.entity.HumanoidArm.RIGHT;
         boolean ring = right && FlashClientRing.has(event.getPlayer());
         boolean hulk = com.flash.hulk.HulkState.isTransformed(event.getPlayer());
-        boolean suit = !hulk && SupermanSuitLayer.worn(event.getPlayer()) != null;
-        boolean lex = !hulk && !suit && com.flash.item.LexArmorItem.isLex(
+        boolean ultron = !hulk && UltronClient.isUltron(event.getPlayer());
+        boolean suit = !hulk && !ultron && SupermanSuitLayer.worn(event.getPlayer()) != null;
+        boolean lex = !hulk && !suit && !ultron && com.flash.item.LexArmorItem.isLex(
                 event.getPlayer().getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST));
-        if (!ring && !hulk && !suit && !lex) {
+        if (!ring && !hulk && !suit && !lex && !ultron) {
             return;
         }
         net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
@@ -227,7 +229,7 @@ public final class FlashClientForgeEvents {
             // the nested event passes through untouched, so the vanilla hand is drawn
             if (hulk) {
                 // the Hulk's arm replaces the skin arm (drawn below)
-            } else if (suit || lex) {
+            } else if (suit || lex || ultron) {
                 // the suit's arm replaces the skin arm (drawn below)
             } else if (right) {
                 player.renderRightHand(event.getPoseStack(), event.getMultiBufferSource(),
@@ -241,6 +243,10 @@ public final class FlashClientForgeEvents {
         }
         if (hulk) {
             HulkClient.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
+                    event.getPlayer(), player.getModel(), event.getArm());
+        }
+        if (ultron) {
+            UltronLayer.drawArm(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
                     event.getPlayer(), player.getModel(), event.getArm());
         }
         if (lex) {

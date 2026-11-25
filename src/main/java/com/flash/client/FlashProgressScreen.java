@@ -145,7 +145,7 @@ public class FlashProgressScreen extends Screen {
         if (PowerTheme.localScarlet()) {
             return new int[] {TAB_PROGRESS, TAB_CONFIG};
         }
-        if (PowerTheme.localStorm() || PowerTheme.localDoom()) {
+        if (PowerTheme.localStorm() || PowerTheme.localDoom() || PowerTheme.localUltron()) {
             return new int[] {TAB_PROGRESS};
         }
         if (PowerTheme.localSpider() || PowerTheme.localWonder()) {
@@ -926,6 +926,7 @@ public class FlashProgressScreen extends Screen {
     private static final String[] DOOM_PASSIVES = {"armour", "thrusters", "repair", "ascension"};
     private static final String[] DOOM_GOD_PASSIVES = {"divinity", "thrusters", "repair", "beyonder"};
     private static final String[] WONDER_PASSIVES = {"flight", "demigoddess", "bracelets", "healing"};
+    private static final String[] ULTRON_PASSIVES = {"flight", "vibranium", "machine", "network"};
 
     /** Storm, Spider-Man or Doom (heroes with modes of their own): their tab, their texts. */
     private static boolean stormTab() {
@@ -936,7 +937,7 @@ public class FlashProgressScreen extends Screen {
     private static String ownHero() {
         return PowerTheme.localSpider() ? "spider" : PowerTheme.localDoom()
                 ? (DoomClient.god(Minecraft.getInstance().player) ? "doom_god" : "doom")
-                : PowerTheme.localWonder() ? "wonder" : "storm";
+                : PowerTheme.localWonder() ? "wonder" : PowerTheme.localUltron() ? "ultron" : "storm";
     }
 
     /** Yas or the Scarlet Witch (the same tab, their own passives and modes). */
@@ -947,7 +948,7 @@ public class FlashProgressScreen extends Screen {
     private static String[] yasPassives() {
         return PowerTheme.localSpider() ? SPIDER_PASSIVES : PowerTheme.localDoom()
                 ? (DoomClient.god(Minecraft.getInstance().player) ? DOOM_GOD_PASSIVES : DOOM_PASSIVES)
-                : PowerTheme.localWonder() ? WONDER_PASSIVES
+                : PowerTheme.localWonder() ? WONDER_PASSIVES : PowerTheme.localUltron() ? ULTRON_PASSIVES
                 : stormTab() ? STORM_PASSIVES : scarletTab() ? SCARLET_PASSIVES : YAS_PASSIVES_OF_YAS;
     }
 

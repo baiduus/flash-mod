@@ -47,6 +47,7 @@ public final class FlashMod {
         com.flash.infinity.InfinityWorld.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         com.flash.registry.ModEntities.ENTITY_TYPES.register(modBus);
+        com.flash.ultron.UltronRegistry.register(modBus);
         ModMenus.MENUS.register(modBus);
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modBus);
         com.flash.registry.ModParticles.PARTICLE_TYPES.register(modBus);

@@ -75,6 +75,8 @@ public final class FlashSuitClient {
             MjolnirRenderer.reset();
             GammaChamberRenderer.reset();
             TransformationChamberRenderer.reset();
+            UltronLayer.reset();
+            SurgeryTableRenderer.reset();
             FlashRingLayer.reset();
         });
     }
