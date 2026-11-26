@@ -3,6 +3,7 @@ package com.flash.client;
 import com.flash.FlashMod;
 import com.flash.network.SupermanFxPacket;
 import com.flash.superman.SupermanPowers;
+import com.flash.superman.SupermanState;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.ArrayDeque;

@@ -3,6 +3,8 @@ package com.flash.client;
 import com.flash.FlashMod;
 import com.flash.network.ThorFxPacket;
 import com.flash.thor.ThorPowers;
+import com.flash.thor.ThorState;
+import com.flash.thor.ThorSuits;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.ArrayList;
