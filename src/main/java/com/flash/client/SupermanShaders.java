@@ -110,7 +110,8 @@ public final class SupermanShaders {
 
     /** True when the beam shaders can be used (loaded, and no shader pack). */
     public static boolean ready() {
-        return !failed && heat != null && heatFp != null && bloom != null && !shaderPack();
+        // off: Superman's light is drawn by SupermanCineVfx now
+        return false && !failed && heat != null && heatFp != null && bloom != null && !shaderPack();
     }
 
     private static boolean laserReady() {

@@ -100,6 +100,9 @@ public final class FlashBodyLightningRenderer {
         var buf = VfxDraw.begin();
         try {
             for (Player player : visible) {
+                if (FlashClientVisualLevels.get(player) < 10) {
+                    continue; // the orbits only from level 10
+                }
                 FlashVfx.halo(buf, matrix, player, partialTick, event.getCamera(),
                         FlashVfx.color(FlashClientVisualLevels.isNegative(player), FlashClientVisualLevels.isV9(player)),
                         FlashClientVisualLevels.get(player));

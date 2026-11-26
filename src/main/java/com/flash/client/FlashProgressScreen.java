@@ -20,7 +20,11 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * K screen. Three tabs (Progress, Equipment, Config) on one balanced panel:
+ * K screen, the hero console: a sidebar on the left (the hero's emblem turning in its rings, his name and state, the
+ * pages to pick from, the hints and credits) beside the page, all over a living backdrop (drifting light, a grid, a
+ * sweep of light, motes rising). Cards of dark glass with lit corners, switches and selectors as glowing pills.
+ *
+ * <p>(Older notes:) Three tabs (Progress, Equipment, Config) on one balanced panel:
  * a compact header, pill tabs with a sliding indicator, and content laid out on
  * two columns. Everything animates softly: the panel opens with a short ease,
  * hover highlights fade in and out, the progress bar fills smoothly, switches
@@ -35,6 +39,11 @@ public class FlashProgressScreen extends Screen {
     // ------------------------------------------------------------------
 
     private static final int PW = 560;
+    /** The sidebar, left of the page (drawn at negative x: the page keeps its own coordinates). */
+    private static final int SB = 140;
+    private static final int NAV_Y = 150;
+    private static final int NAV_H = 24;
+    private static final int NAV_GAP = 5;
     private static final int PH = 340;
     private static final int PAD = 16;
 
@@ -109,12 +118,13 @@ public class FlashProgressScreen extends Screen {
     protected void init() {
         super.init();
         this.uiScale = Math.min(1.0F, Math.min(
-                this.width / (float) (PW + 16),
+                this.width / (float) (PW + SB + 16),
                 this.height / (float) (PH + 16)));
         if (this.uiScale <= 0.01F) {
             this.uiScale = 1.0F;
         }
-        this.leftPos = Math.round((this.width / this.uiScale - PW) / 2.0F);
+        // leftPos is the page's corner: the sidebar lies left of it
+        this.leftPos = Math.round((this.width / this.uiScale - PW - SB) / 2.0F) + SB;
         this.topPos = Math.round((this.height / this.uiScale - PH) / 2.0F);
         if (this.openedAt == 0L) {
             this.openedAt = Util.getMillis();
@@ -250,14 +260,13 @@ public class FlashProgressScreen extends Screen {
 
         // opening: the panel rises a few pixels and grows to its size
         float grow = 0.96F + 0.04F * eased;
-        pose.translate(x + PW / 2.0F, y + PH / 2.0F + (1.0F - eased) * 10.0F, 0.0F);
+        pose.translate(x + (PW - SB) / 2.0F, y + PH / 2.0F + (1.0F - eased) * 10.0F, 0.0F);
         pose.scale(grow, grow, 1.0F);
-        pose.translate(-PW / 2.0F, -PH / 2.0F, 0.0F);
+        pose.translate(-(PW - SB) / 2.0F, -PH / 2.0F, 0.0F);
 
-        drawFrame(graphics);
-        drawHeader(graphics);
-        drawTabs(graphics, mx, my);
-        graphics.fill(PAD, DIVIDER_Y, PW - PAD, DIVIDER_Y + 1, COLOR_BORDER);
+        drawBackdrop(graphics);
+        drawSidebar(graphics, mx, my);
+        drawPageHeader(graphics);
 
         int current = activeTab();
         if (current == TAB_PROGRESS) {
@@ -282,39 +291,133 @@ public class FlashProgressScreen extends Screen {
         } else {
             drawConfigTab(graphics, mx, my);
         }
-        drawFooter(graphics);
         pose.popPose();
     }
 
-    private void drawFrame(GuiGraphics g) {
-        // soft outer glow in the accent colour, a thin border and the body
-        for (int i = 4; i >= 1; i--) {
-            int a = 0x18 * (5 - i);
-            g.fill(-i, -i, PW + i, PH + i, (a << 24) | (accent() & 0x00FFFFFF));
-        }
-        g.fill(-1, -1, PW + 1, PH + 1, withAlpha(accent(), 0.65F));
-        g.fillGradient(0, 0, PW, PH, COLOR_BG_TOP, COLOR_BG_BOTTOM);
+    // ------------------------------------------------------------------
+    // The console: backdrop, sidebar, page header
+    // ------------------------------------------------------------------
+
+    private static float hash(int n) {
+        n = (n << 13) ^ n;
+        return ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 2147483647.0F;
     }
 
-    private void drawHeader(GuiGraphics g) {
-        g.fillGradient(0, 0, PW, HEADER_H + 8, withAlpha(accentDark(), 0.9F), 0x00000000);
-        g.fill(0, 0, PW, 2, accent());
-        // each hero his own symbol (the Flash's bolt, the Hulk's fist, Superman's shield, the others' below)
+    /** A soft round light (stacked discs of rows), kept inside the panel. */
+    private static void blob(GuiGraphics g, int cx, int cy, int r, int color, float alpha) {
+        int col = withAlpha(color, alpha);
+        for (int layer = 1; layer <= 4; layer++) {
+            int rr = Math.max(2, r * layer / 4);
+            for (int dy = -rr; dy < rr; dy += 2) {
+                int hw = (int) Math.sqrt(Math.max(0, rr * rr - dy * dy));
+                int y0 = Math.max(0, cy + dy);
+                int y1 = Math.min(PH, cy + dy + 2);
+                if (y1 > y0) {
+                    g.fill(Math.max(-SB, cx - hw), y0, Math.min(PW, cx + hw), y1, col);
+                }
+            }
+        }
+    }
+
+    /** A box with its corners cut round by r pixels. */
+    private static void round(GuiGraphics g, int x, int y, int w, int h, int r, int color) {
+        r = Math.min(r, Math.min(w, h) / 2);
+        for (int i = 0; i < r; i++) {
+            double d = r - i - 0.5D;
+            int in = r - (int) Math.round(Math.sqrt(Math.max(0.0D, r * r - d * d)));
+            g.fill(x + in, y + i, x + w - in, y + i + 1, color);
+            g.fill(x + in, y + h - i - 1, x + w - in, y + h - i, color);
+        }
+        g.fill(x, y + r, x + w, y + h - r, color);
+    }
+
+    private void drawBackdrop(GuiGraphics g) {
+        float s = seconds();
+        int a = accent();
+        // the outer glow and the lit edge
+        for (int i = 7; i >= 1; i--) {
+            g.fill(-SB - i, -i, PW + i, PH + i, withAlpha(a, 0.035F * (8 - i)));
+        }
+        g.fill(-SB - 1, -1, PW + 1, PH + 1, withAlpha(a, 0.75F));
+        g.fillGradient(-SB, 0, PW, PH, 0xFF0F1218, 0xFF06070A);
+        // drifting light
+        blob(g, (int) (PW * 0.72F + Math.sin(s * 0.31F) * 70.0F), (int) (PH * 0.32F + Math.cos(s * 0.23F) * 45.0F),
+                170, a, 0.035F);
+        blob(g, (int) (PW * 0.22F + Math.cos(s * 0.27F) * 80.0F), (int) (PH * 0.82F + Math.sin(s * 0.19F) * 30.0F),
+                130, accentDark(), 0.06F);
+        // the fine grid
+        for (int gx = 0; gx < PW; gx += 24) {
+            g.fill(gx, 0, gx + 1, PH, 0x06FFFFFF);
+        }
+        for (int gy = 0; gy < PH; gy += 24) {
+            g.fill(0, gy, PW, gy + 1, 0x06FFFFFF);
+        }
+        // a sweep of light crossing the panel now and then
+        float sweep = (s * 0.11F) % 1.0F;
+        int sx = (int) (-SB - 260 + (PW + SB + 520) * sweep);
+        for (int row = 0; row < PH; row += 2) {
+            int off = row / 2;
+            int x0 = Math.max(-SB, sx + off);
+            int x1 = Math.min(PW, sx + off + 46);
+            if (x1 > x0) {
+                g.fill(x0, row, x1, row + 2, 0x05FFFFFF);
+            }
+            int c0 = Math.max(-SB, sx + off + 16);
+            int c1 = Math.min(PW, sx + off + 26);
+            if (c1 > c0) {
+                g.fill(c0, row, c1, row + 2, 0x07FFFFFF);
+            }
+        }
+        // motes of light rising
+        for (int i = 0; i < 44; i++) {
+            float spd = 0.015F + hash(i * 3 + 2) * 0.045F;
+            float yy = (hash(i * 13 + 5) - s * spd) % 1.0F;
+            if (yy < 0.0F) {
+                yy += 1.0F;
+            }
+            int px = -SB + (int) (hash(i * 7 + 1) * (PW + SB - 2)) + (int) (Math.sin(s * 0.7F + i) * 4.0F);
+            int py = (int) (yy * (PH - 2));
+            float tw = 0.5F + 0.5F * (float) Math.sin(s * 2.2F + i * 1.7F);
+            int size = i % 6 == 0 ? 2 : 1;
+            g.fill(px, py, px + size, py + size, withAlpha(a, 0.15F + 0.45F * tw));
+        }
+        // the sidebar's own pane
+        g.fillGradient(-SB, 0, 0, PH, withAlpha(accentDark(), 0.5F), 0xB006070A);
+        g.fill(-1, 0, 0, PH, withAlpha(a, 0.3F));
+        for (int i = 0; i < PH; i += 6) {
+            g.fill(-1, i, 0, i + 2, withAlpha(a, 0.25F + 0.25F * (float) Math.sin(s * 3.0F - i * 0.08F)));
+        }
+        // lit corners of the whole console
+        int c = withAlpha(a, 0.9F);
+        int len = 14 + (int) (4.0F * Math.sin(s * 2.0F));
+        g.fill(-SB, 0, -SB + len, 2, c);
+        g.fill(-SB, 0, -SB + 2, len, c);
+        g.fill(PW - len, 0, PW, 2, c);
+        g.fill(PW - 2, 0, PW, len, c);
+        g.fill(-SB, PH - 2, -SB + len, PH, c);
+        g.fill(-SB, PH - len, -SB + 2, PH, c);
+        g.fill(PW - len, PH - 2, PW, PH, c);
+        g.fill(PW - 2, PH - len, PW, PH, c);
+    }
+
+    /** The hero's symbol (about 26 x 26) at x, y. */
+    private void drawEmblem(GuiGraphics g, int x, int y) {
         String[] own = HERO_ICONS.get(theme().id());
         if (own != null) {
-            drawPixelIcon(g, 12, 9, own, accent(), heroIconSecond(theme().id()));
+            drawPixelIcon(g, x, y, own, accent(), heroIconSecond(theme().id()));
         } else if (theme().icon() == PowerTheme.Icon.BOLT) {
-            drawBolt(g, 14, 8, accent());
+            drawBolt(g, x + 2, y - 1, accent());
         } else if (theme().icon() == PowerTheme.Icon.FIST) {
-            drawFist(g, 12, 9, accent());
+            drawFist(g, x, y, accent());
         } else if (theme().icon() == PowerTheme.Icon.SHIELD) {
-            drawShield(g, 12, 9, accent());
+            drawShield(g, x, y, accent());
         } else {
-            drawNeutralIcon(g, 12, 9, accent());
+            drawNeutralIcon(g, x, y, accent());
         }
-        scaledText(g, Component.translatable(theme().titleKey()), 46, 10, 1.35F, COLOR_TEXT);
-        g.drawString(this.font, Component.translatable(theme().subtitleKey()), 46, 28, COLOR_MUTED, false);
+    }
 
+    /** What the hero is right now (the pill under his name). */
+    private Component badge() {
         boolean hulkPower = PowerTheme.localHulk();
         boolean hulkForm = hulkPower && com.flash.hulk.HulkState.isTransformed(Minecraft.getInstance().player);
         boolean superPower = PowerTheme.localSuperman();
@@ -322,8 +425,7 @@ public class FlashProgressScreen extends Screen {
         boolean thorPower = PowerTheme.localThor();
         boolean thorForm = thorPower && com.flash.thor.ThorState.suited(Minecraft.getInstance().player);
         boolean yasPower = PowerTheme.localYas() || PowerTheme.localScarlet() || PowerTheme.localOwnModes();
-        Component badge = yasPower ? Component.translatable(PowerTheme.localOwnModes() ? "gui.flash." + ownHero()
-                + ".badge"
+        return yasPower ? Component.translatable(PowerTheme.localOwnModes() ? "gui.flash." + ownHero() + ".badge"
                 : PowerTheme.localScarlet() ? "gui.flash.scarlet.badge" : "gui.flash.yas.badge") : thorPower
                 ? Component.translatable(thorForm ? "gui.flash.thor.badge_thor" : "gui.flash.thor.badge_civil")
                 : superPower
@@ -337,20 +439,83 @@ public class FlashProgressScreen extends Screen {
                     : Component.translatable("gui.flash.progress.active_badge",
                         FlashClientData.getSelectedLevel()))
                 : Component.translatable("gui.flash.progress.no_powers_badge");
-        int tw = this.font.width(badge);
-        int bw = tw + 22;
-        int bx = PW - PAD - bw;
-        int by = 13;
-        int color = FlashClientData.hasPowers() || hulkPower || superPower || yasPower ? accent() : COLOR_MUTED;
-        g.fill(bx, by, bx + bw, by + 20, withAlpha(color, 0.55F));
-        g.fill(bx + 1, by + 1, bx + bw - 1, by + 19, accentSoft());
-        // little live dot
-        float pulse = 0.5F + 0.5F * (float) Math.sin(seconds() * 4.0F);
-        g.fill(bx + 7, by + 8, bx + 11, by + 12, lerpColor(withAlpha(color, 0.4F), color, pulse));
-        g.drawString(this.font, badge, bx + 15, by + 6, color, false);
     }
 
-    private void drawTabs(GuiGraphics g, int mx, int my) {
+    private static boolean powered() {
+        return FlashClientData.hasPowers() || PowerTheme.localHulk() || PowerTheme.localSuperman()
+                || PowerTheme.localThor() || PowerTheme.localYas() || PowerTheme.localScarlet()
+                || PowerTheme.localOwnModes();
+    }
+
+    private static int navX() {
+        return -SB + 10;
+    }
+
+    private static int navW() {
+        return SB - 20;
+    }
+
+    private static int navY(int index) {
+        return NAV_Y + index * (NAV_H + NAV_GAP);
+    }
+
+    private float navIndicator = -1.0F;
+
+    private void drawSidebar(GuiGraphics g, int mx, int my) {
+        float s = seconds();
+        int a = accent();
+        int cx = -SB / 2;
+        int ey = 48;
+        // the emblem in its turning rings
+        float breathe = 0.5F + 0.5F * (float) Math.sin(s * 2.0F);
+        blob(g, cx, ey, 38, a, 0.05F + 0.04F * breathe);
+        for (int i = 0; i < 18; i++) {
+            double ang = s * 0.7D + i * Math.PI * 2.0D / 18.0D;
+            int dx = cx + (int) Math.round(Math.cos(ang) * 33.0D);
+            int dy = ey + (int) Math.round(Math.sin(ang) * 33.0D);
+            int sz = i % 3 == 0 ? 2 : 1;
+            g.fill(dx - sz / 2, dy - sz / 2, dx - sz / 2 + sz, dy - sz / 2 + sz,
+                    withAlpha(a, i % 3 == 0 ? 0.95F : 0.45F));
+        }
+        for (int i = 0; i < 28; i++) {
+            double ang = -s * 0.45D + i * Math.PI * 2.0D / 28.0D;
+            int dx = cx + (int) Math.round(Math.cos(ang) * 26.0D);
+            int dy = ey + (int) Math.round(Math.sin(ang) * 26.0D);
+            g.fill(dx, dy, dx + 1, dy + 1, withAlpha(a, 0.3F + 0.3F * (float) Math.sin(s * 3.0F + i)));
+        }
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        float sc = 1.45F + 0.05F * breathe;
+        pose.translate(cx, ey, 0.0F);
+        pose.scale(sc, sc, 1.0F);
+        pose.translate(-13.0F, -13.0F, 0.0F);
+        drawEmblem(g, 0, 0);
+        pose.popPose();
+
+        // the name and what he is
+        Component title = Component.translatable(theme().titleKey());
+        float ts = Math.min(1.2F, (SB - 16.0F) / Math.max(1, this.font.width(title)));
+        int tw = Math.round(this.font.width(title) * ts);
+        scaledText(g, title, cx - tw / 2, 92, ts, COLOR_TEXT);
+        java.util.List<net.minecraft.util.FormattedCharSequence> sub = this.font.split(
+                Component.translatable(theme().subtitleKey()), SB - 18);
+        for (int i = 0; i < Math.min(2, sub.size()); i++) {
+            int w = this.font.width(sub.get(i));
+            g.drawString(this.font, sub.get(i), cx - w / 2, 105 + i * 10, COLOR_MUTED, false);
+        }
+        Component badge = badge();
+        int color = powered() ? a : COLOR_MUTED;
+        String bt = this.font.plainSubstrByWidth(badge.getString(), SB - 34);
+        int bw = this.font.width(bt) + 20;
+        int bx = cx - bw / 2;
+        int by = 127;
+        round(g, bx, by, bw, 15, 5, withAlpha(color, 0.6F));
+        round(g, bx + 1, by + 1, bw - 2, 13, 4, 0xF00B0D12);
+        float pulse = 0.5F + 0.5F * (float) Math.sin(s * 4.0F);
+        g.fill(bx + 6, by + 6, bx + 9, by + 9, lerpColor(withAlpha(color, 0.35F), color, pulse));
+        g.drawString(this.font, bt, bx + 13, by + 4, color, false);
+
+        // the pages
         int[] visible = visibleTabs();
         int activeIndex = 0;
         for (int i = 0; i < visible.length; i++) {
@@ -358,41 +523,33 @@ public class FlashProgressScreen extends Screen {
                 activeIndex = i;
             }
         }
-        // sliding indicator behind the active tab
-        float targetX = tabLeft(activeIndex);
-        float targetW = tabWidth(visible[activeIndex]);
-        if (this.tabX < 0.0F) {
-            this.tabX = targetX;
-            this.tabW = targetW;
+        float target = navY(activeIndex);
+        if (this.navIndicator < 0.0F) {
+            this.navIndicator = target;
         }
-        float k = Math.min(1.0F, this.dt * 16.0F);
-        this.tabX += (targetX - this.tabX) * k;
-        this.tabW += (targetW - this.tabW) * k;
-
-        int total = tabLeft(visible.length - 1) + tabWidth(visible[visible.length - 1]) - PAD;
-        g.fill(PAD - 2, TAB_Y - 2, PAD + total + 2, TAB_Y + TAB_H + 2, COLOR_TRACK);
-        int ix = Math.round(this.tabX);
-        int iw = Math.round(this.tabW);
-        g.fill(ix, TAB_Y, ix + iw, TAB_Y + TAB_H, accentSoft());
-        g.fill(ix, TAB_Y + TAB_H - 2, ix + iw, TAB_Y + TAB_H, accent());
-
+        this.navIndicator += (target - this.navIndicator) * Math.min(1.0F, this.dt * 14.0F);
+        int iy = Math.round(this.navIndicator);
+        round(g, navX(), iy, navW(), NAV_H, 5, withAlpha(a, 0.22F));
+        round(g, navX() + 1, iy + 1, navW() - 2, NAV_H - 2, 4, withAlpha(accentDark(), 0.85F));
+        g.fill(navX(), iy + 5, navX() + 2, iy + NAV_H - 5, a);
+        g.fill(navX() + navW() - 9, iy + 10, navX() + navW() - 6, iy + 14, a);
         for (int i = 0; i < visible.length; i++) {
             int id = visible[i];
-            int tx = tabLeft(i);
-            int w = tabWidth(id);
+            int ny = navY(i);
             boolean active = id == activeTab();
-            float h = hover("tab" + id, !active && inside(mx, my, tx, TAB_Y, w, TAB_H));
-            if (h > 0.0F) {
-                g.fill(tx, TAB_Y, tx + w, TAB_Y + TAB_H, withAlpha(0xFF1E232C, h));
+            float hv = hover("nav" + id, !active && inside(mx, my, navX(), ny, navW(), NAV_H));
+            if (hv > 0.0F) {
+                round(g, navX(), ny, navW(), NAV_H, 5, withAlpha(0xFF1E232C, 0.8F * hv));
             }
-            Component label = Component.translatable(TAB_KEYS[id]);
-            int color = active ? accent() : lerpColor(COLOR_MUTED, COLOR_TEXT, h);
-            g.drawString(this.font, label, tx + (w - this.font.width(label)) / 2, TAB_Y + 6, color, false);
+            int shift = Math.round(3.0F * hv);
+            int tc = active ? 0xFFFFFFFF : lerpColor(COLOR_MUTED, COLOR_TEXT, hv);
+            navIcon(g, id, navX() + 10 + shift, ny + 8, active ? a : lerpColor(COLOR_DIM, a, hv));
+            g.drawString(this.font, this.font.plainSubstrByWidth(Component.translatable(TAB_KEYS[id]).getString(),
+                    navW() - 40), navX() + 26 + shift, ny + 8, tc, false);
         }
-    }
 
-    private void drawFooter(GuiGraphics g) {
-        Component text = PowerTheme.localThor()
+        // the hints and the credits at the foot
+        Component hint = PowerTheme.localThor()
                 ? Component.translatable("gui.flash.footer.thor", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage())
                 : PowerTheme.localSuperman()
                 ? Component.translatable("gui.flash.footer.superman", FlashKeys.TOGGLE_SUIT.getTranslatedKeyMessage())
@@ -402,13 +559,83 @@ public class FlashProgressScreen extends Screen {
                 ? Component.translatable("gui.flash.footer.neutral")
                 : Component.translatable(FlashClientConfig.SCROLL_MODE.get()
                     ? "gui.flash.footer.scroll" : "gui.flash.footer.keys");
-        g.fill(PAD, PH - 20, PW - PAD, PH - 19, COLOR_BORDER);
-        int half = (PW - 2 * PAD) / 2;
-        g.drawString(this.font, this.font.plainSubstrByWidth(text.getString(), half - 8),
-                PAD, PH - 13, COLOR_DIM, false);
-        // the credits of the mods this hero was made with (the hero guide shows the picked hero's in its card)
+        float hs = 0.7F;
+        java.util.List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(hint,
+                (int) ((SB - 18) / hs));
+        int shown = Math.min(4, lines.size());
+        int hy = PH - 40 - shown * 7;
+        g.fill(-SB + 10, hy - 6, -10, hy - 5, withAlpha(a, 0.25F));
+        pose.pushPose();
+        pose.translate(-SB + 10, hy, 0.0F);
+        pose.scale(hs, hs, 1.0F);
+        for (int i = 0; i < shown; i++) {
+            g.drawString(this.font, lines.get(i), 0, i * 10, COLOR_DIM, false);
+        }
+        pose.popPose();
         if (FlashClientData.hasPowers() || theme() != PowerTheme.NEUTRAL) {
-            drawCredits(g, creditsKey(theme().id()), PW - PAD, PH - 12, half);
+            float cs = 0.6F;
+            java.util.List<net.minecraft.util.FormattedCharSequence> cl = this.font.split(
+                    Component.translatable(creditsKey(theme().id())), (int) ((SB - 18) / cs));
+            pose.pushPose();
+            pose.translate(-SB + 10, PH - 30, 0.0F);
+            pose.scale(cs, cs, 1.0F);
+            for (int i = 0; i < Math.min(3, cl.size()); i++) {
+                g.drawString(this.font, cl.get(i), 0, i * 10, 0xFF4A515B, false);
+            }
+            pose.popPose();
+        }
+    }
+
+    /** A tiny glyph for each page. */
+    private static void navIcon(GuiGraphics g, int tabId, int x, int y, int c) {
+        if (tabId == TAB_PROGRESS) {
+            g.fill(x, y + 5, x + 2, y + 8, c);
+            g.fill(x + 3, y + 2, x + 5, y + 8, c);
+            g.fill(x + 6, y, x + 8, y + 8, c);
+        } else if (tabId == TAB_CONFIG) {
+            g.fill(x + 2, y, x + 6, y + 8, c);
+            g.fill(x, y + 2, x + 8, y + 6, c);
+            g.fill(x + 3, y + 3, x + 5, y + 5, 0xFF0B0D12);
+        } else {
+            g.fill(x + 2, y, x + 6, y + 1, c);
+            g.fill(x + 1, y + 1, x + 7, y + 2, c);
+            g.fill(x, y + 2, x + 2, y + 6, c);
+            g.fill(x + 6, y + 2, x + 8, y + 6, c);
+            g.fill(x + 1, y + 6, x + 7, y + 7, c);
+            g.fill(x + 2, y + 7, x + 6, y + 8, c);
+        }
+    }
+
+    /** The page's own header: the hero over the page's name, an energy line under it. */
+    private void drawPageHeader(GuiGraphics g) {
+        float s = seconds();
+        int a = accent();
+        String crumb = Component.translatable(theme().titleKey()).getString().toUpperCase(java.util.Locale.ROOT);
+        PoseStack pose = g.pose();
+        pose.pushPose();
+        pose.translate(PAD, 14, 0.0F);
+        pose.scale(0.7F, 0.7F, 1.0F);
+        g.drawString(this.font, crumb, 0, 0, withAlpha(a, 0.85F), false);
+        pose.popPose();
+        Component page = Component.translatable(TAB_KEYS[activeTab()]);
+        scaledText(g, page, PAD, 26, 1.7F, COLOR_TEXT);
+        // the energy line: grows in, a light runs along it
+        int lx0 = PAD;
+        int lx1 = PW - PAD;
+        int ly = 74;
+        for (int x0 = lx0; x0 < lx1; x0 += 4) {
+            float k = (x0 - lx0) / (float) (lx1 - lx0);
+            g.fill(x0, ly, Math.min(lx1, x0 + 4), ly + 1, withAlpha(a, 0.55F * (1.0F - k) + 0.08F));
+        }
+        float run = (s * 0.35F) % 1.0F;
+        int rx = lx0 + Math.round((lx1 - lx0) * run);
+        g.fill(Math.max(lx0, rx - 24), ly - 1, Math.min(lx1, rx + 24), ly + 2, withAlpha(a, 0.35F));
+        g.fill(Math.max(lx0, rx - 6), ly - 1, Math.min(lx1, rx + 6), ly + 2, withAlpha(0xFFFFFFFF, 0.8F));
+        // a few live readings at the right of the header
+        int dots = 5;
+        for (int i = 0; i < dots; i++) {
+            float on = 0.5F + 0.5F * (float) Math.sin(s * 3.0F - i * 0.7F);
+            g.fill(PW - PAD - 6 - i * 8, 32, PW - PAD - 2 - i * 8, 36, withAlpha(a, 0.2F + 0.7F * on));
         }
     }
 
@@ -1629,8 +1856,17 @@ public class FlashProgressScreen extends Screen {
     }
 
     private void sectionTitle(GuiGraphics g, Component text, int x, int y) {
-        g.fill(x, y + 2, x + 2, y + 7, accent());
-        g.drawString(this.font, text, x + 6, y, COLOR_TEXT, false);
+        int a = accent();
+        // a little lit diamond, the title, a line fading out after it
+        g.fill(x + 2, y, x + 3, y + 7, a);
+        g.fill(x + 1, y + 1, x + 4, y + 6, a);
+        g.fill(x, y + 3, x + 5, y + 4, a);
+        g.fill(x + 2, y + 3, x + 3, y + 4, 0xFFFFFFFF);
+        g.drawString(this.font, text, x + 9, y, COLOR_TEXT, false);
+        int lx = x + 9 + this.font.width(text) + 6;
+        for (int i = 0; i < 16; i++) {
+            g.fill(lx + i * 4, y + 3, lx + i * 4 + 3, y + 4, withAlpha(a, 0.5F * (1.0F - i / 16.0F)));
+        }
     }
 
     /** Neutral screen shown while the player has no power. */
@@ -1899,7 +2135,7 @@ public class FlashProgressScreen extends Screen {
     private void statCard(GuiGraphics g, int x, int y, int w, int h, Component label, Component value,
                           Component extra) {
         card(g, x, y, w, h, 0.0F);
-        g.fill(x, y + 6, x + 2, y + h - 6, accent());
+        g.fillGradient(x + 1, y + 5, x + 3, y + h - 5, accent(), withAlpha(accent(), 0.1F));
         g.drawString(this.font, label, x + 10, y + 7, COLOR_MUTED, false);
         // the value shrinks to fit the card; the extra goes beside it when there is room, else on the label line
         // (cut to the room left there), so the texts never run over each other or out of the card
@@ -1920,13 +2156,19 @@ public class FlashProgressScreen extends Screen {
         }
     }
 
-    /** Rounded-looking card (corners cut by one pixel), brighter when {@code highlight} > 0. */
+    /** A card of dark glass: lit from the top in the hero's colour, its corners lit, brighter on highlight. */
     private static void card(GuiGraphics g, int x, int y, int w, int h, float highlight) {
-        int border = lerpColor(COLOR_BORDER, 0xFF3A4250, highlight);
-        g.fill(x + 1, y, x + w - 1, y + h, border);
-        g.fill(x, y + 1, x + w, y + h - 1, border);
-        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, lerpColor(COLOR_CARD, COLOR_CARD_HI, highlight));
-        g.fill(x + 1, y + 1, x + w - 1, y + 2, 0x0FFFFFFF);
+        int a = accent();
+        round(g, x, y, w, h, 3, lerpColor(0x30FFFFFF, withAlpha(a, 0.85F), highlight));
+        round(g, x + 1, y + 1, w - 2, h - 2, 2, lerpColor(0xF20E1117, 0xF4151A22, highlight));
+        g.fillGradient(x + 2, y + 1, x + w - 2, y + Math.min(h - 1, 16), withAlpha(a, 0.09F + 0.14F * highlight),
+                0x00000000);
+        g.fill(x + 3, y + 1, x + w - 3, y + 2, 0x14FFFFFF);
+        int c = withAlpha(a, 0.5F + 0.5F * highlight);
+        g.fill(x + 1, y + 1, x + 6, y + 2, c);
+        g.fill(x + 1, y + 1, x + 2, y + 6, c);
+        g.fill(x + w - 6, y + h - 2, x + w - 1, y + h - 1, c);
+        g.fill(x + w - 2, y + h - 6, x + w - 1, y + h - 1, c);
     }
 
     /** Levels on the grid: 0..10, up to 20 with the amplifier, and whatever the V-9 adds on top. */
@@ -1988,11 +2230,13 @@ public class FlashProgressScreen extends Screen {
             cy -= lift;
 
             if (inUse) {
-                // pulsing halo around the level in use
-                int halo = withAlpha(accent(), 0.25F + 0.35F * pulse);
-                g.fill(cx - 2, cy - 2, cx + w + 2, cy + h + 2, halo);
-                g.fill(cx - 1, cy - 1, cx + w + 1, cy + h + 1, accent());
-                g.fill(cx, cy, cx + w, cy + h, accentSoft());
+                // the level in use: lit through, its halo breathing out
+                int grow = Math.round(2.0F + 2.0F * pulse);
+                round(g, cx - grow, cy - grow, w + 2 * grow, h + 2 * grow, 5, withAlpha(accent(), 0.12F + 0.12F * pulse));
+                round(g, cx - 1, cy - 1, w + 2, h + 2, 4, accent());
+                round(g, cx, cy, w, h, 3, accentDark());
+                g.fillGradient(cx + 1, cy + 1, cx + w - 1, cy + h - 1, withAlpha(accent(), 0.55F), 0x00000000);
+                g.fill(cx + 2, cy + 1, cx + w - 2, cy + 2, 0x70FFFFFF);
             } else {
                 card(g, cx, cy, w, h, hv);
                 if (unlocked) {
@@ -2003,7 +2247,7 @@ public class FlashProgressScreen extends Screen {
             Component number = Component.literal(Integer.toString(level));
             float scale = w >= 44 ? 1.5F : 1.25F;
             int nw = Math.round(this.font.width(number) * scale);
-            int color = inUse ? accent() : unlocked ? lerpColor(COLOR_TEXT, 0xFFFFFFFF, hv) : COLOR_DIM;
+            int color = inUse ? 0xFFFFFFFF : unlocked ? lerpColor(COLOR_TEXT, 0xFFFFFFFF, hv) : COLOR_DIM;
             scaledText(g, number, cx + (w - nw) / 2, cy + (h - Math.round(8 * scale)) / 2, scale, color);
             if (!unlocked) {
                 drawLock(g, cx + w - 10, cy + 3, COLOR_DIM);
@@ -2048,17 +2292,27 @@ public class FlashProgressScreen extends Screen {
         g.drawString(this.font, rest, ix + iw - this.font.width(rest), y + 36, COLOR_MUTED, false);
     }
 
+    /** A glowing bar: ticks every tenth, the fill lit along its top, a light running in it, a hot tip. */
     private void drawBar(GuiGraphics g, int x, int y, int w, float fraction, int color) {
         int h = 8;
-        g.fill(x, y, x + w, y + h, COLOR_TRACK);
+        round(g, x, y, w, h, 4, 0xFF07080B);
+        round(g, x, y, w, 1, 0, 0x12FFFFFF);
+        for (int i = 1; i < 10; i++) {
+            int tx = x + w * i / 10;
+            g.fill(tx, y + 2, tx + 1, y + h - 2, 0x18FFFFFF);
+        }
         int filled = Math.round(w * Math.max(0.0F, Math.min(1.0F, fraction)));
-        if (filled > 0) {
-            g.fillGradient(x, y, x + filled, y + h, color, darker(color));
-            g.fill(x, y, x + filled, y + 1, 0x40FFFFFF);
-            // a light sweeping along the filled part
+        if (filled > 2) {
+            round(g, x, y - 1, filled, h + 2, 4, withAlpha(color, 0.25F));
+            round(g, x, y, filled, h, 4, darker(color));
+            g.fillGradient(x + 1, y + 1, x + filled - 1, y + h - 1, color, darker(color));
+            g.fill(x + 2, y + 1, x + filled - 2, y + 2, 0x60FFFFFF);
             float sweep = (seconds() * 0.6F) % 1.0F;
             int sx = x + Math.round(filled * sweep);
-            g.fill(Math.max(x, sx - 6), y, Math.min(x + filled, sx + 6), y + h, 0x30FFFFFF);
+            g.fill(Math.max(x + 1, sx - 10), y + 1, Math.min(x + filled - 1, sx + 10), y + h - 1, 0x22FFFFFF);
+            g.fill(Math.max(x + 1, sx - 3), y + 1, Math.min(x + filled - 1, sx + 3), y + h - 1, 0x40FFFFFF);
+            float pulse = 0.6F + 0.4F * (float) Math.sin(seconds() * 5.0F);
+            g.fill(x + filled - 3, y - 1, x + filled, y + h + 1, withAlpha(0xFFFFFFFF, 0.6F * pulse));
         }
     }
 
@@ -2159,34 +2413,46 @@ public class FlashProgressScreen extends Screen {
                         PW - 2 * PAD - 2 * SEG_W - 40), PAD + 12, y + 19, COLOR_MUTED, false);
     }
 
-    /** Toggle switch whose knob slides to the new side. */
+    /** A glowing pill switch: the knob slides over and lights up. */
     private void drawSwitch(GuiGraphics g, String key, int x, int y, boolean on) {
         float t = ease(key, on, 12.0F);
-        int track = lerpColor(COLOR_TRACK, accentDark(), t);
-        g.fill(x + 1, y, x + SWITCH_W - 1, y + SWITCH_H, lerpColor(COLOR_BORDER, accent(), t));
-        g.fill(x, y + 1, x + SWITCH_W, y + SWITCH_H - 1, lerpColor(COLOR_BORDER, accent(), t));
-        g.fill(x + 1, y + 1, x + SWITCH_W - 1, y + SWITCH_H - 1, track);
-        int knobSize = SWITCH_H - 6;
-        int kx = x + 3 + Math.round((SWITCH_W - 6 - knobSize) * t);
-        g.fill(kx, y + 3, kx + knobSize, y + 3 + knobSize, lerpColor(COLOR_DIM, 0xFFFFFFFF, t));
+        int a = accent();
+        if (t > 0.01F) {
+            round(g, x - 2, y - 2, SWITCH_W + 4, SWITCH_H + 4, 10, withAlpha(a, 0.18F * t));
+        }
+        round(g, x, y, SWITCH_W, SWITCH_H, 9, lerpColor(0x40FFFFFF, a, t));
+        round(g, x + 1, y + 1, SWITCH_W - 2, SWITCH_H - 2, 8, lerpColor(0xFF0A0C10, accentDark(), t));
+        g.fillGradient(x + 3, y + 2, x + SWITCH_W - 3, y + SWITCH_H / 2, withAlpha(0xFFFFFFFF, 0.06F + 0.08F * t),
+                0x00000000);
+        int knob = SWITCH_H - 6;
+        int kx = x + 3 + Math.round((SWITCH_W - 6 - knob) * t);
+        if (t > 0.01F) {
+            round(g, kx - 2, y + 1, knob + 4, knob + 4, 7, withAlpha(a, 0.4F * t));
+        }
+        round(g, kx, y + 3, knob, knob, 6, lerpColor(0xFF5B626C, 0xFFFFFFFF, t));
+        g.fill(kx + 3, y + 5, kx + knob - 3, y + 6, withAlpha(0xFFFFFFFF, 0.6F));
     }
 
-    /** Two-option selector with a sliding highlight. */
+    /** Two choices on one glowing pill; the lit half slides over to the one picked. */
     private void drawSegments(GuiGraphics g, String key, int y, String leftKey, String rightKey,
                               boolean right, int mx, int my) {
         float t = ease(key, right, 14.0F);
+        int a = accent();
         int x0 = segX(0);
-        g.fill(x0, y, x0 + 2 * SEG_W, y + SEG_H, COLOR_TRACK);
+        round(g, x0, y, 2 * SEG_W, SEG_H, 6, 0x40FFFFFF);
+        round(g, x0 + 1, y + 1, 2 * SEG_W - 2, SEG_H - 2, 5, 0xFF0A0C10);
         int hx = x0 + Math.round(SEG_W * t);
-        g.fill(hx + 1, y + 1, hx + SEG_W - 1, y + SEG_H - 1, accentDark());
-        g.fill(hx + 1, y + SEG_H - 2, hx + SEG_W - 1, y + SEG_H - 1, accent());
+        round(g, hx + 1, y + 1, SEG_W - 2, SEG_H - 2, 5, withAlpha(a, 0.55F));
+        round(g, hx + 2, y + 2, SEG_W - 4, SEG_H - 4, 4, accentDark());
+        g.fillGradient(hx + 3, y + 2, hx + SEG_W - 3, y + SEG_H / 2, withAlpha(a, 0.35F), 0x00000000);
+        g.fill(hx + 8, y + SEG_H - 3, hx + SEG_W - 8, y + SEG_H - 2, a);
         String[] keys = {leftKey, rightKey};
         for (int i = 0; i < 2; i++) {
             int sx = segX(i);
             boolean active = (i == 1) == right;
             float hv = hover(key + i, !active && inside(mx, my, sx, y, SEG_W, SEG_H));
             String label = this.font.plainSubstrByWidth(Component.translatable(keys[i]).getString(), SEG_W - 8);
-            int color = active ? accent() : lerpColor(COLOR_MUTED, COLOR_TEXT, hv);
+            int color = active ? 0xFFFFFFFF : lerpColor(COLOR_MUTED, COLOR_TEXT, hv);
             g.drawString(this.font, label, sx + (SEG_W - this.font.width(label)) / 2, y + 6, color, false);
         }
     }
@@ -2436,9 +2702,12 @@ public class FlashProgressScreen extends Screen {
 
     private void slot(GuiGraphics g, int x, int y, boolean filled, net.minecraft.world.item.Item item) {
         float t = ease("slot" + item.hashCode(), filled, 10.0F);
-        g.fill(x, y, x + SLOT, y + SLOT, lerpColor(COLOR_BORDER, accent(), t));
-        g.fill(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, COLOR_TRACK);
-        g.fillGradient(x + 1, y + 1, x + SLOT - 1, y + SLOT - 1, withAlpha(accentSoft(), t), 0x00000000);
+        if (t > 0.01F) {
+            round(g, x - 3, y - 3, SLOT + 6, SLOT + 6, 8, withAlpha(accent(), 0.15F * t));
+        }
+        round(g, x, y, SLOT, SLOT, 6, lerpColor(0x30FFFFFF, accent(), t));
+        round(g, x + 1, y + 1, SLOT - 2, SLOT - 2, 5, 0xFF07080B);
+        g.fillGradient(x + 2, y + 2, x + SLOT - 2, y + SLOT - 2, withAlpha(accent(), 0.3F * t), 0x00000000);
         if (filled) {
             PoseStack pose = g.pose();
             pose.pushPose();
@@ -2462,15 +2731,19 @@ public class FlashProgressScreen extends Screen {
                         boolean enabled, int mx, int my) {
         float hv = hover(key, enabled && inside(mx, my, x, y, w, h));
         if (!enabled) {
-            g.fill(x, y, x + w, y + h, COLOR_BORDER);
-            g.fill(x + 1, y + 1, x + w - 1, y + h - 1, COLOR_TRACK);
+            round(g, x, y, w, h, 5, 0x30FFFFFF);
+            round(g, x + 1, y + 1, w - 2, h - 2, 4, 0xFF0A0C10);
         } else {
-            g.fill(x, y, x + w, y + h, lerpColor(accentDark(), accent(), hv));
-            g.fill(x + 1, y + 1, x + w - 1, y + h - 1, lerpColor(accentSoft(), accentDark(), hv));
+            if (hv > 0.01F) {
+                round(g, x - 2, y - 2, w + 4, h + 4, 7, withAlpha(accent(), 0.25F * hv));
+            }
+            round(g, x, y, w, h, 5, lerpColor(withAlpha(accent(), 0.6F), accent(), hv));
+            round(g, x + 1, y + 1, w - 2, h - 2, 4, lerpColor(0xFF0E1117, accentDark(), 0.4F + 0.6F * hv));
+            g.fillGradient(x + 2, y + 1, x + w - 2, y + h / 2, withAlpha(accent(), 0.2F + 0.25F * hv), 0x00000000);
         }
         String text = this.font.plainSubstrByWidth(label.getString(), w - 8);
         g.drawString(this.font, text, x + (w - this.font.width(text)) / 2, y + (h - 8) / 2,
-                enabled ? lerpColor(accent(), COLOR_TEXT, hv) : COLOR_DIM, false);
+                enabled ? lerpColor(COLOR_TEXT, 0xFFFFFFFF, hv) : COLOR_DIM, false);
     }
 
     private boolean clickEquip(double mx, double my) {
@@ -2583,7 +2856,7 @@ public class FlashProgressScreen extends Screen {
 
         int[] visible = visibleTabs();
         for (int i = 0; i < visible.length; i++) {
-            if (inside(ix, iy, tabLeft(i), TAB_Y, tabWidth(visible[i]), TAB_H)) {
+            if (inside(ix, iy, navX(), navY(i), navW(), NAV_H)) {
                 if (tab != visible[i]) {
                     tab = visible[i];
                     click();

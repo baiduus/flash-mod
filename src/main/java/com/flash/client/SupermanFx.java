@@ -94,10 +94,8 @@ public final class SupermanFx {
             SupermanCracks.add(new Vec3(x, y, z), scale);
             return;
         }
-        EFFECTS.add(new Fx(kind, new Vec3(x, y, z), dir, scale, mc.level.getGameTime()));
-        if (EFFECTS.size() > 200) {
-            EFFECTS.remove(0);
-        }
+        // drawn now by SupermanCineVfx
+        SupermanCineVfx.spawn(kind, new Vec3(x, y, z), dir, scale);
     }
 
     // ------------------------------------------------------------------
@@ -473,104 +471,9 @@ public final class SupermanFx {
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
 
 
-        renderFrost(buffers, m, cam, time);
-        for (ResourceLocation tex : FROST_TEX) {
-            buffers.endBatch(RenderType.entityTranslucent(tex));
-        }
-        buffers.endBatch(RenderType.entityTranslucent(SNOW_TEX));
+        // (the rest of Superman's light: SupermanCineVfx)
         renderFrozen(buffers, m, level, cam, left, up, partial);
         buffers.endBatch(RenderType.entityTranslucent(ICE_BLOCK));
-
-        // one-shot effects
-        for (Fx f : EFFECTS) {
-            float age = (time - f.start) / f.life();
-            if (age < 0.0F || age > 1.0F) {
-                continue;
-            }
-            float fade = 1.0F - age;
-            switch (f.kind) {
-                case SupermanFxPacket.RING -> quadFacing(buffers.getBuffer(RenderType.eyes(RING)), m, f.pos, f.dir,
-                        f.scale * (0.4F + 1.4F * ease(age)), 0.85F, 0.92F, 1.0F, fade * 0.9F);
-                case SupermanFxPacket.SHOCKWAVE -> quadFacing(buffers.getBuffer(RenderType.eyes(RING)), m, f.pos,
-                        new Vec3(0, 1, 0), f.scale * (0.2F + 1.8F * ease(age)), 1.0F, 0.93F, 0.82F, fade * 0.8F);
-                default -> {
-                    quadFacing(buffers.getBuffer(RenderType.eyes(RING)), m, f.pos, new Vec3(0, 1, 0),
-                            f.scale * (0.1F + 2.0F * ease(age)), 1.0F, 0.78F, 0.25F, fade);
-                    billboard(buffers.getBuffer(RenderType.eyes(GLOW)), m, f.pos, left, up,
-                            f.scale * 0.9F * (0.3F + age), 1.0F, 0.85F, 0.45F, fade, 0.0F, 0.0F, 1.0F, 1.0F);
-                }
-            }
-        }
-
-        for (Player p : level.players()) {
-            if (!SupermanState.isSuperman(p) || p.isInvisible()) {
-                continue;
-            }
-            Track t = TRACKS.get(p.getUUID());
-            Vec3 at = p.getPosition(partial);
-            // ultimate: the sun growing around him and pillars of sunlight
-            if (t != null && t.ultStart >= 0L) {
-                float k = Math.min(1.0F, (time - t.ultStart) / 100.0F);
-                Vec3 c = at.add(0.0D, 1.0D, 0.0D);
-                sphere(buffers.getBuffer(RenderType.eyes(SUN)), m, c, 0.6F + 1.8F * k, time * 0.004F,
-                        1.0F, 0.62F, 0.18F, 0.35F + 0.35F * k);
-                // only the ball: no square glow around it
-                VertexConsumer beam = buffers.getBuffer(RenderType.eyes(SOLAR));
-                for (int i = 0; i < 4; i++) {
-                    double a = i * Math.PI / 2.0D + time * 0.02D;
-                    double r = 3.0D * (1.0D - k) + 0.3D;
-                    Vec3 base = at.add(Math.cos(a) * r, 0.0D, Math.sin(a) * r);
-                    pillar(beam, m, cam, base, 60.0F, 0.5F + 0.6F * k, 1.0F, 0.85F, 0.4F,
-                            0.4F + 0.4F * k, 0.0F, 0.25F);
-                }
-            }
-            // heat vision: glowing eyes and the burning point
-            if (SupermanState.flag(p, SupermanPowers.F_HEAT)) {
-                boolean laser = SupermanState.flag(p, SupermanPowers.F_LASER);
-                Vec3 eye = p.getEyePosition(partial);
-                Vec3 look = p.getViewVector(partial);
-                Vec3 side = look.cross(new Vec3(0, 1, 0));
-                side = side.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : side.normalize();
-                VertexConsumer glow = buffers.getBuffer(RenderType.eyes(GLOW));
-                boolean firstPerson = p == mc.player && mc.options.getCameraType().isFirstPerson();
-                // with the pack shaders the eye and impact flares come from the beam shader
-                boolean shaders = SupermanShaders.ready();
-                if (!firstPerson && !shaders) {
-                    for (int s = -1; s <= 1; s += 2) {
-                        billboard(glow, m, eye.add(look.scale(0.26D)).add(side.scale(s * 0.065D)).add(0, 0.02D, 0),
-                                left, up, laser ? 0.35F : 0.22F, 1.0F, 0.25F, 0.1F, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F);
-                    }
-                }
-                Vec3 hit = SupermanClient.beamEnd(p.getUUID());
-                if (hit != null) {
-                    float pulse = 0.8F + 0.2F * (float) Math.sin(time * 1.7F);
-                    if (!shaders) {
-                        billboard(glow, m, hit, left, up, (laser ? 1.6F : 1.0F) * pulse, 1.0F, 0.35F, 0.08F, 1.0F,
-                                0.0F, 0.0F, 1.0F, 1.0F);
-                    }
-                    // laser clash: two beams meeting
-                    for (Player o : level.players()) {
-                        if (o == p || !SupermanState.flag(o, SupermanPowers.F_HEAT)) {
-                            continue;
-                        }
-                        Vec3 other = SupermanClient.beamEnd(o.getUUID());
-                        if (other != null && other.distanceToSqr(hit) < 2.5D && p.getId() < o.getId()) {
-                            clash(buffers, m, hit.add(other).scale(0.5D), left, up, time);
-                        }
-                    }
-                }
-            }
-            // breath cones
-            if (SupermanState.flag(p, SupermanPowers.F_FREEZE)) {
-                cone(buffers.getBuffer(RenderType.eyes(FLOW)), m, p, partial, time, 0.55F, 0.85F, 1.0F, 0.5F);
-            } else if (SupermanState.flag(p, SupermanPowers.F_BREATH)) {
-                cone(buffers.getBuffer(RenderType.eyes(FLOW)), m, p, partial, time, 0.9F, 0.9F, 0.9F, 0.4F);
-            }
-            // high speed trail
-            if (t != null && t.trail.size() > 1) {
-                trail(buffers.getBuffer(RenderType.eyes(TRAIL)), m, cam, p, partial, t);
-            }
-        }
         pose.popPose();
         buffers.endBatch(RenderType.eyes(RING));
         buffers.endBatch(RenderType.eyes(GLOW));

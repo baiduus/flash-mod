@@ -777,20 +777,7 @@ public final class SupermanClient {
             double spread = firstPerson ? 0.15D : 0.065D;
             BEAMS.add(new Beam(p, start.add(side.scale(-spread)), start.add(side.scale(spread)), stop, laser,
                     firstPerson));
-            // the red ribbon is always drawn, also for the one firing in first person (the shader beam alone could
-            // stay invisible to him)
-            for (int s = -1; s <= 1; s += 2) {
-                List<Vec3> points = new ArrayList<>();
-                Vec3 from = start.add(side.scale(s * spread));
-                int segments = 12;
-                for (int i = 0; i <= segments; i++) {
-                    points.add(from.add(stop.subtract(from).scale(i / (double) segments)));
-                }
-                FlashLightningRibbon.drawArc(consumer, matrix, cam, points, 0.11F * thick, 0.05F * thick,
-                        0.018F * thick,
-                        FlashLightningRibbon.RED_GLOW_COLOR, FlashLightningRibbon.RED_MID_COLOR,
-                        FlashLightningRibbon.RED_CORE_COLOR, flicker);
-            }
+            // (drawn by SupermanCineVfx)
         }
         pose.popPose();
         buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);

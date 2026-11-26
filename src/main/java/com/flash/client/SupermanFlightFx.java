@@ -52,6 +52,8 @@ public final class SupermanFlightFx {
     private static final ResourceLocation FLOW = new ResourceLocation(FlashMod.MODID,
             "textures/fx/superman/breath_flow.png");
     private static final int MAX_PUFFS = 1600;
+    /** Off: Superman's flight is drawn by SupermanCineVfx. */
+    private static final boolean ENABLED = false;
     private static final Random RNG = new Random();
 
     private static ResourceLocation[] tex(String name, int n) {
@@ -156,6 +158,9 @@ public final class SupermanFlightFx {
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (!ENABLED) {
+            return; // replaced by SupermanCineVfx
+        }
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) {
             return;
@@ -272,7 +277,7 @@ public final class SupermanFlightFx {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        if (!ENABLED || event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();

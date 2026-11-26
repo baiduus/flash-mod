@@ -88,13 +88,13 @@ public final class ThorFx {
         Vec3 b = new Vec3(p.bx(), p.by(), p.bz());
         long now = level.getGameTime();
         long seed = RANDOM.nextLong();
+        // the light is drawn by ThorCineVfx now; here only the particles and the Bifrost's scorch mark
+        ThorCineVfx.handle(kind, a, b, p.scale(), cosmic);
         switch (kind) {
             case ThorFxPacket.BOLT -> {
-                add(a, b, p.scale(), 7, cosmic);
                 level.addParticle(ParticleTypes.ELECTRIC_SPARK, b.x, b.y, b.z, 0.0D, 0.1D, 0.0D);
             }
             case ThorFxPacket.RING -> {
-                EFFECTS.add(new Fx(kind, a, b, p.scale(), now, 14, cosmic, seed));
                 for (int i = 0; i < 24; i++) {
                     double ang = i * Math.PI / 12.0D;
                     level.addParticle(ParticleTypes.ELECTRIC_SPARK, a.x + Math.cos(ang) * 0.8D, a.y + 0.2D,
@@ -102,9 +102,7 @@ public final class ThorFx {
                             Math.sin(ang) * p.scale() * 0.08D);
                 }
             }
-            case ThorFxPacket.WAVE -> EFFECTS.add(new Fx(kind, a, b, p.scale(), now, 10, cosmic, seed));
             case ThorFxPacket.IMPACT -> {
-                EFFECTS.add(new Fx(kind, a, b, p.scale(), now, 30, cosmic, seed));
                 level.addParticle(ParticleTypes.FLASH, a.x, a.y + 0.5D, a.z, 0.0D, 0.0D, 0.0D);
                 level.addParticle(ParticleTypes.EXPLOSION_EMITTER, a.x, a.y + 0.5D, a.z, 0.0D, 0.0D, 0.0D);
                 for (int i = 0; i < 50; i++) {
@@ -115,14 +113,9 @@ public final class ThorFx {
                     level.addParticle(ParticleTypes.ELECTRIC_SPARK, a.x, a.y + 0.4D, a.z, Math.cos(ang) * sp * 2.0D,
                             0.2D + RANDOM.nextDouble() * 0.3D, Math.sin(ang) * sp * 2.0D);
                 }
-                for (int i = 0; i < 3; i++) {
-                    Vec3 g = a.add(RANDOM.nextGaussian() * 2.0D, 0.2D, RANDOM.nextGaussian() * 2.0D);
-                    add(g.add(0.0D, 30.0D, 0.0D), g, 2.0F, 10, cosmic);
-                }
             }
             case ThorFxPacket.BIFROST -> {
                 int life = Math.max(10, (int) p.bx());
-                EFFECTS.add(new Fx(kind, a, b, p.scale(), now, life, cosmic, seed));
                 EFFECTS.add(new Fx(SCORCH, a, b, p.scale(), now, 400, cosmic, seed));
                 for (int i = 0; i < 40; i++) {
                     level.addParticle(ParticleTypes.END_ROD, a.x + RANDOM.nextGaussian() * p.scale() * 0.5D,
@@ -130,9 +123,7 @@ public final class ThorFx {
                             0.3D + RANDOM.nextDouble() * 0.4D, 0.0D);
                 }
             }
-            case ThorFxPacket.DOME -> EFFECTS.add(new Fx(kind, a, b, p.scale(), now, 22, true, seed));
             case ThorFxPacket.BEAM -> {
-                EFFECTS.add(new Fx(kind, a, b, p.scale(), now, 4, cosmic, seed));
                 for (int i = 0; i < 6; i++) {
                     level.addParticle(ParticleTypes.ELECTRIC_SPARK, b.x, b.y, b.z, RANDOM.nextGaussian() * 0.3D,
                             RANDOM.nextDouble() * 0.3D, RANDOM.nextGaussian() * 0.3D);
@@ -189,51 +180,7 @@ public final class ThorFx {
         }
         ClientLevel level = mc.level;
         blastSounds(mc, level);
-        for (Player p : level.players()) {
-            if (!ThorState.isThor(p)) {
-                continue;
-            }
-            boolean cosmic = cosmic(p);
-            // Thunder's Fury: lightning all over the body
-            if (ThorState.flag(p, ThorPowers.F_FURY)) {
-                for (int i = 0; i < 2; i++) {
-                    Vec3 c = p.position().add(0.0D, 0.3D + RANDOM.nextDouble() * 1.5D, 0.0D);
-                    Vec3 o = c.add((RANDOM.nextDouble() - 0.5D) * 1.4D, (RANDOM.nextDouble() - 0.5D) * 1.0D,
-                            (RANDOM.nextDouble() - 0.5D) * 1.4D);
-                    add(c, o, 0.35F, 3, cosmic);
-                }
-            }
-            // the charge aura of the ultimates (Photon's "god_of_thunder_chargeaura"): two rings of lightning
-            // turning around Thor, stars of lightning, the hammer crackling
-            if (ThorState.flag(p, ThorPowers.F_ULTIMATE) || ThorState.flag(p, ThorPowers.F_TWIRL)) {
-                double t = (p.tickCount + RANDOM.nextDouble()) * 0.35D;
-                for (int ring = 0; ring < 2; ring++) {
-                    double h = ring == 0 ? 0.25D : 1.55D;
-                    double r = ring == 0 ? 1.3D : 1.0D;
-                    double a0 = t * (ring == 0 ? 1.0D : -1.3D) + RANDOM.nextDouble() * 0.6D;
-                    Vec3 c = p.position().add(0.0D, h, 0.0D);
-                    Vec3 from = c.add(Math.cos(a0) * r, RANDOM.nextGaussian() * 0.08D, Math.sin(a0) * r);
-                    Vec3 to = c.add(Math.cos(a0 + 1.1D) * r, RANDOM.nextGaussian() * 0.08D, Math.sin(a0 + 1.1D) * r);
-                    add(from, to, 0.45F, 2, cosmic);
-                }
-                Vec3 h = hand(p, 1.0F).add(0.0D, 0.5D, 0.0D);
-                add(h, h.add(RANDOM.nextGaussian() * 0.7D, RANDOM.nextDouble() * 0.8D, RANDOM.nextGaussian() * 0.7D),
-                        0.35F, 2, cosmic);
-                if (p.tickCount % 2 == 0) {
-                    Vec3 s = p.position().add(RANDOM.nextGaussian() * 1.2D, RANDOM.nextDouble() * 2.4D,
-                            RANDOM.nextGaussian() * 1.2D);
-                    level.addParticle(ParticleTypes.END_ROD, s.x, s.y, s.z, 0.0D, 0.02D, 0.0D);
-                    level.addParticle(ParticleTypes.ELECTRIC_SPARK, s.x, s.y, s.z, 0.0D, 0.05D, 0.0D);
-                }
-            }
-            // a charged hammer crackles; drinking lightning, even more
-            boolean charging = ThorState.flag(p, ThorPowers.F_CHARGING);
-            if (charging || (ThorState.flag(p, ThorPowers.F_FURY) && p.tickCount % 3 == 0)) {
-                Vec3 h = hand(p, 1.0F);
-                add(h, h.add((RANDOM.nextDouble() - 0.5D) * 1.2D, RANDOM.nextDouble() * 0.9D,
-                        (RANDOM.nextDouble() - 0.5D) * 1.2D), 0.3F, 3, cosmic);
-            }
-        }
+        // (Thor's aura and the hammer's crackle: ThorCineVfx)
     }
 
     // ------------------------------------------------------------------
@@ -377,49 +324,7 @@ public final class ThorFx {
             }
             buffers.endBatch(RenderType.entityTranslucent(SCORCH_TEXTURE));
         }
-        VertexConsumer consumer = buffers.getBuffer(FlashLightningRibbon.RENDER_TYPE);
-        Iterator<Bolt> it = BOLTS.iterator();
-        while (it.hasNext()) {
-            Bolt b = it.next();
-            float age = time - b.start();
-            float alpha = Math.max(0.0F, 1.0F - age / b.life());
-            arc(consumer, m, cam, b.points(), b.scale(), b.cosmic(), alpha);
-        }
-        for (Fx f : EFFECTS) {
-            drawFx(consumer, m, cam, f, time);
-        }
-        // the Lightning Blast: a bolt from the hand to whatever it hits, re-jagged every frame
-        for (Player p : blasting) {
-            Vec3 eye = p.getEyePosition(partial);
-            Vec3 look = p.getViewVector(partial);
-            Vec3 end = eye.add(look.scale(32.0D));
-            BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER,
-                    ClipContext.Fluid.NONE, p));
-            Vec3 stop = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
-            AABB box = p.getBoundingBox().expandTowards(stop.subtract(eye)).inflate(1.0D);
-            EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, stop,
-                    box, e -> !e.isSpectator() && e.isPickable(), eye.distanceToSqr(stop));
-            if (hit != null) {
-                stop = hit.getLocation();
-            } else if (block.getType() != HitResult.Type.MISS) {
-                // the burnt trail the beam leaves on the blocks, as Superman's heat vision
-                SupermanScorch.paint(p.getUUID(), stop, Vec3.atLowerCornerOf(block.getDirection().getNormal()), false);
-            }
-            Vec3 from = hand(p, partial);
-            boolean cosmic = cosmic(p);
-            float[][] col = colors(cosmic);
-            for (int k = 0; k < 2; k++) {
-                FlashLightningRibbon.drawArc(consumer, m, cam, jagged(from, stop, 0.22D, RANDOM), 0.2F, 0.08F, 0.03F,
-                        col[0], col[1], col[2], 1.0F);
-            }
-            if (RANDOM.nextInt(2) == 0) {
-                level.addParticle(ParticleTypes.ELECTRIC_SPARK, stop.x, stop.y, stop.z,
-                        RANDOM.nextGaussian() * 0.1D, 0.1D, RANDOM.nextGaussian() * 0.1D);
-            }
-        }
-        buffers.endBatch(FlashLightningRibbon.RENDER_TYPE);
-        // the light around the lightning (VfxDraw: the Lanterns' glows, rays and spheres, rune rings)
-        glowPass(event, m, level, partial, time, blasting);
+        // (the lightning, the Lightning Blast and all the light: ThorCineVfx)
         pose.popPose();
     }
 

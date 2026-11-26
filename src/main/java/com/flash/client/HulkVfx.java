@@ -88,7 +88,7 @@ public final class HulkVfx {
     }
 
     /** The camera shakes for whoever is close (strength at the place, reach in blocks). */
-    private static void quake(Minecraft mc, Vec3 at, float strength, double reach) {
+    public static void quake(Minecraft mc, Vec3 at, float strength, double reach) {
         if (mc.player == null) {
             return;
         }

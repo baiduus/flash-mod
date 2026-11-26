@@ -215,45 +215,8 @@ public final class FlashCineVfx {
                 }
                 VfxDraw.sparks(buf, m, f.a, f.seed, 36, 2.0D + s, age / 18.0F, 1.2D, hot[0], hot[1], hot[2], 1.0F);
             }
-            case FlashFx.TORNADO -> {
-                Vec3 base = f.a;
-                double height = 9.5D;
-                float spin = t * 0.55F;
-                // spinning rings, wider up the funnel
-                for (int i = 0; i < 11; i++) {
-                    double h = i * height / 10.0D;
-                    double r = 0.35D + h * 0.19D;
-                    float a = on * (0.35F + 0.25F * (float) Math.sin(t * 0.3D + i));
-                    VfxDraw.ring(buf, m, base.add(0.0D, h, 0.0D), vup, r, 0.05D + h * 0.01D, spin + i * 0.5F,
-                            hot[0], hot[1], hot[2], a);
-                }
-                // bands of speed force winding up it
-                for (int s = 0; s < 5; s++) {
-                    List<Vec3> pts = new ArrayList<>();
-                    for (int i = 0; i <= 26; i++) {
-                        double h = i * height / 26.0D;
-                        double r = 0.35D + h * 0.19D;
-                        double ang = spin + s * Math.PI * 2.0D / 5.0D + h * 0.85D;
-                        pts.add(base.add(Math.cos(ang) * r, h, Math.sin(ang) * r));
-                    }
-                    VfxDraw.path(buf, m, pts, 0.16F, main[0], main[1], main[2], 0.35F * on);
-                    VfxDraw.path(buf, m, pts, 0.05F, white[0], white[1], white[2], 0.7F * on);
-                }
-                // lightning crackling inside
-                java.util.Random rnd = new java.util.Random(f.seed + (long) (t / 2.0F));
-                for (int i = 0; i < 3; i++) {
-                    double h = rnd.nextDouble() * height;
-                    double r = 0.35D + h * 0.19D;
-                    double ang = rnd.nextDouble() * Math.PI * 2.0D;
-                    bolt(buf, m, base.add(0.0D, 0.3D, 0.0D), base.add(Math.cos(ang) * r, h, Math.sin(ang) * r),
-                            rnd.nextLong(), 1.0D, 0.04F, c, on);
-                }
-                VfxDraw.glow(buf, m, base.add(0.0D, 0.1D, 0.0D), new Vec3(1.0D, 0.0D, 0.0D),
-                        new Vec3(0.0D, 0.0D, 1.0D), 3.0D, main[0], main[1], main[2], 0.4F * on);
-                VfxDraw.wall(buf, m, base, 1.7D, 1.4D, main[0], main[1], main[2], 0.35F * on);
-                VfxDraw.glow(buf, m, base.add(0.0D, height * 0.5D, 0.0D), left, up, 4.0D, main[0], main[1], main[2],
-                        0.08F * on);
-            }
+            case FlashFx.TORNADO -> FlashTornadoVfx.speedTornado(buf, m, f.a, cam, left, up, t, main, on,
+                    ease(Math.min(1.0F, (t - f.born) / 25.0F)), f.caster * 7919L);
             case FlashFx.MASS_CHARGE -> {
                 double r = Math.max(2.0D, f.power);
                 Vec3 g = f.a.add(0.0D, 0.06D, 0.0D);

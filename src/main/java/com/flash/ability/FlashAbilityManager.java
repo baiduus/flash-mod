@@ -610,29 +610,7 @@ public final class FlashAbilityManager {
         if (state.tornadoTicks % 4 == 0) {
             FlashFx.send(player, FlashFx.TORNADO, center, Vec3.ZERO, 1.0F);
         }
-        // Visual funnel: about 9.5 blocks tall, wider at the top, with two
-        // particles per layer every other tick (bounded for performance).
-        if ((state.tornadoTicks & 1) == 0) {
-            int layers = 14;
-            for (int i = 0; i < layers; i++) {
-                double height = i * 0.68D;
-                double ring = 0.22D + i * 0.17D;
-                for (int j = 0; j < 2; j++) {
-                    double angle = state.tornadoTicks * 0.62D + j * Math.PI
-                            + i * 0.36D;
-                    double px = center.x + Math.cos(angle) * ring;
-                    double pz = center.z + Math.sin(angle) * ring;
-                    level.sendParticles(ParticleTypes.CLOUD,
-                            px, center.y + height, pz, 1,
-                            0.05D, 0.06D, 0.05D, 0.01D);
-                    if (i % 3 == 0 && j == 0) {
-                        level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                                px, center.y + height, pz, 1,
-                                0.03D, 0.03D, 0.03D, 0.02D);
-                    }
-                }
-            }
-        }
+        // (the funnel itself is drawn on the clients: FlashTornadoVfx)
         // Soft wind loop, only while the key is held (this method stops running
         // the moment the ability is released).
         if (state.tornadoTicks % 16 == 0) {
