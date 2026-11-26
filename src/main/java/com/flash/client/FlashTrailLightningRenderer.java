@@ -124,6 +124,13 @@ public final class FlashTrailLightningRenderer {
                     if (fade > 0.01F) {
                         FlashVfx.trail(buf, matrix, older.base().add(0.0D, 1.0D, 0.0D),
                                 points.get(i).base().add(0.0D, 1.0D, 0.0D), fade, c);
+                        // glints of Speed Force left hanging in the trail
+                        long h = older.createdAt() * 31L ^ state.seed;
+                        if ((h & 3L) == 0L) {
+                            Vec3 g = older.base().add(((h >> 3) & 15) / 15.0D - 0.5D, 0.4D + ((h >> 7) & 15) / 12.0D,
+                                    ((h >> 11) & 15) / 15.0D - 0.5D);
+                            FlashVfx.glint(buf, matrix, g, camera, fade, c, now);
+                        }
                     }
                 }
                 net.minecraft.world.entity.player.Player runner = level.getPlayerByUUID(state.id);

@@ -79,6 +79,9 @@ public final class FlashPhase {
             state.lastSafe = player.position();
         }
 
+        if (state.phasingTicks % 4 == 1) {
+            FlashFx.send(player, FlashFx.PHASE, player.position(), Vec3.ZERO, 1.0F);
+        }
         if (player.tickCount % 2 == 0) {
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                     player.getX(), player.getY() + 1.0D, player.getZ(),

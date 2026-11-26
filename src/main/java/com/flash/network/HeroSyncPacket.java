@@ -13,6 +13,10 @@ public record HeroSyncPacket(int hero, int entity, boolean has, int data) {
     public static final int DOOM = 1;
     public static final int WONDER = 2;
     public static final int ULTRON = 3;
+    /** (HeroFxPacket only: the Hulk's effects, HulkVfx.) */
+    public static final int HULK = 4;
+    /** (HeroFxPacket only: the Flash's effects, FlashCineVfx.) */
+    public static final int FLASH = 5;
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeByte(this.hero);

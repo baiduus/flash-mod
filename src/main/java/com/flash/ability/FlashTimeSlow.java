@@ -106,6 +106,7 @@ public final class FlashTimeSlow {
         }
 
         if (now % 4L == 0L) {
+            FlashFx.send(player, FlashFx.TIME_SLOW, center, Vec3.ZERO, (float) RADIUS);
             ring(level, center, FlashPowers.isNegative(player));
         }
         return true;

@@ -98,6 +98,8 @@ final class FlashDashPunch {
             Vec3 move = direction.scale(Math.max(0.4D, step));
             if (level.noCollision(player, player.getBoundingBox().move(move))) {
                 trail(level, from, from.add(move));
+                FlashFx.send(player, FlashFx.DASH, from.add(0.0D, 1.0D, 0.0D), from.add(move).add(0.0D, 1.0D, 0.0D),
+                        1.0F);
                 player.connection.teleport(from.x + move.x, from.y + move.y, from.z + move.z,
                         yaw, 0.0F);
             } else if (level.noCollision(player, player.getBoundingBox().move(move.add(0, 1.0D, 0)))) {
@@ -121,6 +123,8 @@ final class FlashDashPunch {
         Vec3 push = delta.normalize().scale(0.12D);
         target.setDeltaMovement(target.getDeltaMovement().add(push.x, 0.03D, push.z));
         target.hurtMarked = true;
+        FlashFx.send(player, FlashFx.HIT, target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D),
+                delta, 0.5F + run.punches * 0.1F);
         level.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() * 0.6D,
                 target.getZ(), 6, 0.25D, 0.25D, 0.25D, 0.15D);
         level.playSound(null, target.getX(), target.getY(), target.getZ(),

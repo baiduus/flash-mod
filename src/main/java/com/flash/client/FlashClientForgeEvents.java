@@ -194,6 +194,8 @@ public final class FlashClientForgeEvents {
         DoomClient.reset();
         WonderClient.reset();
         UltronClient.reset();
+        HulkVfx.reset();
+        FlashCineVfx.reset();
         com.flash.client.infinity.InfinityClient.reset();
         WonderLayer.resetModels();
         WonderItemRenderer.resetModels();

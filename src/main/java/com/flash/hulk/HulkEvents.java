@@ -126,6 +126,7 @@ public final class HulkEvents {
         }
         level.sendParticles(ParticleTypes.EXPLOSION, player.getX(), player.getY() + 0.3D, player.getZ(),
                 6, radius / 3.0D, 0.1D, radius / 3.0D, 0.0D);
+        HulkFx.send(player, HulkFx.LAND, player.position(), Vec3.ZERO, (float) radius);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.2F, 0.6F);
         HulkPowers.addRage(player, 4.0F);
@@ -149,6 +150,14 @@ public final class HulkEvents {
         }
         if (!(source instanceof ServerPlayer hulk) || hulk == victim || !HulkPowers.isTransformed(hulk)) {
             return;
+        }
+        if (event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)
+                && event.getSource().getDirectEntity() == hulk) {
+            // the fist landing: a gamma impact where it hits
+            Vec3 at = victim.position().add(0.0D, victim.getBbHeight() * 0.55D, 0.0D);
+            Vec3 way = at.subtract(hulk.getEyePosition());
+            HulkFx.send(hulk, HulkFx.PUNCH, at.subtract(way.normalize().scale(victim.getBbWidth() * 0.5D)), way,
+                    Math.min(1.0F, event.getAmount() / 20.0F));
         }
         if (victim instanceof net.minecraft.world.entity.player.Player pv && com.flash.power.HeroBalance.isHero(pv)) {
             return;

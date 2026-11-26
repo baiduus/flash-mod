@@ -27,6 +27,7 @@ public final class GammaBurst {
             player.displayClientMessage(Component.translatable("message.flash.gamma_exposed"), false);
         }
         level.explode(null, at.x, at.y, at.z, 3.0F, Level.ExplosionInteraction.NONE);
+        HulkFx.at(level, HulkFx.IMPACT, at, (float) radius * 1.5F);
         level.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), at.x, at.y + 0.5D, at.z, 300, radius / 2.0D, 1.5D, radius / 2.0D, 0.0D);
         level.sendParticles(ParticleTypes.FLASH, at.x, at.y + 0.5D, at.z, 3, 0.0D, 0.0D, 0.0D, 0.0D);
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, at.x, at.y + 1.0D, at.z, 80, radius / 2.0D, 1.5D, radius / 2.0D, 0.0D);

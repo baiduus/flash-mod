@@ -360,6 +360,7 @@ public final class HulkPowers {
     }
 
     public static void burst(ServerPlayer player) {
+        HulkFx.send(player, HulkFx.TRANSFORM, player.position(), net.minecraft.world.phys.Vec3.ZERO, isTransformed(player) ? 1.0F : 0.0F);
         if (player.level() instanceof ServerLevel level) {
             level.sendParticles(com.flash.registry.ModParticles.GAMMA.get(), player.getX(), player.getY() + 1.2D, player.getZ(),
                     60, 0.6D, 1.0D, 0.6D, 0.0D);
@@ -416,6 +417,7 @@ public final class HulkPowers {
                 net.minecraft.world.effect.MobEffects.REGENERATION, EXTRA_TICKS, 3, false, true, true));
         player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                 net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 100, 4, false, false, true));
+        HulkFx.send(player, HulkFx.EXTRA_LIFE, player.position(), net.minecraft.world.phys.Vec3.ZERO, 1.0F);
         if (player.level() instanceof ServerLevel level) {
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, player.getX(),
                     player.getY() + player.getBbHeight() * 0.5D, player.getZ(), 120, player.getBbWidth(),

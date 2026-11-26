@@ -352,6 +352,7 @@ public final class HulkAbilities {
             }
         }
         dust(level, g, 30);
+        HulkFx.send(player, HulkFx.SMASH, Vec3.atBottomCenterOf(g.above()), dir, HulkPowers.activeLevel(player));
         // TNT is power 4; a little stronger every level (6.25 at level 10)
         float tnt = 4.0F + 0.25F * (HulkPowers.activeLevel(player) - 1);
         blast(player, level, g.getX() + 0.5D, g.getY() + 0.5D, g.getZ() + 0.5D, tnt);
@@ -387,6 +388,7 @@ public final class HulkAbilities {
         }
         level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 0.3D, player.getZ(),
                 4, 0.4D, 0.1D, 0.4D, 0.02D);
+        HulkFx.send(player, HulkFx.CHARGE, player.position(), dir, t);
         if (t == 1) {
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_STEP,
                     SoundSource.PLAYERS, 1.6F, 0.6F);
@@ -424,6 +426,7 @@ public final class HulkAbilities {
                 SoundSource.PLAYERS, 3.0F, 0.45F);
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
+        HulkFx.send(player, HulkFx.ROAR, eye, look, 12.0F);
         for (int i = 1; i <= 4; i++) {
             Vec3 p = eye.add(look.scale(i * 1.5D));
             level.sendParticles(ParticleTypes.SONIC_BOOM, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
@@ -456,6 +459,7 @@ public final class HulkAbilities {
             hit(player, e, (float) (damage * (1.0D - dist / (range * 1.6D))), look.scale(3.0D).add(0.0D, 0.6D, 0.0D));
         }
         // the shockwave: rings of air flying forward
+        HulkFx.send(player, HulkFx.CLAP, eye.add(look.scale(0.6D)).add(0.0D, -0.4D, 0.0D), look, (float) range);
         for (int d = 1; d <= range; d += 2) {
             Vec3 c = eye.add(look.scale(d));
             level.sendParticles(ParticleTypes.CLOUD, c.x, c.y, c.z, 10 + d, 0.2D + d * 0.08D, 0.2D + d * 0.08D,
@@ -490,6 +494,7 @@ public final class HulkAbilities {
             level.destroyBlock(g, false, player);
         }
         dust(level, g, 20);
+        HulkFx.send(player, HulkFx.RIP, Vec3.atBottomCenterOf(g.above()), Vec3.ZERO, 1.0F);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.STONE_BREAK,
                 SoundSource.PLAYERS, 1.4F, 0.5F);
         return rock;
@@ -566,6 +571,7 @@ public final class HulkAbilities {
         // the fuller the bar, the farther it goes
         boulder.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 0.9F + 2.4F * charge, 0.5F);
         level.addFreshEntity(boulder);
+        HulkFx.send(player, HulkFx.THROW, boulder.position(), player.getLookAngle(), charge);
         player.swing(InteractionHand.MAIN_HAND, true);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ATTACK,
                 SoundSource.PLAYERS, 1.4F, 0.5F);
@@ -671,6 +677,8 @@ public final class HulkAbilities {
         double force = (1.8D + 0.18D * HulkPowers.activeLevel(player)) * (0.35D + 0.9D * charge);
         target.setDeltaMovement(look.scale(force).add(0.0D, 0.35D, 0.0D));
         target.hurtMarked = true;
+        HulkFx.send(player, HulkFx.THROW, target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D), look,
+                charge);
         THROWN.put(target.getId(), new Thrown(player.getUUID(),
                 punch(player) * 2.0F * ABILITY_DAMAGE * (0.35F + 0.45F * charge), player.tickCount, charge >= 0.999F));
         player.swing(InteractionHand.MAIN_HAND, true);
@@ -706,6 +714,7 @@ public final class HulkAbilities {
                 SoundSource.PLAYERS, 2.0F, 0.6F);
         level.sendParticles(ParticleTypes.SONIC_BOOM, target.getX(), target.getY() + 1.0D, target.getZ(), 1,
                 0.0D, 0.0D, 0.0D, 0.0D);
+        HulkFx.send(player, HulkFx.THROW, target.position().add(0.0D, 1.0D, 0.0D), aim, 2.0F);
         player.swing(InteractionHand.MAIN_HAND, true);
     }
 
@@ -752,6 +761,7 @@ public final class HulkAbilities {
                 }
                 // the impact blows up like 6 TNTs (even if the creature is gone)
                 blast(player, level, impact.x, impact.y + 0.5D, impact.z, SUPER_BLAST);
+                HulkFx.at(level, HulkFx.IMPACT, impact, 14.0F);
                 return true;
             }
             if (target == null) {
@@ -815,6 +825,7 @@ public final class HulkAbilities {
                 target.invulnerableTime = 0;
                 target.hurt(player.damageSources().playerAttack(player), thrown.damage());
                 dust(level, target.blockPosition().below(), 25);
+                HulkFx.send(player, HulkFx.LAND, target.position(), Vec3.ZERO, thrown.explode() ? 5.0F : 2.5F);
                 level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.GENERIC_EXPLODE,
                         SoundSource.PLAYERS, 1.0F, 0.7F);
                 HulkPowers.addRage(player, 3.0F);
@@ -834,6 +845,7 @@ public final class HulkAbilities {
     /** Level 7: gamma fury - 20 seconds of more damage, toughness and faster healing. */
     private static void fury(ServerPlayer player, ServerLevel level) {
         HulkPowers.startFury(player);
+        HulkFx.send(player, HulkFx.FURY, player.position(), Vec3.ZERO, 400.0F);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.RAVAGER_ROAR,
                 SoundSource.PLAYERS, 2.5F, 0.4F);
         player.displayClientMessage(Component.translatable("message.flash.hulk_fury"), true);
@@ -855,6 +867,7 @@ public final class HulkAbilities {
             e.addEffect(new MobEffectInstance(MobEffects.POISON, 200, 1), player);
             e.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1), player);
         }
+        HulkFx.send(player, HulkFx.GAMMA_WAVE, player.position(), Vec3.ZERO, (float) radius);
         for (int ring = 1; ring <= 10; ring++) {
             for (int i = 0; i < 24; i++) {
                 double a = i * Math.PI * 2.0D / 24.0D;
@@ -881,6 +894,7 @@ public final class HulkAbilities {
             return;
         }
         double r = 3.0D + stomp * 2.2D;
+        HulkFx.send(player, HulkFx.STOMP, origin, Vec3.ZERO, (float) r, (stomp << 1) | (HulkPowers.isRed(player) ? 1 : 0));
         float damage = 1.5F * punch(player);
         for (LivingEntity e : around(player, new AABB(origin, origin).inflate(r + 1.5D, 4.0D, r + 1.5D))) {
             double d = Math.hypot(e.getX() - origin.x, e.getZ() - origin.z);

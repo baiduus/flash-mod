@@ -607,6 +607,9 @@ public final class FlashAbilityManager {
         }
         holdDebrisAtTop(state, center);
 
+        if (state.tornadoTicks % 4 == 0) {
+            FlashFx.send(player, FlashFx.TORNADO, center, Vec3.ZERO, 1.0F);
+        }
         // Visual funnel: about 9.5 blocks tall, wider at the top, with two
         // particles per layer every other tick (bounded for performance).
         if ((state.tornadoTicks & 1) == 0) {
@@ -786,6 +789,8 @@ public final class FlashAbilityManager {
         }
 
         FlashAbilityCombat.spawnImpact(level, targetPoint, 2.5F);
+        FlashFx.send(player, FlashFx.IMPACT, targetPoint, look, 2.5F);
+        FlashFx.send(player, FlashFx.RELEASE, slapCenter, look, 1.0F);
         FlashAbilityCombat.playThunder(level, targetPoint);
         FlashBeamPacket.send(player, start, targetPoint, 0xFFFFC400, 16, 1.25F);
     }
@@ -812,6 +817,9 @@ public final class FlashAbilityManager {
             player.hurtMarked = true;
         }
 
+        if (state.massTicks % 4 == 0) {
+            FlashFx.send(player, FlashFx.MASS_CHARGE, center, Vec3.ZERO, (float) MASS_CIRCLE_RADIUS);
+        }
         // Speed trails and a visible circular preparation area.
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
                 player.getX(), player.getY() + 1.0D, player.getZ(),
@@ -852,6 +860,8 @@ public final class FlashAbilityManager {
 
         FlashAbilityCombat.breakCone(player, look, 15.0D, 2.2D, 80);
         FlashAbilityCombat.spawnImpact(level, end, 4.0F);
+        FlashFx.send(player, FlashFx.IMPACT, end, look, 4.0F);
+        FlashFx.send(player, FlashFx.RELEASE, start.add(look.scale(1.2D)).add(0.0D, -0.3D, 0.0D), look, 2.0F);
         FlashAbilityCombat.playThunder(level, end);
         FlashBeamPacket.send(player, start, end, 0xFFFFD24A, 20, 2.2F);
 

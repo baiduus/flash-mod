@@ -447,4 +447,197 @@ public final class VfxDraw {
             bar(buf, m, x0, y, z0, x1, z1, s * 0.15D, r, g, b, al);
         }
     }
+
+    // ------------------------------------------------------------------
+    // Cinematic pieces: lens flares, shockwaves, glowing cracks, sparks, energy flames
+    // ------------------------------------------------------------------
+
+    /** A long thin streak of light through c along dir (camera plane), bright in the middle, clear at the tips. */
+    public static void streak(BufferBuilder buf, Matrix4f m, Vec3 c, Vec3 dir, Vec3 across, double len, double w,
+                              float r, float g, float b, float a) {
+        if (a <= 0.002F) {
+            return;
+        }
+        Vec3 d = dir.scale(len);
+        Vec3 s = across.scale(w);
+        // two halves, each a diamond fan from the centre
+        for (int side = -1; side <= 1; side += 2) {
+            Vec3 tip = c.add(d.scale(side));
+            vert(buf, m, c.add(s), r, g, b, 0.0F);
+            vert(buf, m, c, mix(r, 0.6F), mix(g, 0.6F), mix(b, 0.6F), a);
+            vert(buf, m, tip, r, g, b, 0.0F);
+            vert(buf, m, tip, r, g, b, 0.0F);
+            vert(buf, m, c.subtract(s), r, g, b, 0.0F);
+            vert(buf, m, c, mix(r, 0.6F), mix(g, 0.6F), mix(b, 0.6F), a);
+            vert(buf, m, tip, r, g, b, 0.0F);
+            vert(buf, m, tip, r, g, b, 0.0F);
+        }
+    }
+
+    /**
+     * A movie lens flare at c: a white-hot core, a coloured halo, the long anamorphic streak across the screen, a
+     * short cross streak, a faint ring and two ghost glows along the line to the screen centre.
+     */
+    public static void flare(BufferBuilder buf, Matrix4f m, Vec3 c, Vec3 left, Vec3 up, double size, float r,
+                             float g, float b, float a) {
+        if (a <= 0.002F || size <= 0.0D) {
+            return;
+        }
+        glow(buf, m, c, left, up, size * 1.6D, r, g, b, 0.22F * a);
+        glow(buf, m, c, left, up, size * 0.7D, mix(r, 0.4F), mix(g, 0.4F), mix(b, 0.4F), 0.55F * a);
+        glow(buf, m, c, left, up, size * 0.28D, 1.0F, 1.0F, 1.0F, 0.95F * a);
+        streak(buf, m, c, left, up, size * 5.5D, size * 0.09D, r, g, b, 0.75F * a);
+        streak(buf, m, c, left, up, size * 2.6D, size * 0.035D, 1.0F, 1.0F, 1.0F, 0.6F * a);
+        streak(buf, m, c, up, left, size * 1.5D, size * 0.05D, mix(r, 0.3F), mix(g, 0.3F), mix(b, 0.3F), 0.4F * a);
+        Vec3 n = left.cross(up);
+        ring(buf, m, c, n, size * 1.25D, size * 0.05D, 0.0F, r, g, b, 0.18F * a);
+        Vec3 off = left.scale(size * 1.9D).add(up.scale(size * 0.4D));
+        glow(buf, m, c.subtract(off), left, up, size * 0.32D, mix(r, 0.2F), g * 0.8F, b, 0.15F * a);
+        glow(buf, m, c.subtract(off.scale(1.7D)), left, up, size * 0.18D, r, g, mix(b, 0.5F), 0.12F * a);
+    }
+
+    /**
+     * A shockwave on the ground at radius: a bright band, a softer wide band, a short wall of light rising off it
+     * and an inner glow ring; k (0..1) its age.
+     */
+    public static void shockwave(BufferBuilder buf, Matrix4f m, Vec3 c, double radius, double height, float r,
+                                 float g, float b, float a) {
+        if (a <= 0.002F || radius <= 0.0D) {
+            return;
+        }
+        Vec3 upv = new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 at = c.add(0.0D, 0.06D, 0.0D);
+        ring(buf, m, at, upv, radius, Math.max(0.08D, radius * 0.08D), 0.0F, mix(r, 0.5F), mix(g, 0.5F),
+                mix(b, 0.5F), a);
+        ring(buf, m, at, upv, radius * 0.94D, Math.max(0.25D, radius * 0.22D), 0.0F, r, g, b, 0.35F * a);
+        wall(buf, m, at, radius, height, r, g, b, 0.45F * a);
+        wall(buf, m, at, radius * 0.97D, height * 0.45D, mix(r, 0.6F), mix(g, 0.6F), mix(b, 0.6F), 0.4F * a);
+    }
+
+    /**
+     * A glowing crack running over the ground from c outwards (angle, length), jagged, with a side branch; grown
+     * up to grow (0..1) of its length.
+     */
+    public static void crack(BufferBuilder buf, Matrix4f m, Vec3 c, double angle, double len, long seed, float grow,
+                             double w, float r, float g, float b, float a) {
+        if (a <= 0.002F || grow <= 0.0F) {
+            return;
+        }
+        java.util.Random rnd = new java.util.Random(seed);
+        int n = 7;
+        double x = c.x;
+        double z = c.z;
+        double y = c.y + 0.03D;
+        double ang = angle;
+        double step = len / n;
+        int shown = Math.max(1, (int) Math.ceil(n * grow));
+        for (int i = 0; i < shown; i++) {
+            ang += (rnd.nextDouble() - 0.5D) * 0.9D;
+            double nx = x + Math.cos(ang) * step;
+            double nz = z + Math.sin(ang) * step;
+            double ww = w * (1.0D - 0.75D * i / n);
+            bar(buf, m, x, y, z, nx, nz, ww * 3.2D, r, g, b, 0.22F * a);
+            bar(buf, m, x, y + 0.005D, z, nx, nz, ww, mix(r, 0.75F), mix(g, 0.75F), mix(b, 0.75F), a);
+            if (i == 2 || i == 4) {
+                double ba = ang + (rnd.nextBoolean() ? 0.8D : -0.8D);
+                double bx = nx + Math.cos(ba) * step * 0.9D;
+                double bz = nz + Math.sin(ba) * step * 0.9D;
+                bar(buf, m, nx, y, nz, bx, bz, ww * 1.8D, r, g, b, 0.2F * a);
+                bar(buf, m, nx, y + 0.005D, nz, bx, bz, ww * 0.55D, mix(r, 0.6F), mix(g, 0.6F), mix(b, 0.6F),
+                        0.8F * a);
+            }
+            x = nx;
+            z = nz;
+        }
+    }
+
+    /**
+     * Sparks flying out of c (seeded), each a short streak along its path: speed blocks over the whole life, k
+     * (0..1) how far in its life, a little gravity.
+     */
+    public static void sparks(BufferBuilder buf, Matrix4f m, Vec3 c, long seed, int count, double speed, float k,
+                              double gravity, float r, float g, float b, float a) {
+        if (a <= 0.002F || k >= 1.0F) {
+            return;
+        }
+        java.util.Random rnd = new java.util.Random(seed);
+        for (int i = 0; i < count; i++) {
+            double th = rnd.nextDouble() * Math.PI * 2.0D;
+            double ph = Math.acos(rnd.nextDouble() * 2.0D - 1.0D);
+            Vec3 v = new Vec3(Math.sin(ph) * Math.cos(th), Math.cos(ph) * 0.8D + 0.25D, Math.sin(ph) * Math.sin(th))
+                    .scale(speed * (0.4D + rnd.nextDouble() * 0.8D));
+            double kk = Math.min(1.0D, k * (0.8D + rnd.nextDouble() * 0.5D));
+            double ease = 1.0D - (1.0D - kk) * (1.0D - kk);
+            Vec3 p = c.add(v.scale(ease)).add(0.0D, -gravity * kk * kk, 0.0D);
+            Vec3 tail = c.add(v.scale(Math.max(0.0D, ease - 0.12D))).add(0.0D, -gravity * Math.max(0.0D, kk - 0.1D)
+                    * Math.max(0.0D, kk - 0.1D), 0.0D);
+            float fa = a * (float) (1.0D - kk);
+            beam(buf, m, tail, p, 0.05F, r, g, b, fa);
+            beam(buf, m, tail, p, 0.018F, mix(r, 0.8F), mix(g, 0.8F), mix(b, 0.8F), fa);
+        }
+    }
+
+    /**
+     * A tongue of energy fire rising from base (turned to the camera): wide at the root, licking up to a point, its
+     * tip swaying with t.
+     */
+    public static void flame(BufferBuilder buf, Matrix4f m, Vec3 base, double height, double w, Vec3 cam, float t,
+                             float r, float g, float b, float a) {
+        if (a <= 0.002F) {
+            return;
+        }
+        double dx = cam.x - base.x;
+        double dz = cam.z - base.z;
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 1.0E-4D) {
+            len = 1.0D;
+            dx = 1.0D;
+        }
+        Vec3 side = new Vec3(-dz / len, 0.0D, dx / len);
+        int seg = 5;
+        Vec3 prev = base;
+        double prevW = w;
+        for (int i = 1; i <= seg; i++) {
+            double k = (double) i / seg;
+            double sway = Math.sin(t * 0.35D + k * 3.0D + base.x * 2.0D) * w * 0.9D * k;
+            Vec3 p = base.add(0.0D, height * k, 0.0D).add(side.scale(sway));
+            double ww = w * (1.0D - k);
+            float a0 = a * (float) (1.0D - (k - 1.0D / seg));
+            float a1 = a * (float) (1.0D - k);
+            vert(buf, m, prev.subtract(side.scale(prevW)), r, g, b, 0.0F);
+            vert(buf, m, prev, mix(r, 0.4F), mix(g, 0.4F), mix(b, 0.4F), a0);
+            vert(buf, m, p, mix(r, 0.4F), mix(g, 0.4F), mix(b, 0.4F), a1);
+            vert(buf, m, p.subtract(side.scale(ww)), r, g, b, 0.0F);
+            vert(buf, m, prev, mix(r, 0.4F), mix(g, 0.4F), mix(b, 0.4F), a0);
+            vert(buf, m, prev.add(side.scale(prevW)), r, g, b, 0.0F);
+            vert(buf, m, p.add(side.scale(ww)), r, g, b, 0.0F);
+            vert(buf, m, p, mix(r, 0.4F), mix(g, 0.4F), mix(b, 0.4F), a1);
+            prev = p;
+            prevW = ww;
+        }
+    }
+
+    /** A cone of light opening from apex along dir (a blast of air or sound): open radius at length. */
+    public static void cone(BufferBuilder buf, Matrix4f m, Vec3 apex, Vec3 dir, double length, double radius,
+                            float r, float g, float b, float a) {
+        if (a <= 0.002F) {
+            return;
+        }
+        Vec3 dn = dir.normalize();
+        Vec3 ref = Math.abs(dn.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 u = dn.cross(ref).normalize();
+        Vec3 v = dn.cross(u).normalize();
+        Vec3 end = apex.add(dn.scale(length));
+        int seg = 24;
+        for (int j = 0; j < seg; j++) {
+            double a0 = Math.PI * 2.0D * j / seg;
+            double a1 = Math.PI * 2.0D * (j + 1) / seg;
+            Vec3 p0 = end.add(u.scale(Math.cos(a0) * radius)).add(v.scale(Math.sin(a0) * radius));
+            Vec3 p1 = end.add(u.scale(Math.cos(a1) * radius)).add(v.scale(Math.sin(a1) * radius));
+            vert(buf, m, apex, r, g, b, 0.0F);
+            vert(buf, m, apex, r, g, b, 0.0F);
+            vert(buf, m, p1, r, g, b, a);
+            vert(buf, m, p0, r, g, b, a);
+        }
+    }
 }
