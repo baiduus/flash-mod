@@ -75,11 +75,15 @@ public final class SupermanPose {
             return;
         }
         float pt = Minecraft.getInstance().getFrameTime();
+        State st = STATES.get(p.getUUID());
         IAnimation[] layers = new IAnimation[APPLIED.length];
         boolean any = false;
         for (int i = 0; i < APPLIED.length; i++) {
-            Object data = PlayerAnimationAccess.getPlayerAssociatedData(p).get(APPLIED[i]);
-            if (data instanceof IAnimation a && a.isActive()) {
+            // the base, hold and shot: the mod's own copies (they work even when playerAnimator's layers do not);
+            // the arms of Lex and Ultron: their layers
+            IAnimation a = i < 3 ? st.own[i] : PlayerAnimationAccess.getPlayerAssociatedData(p).get(APPLIED[i])
+                    instanceof IAnimation l ? l : null;
+            if (a != null && a.isActive()) {
                 a.setupAnim(pt);
                 layers[i] = a;
                 any = true;
@@ -124,9 +128,48 @@ public final class SupermanPose {
         return data instanceof ModifierLayer<?> l ? (ModifierLayer<IAnimation>) l : null;
     }
 
+    /** A fresh player of an animation (null: none). */
+    private static IAnimation make(AbstractClientPlayer player, String name, int startTick, boolean frozen) {
+        if (name == null) {
+            return null;
+        }
+        if (LANTERN.equals(name)) {
+            return new LanternFlight(player);
+        }
+        KeyframeAnimation a = anim(name);
+        if (a == null) {
+            return null;
+        }
+        return frozen ? new Frozen(a, startTick) : new KeyframeAnimationPlayer(a, startTick);
+    }
+
+    private static int slot(ResourceLocation id) {
+        return id == BASE ? 0 : id == HOLD ? 1 : 2;
+    }
+
+    /** Puts the mod's own copy of a layer in place (with the legs' mask on the hold and the shot). */
+    private static void own(AbstractClientPlayer player, ResourceLocation id, IAnimation mine) {
+        State st = STATES.get(player.getUUID());
+        if (st == null) {
+            return;
+        }
+        int i = slot(id);
+        st.own[i] = mine == null ? null : i == 0 ? new ModifierLayer<>(mine)
+                : new ModifierLayer<>(mine, new LegMask(player, i == 2));
+    }
+
+    private static boolean told;
+
     private static void set(AbstractClientPlayer player, ResourceLocation id, String name, int startTick, int fade,
                             boolean frozen) {
+        own(player, id, make(player, name, startTick, frozen));
         ModifierLayer<IAnimation> layer = layer(player, id);
+        if (!told && name != null) {
+            told = true;
+            com.mojang.logging.LogUtils.getLogger().info("[flash] poses: playerAnimator layer {} for {}, animation '{}' {}",
+                    layer == null ? "MISSING" : "ok", player.getGameProfile().getName(), name,
+                    LANTERN.equals(name) || anim(name) != null ? "loaded" : "NOT LOADED");
+        }
         if (layer == null) {
             return;
         }
@@ -188,6 +231,8 @@ public final class SupermanPose {
         boolean wasFlying;
         boolean wasDiving;
         double lastSpeed;
+        /** The mod's own copies of the three layers (base, hold, shot), ticked here and put on the model by apply. */
+        final IAnimation[] own = new IAnimation[3];
     }
 
     private static final Map<UUID, State> STATES = new ConcurrentHashMap<>();
@@ -295,6 +340,7 @@ public final class SupermanPose {
             // the coil of the charged takeoff, as Man of Tomorrow plays it: 4 ticks of fade in, then the crouch runs
             // to its last keyframe and holds there until the launch (or the release)
             st.shotUntil = player.tickCount + 400;
+            own(player, SHOT, new Clamped(a));
             ModifierLayer<IAnimation> layer = layer(player, SHOT);
             if (layer != null) {
                 layer.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(4, Ease.INOUTSINE), new Clamped(a));
@@ -370,6 +416,11 @@ public final class SupermanPose {
         if (st.shot != null && player.tickCount >= st.shotUntil) {
             st.shot = null;
             set(player, SHOT, null, 0, 6, false);
+        }
+        for (IAnimation a : st.own) {
+            if (a != null) {
+                a.tick();
+            }
         }
     }
 
