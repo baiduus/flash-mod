@@ -90,16 +90,98 @@ public final class SupermanPose {
             }
         }
         if (!any) {
+            if ("charge_takeoff9".equals(st.shot)) {
+                coil(m, p, pt);
+            }
             return;
         }
         limb(layers, "rightArm", m.rightArm, pt);
         limb(layers, "leftArm", m.leftArm, pt);
         limb(layers, "rightLeg", m.rightLeg, pt);
         limb(layers, "leftLeg", m.leftLeg, pt);
+        if ("charge_takeoff9".equals(st.shot)) {
+            coil(m, p, pt);
+        }
         m.rightSleeve.copyFrom(m.rightArm);
         m.leftSleeve.copyFrom(m.leftArm);
         m.rightPants.copyFrom(m.rightLeg);
         m.leftPants.copyFrom(m.leftLeg);
+    }
+
+    /** Since when each player has been coiling for the charged takeoff (game ticks). */
+    private static final Map<UUID, Integer> COIL = new ConcurrentHashMap<>();
+
+    /** How deep the coil of the charged takeoff is (0..1): it sinks over the first half second. */
+    private static float coilDepth(AbstractClientPlayer p, float pt) {
+        State st = STATES.get(p.getUUID());
+        if (st == null || !"charge_takeoff9".equals(st.shot)) {
+            COIL.remove(p.getUUID());
+            return 0.0F;
+        }
+        int since = COIL.computeIfAbsent(p.getUUID(), id -> p.tickCount);
+        float k = Math.min(1.0F, (p.tickCount - since + pt) / 10.0F);
+        return k * k * (3.0F - 2.0F * k);
+    }
+
+    /**
+     * The coil of the charged takeoff on the model itself: a deep crouch, the torso leaning over the knees, the
+     * fists low and back, the eyes up to the sky (the renderer lowers the whole body, onRenderPlayer).
+     */
+    private static void coil(net.minecraft.client.model.PlayerModel<?> m, AbstractClientPlayer p, float pt) {
+        float k = coilDepth(p, pt);
+        if (k <= 0.0F) {
+            return;
+        }
+        float breath = (float) Math.sin((p.tickCount + pt) * 0.25F) * 0.03F;
+        m.body.xRot = net.minecraft.util.Mth.lerp(k, m.body.xRot, 0.62F + breath);
+        m.body.y = net.minecraft.util.Mth.lerp(k, m.body.y, 3.6F);
+        m.head.y = net.minecraft.util.Mth.lerp(k, m.head.y, 4.6F);
+        m.head.xRot = net.minecraft.util.Mth.lerp(k, m.head.xRot, -0.55F);
+        for (net.minecraft.client.model.geom.ModelPart arm : new net.minecraft.client.model.geom.ModelPart[] {
+                m.rightArm, m.leftArm}) {
+            arm.y = net.minecraft.util.Mth.lerp(k, arm.y, 5.6F);
+            arm.xRot = net.minecraft.util.Mth.lerp(k, arm.xRot, 0.75F + breath);
+        }
+        m.rightArm.zRot = net.minecraft.util.Mth.lerp(k, m.rightArm.zRot, 0.22F);
+        m.leftArm.zRot = net.minecraft.util.Mth.lerp(k, m.leftArm.zRot, -0.22F);
+        for (net.minecraft.client.model.geom.ModelPart leg : new net.minecraft.client.model.geom.ModelPart[] {
+                m.rightLeg, m.leftLeg}) {
+            leg.z = net.minecraft.util.Mth.lerp(k, leg.z, 4.2F);
+            leg.y = net.minecraft.util.Mth.lerp(k, leg.y, 12.2F);
+            leg.xRot = net.minecraft.util.Mth.lerp(k, leg.xRot, -0.35F);
+        }
+        m.rightLeg.zRot = net.minecraft.util.Mth.lerp(k, m.rightLeg.zRot, 0.12F);
+        m.leftLeg.zRot = net.minecraft.util.Mth.lerp(k, m.leftLeg.zRot, -0.12F);
+        m.hat.copyFrom(m.head);
+        m.jacket.copyFrom(m.body);
+        m.rightSleeve.copyFrom(m.rightArm);
+        m.leftSleeve.copyFrom(m.leftArm);
+        m.rightPants.copyFrom(m.rightLeg);
+        m.leftPants.copyFrom(m.leftLeg);
+    }
+
+    private static boolean lowered;
+
+    /** The coiled body sinks toward the ground. */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onRenderPlayer(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        lowered = false;
+        if (!event.isCanceled() && event.getEntity() instanceof AbstractClientPlayer p) {
+            float k = coilDepth(p, event.getPartialTick());
+            if (k > 0.0F) {
+                event.getPoseStack().pushPose();
+                event.getPoseStack().translate(0.0D, -0.32D * k, 0.0D);
+                lowered = true;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRenderPlayerPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
+        if (lowered) {
+            lowered = false;
+            event.getPoseStack().popPose();
+        }
     }
 
     private static void limb(IAnimation[] layers, String name, net.minecraft.client.model.geom.ModelPart part,
@@ -333,6 +415,11 @@ public final class SupermanPose {
     private static void shot(AbstractClientPlayer player, State st, String name, int offset) {
         KeyframeAnimation a = anim(name);
         if (a == null) {
+            if ("charge_takeoff9".equals(name)) {
+                // (the coil is drawn on the model even without its file)
+                st.shot = name;
+                st.shotUntil = player.tickCount + 400;
+            }
             return;
         }
         st.shot = name;

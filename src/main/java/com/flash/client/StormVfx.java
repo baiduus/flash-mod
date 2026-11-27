@@ -175,8 +175,11 @@ public final class StormVfx {
             }
             for (Player p : mc.level.players()) {
                 if (StormClient.flying(p) && !p.isInvisible()) {
-                    // a tornado carrying her: the narrow tip below, wide under her feet
-                    funnel(buf, m, p.getPosition(pt).add(0.0D, 0.15D - 2.2D, 0.0D), 2.2D, 0.12D, 0.85D, t, 0.45F);
+                    // a little tornado carrying her: its tip below, wide under her feet, lightning in it
+                    FlashTornadoVfx.speedTornado(buf, m, p.getPosition(pt).add(0.0D, -2.3D, 0.0D), cam, left, up, t,
+                            BLUE, 0.7F, 0.23F, 0.33D, p.getId() * 131L);
+                    VfxDraw.glow(buf, m, p.getPosition(pt).add(0.0D, 0.05D, 0.0D), new Vec3(1.0D, 0.0D, 0.0D),
+                            new Vec3(0.0D, 0.0D, 1.0D), 1.2D, BLUE[0], BLUE[1], BLUE[2], 0.25F);
                 }
             }
         } finally {
@@ -185,33 +188,26 @@ public final class StormVfx {
         }
     }
 
-    /** A funnel of air: spinning bands from a narrow end (at c) to a wide one (height h, may be negative). */
-    private static void funnel(BufferBuilder buf, Matrix4f m, Vec3 c, double h, double r0, double r1, float t,
-                               float alpha) {
-        int bands = 5;
-        int steps = 14;
-        for (int k = 0; k < bands; k++) {
-            Vec3 prev = null;
-            for (int i = 0; i <= steps; i++) {
-                double s = (double) i / steps;
-                double r = r0 + (r1 - r0) * s;
-                double a = t * 0.45D + k * Math.PI * 2.0D / bands + s * 4.0D;
-                Vec3 q = c.add(Math.cos(a) * r, h * s, Math.sin(a) * r);
-                if (prev != null) {
-                    float al = alpha * (float) Math.sin(Math.PI * Math.min(1.0D, s * 1.1D));
-                    VfxDraw.beam(buf, m, prev, q, 0.08F + 0.12F * (float) s, WIND[0], WIND[1], WIND[2], al);
-                }
-                prev = q;
-            }
+    private static float ease(float k) {
+        float u = 1.0F - Mth.clamp(k, 0.0F, 1.0F);
+        return 1.0F - u * u * u;
+    }
+
+    /** Lightning strobing as real strokes do. */
+    private static float strobe(long seed, float age) {
+        long h = (seed + (int) age * 0x9E3779B97F4A7C15L) >>> 40;
+        return (h & 3L) == 0L ? 0.4F : 1.0F;
+    }
+
+    /** A crackling bolt of her lightning: blue glow, pale colour, white core. */
+    private static void bolt(BufferBuilder buf, Matrix4f m, Vec3 a, Vec3 b, long seed, float w, float alpha) {
+        if (alpha <= 0.01F) {
+            return;
         }
-        // rings climbing it
-        Vec3 axis = new Vec3(0.0D, 1.0D, 0.0D);
-        for (int i = 0; i < 3; i++) {
-            double s = ((t * 0.04D + i / 3.0D) % 1.0D);
-            double r = r0 + (r1 - r0) * s;
-            VfxDraw.ring(buf, m, c.add(0.0D, h * s, 0.0D), axis, r, 0.04D + 0.06D * s, 0.0F, WIND[0], WIND[1],
-                    WIND[2], alpha * 0.8F * (float) Math.sin(Math.PI * s));
-        }
+        Vec3[] pts = VfxDraw.jagged(a, b, seed, 1.1D, 4);
+        VfxDraw.path(buf, m, pts, w * 4.0F, BLUE[0], BLUE[1], BLUE[2], 0.22F * alpha);
+        VfxDraw.path(buf, m, pts, w, 0.75F, 0.9F, 1.0F, 0.85F * alpha);
+        VfxDraw.path(buf, m, pts, w * 0.3F, 1.0F, 1.0F, 1.0F, alpha);
     }
 
     private static void draw(BufferBuilder buf, Matrix4f m, Minecraft mc, Fx f, float pt, float t, Vec3 cam,
@@ -222,115 +218,192 @@ public final class StormVfx {
         Vec3 yUp = new Vec3(0.0D, 1.0D, 0.0D);
         Vec3 a = f.a;
         Vec3 b = f.b;
+        long tick = (long) age;
         switch (f.type) {
             case StormFxPacket.SKY -> {
-                float grow = 1.0F - fade * fade;
+                // a bolt out of the storm: the clouds light up, a blinding strike, the ground torn with lightning
                 float big = Math.max(0.6F, f.power);
-                VfxDraw.beam(buf, m, a, b, 1.6F * big, BLUE[0], BLUE[1], BLUE[2], 0.25F * fade);
-                VfxDraw.burst(buf, m, b.add(0.0D, 0.5D, 0.0D), left, up, 3.0F * big * (0.5F + grow), BLUE[0], BLUE[1],
-                        BLUE[2], 0.9F * fade, t * 0.2F);
-                VfxDraw.ring(buf, m, b.add(0.0D, 0.08D, 0.0D), yUp, 0.5D + 5.0D * big * grow, 0.3D * fade + 0.04D,
-                        0.0F, BLUE[0], BLUE[1], BLUE[2], 0.8F * fade);
-                VfxDraw.sphere(buf, m, b.add(0.0D, 0.4D, 0.0D), 0.6D + 1.8D * big * grow, cam, BLUE[0], BLUE[1],
-                        BLUE[2], 0.5F * fade * fade, t, 2.2D);
+                float st = strobe(f.seed, age);
+                VfxDraw.glow(buf, m, a, left, up, 10.0D * big, BLUE[0], BLUE[1], BLUE[2], 0.18F * fade * st);
+                VfxDraw.beam(buf, m, a, b, 1.4F * big, BLUE[0], BLUE[1], BLUE[2], 0.16F * fade * st);
+                VfxDraw.flare(buf, m, b.add(0.0D, 0.5D, 0.0D), left, up, 1.4D * big, 0.75F, 0.9F, 1.0F,
+                        Math.max(0.0F, 1.0F - age / 6.0F));
+                float kk = Mth.clamp(age / 10.0F, 0.0F, 1.0F);
+                VfxDraw.sphere(buf, m, b.add(0.0D, 0.4D, 0.0D), 0.5D + 1.8D * big * ease(kk), cam, BLUE[0], BLUE[1],
+                        BLUE[2], 0.55F * (1.0F - kk), t, 2.2D);
+                VfxDraw.shockwave(buf, m, b, 0.5D + 5.5D * big * ease(k), 1.2D * fade, BLUE[0], BLUE[1], BLUE[2],
+                        fade);
+                Random rnd = new Random(f.seed);
+                for (int i = 0; i < 7; i++) {
+                    double ang = Math.PI * 2.0D * i / 7.0D + rnd.nextDouble() * 0.5D;
+                    double len = (2.0D + rnd.nextDouble() * 2.5D) * big * ease(Math.min(1.0F, age / 4.0F));
+                    Vec3 to = b.add(Math.cos(ang) * len, 0.05D, Math.sin(ang) * len);
+                    Vec3[] pts = VfxDraw.jagged(b.add(0.0D, 0.05D, 0.0D), to, f.seed + i * 31L + tick / 2, 1.0D, 3);
+                    for (int j = 0; j < pts.length; j++) {
+                        pts[j] = new Vec3(pts[j].x, b.y + 0.05D + Math.abs(pts[j].y - b.y) * 0.2D, pts[j].z);
+                    }
+                    VfxDraw.path(buf, m, pts, 0.14F, BLUE[0], BLUE[1], BLUE[2], 0.3F * fade * st);
+                    VfxDraw.path(buf, m, pts, 0.04F, 1.0F, 1.0F, 1.0F, fade * st);
+                    VfxDraw.crack(buf, m, b, ang + 0.3D, len * 0.7D, f.seed + i, 1.0F, 0.05D, BLUE[0], BLUE[1],
+                            BLUE[2], 0.8F * fade);
+                }
+                VfxDraw.sparks(buf, m, b.add(0.0D, 0.3D, 0.0D), f.seed, 26, 2.5D * big, age / 12.0F, 1.0D, 0.75F,
+                        0.9F, 1.0F, 1.0F);
             }
             case StormFxPacket.ARC -> {
-                VfxDraw.beam(buf, m, a, b, 0.5F, BLUE[0], BLUE[1], BLUE[2], 0.2F * fade);
-                VfxDraw.burst(buf, m, b, left, up, 0.6F, BLUE[0], BLUE[1], BLUE[2], 0.6F * fade, t * 0.4F);
+                VfxDraw.beam(buf, m, a, b, 0.45F, BLUE[0], BLUE[1], BLUE[2], 0.16F * fade);
+                VfxDraw.flare(buf, m, b, left, up, 0.35D, 0.75F, 0.9F, 1.0F, fade);
             }
             case StormFxPacket.BEAM -> {
+                // her stream: a river of lightning from the hands, branching and crackling
                 float al = Mth.clamp((f.life - age) / 2.0F, 0.0F, 1.0F);
-                VfxDraw.energy(buf, m, a, b, 0.25F, BLUE[0], BLUE[1], BLUE[2], 0.4F * al);
-                VfxDraw.burst(buf, m, a, left, up, 0.8F, BLUE[0], BLUE[1], BLUE[2], 0.7F * al, t * 0.5F);
+                VfxDraw.beam(buf, m, a, b, 0.6F, BLUE[0], BLUE[1], BLUE[2], 0.12F * al);
+                for (int i = 0; i < 3; i++) {
+                    bolt(buf, m, a, b, f.seed + i * 97L + (long) (t * 1.5F), i == 0 ? 0.08F : 0.045F, al);
+                }
+                Vec3[] hx = VfxDraw.helix(a, b, 0.22D, Math.max(2.0D, a.distanceTo(b) / 1.5D), t * 0.7D, 60);
+                VfxDraw.path(buf, m, hx, 0.03F, 0.85F, 0.95F, 1.0F, 0.45F * al);
+                VfxDraw.flare(buf, m, a, left, up, 0.45D, 0.75F, 0.9F, 1.0F, al);
+                VfxDraw.flare(buf, m, b, left, up, 0.9D, 0.75F, 0.9F, 1.0F, al);
                 VfxDraw.burst(buf, m, b, left, up, 1.6F, BLUE[0], BLUE[1], BLUE[2], 0.8F * al, -t * 0.4F);
-                VfxDraw.glow(buf, m, b, left, up, 1.0D, BLUE[0], BLUE[1], BLUE[2], 0.4F * al);
+                for (int g = 0; g < 2; g++) {
+                    long gen = (long) (t / 4.0F) - g;
+                    VfxDraw.sparks(buf, m, b, f.seed + gen * 977L, 8, 1.5D, (t - gen * 4.0F) / 8.0F, 0.6D, 0.75F, 0.9F,
+                            1.0F, 1.0F);
+                }
             }
             case StormFxPacket.CAST -> {
+                // the goddess of the storm: her eyes white fire, lightning about her, the wind circling
                 Entity e = mc.level.getEntity(f.caster);
                 if (e == null) {
                     return;
                 }
                 Vec3 pos = e.getPosition(pt);
                 float al = Mth.clamp((f.life - age) / 8.0F, 0.0F, 1.0F) * Mth.clamp(age / 3.0F, 0.0F, 1.0F);
-                VfxDraw.ring(buf, m, pos.add(0.0D, 1.0D, 0.0D), new Vec3(Math.sin(t * 0.1D), 1.0D, Math.cos(t * 0.1D)),
-                        1.0D, 0.04D, t * 0.2F, BLUE[0], BLUE[1], BLUE[2], 0.7F * al);
-                VfxDraw.glow(buf, m, pos.add(0.0D, 1.0D, 0.0D), left, up, 1.4D, BLUE[0], BLUE[1], BLUE[2], 0.2F * al);
                 boolean me = e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
                 if (!me) {
-                    // her eyes, white
-                    Vec3 eye = e.getEyePosition(pt);
-                    VfxDraw.burst(buf, m, eye, left, up, 0.5F, 0.9F, 0.95F, 1.0F, 0.7F * al, t * 0.3F);
+                    Vec3 look = e.getViewVector(pt);
+                    Vec3 side = new Vec3(-look.z, 0.0D, look.x).normalize().scale(0.07D);
+                    Vec3 eye = e.getEyePosition(pt).add(look.scale(0.26D));
+                    VfxDraw.flare(buf, m, eye.add(side), left, up, 0.14D, 0.9F, 0.96F, 1.0F, al);
+                    VfxDraw.flare(buf, m, eye.subtract(side), left, up, 0.14D, 0.9F, 0.96F, 1.0F, al);
+                    VfxDraw.glow(buf, m, pos.add(0.0D, 1.0D, 0.0D), left, up, 1.6D, BLUE[0], BLUE[1], BLUE[2], 0.18F * al);
+                }
+                Random rnd = new Random(f.seed + tick);
+                for (int i = 0; i < 3; i++) {
+                    Vec3 p0 = pos.add(rnd.nextGaussian() * 0.35D, 0.2D + rnd.nextDouble() * 1.7D, rnd.nextGaussian() * 0.35D);
+                    bolt(buf, m, p0, p0.add(rnd.nextGaussian() * 0.6D, rnd.nextGaussian() * 0.5D, rnd.nextGaussian() * 0.6D),
+                            rnd.nextLong(), 0.03F, 0.9F * al);
+                }
+                for (int i = 0; i < 6; i++) {
+                    double ang = t * 0.25D + i * Math.PI / 3.0D;
+                    double y = 0.3D + (i % 3) * 0.6D;
+                    Vec3 p0 = pos.add(Math.cos(ang) * 1.1D, y, Math.sin(ang) * 1.1D);
+                    Vec3 p1 = pos.add(Math.cos(ang + 0.6D) * 1.1D, y + 0.1D, Math.sin(ang + 0.6D) * 1.1D);
+                    VfxDraw.beam(buf, m, p0, p1, 0.02F, WIND[0], WIND[1], WIND[2], 0.5F * al);
                 }
             }
             case StormFxPacket.GUST -> {
+                // a blast of wind: streaks of air and rings rushing ahead
                 Vec3 dir = b.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : b.normalize();
                 Random rnd = new Random(f.seed);
-                double run = 2.0D + 14.0D * (1.0D - fade * fade);
-                for (int i = 0; i < 10; i++) {
+                double run = 2.0D + 16.0D * ease(k);
+                for (int i = 0; i < 22; i++) {
                     Vec3 off = new Vec3(rnd.nextGaussian() * 0.8D, rnd.nextGaussian() * 0.5D, rnd.nextGaussian() * 0.8D);
-                    double lead = run * (0.6D + 0.4D * rnd.nextDouble());
+                    double lead = run * (0.5D + 0.5D * rnd.nextDouble());
                     Vec3 head = a.add(dir.scale(lead)).add(off.scale(1.0D + lead * 0.15D));
-                    Vec3 tail = head.subtract(dir.scale(3.0D + rnd.nextDouble() * 2.0D));
-                    VfxDraw.beam(buf, m, tail, head, 0.12F, WIND[0], WIND[1], WIND[2], 0.5F * fade);
+                    Vec3 tail = head.subtract(dir.scale(2.5D + rnd.nextDouble() * 3.0D));
+                    VfxDraw.beam(buf, m, tail, head, 0.03F, 1.0F, 1.0F, 1.0F, 0.45F * fade);
+                    VfxDraw.beam(buf, m, tail, head, 0.14F, WIND[0], WIND[1], WIND[2], 0.12F * fade);
                 }
-                for (int r = 0; r < 3; r++) {
-                    double d = run * (0.3D + r * 0.3D);
-                    VfxDraw.ring(buf, m, a.add(dir.scale(d)), dir, 0.8D + d * 0.18D, 0.06D, 0.0F, WIND[0], WIND[1],
-                            WIND[2], 0.5F * fade);
+                for (int r = 0; r < 4; r++) {
+                    double d = run * (0.2D + r * 0.25D);
+                    VfxDraw.ring(buf, m, a.add(dir.scale(d)), dir, 0.8D + d * 0.2D, 0.1D, (float) t, WIND[0], WIND[1],
+                            WIND[2], 0.35F * fade);
                 }
+                VfxDraw.cone(buf, m, a, dir, run, 1.0D + run * 0.2D, WIND[0], WIND[1], WIND[2], 0.07F * fade);
             }
             case StormFxPacket.TORNADO -> {
+                // her tornado: the wind's own, wide, with her lightning
                 float al = Mth.clamp((f.life - age) / 3.0F, 0.0F, 1.0F);
-                funnel(buf, m, a, 14.0D, 0.6D, 5.0D, t, 0.55F * al);
-                VfxDraw.ring(buf, m, a.add(0.0D, 0.1D, 0.0D), yUp, 3.0D, 0.6D, t * 0.3F, 0.75F, 0.7F, 0.6F, 0.25F * al);
+                FlashTornadoVfx.speedTornado(buf, m, a, cam, left, up, t, BLUE, al, 1.4F, 1.6D, f.seed);
             }
             case StormFxPacket.HAIL -> {
+                // hail: shards of ice falling hard into a frosted circle, glinting where they strike
                 float in = Mth.clamp(age / 6.0F, 0.0F, 1.0F);
                 float al = in * Mth.clamp((f.life - age) / 10.0F, 0.0F, 1.0F);
-                VfxDraw.ring(buf, m, a.add(0.0D, 0.06D, 0.0D), yUp, 4.0D, 0.15D, 0.0F, ICE[0], ICE[1], ICE[2], 0.7F * al);
-                VfxDraw.glow(buf, m, a.add(0.0D, 0.06D, 0.0D), new Vec3(1.0D, 0.0D, 0.0D), new Vec3(0.0D, 0.0D, 1.0D),
-                        4.2D, ICE[0], ICE[1], ICE[2], 0.25F * al);
+                Vec3 g = a.add(0.0D, 0.06D, 0.0D);
+                VfxDraw.ring(buf, m, g, yUp, 4.2D, 0.12D, t * 0.02F, ICE[0], ICE[1], ICE[2], 0.7F * al);
+                VfxDraw.ring(buf, m, g, yUp, 3.6D, 0.4D, 0.0F, ICE[0], ICE[1], ICE[2], 0.2F * al);
+                VfxDraw.glow(buf, m, g, new Vec3(1.0D, 0.0D, 0.0D), new Vec3(0.0D, 0.0D, 1.0D), 4.4D, ICE[0], ICE[1],
+                        ICE[2], 0.22F * al);
+                VfxDraw.glow(buf, m, a.add(0.0D, 10.0D, 0.0D), left, up, 5.0D, 0.6F, 0.7F, 0.85F, 0.12F * al);
                 Random rnd = new Random(f.seed);
-                for (int i = 0; i < 26; i++) {
+                for (int i = 0; i < 40; i++) {
                     double x = (rnd.nextDouble() - 0.5D) * 8.0D;
                     double z = (rnd.nextDouble() - 0.5D) * 8.0D;
-                    double ph = ((age * 0.09D + rnd.nextDouble()) % 1.0D);
-                    double y = 9.0D * (1.0D - ph);
+                    double ph = ((age * (0.08D + rnd.nextDouble() * 0.04D) + rnd.nextDouble()) % 1.0D);
+                    double y = 10.0D * (1.0D - ph);
                     Vec3 head = a.add(x, y, z);
-                    VfxDraw.beam(buf, m, head.add(0.0D, 1.4D, 0.0D), head, 0.07F, ICE[0], ICE[1], ICE[2], 0.8F * al);
+                    VfxDraw.beam(buf, m, head.add(0.0D, 1.6D, 0.0D), head, 0.05F, ICE[0], ICE[1], ICE[2], 0.7F * al);
+                    VfxDraw.beam(buf, m, head.add(0.0D, 0.5D, 0.0D), head, 0.02F, 1.0F, 1.0F, 1.0F, 0.9F * al);
+                    if (ph > 0.9D) {
+                        VfxDraw.flare(buf, m, a.add(x, 0.15D, z), left, up, 0.12D, ICE[0], ICE[1], ICE[2], al);
+                    }
                 }
             }
             case StormFxPacket.FROST -> {
-                double r = Math.max(2.0D, f.power) * (1.0D - fade * fade);
+                // the frost running out of her: a ring of ice light, shards of ice standing up on it, glints
+                double r = Math.max(2.0D, f.power) * ease(k);
                 Vec3 c = a.add(0.0D, 0.06D, 0.0D);
-                VfxDraw.ring(buf, m, c, yUp, Math.max(0.3D, r), 0.35D * fade + 0.05D, 0.0F, ICE[0], ICE[1], ICE[2],
-                        0.85F * fade);
-                VfxDraw.wall(buf, m, c, Math.max(0.3D, r), 1.0D * fade, ICE[0], ICE[1], ICE[2], 0.3F * fade);
+                VfxDraw.shockwave(buf, m, a, Math.max(0.3D, r), 1.0D * fade, ICE[0], ICE[1], ICE[2], fade);
+                VfxDraw.glow(buf, m, c, new Vec3(1.0D, 0.0D, 0.0D), new Vec3(0.0D, 0.0D, 1.0D), r, ICE[0], ICE[1],
+                        ICE[2], 0.2F * fade);
                 Random rnd = new Random(f.seed);
-                for (int i = 0; i < 24; i++) {
+                for (int i = 0; i < 30; i++) {
                     double ang = rnd.nextDouble() * Math.PI * 2.0D;
-                    double d = r * (0.85D + rnd.nextDouble() * 0.15D);
+                    double d = r * (0.8D + rnd.nextDouble() * 0.2D);
                     Vec3 base = c.add(Math.cos(ang) * d, 0.0D, Math.sin(ang) * d);
-                    Vec3 tip = base.add(Math.cos(ang) * 0.2D, 0.4D + rnd.nextDouble() * 0.8D, Math.sin(ang) * 0.2D);
-                    VfxDraw.energy(buf, m, base, tip, 0.08F, ICE[0], ICE[1], ICE[2], 0.8F * fade);
+                    Vec3 tip = base.add(Math.cos(ang) * 0.25D, 0.5D + rnd.nextDouble() * 1.0D, Math.sin(ang) * 0.25D);
+                    VfxDraw.energy(buf, m, base, tip, 0.07F, ICE[0], ICE[1], ICE[2], 0.85F * fade);
+                    if (i % 3 == 0) {
+                        VfxDraw.flare(buf, m, tip, left, up, 0.1D, 0.9F, 0.97F, 1.0F, fade);
+                    }
+                }
+                for (int i = 0; i < 8; i++) {
+                    VfxDraw.crack(buf, m, a, Math.PI * 2.0D * i / 8.0D, r * 0.9D, f.seed + i, 1.0F, 0.05D, ICE[0],
+                            ICE[1], ICE[2], 0.7F * fade);
                 }
             }
             case StormFxPacket.TAKEOFF -> {
-                float grow = 1.0F - fade * fade;
-                VfxDraw.ring(buf, m, a.add(0.0D, 0.06D, 0.0D), yUp, 0.5D + 4.5D * grow, 0.3D * fade + 0.04D, 0.0F,
-                        WIND[0], WIND[1], WIND[2], 0.8F * fade);
-                funnel(buf, m, a, 4.0D * grow + 0.5D, 0.3D, 1.6D, t, 0.6F * fade);
+                VfxDraw.shockwave(buf, m, a, 0.5D + 5.0D * ease(k), 1.0D * fade, WIND[0], WIND[1], WIND[2], fade);
+                Random rnd = new Random(f.seed);
+                for (int i = 0; i < 14; i++) {
+                    double ang = rnd.nextDouble() * Math.PI * 2.0D;
+                    double d = 0.4D + rnd.nextDouble() * 1.2D;
+                    Vec3 base = a.add(Math.cos(ang) * d, 0.2D + age * 0.35D, Math.sin(ang) * d);
+                    VfxDraw.beam(buf, m, base, base.add(0.0D, 1.5D + rnd.nextDouble(), 0.0D), 0.025F, 1.0F, 1.0F, 1.0F,
+                            0.5F * fade);
+                }
             }
             case StormFxPacket.CALL -> {
-                float grow = 1.0F - fade * fade;
-                VfxDraw.pillar(buf, m, a, a.y, a.y + 60.0D, cam, 1.6F * fade, BLUE[0], BLUE[1], BLUE[2], 0.5F * fade);
-                VfxDraw.pillar(buf, m, a, a.y, a.y + 60.0D, cam, 0.5F * fade, 1.0F, 1.0F, 1.0F, 0.8F * fade);
+                // the storm's power coming down into her: a column of lightning, the sky torn open
+                float grow = ease(k);
+                float st = strobe(f.seed, age);
+                VfxDraw.pillar(buf, m, a, a.y, a.y + 80.0D, cam, 2.0F * fade, BLUE[0], BLUE[1], BLUE[2], 0.45F * fade);
+                VfxDraw.pillar(buf, m, a, a.y, a.y + 80.0D, cam, 0.5F * fade, 1.0F, 1.0F, 1.0F, 0.8F * fade * st);
+                for (int i = 0; i < 4; i++) {
+                    Random rnd = new Random(f.seed + i * 13L + tick / 2);
+                    Vec3 from = a.add(rnd.nextGaussian() * 4.0D, 30.0D, rnd.nextGaussian() * 4.0D);
+                    bolt(buf, m, from, a.add(0.0D, 1.0D, 0.0D), rnd.nextLong(), 0.08F, fade * st);
+                }
                 VfxDraw.sphere(buf, m, a.add(0.0D, 1.0D, 0.0D), 0.5D + 3.0D * grow, cam, BLUE[0], BLUE[1], BLUE[2],
-                        0.6F * fade, t, 2.0D);
-                VfxDraw.ring(buf, m, a.add(0.0D, 0.06D, 0.0D), yUp, 0.5D + 7.0D * grow, 0.3D, 0.0F, BLUE[0], BLUE[1],
-                        BLUE[2], 0.8F * fade);
-                VfxDraw.burst(buf, m, a.add(0.0D, 1.0D, 0.0D), left, up, 4.0F * (0.5F + grow), BLUE[0], BLUE[1],
-                        BLUE[2], 0.9F * fade, t * 0.2F);
+                        0.55F * fade, t, 2.0D);
+                VfxDraw.shockwave(buf, m, a, 0.5D + 8.0D * grow, 1.6D * fade, BLUE[0], BLUE[1], BLUE[2], fade);
+                VfxDraw.flare(buf, m, a.add(0.0D, 1.2D, 0.0D), left, up, 3.0D, 0.75F, 0.9F, 1.0F,
+                        Math.max(0.0F, 1.0F - age / 10.0F));
+                VfxDraw.glow(buf, m, a.add(0.0D, 30.0D, 0.0D), left, up, 18.0D, BLUE[0], BLUE[1], BLUE[2],
+                        0.15F * fade * st);
             }
             default -> {
             }
