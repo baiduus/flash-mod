@@ -2123,5 +2123,6 @@
   "message.flash.ultron.prime": "ULTRON PRIME: core overcharge!",
   "commands.flash.ultron.cooldown_reset": "Reset %s's Ultron cooldowns",
   "commands.flash.ultron.cooldown_off": "%s: Ultron's abilities have no cooldown",
-  "commands.flash.ultron.cooldown_on": "%s: Ultron's cooldowns back to normal"
+  "commands.flash.ultron.cooldown_on": "%s: Ultron's cooldowns back to normal",
+  "message.flash.surgery.hold": "Lying down on the table... %s%% (keep crouching)"
 }

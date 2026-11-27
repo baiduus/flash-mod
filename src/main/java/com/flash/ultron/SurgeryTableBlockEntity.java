@@ -76,13 +76,14 @@ public class SurgeryTableBlockEntity extends BlockEntity {
             if (state.getValue(SurgeryTableBlock.OPERATING)) {
                 table.stop(level, pos);
             }
+            table.sneakToStart(server, pos, state);
             return;
         }
         Player found = table.patient == null ? null : level.getPlayerByUUID(table.patient);
         Vec3 bed = Vec3.atBottomCenterOf(pos);
         String why = !(found instanceof ServerPlayer) ? "patient gone" : !found.isAlive() ? "dead"
                 : !UltronPowers.has(found) ? "not Ultron" : found.position().distanceToSqr(bed) > 9.0D ? "walked away"
-                : !found.isSleeping() && found.isShiftKeyDown() ? "got up" : null;
+                : !found.isSleeping() && found.isShiftKeyDown() && table.ticks > 25 ? "got up" : null;
         if (why != null) {
             LOGGER.info("[flash] surgery at {} stopped: {}", pos, why);
             table.stop(level, pos);
@@ -129,6 +130,30 @@ public class SurgeryTableBlockEntity extends BlockEntity {
             table.stop(level, pos);
             p.stopSleepInBed(true, true);
         }
+    }
+
+    /** Ultron crouching on or beside the table for a second lies down on it too (without a click). */
+    private final java.util.Map<UUID, Integer> crouching = new java.util.HashMap<>();
+
+    private void sneakToStart(ServerLevel level, BlockPos pos, BlockState state) {
+        BlockPos foot = pos.relative(state.getValue(SurgeryTableBlock.FACING).getOpposite());
+        AABB around = new AABB(pos).minmax(new AABB(foot)).inflate(1.3D, 1.0D, 1.3D);
+        java.util.Set<UUID> seen = new java.util.HashSet<>();
+        for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class, around,
+                pl -> pl.isAlive() && UltronPowers.has(pl) && pl.isShiftKeyDown() && !pl.isSleeping())) {
+            seen.add(p.getUUID());
+            int n = this.crouching.merge(p.getUUID(), 1, Integer::sum);
+            if (n == 1) {
+                LOGGER.info("[flash] surgery table at {}: {} crouching to lie down", pos, p.getGameProfile().getName());
+            }
+            p.displayClientMessage(Component.translatable("message.flash.surgery.hold", Math.min(100, n * 5)), true);
+            if (n >= 20) {
+                this.crouching.clear();
+                this.start(p);
+                return;
+            }
+        }
+        this.crouching.keySet().retainAll(seen);
     }
 
     private void stop(Level level, BlockPos pos) {

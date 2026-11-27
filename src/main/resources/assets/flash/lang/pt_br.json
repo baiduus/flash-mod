@@ -2041,5 +2041,6 @@
   "message.flash.ultron.prime": "ULTRON PRIME: sobrecarga do núcleo!",
   "commands.flash.ultron.cooldown_reset": "Recargas do Ultron de %s zeradas",
   "commands.flash.ultron.cooldown_off": "%s: habilidades do Ultron sem recarga",
-  "commands.flash.ultron.cooldown_on": "%s: recargas do Ultron de volta ao normal"
+  "commands.flash.ultron.cooldown_on": "%s: recargas do Ultron de volta ao normal",
+  "message.flash.surgery.hold": "Deite na mesa... %s%% (continue agachado)"
 }
