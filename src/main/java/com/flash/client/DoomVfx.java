@@ -186,23 +186,29 @@ public final class DoomVfx {
                     continue;
                 }
                 if (DoomClient.god(p)) {
-                    // the crown of a god: runes turning over his head, a soft halo of gold
+                    // the crown of a god: a sigil turning over his head, gold light pouring off him, motes rising
                     Vec3 head = p.getPosition(pt).add(0.0D, p.getBbHeight() + 0.35D, 0.0D);
-                    float pulse = 0.55F + 0.2F * (float) Math.sin(t * 0.15F + p.getId());
-                    VfxDraw.runeRing(buf, m, head, 0.55D, 6, t * 0.04F, GOD[0], GOD[1], GOD[2], pulse);
-                    VfxDraw.ring(buf, m, head, new Vec3(0.0D, 1.0D, 0.0D), 0.5D, 0.04D, t * 0.05F, WHITE[0], WHITE[1],
+                    float pulse = 0.65F + 0.25F * (float) Math.sin(t * 0.15F + p.getId());
+                    VfxDraw.sigil(buf, m, head, new Vec3(0.0D, 1.0D, 0.0D), 0.55D, t, GOD[0], GOD[1], GOD[2], pulse);
+                    VfxDraw.runeRing(buf, m, head.add(0.0D, 0.05D, 0.0D), 0.42D, 6, -t * 0.05F, WHITE[0], WHITE[1],
                             WHITE[2], pulse);
                     VfxDraw.glow(buf, m, p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.55D, 0.0D), left, up,
-                            1.3D, GOD[0], GOD[1], GOD[2], 0.16F * pulse);
+                            1.6D, GOD[0], GOD[1], GOD[2], 0.2F * pulse);
+                    java.util.Random rnd = new java.util.Random(p.getId() * 31L);
+                    for (int i = 0; i < 10; i++) {
+                        double ang = rnd.nextDouble() * Math.PI * 2.0D;
+                        double ph = (t * 0.02D + rnd.nextDouble()) % 1.0D;
+                        Vec3 q = p.getPosition(pt).add(Math.cos(ang) * 0.6D, ph * 2.6D, Math.sin(ang) * 0.6D);
+                        VfxDraw.flare(buf, m, q, left, up, 0.06D, GOD[0], GOD[1], GOD[2], (float) (1.0D - ph));
+                    }
                 }
                 if (DoomClient.shielded(p)) {
+                    // the emerald force field: a bubble of hexagonal plates, a ripple running over it
                     Vec3 c = p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
                     double r = DoomAbilities.FIELD_RADIUS;
-                    VfxDraw.sphere(buf, m, c, r, cam, FIELD[0], FIELD[1], FIELD[2], 0.5F, t, 2.6D);
+                    VfxDraw.hexShield(buf, m, c, r, cam, t, FIELD[0], FIELD[1], FIELD[2], 0.9F, 0.0F);
                     VfxDraw.hexCircle(buf, m, c.add(0.0D, -p.getBbHeight() * 0.5D + 0.05D, 0.0D), r, t,
                             FIELD[0], FIELD[1], FIELD[2], 0.45F);
-                    VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r + 0.05D, 0.05D, t * 0.05F, FIELD[0], FIELD[1],
-                            FIELD[2], 0.5F + 0.2F * (float) Math.sin(t * 0.3F));
                 }
             }
         } finally {
@@ -237,138 +243,216 @@ public final class DoomVfx {
         return f.a;
     }
 
+    private static float ease(float k) {
+        float u = 1.0F - Math.min(1.0F, Math.max(0.0F, k));
+        return 1.0F - u * u * u;
+    }
+
+    private static float strobe(long seed, float age) {
+        long h = (seed + (int) age * 0x9E3779B97F4A7C15L) >>> 40;
+        return (h & 3L) == 0L ? 0.4F : 1.0F;
+    }
+
+    /** A bolt of his gauntlets: green glow, bright colour, white core, side forks. */
+    private static void bolt(BufferBuilder buf, Matrix4f m, Vec3 a, Vec3 b, long seed, float w, float[] c,
+                             float alpha, int forks) {
+        if (alpha <= 0.01F) {
+            return;
+        }
+        Vec3[] pts = VfxDraw.jagged(a, b, seed, 1.0D, 4);
+        VfxDraw.path(buf, m, pts, w * 4.0F, c[0], c[1], c[2], 0.22F * alpha);
+        VfxDraw.path(buf, m, pts, w, VfxDraw.mix(c[0], 0.4F), VfxDraw.mix(c[1], 0.4F), VfxDraw.mix(c[2], 0.4F),
+                0.85F * alpha);
+        VfxDraw.path(buf, m, pts, w * 0.3F, 1.0F, 1.0F, 1.0F, alpha);
+        java.util.Random rnd = new java.util.Random(seed ^ 0x5DEECE66DL);
+        double len = a.distanceTo(b);
+        for (int i = 0; i < forks && pts.length > 6; i++) {
+            Vec3 from = pts[2 + rnd.nextInt(pts.length - 4)];
+            Vec3 d = b.subtract(a).normalize().add(rnd.nextGaussian() * 0.7D, rnd.nextGaussian() * 0.6D,
+                    rnd.nextGaussian() * 0.7D).normalize();
+            Vec3[] fp = VfxDraw.jagged(from, from.add(d.scale(len * 0.25D)), rnd.nextLong(), 1.2D, 3);
+            VfxDraw.path(buf, m, fp, w * 0.45F, c[0], c[1], c[2], 0.6F * alpha);
+            VfxDraw.path(buf, m, fp, w * 0.15F, 1.0F, 1.0F, 1.0F, 0.8F * alpha);
+        }
+    }
+
     private static void draw(BufferBuilder buf, Matrix4f m, Minecraft mc, Fx f, float pt, float t, Vec3 cam,
                              Vec3 left, Vec3 up) {
         float age = f.age + pt;
         float k = Math.min(1.0F, age / f.life);
         float fade = 1.0F - k;
+        Vec3 yUp = new Vec3(0.0D, 1.0D, 0.0D);
+        long tick = (long) age;
         switch (f.type) {
             case DoomAbilities.FX_BOLT -> {
+                // a bolt of the gauntlet: forking green lightning, the gauntlet flaring
                 Vec3 a = handOf(mc, f, pt);
-                Vec3[] pts = VfxDraw.jagged(a, f.b, f.seed + (long) (age * 0.5F), 0.22D, 4);
-                VfxDraw.path(buf, m, pts, 0.08F, GAUNT[0], GAUNT[1], GAUNT[2], fade);
-                VfxDraw.glow(buf, m, a, left, up, 0.4D, GAUNT[0], GAUNT[1], GAUNT[2], 0.8F * fade);
+                bolt(buf, m, a, f.b, f.seed + tick / 2, 0.06F, GAUNT, fade * strobe(f.seed, age), 2);
+                VfxDraw.flare(buf, m, a, left, up, 0.3D, GAUNT[0], GAUNT[1], GAUNT[2], fade);
                 if (f.power > 0.0F) {
-                    VfxDraw.burst(buf, m, f.b, left, up, 0.9F + k, GAUNT[0], GAUNT[1], GAUNT[2], fade, t * 0.2F);
+                    VfxDraw.flare(buf, m, f.b, left, up, 0.6D, GAUNT[0], GAUNT[1], GAUNT[2], fade);
+                    VfxDraw.sparks(buf, m, f.b, f.seed, 12, 1.4D, k, 0.6D, GAUNT[0], GAUNT[1], GAUNT[2], 1.0F);
                 }
             }
             case DoomAbilities.FX_BEAM -> {
+                // the beam: a torrent of green energy with lightning crawling over it
                 Vec3 a = handOf(mc, f, pt);
-                VfxDraw.energy(buf, m, a, f.b, 0.14F, GAUNT[0], GAUNT[1], GAUNT[2], 0.9F * fade + 0.1F);
-                Vec3[] arc = VfxDraw.jagged(a, f.b, f.seed, 0.35D, 4);
-                VfxDraw.path(buf, m, arc, 0.04F, GAUNT[0], GAUNT[1], GAUNT[2], 0.7F * fade);
-                VfxDraw.glow(buf, m, a, left, up, 0.5D, GAUNT[0], GAUNT[1], GAUNT[2], 0.9F);
+                float al = 0.9F * fade + 0.1F;
+                VfxDraw.beam(buf, m, a, f.b, 0.5F, GAUNT[0], GAUNT[1], GAUNT[2], 0.12F * al);
+                VfxDraw.energy(buf, m, a, f.b, 0.13F, GAUNT[0], GAUNT[1], GAUNT[2], al);
+                for (int i = 0; i < 2; i++) {
+                    bolt(buf, m, a, f.b, f.seed + i * 71L + (long) (t * 1.5F), 0.035F, GAUNT, 0.8F * al, 1);
+                }
+                VfxDraw.flare(buf, m, a, left, up, 0.4D, GAUNT[0], GAUNT[1], GAUNT[2], 1.0F);
                 if (f.power > 0.0F) {
-                    VfxDraw.glow(buf, m, f.b, left, up, 0.9D, GAUNT[0], GAUNT[1], GAUNT[2], 0.8F);
+                    VfxDraw.flare(buf, m, f.b, left, up, 0.8D, GAUNT[0], GAUNT[1], GAUNT[2], 1.0F);
+                    long gen = (long) (t / 4.0F);
+                    VfxDraw.sparks(buf, m, f.b, f.seed + gen * 977L, 8, 1.4D, (t - gen * 4.0F) / 8.0F, 0.6D, GAUNT[0],
+                            GAUNT[1], GAUNT[2], 1.0F);
                 }
             }
             case DoomAbilities.FX_DISCHARGE -> {
+                // both gauntlets let go: a storm of green lightning fanning out
                 Vec3 a = handOf(mc, f, pt);
                 Vec3 dir = f.b.normalize();
                 Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
                 side = side.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
                 Vec3 vup = side.cross(dir).normalize();
-                for (int i = 0; i < 9; i++) {
-                    double ax = ((i * 53) % 9 - 4) / 4.0D * 0.55D;
+                for (int i = 0; i < 11; i++) {
+                    double ax = ((i * 53) % 11 - 5) / 5.0D * 0.6D;
                     double ay = ((i * 29) % 5 - 2) / 2.0D * 0.3D;
                     Vec3 d = dir.add(side.scale(ax)).add(vup.scale(ay)).normalize();
-                    Vec3 end = a.add(d.scale(4.0D + 7.0D * Math.min(1.0F, age / 3.0F)));
-                    VfxDraw.path(buf, m, VfxDraw.jagged(a, end, f.seed + i * 977L + (long) age, 0.5D, 4), 0.06F,
-                            GAUNT[0], GAUNT[1], GAUNT[2], fade);
+                    Vec3 end = a.add(d.scale(4.0D + 8.0D * ease(Math.min(1.0F, age / 3.0F))));
+                    bolt(buf, m, a, end, f.seed + i * 977L + tick, 0.05F, GAUNT, fade * strobe(f.seed + i, age), 1);
                 }
-                VfxDraw.burst(buf, m, a, left, up, 1.2F, GAUNT[0], GAUNT[1], GAUNT[2], fade, t * 0.3F);
+                VfxDraw.flare(buf, m, a, left, up, 1.0D, GAUNT[0], GAUNT[1], GAUNT[2], fade);
+                VfxDraw.cone(buf, m, a, dir, 8.0D * ease(k), 3.5D * ease(k), GAUNT[0], GAUNT[1], GAUNT[2], 0.1F * fade);
             }
             case DoomAbilities.FX_SHIELD -> {
+                // the field going up: the plates spreading out from his chest
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 c = e != null ? e.getPosition(pt).add(0.0D, 1.0D, 0.0D) : f.a.add(0.0D, 1.0D, 0.0D);
-                VfxDraw.sphere(buf, m, c, 0.3D + DoomAbilities.FIELD_RADIUS * k, cam, FIELD[0], FIELD[1], FIELD[2],
-                        fade, t, 2.0D);
-                VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), 0.5D + 2.5D * k, 0.12D, t * 0.1F, FIELD[0],
-                        FIELD[1], FIELD[2], fade);
+                VfxDraw.hexShield(buf, m, c, 0.3D + DoomAbilities.FIELD_RADIUS * ease(k), cam, t, FIELD[0], FIELD[1],
+                        FIELD[2], fade, 0.4F * fade);
+                VfxDraw.flare(buf, m, c, left, up, 0.9D, FIELD[0], FIELD[1], FIELD[2], Math.max(0.0F, 1.0F - age / 5.0F));
             }
             case DoomAbilities.FX_SHIELD_HIT -> {
                 Entity e = mc.level.getEntity(f.caster);
                 if (e != null) {
                     Vec3 c = e.getPosition(pt).add(0.0D, 1.0D, 0.0D);
-                    VfxDraw.sphere(buf, m, c, DoomAbilities.FIELD_RADIUS + 0.1D + 0.2D * k, cam, 0.8F, 1.0F, 0.8F,
-                            0.8F * fade, t, 1.6D);
+                    VfxDraw.hexShield(buf, m, c, DoomAbilities.FIELD_RADIUS + 0.05D + 0.15D * k, cam, t, 0.7F, 1.0F,
+                            0.75F, 0.5F * fade, 0.8F * fade);
                 }
             }
             case DoomAbilities.FX_WAVE -> {
-                double r = 0.5D + f.power * k;
-                Vec3 c = f.a;
-                VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r, 0.35D, t * 0.1F, FIELD[0], FIELD[1], FIELD[2],
-                        fade);
-                VfxDraw.wall(buf, m, f.b, r, 1.6D * fade + 0.2D, FIELD[0], FIELD[1], FIELD[2], 0.6F * fade);
-                VfxDraw.sphere(buf, m, c, r * 0.6D, cam, FIELD[0], FIELD[1], FIELD[2], 0.4F * fade, t, 3.0D);
+                // the field thrown out: a wall of plates and a ring of force rolling away
+                double r = 0.5D + f.power * ease(k);
+                VfxDraw.shockwave(buf, m, f.b, r, 1.8D * fade, FIELD[0], FIELD[1], FIELD[2], fade);
+                VfxDraw.hexShield(buf, m, f.a, r * 0.6D, cam, t, FIELD[0], FIELD[1], FIELD[2], 0.6F * fade, 0.0F);
+                VfxDraw.hexCircle(buf, m, f.b.add(0.0D, 0.04D, 0.0D), r * 0.8D, t, FIELD[0], FIELD[1], FIELD[2],
+                        0.6F * fade);
             }
             case DoomAbilities.FX_MYSTIC -> {
-                VfxDraw.energy(buf, m, f.a, f.b, 0.13F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
-                Vec3[] hx = VfxDraw.helix(f.a, f.b, 0.22D, 1.5D, t * 0.6D, 10);
-                VfxDraw.path(buf, m, hx, 0.035F, MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.8F * fade);
-                if (f.age < 2.0F) {
-                    VfxDraw.glow(buf, m, f.b, left, up, 0.55D, MYSTIC[0], MYSTIC[1], MYSTIC[2], 1.0F);
-                    VfxDraw.rune(buf, m, f.b.x, f.b.y, f.b.z, 0.25D, t * 0.3D, (int) (f.seed & 15), MYSTIC[0],
-                            MYSTIC[1], MYSTIC[2], 0.9F);
+                // a mystic bolt: arcane wisps winding round a bright thread, a sigil where it starts
+                VfxDraw.energy(buf, m, f.a, f.b, 0.1F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
+                for (int i = 0; i < 3; i++) {
+                    VfxDraw.wisp(buf, m, f.a, f.b, f.seed + i * 17L, t * 2.0F, 0.3D, 0.1F, MYSTIC[0], MYSTIC[1],
+                            MYSTIC[2], fade);
                 }
+                VfxDraw.sigil(buf, m, f.a, f.b.subtract(f.a), 0.35D, t * 2.0F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.flare(buf, m, f.b, left, up, 0.4D, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
             }
             case DoomAbilities.FX_MYSTIC_HIT -> {
-                VfxDraw.sphere(buf, m, f.a, 0.4D + 2.8D * k, cam, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade, t, 2.2D);
-                VfxDraw.burst(buf, m, f.a, left, up, 1.5F + 2.0F * k, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade, t * 0.2F);
-                VfxDraw.runeRing(buf, m, f.a.add(0.0D, -0.6D, 0.0D), 1.2D + 1.5D * k, 6, t * 0.08F, MYSTIC[0],
+                VfxDraw.flare(buf, m, f.a, left, up, 1.3D, MYSTIC[0], MYSTIC[1], MYSTIC[2],
+                        Math.max(0.0F, 1.0F - age / 5.0F));
+                VfxDraw.sphere(buf, m, f.a, 0.4D + 2.8D * ease(k), cam, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade, t, 2.2D);
+                VfxDraw.runeRing(buf, m, f.a.add(0.0D, -0.6D, 0.0D), 1.2D + 1.8D * ease(k), 8, t * 0.08F, MYSTIC[0],
                         MYSTIC[1], MYSTIC[2], fade);
+                for (int i = 0; i < 6; i++) {
+                    double ang = Math.PI * 2.0D * i / 6.0D;
+                    Vec3 out = f.a.add(Math.cos(ang) * 3.0D * ease(k), (i % 2) * 1.2D * ease(k), Math.sin(ang) * 3.0D
+                            * ease(k));
+                    VfxDraw.wisp(buf, m, f.a, out, f.seed + i, t * 2.0F, 0.4D, 0.12F, MYSTIC[0], MYSTIC[1], MYSTIC[2],
+                            fade);
+                }
+                VfxDraw.sparks(buf, m, f.a, f.seed, 24, 2.5D, k, 0.6D, MYSTIC[0], MYSTIC[1], MYSTIC[2], 1.0F);
             }
             case DoomAbilities.FX_RITUAL -> {
+                // the ritual: circles of runes turning faster, the ground lit, the air thick with sorcery
                 float charge = Math.min(1.0F, age / Math.max(1, f.target));
-                double r = f.power * Math.min(1.0F, age / 6.0F);
+                double r = f.power * ease(Math.min(1.0F, age / 6.0F));
                 float a = 0.4F + 0.6F * charge;
-                VfxDraw.runeRing(buf, m, f.a, r, 10, t * (0.03F + 0.12F * charge), MYSTIC[0], MYSTIC[1], MYSTIC[2], a);
+                VfxDraw.runeRing(buf, m, f.a, r, 12, t * (0.03F + 0.12F * charge), MYSTIC[0], MYSTIC[1], MYSTIC[2], a);
                 VfxDraw.hexCircle(buf, m, f.a.add(0.0D, 0.03D, 0.0D), r * 0.7D, t * 0.5F, FIELD[0], FIELD[1],
                         FIELD[2], a * 0.8F);
-                VfxDraw.ring(buf, m, f.a.add(0.0D, 0.04D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), r * 0.35D, 0.06D,
-                        -t * 0.15F, MYSTIC[0], MYSTIC[1], MYSTIC[2], a);
-                VfxDraw.wall(buf, m, f.a, r, 0.6D * charge, MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.35F * charge);
+                VfxDraw.sigil(buf, m, f.a.add(0.0D, 0.04D, 0.0D), yUp, r * 0.38D, -t * 2.0F, MYSTIC[0], MYSTIC[1],
+                        MYSTIC[2], a);
+                VfxDraw.wall(buf, m, f.a, r, 0.8D * charge, MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.35F * charge);
+                for (int i = 0; i < 6; i++) {
+                    double ang = t * 0.04D + i * Math.PI / 3.0D;
+                    Vec3 p0 = f.a.add(Math.cos(ang) * r, 0.0D, Math.sin(ang) * r);
+                    VfxDraw.wisp(buf, m, p0, f.a.add(0.0D, 2.0D + 3.0D * charge, 0.0D), f.seed + i, t, 0.5D, 0.12F,
+                            MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.7F * charge);
+                }
             }
             case DoomAbilities.FX_ERUPT -> {
+                // the eruption: a column of green fire, the rune circle blazing, a ring of force
                 double r = f.power;
-                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 9.0D * (1.0F - fade * fade * 0.5F), cam,
+                VfxDraw.flare(buf, m, f.a.add(0.0D, 1.0D, 0.0D), left, up, 2.5D, MYSTIC[0], MYSTIC[1], MYSTIC[2],
+                        Math.max(0.0F, 1.0F - age / 6.0F));
+                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 12.0D * ease(Math.min(1.0F, age / 5.0F)), cam,
                         (float) r * 0.9F * fade, MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.7F * fade);
-                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 12.0D, cam, (float) r * 0.25F * fade, 1.0F, 1.0F, 0.9F,
+                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 16.0D, cam, (float) r * 0.25F * fade, 1.0F, 1.0F, 0.9F,
                         0.9F * fade);
-                VfxDraw.ring(buf, m, f.a.add(0.0D, 0.1D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), r + 4.0D * k, 0.4D,
-                        t * 0.1F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
-                VfxDraw.runeRing(buf, m, f.a, r, 10, t * 0.2F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
-                VfxDraw.wall(buf, m, f.a, r, 3.5D * fade, MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.5F * fade);
+                VfxDraw.shockwave(buf, m, f.a, r + 5.0D * ease(k), 2.0D * fade, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.runeRing(buf, m, f.a, r, 12, t * 0.2F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
+                for (int i = 0; i < 8; i++) {
+                    double ang = Math.PI * 2.0D * i / 8.0D;
+                    Vec3 p0 = f.a.add(Math.cos(ang) * r * 0.8D, 0.0D, Math.sin(ang) * r * 0.8D);
+                    VfxDraw.flame(buf, m, p0, (2.0D + (i % 3)) * fade, 0.35D, cam, t + i * 7.0F, MYSTIC[0], MYSTIC[1],
+                            MYSTIC[2], 0.7F * fade);
+                }
+                VfxDraw.sparks(buf, m, f.a.add(0.0D, 0.5D, 0.0D), f.seed, 40, r * 1.5D, k, 1.0D, MYSTIC[0], MYSTIC[1],
+                        MYSTIC[2], 1.0F);
             }
             case DoomAbilities.FX_TAKEOFF -> {
-                VfxDraw.ring(buf, m, f.a.add(0.0D, 0.05D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 0.5D + 3.5D * k, 0.3D,
-                        0.0F, JET[0], JET[1], JET[2], fade);
-                VfxDraw.glow(buf, m, f.a.add(0.0D, 0.3D, 0.0D), left, up, 1.5D * fade, 1.0F, 0.7F, 0.4F, fade);
+                VfxDraw.shockwave(buf, m, f.a, 0.5D + 3.5D * ease(k), 0.8D * fade, JET[0], JET[1], JET[2], fade);
+                VfxDraw.flare(buf, m, f.a.add(0.0D, 0.3D, 0.0D), left, up, 0.9D, 1.0F, 0.7F, 0.4F, fade);
             }
             case DoomAbilities.FX_ANNIHILATE -> {
+                // the God Emperor's annihilation: a river of gold-white light wound with green lightning
                 Vec3 a = handOf(mc, f, pt);
                 float w = 0.45F * (0.4F + fade);
+                VfxDraw.beam(buf, m, a, f.b, w * 3.0F, GOD[0], GOD[1], GOD[2], 0.15F * fade);
                 VfxDraw.energy(buf, m, a, f.b, w, GOD[0], GOD[1], GOD[2], fade);
-                VfxDraw.energy(buf, m, a, f.b, w * 0.4F, WHITE[0], WHITE[1], WHITE[2], fade);
-                VfxDraw.path(buf, m, VfxDraw.helix(a, f.b, 0.5D * (1.0F + k), 6.0D, t * 0.5D, 40), 0.05F, GAUNT[0],
-                        GAUNT[1], GAUNT[2], fade);
-                VfxDraw.glow(buf, m, a, left, up, 0.9D, WHITE[0], WHITE[1], WHITE[2], fade);
-                VfxDraw.burst(buf, m, f.b, left, up, 1.5F + 3.0F * k, GOD[0], GOD[1], GOD[2], fade, t * 0.2F);
+                VfxDraw.energy(buf, m, a, f.b, w * 0.35F, WHITE[0], WHITE[1], WHITE[2], fade);
+                for (int i = 0; i < 3; i++) {
+                    bolt(buf, m, a, f.b, f.seed + i * 131L + (long) (t * 2.0F), 0.06F, GAUNT, fade, 1);
+                }
+                VfxDraw.flare(buf, m, a, left, up, 1.0D, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.flare(buf, m, f.b, left, up, 2.0D + 2.0D * k, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.sphere(buf, m, f.b, 1.0D + 3.0D * ease(k), cam, GOD[0], GOD[1], GOD[2], 0.6F * fade, t, 2.0D);
+                VfxDraw.sparks(buf, m, f.b, f.seed, 40, 4.0D, k, 1.0D, GOD[0], GOD[1], GOD[2], 1.0F);
             }
             case DoomAbilities.FX_REWRITE -> {
+                // Secret Wars: reality rewritten, a dome of gold and a sea of runes
                 double r = f.power;
                 Vec3 c = f.a;
-                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.0D + r * k, cam, GOD[0], GOD[1], GOD[2],
+                VfxDraw.flare(buf, m, c.add(0.0D, 1.0D, 0.0D), left, up, 4.0D, GOD[0], GOD[1], GOD[2],
+                        Math.max(0.0F, 1.0F - age / 10.0F));
+                VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.0D + r * ease(k), cam, GOD[0], GOD[1], GOD[2],
                         0.5F * fade, t, 3.0D);
-                VfxDraw.ring(buf, m, c.add(0.0D, 0.1D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 1.0D + r * k, 0.8D,
-                        t * 0.05F, GOD[0], GOD[1], GOD[2], fade);
-                VfxDraw.runeRing(buf, m, c.add(0.0D, 0.05D, 0.0D), 4.0D + r * 0.4D * k, 16, t * 0.03F, MYSTIC[0],
-                        MYSTIC[1], MYSTIC[2], fade);
-                VfxDraw.wall(buf, m, c, 1.0D + r * k, 6.0D * fade, GOD[0], GOD[1], GOD[2], 0.4F * fade);
-                VfxDraw.pillar(buf, m, c, c.y, c.y + 60.0D, cam, 2.5F * fade, WHITE[0], WHITE[1], WHITE[2],
-                        0.8F * fade);
+                VfxDraw.shockwave(buf, m, c, 1.0D + r * ease(k), 4.0D * fade, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.runeRing(buf, m, c.add(0.0D, 0.05D, 0.0D), 4.0D + r * 0.4D * ease(k), 18, t * 0.03F,
+                        MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
+                VfxDraw.pillar(buf, m, c, c.y, c.y + 80.0D, cam, 2.5F * fade, WHITE[0], WHITE[1], WHITE[2], 0.8F * fade);
+                for (int i = 0; i < 4; i++) {
+                    VfxDraw.sigil(buf, m, c.add(0.0D, 2.0D + i * 2.5D, 0.0D), yUp, 1.5D + i * 0.8D,
+                            t * (i % 2 == 0 ? 1.0F : -1.0F), GOD[0], GOD[1], GOD[2], fade);
+                }
             }
             case DoomAbilities.FX_ASCEND -> {
+                // the ascension: a column of gold from the sky, rings of runes climbing him
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 c = e != null ? e.getPosition(pt) : f.a;
                 float charge = Math.min(1.0F, age / Math.max(1.0F, f.power));
@@ -377,24 +461,29 @@ public final class DoomVfx {
                         GOD[1], GOD[2], 0.6F * out);
                 VfxDraw.pillar(buf, m, f.a, f.a.y - 1.0D, c.y + 80.0D, cam, (0.2F + 0.6F * charge) * out, WHITE[0],
                         WHITE[1], WHITE[2], 0.9F * out);
-                for (int i = 0; i < 3; i++) {
-                    VfxDraw.runeRing(buf, m, c.add(0.0D, 0.2D + i * 0.9D, 0.0D), 1.6D + i * 0.5D, 10,
-                            t * (0.03F + i * 0.02F) * (i % 2 == 0 ? 1 : -1), GOD[0], GOD[1], GOD[2], out);
+                for (int i = 0; i < 4; i++) {
+                    double y = (age * 0.08D + i * 0.8D) % 3.2D;
+                    VfxDraw.sigil(buf, m, c.add(0.0D, 0.2D + y, 0.0D), yUp, 1.6D - y * 0.25D,
+                            t * (i % 2 == 0 ? 1.0F : -1.0F), GOD[0], GOD[1], GOD[2], out * (float) (1.0D - y / 3.2D));
                 }
                 VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.2D + charge * 1.2D, cam, GOD[0], GOD[1], GOD[2],
                         0.5F * out, t, 2.0D);
+                VfxDraw.flare(buf, m, c.add(0.0D, 1.0D, 0.0D), left, up, 1.5D + charge * 2.0D, GOD[0], GOD[1], GOD[2],
+                        0.6F * out);
                 VfxDraw.runeRing(buf, m, f.a.add(0.0D, 0.05D, 0.0D), 6.0D, 16, t * 0.02F, MYSTIC[0], MYSTIC[1],
                         MYSTIC[2], out);
             }
             case DoomAbilities.FX_ABSORB -> {
+                // a fallen boss' power pulled into him: a stream of wisps and gold light
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 to = e != null ? e.getPosition(pt).add(0.0D, 1.0D, 0.0D) : f.b;
                 float head = Math.min(1.0F, age / 25.0F);
                 Vec3 tip = f.a.lerp(to, head);
-                VfxDraw.path(buf, m, VfxDraw.helix(f.a, tip, 0.6D, 4.0D, t * 0.4D, 30), 0.12F, MYSTIC[0],
-                        MYSTIC[1], MYSTIC[2], fade);
-                VfxDraw.energy(buf, m, f.a, tip, 0.2F, GOD[0], GOD[1], GOD[2], fade);
-                VfxDraw.glow(buf, m, tip, left, up, 1.0D, WHITE[0], WHITE[1], WHITE[2], fade);
+                for (int i = 0; i < 4; i++) {
+                    VfxDraw.wisp(buf, m, f.a, tip, f.seed + i, t, 0.7D, 0.16F, MYSTIC[0], MYSTIC[1], MYSTIC[2], fade);
+                }
+                VfxDraw.energy(buf, m, f.a, tip, 0.18F, GOD[0], GOD[1], GOD[2], fade);
+                VfxDraw.flare(buf, m, tip, left, up, 0.8D, WHITE[0], WHITE[1], WHITE[2], fade);
             }
             case DoomAbilities.FX_GRIMOIRE -> {
                 Entity e = mc.level.getEntity(f.caster);
@@ -403,9 +492,14 @@ public final class DoomVfx {
                 VfxDraw.runeRing(buf, m, c, 2.2D, 12, t * 0.05F, MYSTIC[0], MYSTIC[1], MYSTIC[2], in * fade);
                 VfxDraw.hexCircle(buf, m, c.add(0.0D, 0.03D, 0.0D), 1.6D, t * 0.4F, FIELD[0], FIELD[1], FIELD[2],
                         in * fade);
-                VfxDraw.wall(buf, m, c, 2.2D, 2.6D * in, MYSTIC[0], MYSTIC[1], MYSTIC[2], 0.4F * fade);
+                for (int i = 0; i < 6; i++) {
+                    double ang = t * 0.05D + i * Math.PI / 3.0D;
+                    Vec3 p0 = c.add(Math.cos(ang) * 2.2D, 0.0D, Math.sin(ang) * 2.2D);
+                    VfxDraw.wisp(buf, m, p0, c.add(0.0D, 2.2D, 0.0D), f.seed + i, t, 0.4D, 0.1F, MYSTIC[0], MYSTIC[1],
+                            MYSTIC[2], in * fade);
+                }
                 VfxDraw.sphere(buf, m, c.add(0.0D, 1.0D, 0.0D), 1.2D + 0.4D * k, cam, FIELD[0], FIELD[1], FIELD[2],
-                        0.5F * fade, t, 2.0D);
+                        0.4F * fade, t, 2.0D);
             }
             default -> {
             }

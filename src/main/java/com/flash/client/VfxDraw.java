@@ -640,4 +640,97 @@ public final class VfxDraw {
             vert(buf, m, p0, r, g, b, a);
         }
     }
+
+    /**
+     * A wisp of magic flowing from a to b: a living curve writhing with t (seeded), thick in the middle, fading at
+     * both ends, coloured round a pale heart.
+     */
+    public static void wisp(BufferBuilder buf, Matrix4f m, Vec3 a, Vec3 b, long seed, float t, double amp, float w,
+                            float r, float g, float bl, float al) {
+        if (al <= 0.01F) {
+            return;
+        }
+        Vec3 d = b.subtract(a);
+        double len = d.length();
+        if (len < 1.0E-3D) {
+            return;
+        }
+        Vec3 dn = d.scale(1.0D / len);
+        Vec3 ref = Math.abs(dn.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 u = dn.cross(ref).normalize();
+        Vec3 v = dn.cross(u).normalize();
+        java.util.Random rnd = new java.util.Random(seed);
+        double f1 = 1.5D + rnd.nextDouble() * 2.0D;
+        double f2 = 1.0D + rnd.nextDouble() * 2.5D;
+        double ph1 = rnd.nextDouble() * Math.PI * 2.0D;
+        double ph2 = rnd.nextDouble() * Math.PI * 2.0D;
+        double sp = 0.15D + rnd.nextDouble() * 0.15D;
+        int n = Math.max(10, Math.min(40, (int) (len * 4.0D)));
+        Vec3 prev = a;
+        for (int i = 1; i <= n; i++) {
+            double k = (double) i / n;
+            double env = Math.sin(Math.PI * k);
+            double ox = Math.sin(k * Math.PI * f1 + t * sp + ph1) * amp * env;
+            double oy = Math.cos(k * Math.PI * f2 - t * sp * 1.3D + ph2) * amp * env;
+            Vec3 p = a.add(d.scale(k)).add(u.scale(ox)).add(v.scale(oy));
+            float e = (float) Math.sqrt(Math.max(0.0D, Math.sin(Math.PI * (k - 0.5D / n))));
+            beam(buf, m, prev, p, w * (0.35F + 0.65F * e), r, g, bl, 0.45F * al * e);
+            beam(buf, m, prev, p, w * 0.3F * (0.35F + 0.65F * e), mix(r, 0.6F), mix(g, 0.6F), mix(bl, 0.6F),
+                    0.8F * al * e);
+            prev = p;
+        }
+    }
+
+    /** A turning sigil in the plane facing n: two rings and marks of light between them. */
+    public static void sigil(BufferBuilder buf, Matrix4f m, Vec3 c, Vec3 n, double r, float t, float cr, float cg,
+                             float cb, float al) {
+        ring(buf, m, c, n, r, 0.04D, t * 0.06F, mix(cr, 0.3F), mix(cg, 0.3F), mix(cb, 0.3F), 0.8F * al);
+        ring(buf, m, c, n, r * 0.72D, 0.025D, -t * 0.09F, cr, cg, cb, 0.7F * al);
+        Vec3 nn = n.normalize();
+        Vec3 ref = Math.abs(nn.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 u = nn.cross(ref).normalize();
+        Vec3 v = nn.cross(u).normalize();
+        for (int i = 0; i < 8; i++) {
+            double ang = t * 0.06D + i * Math.PI / 4.0D;
+            Vec3 q = c.add(u.scale(Math.cos(ang) * r * 0.86D)).add(v.scale(Math.sin(ang) * r * 0.86D));
+            Vec3 o = u.scale(-Math.sin(ang) * r * 0.06D).add(v.scale(Math.cos(ang) * r * 0.06D));
+            beam(buf, m, q.subtract(o), q.add(o), 0.02F, mix(cr, 0.5F), mix(cg, 0.5F), mix(cb, 0.5F), 0.9F * al);
+        }
+    }
+
+    /**
+     * A bubble of hexagonal plates: a fresnel sphere and hexagons over it (Fibonacci-spread), each flickering with
+     * a ripple running over the surface; hit (0..1) lights them all up.
+     */
+    public static void hexShield(BufferBuilder buf, Matrix4f m, Vec3 c, double radius, Vec3 cam, float t, float cr,
+                                 float cg, float cb, float al, float hit) {
+        sphere(buf, m, c, radius, cam, cr, cg, cb, 0.35F * al + 0.4F * hit, t, 2.6D);
+        int n = 70;
+        double golden = Math.PI * (3.0D - Math.sqrt(5.0D));
+        double cell = radius * 0.26D;
+        for (int i = 0; i < n; i++) {
+            double y = 1.0D - 2.0D * (i + 0.5D) / n;
+            double rr = Math.sqrt(1.0D - y * y);
+            double th = golden * i + t * 0.01D;
+            Vec3 nrm = new Vec3(Math.cos(th) * rr, y, Math.sin(th) * rr);
+            Vec3 at = c.add(nrm.scale(radius));
+            // only the plates facing the camera's side of the bubble, softly
+            Vec3 toCam = cam.subtract(at);
+            double facing = toCam.lengthSqr() < 1.0E-6D ? 1.0D : Math.abs(nrm.dot(toCam.normalize()));
+            float ripple = 0.5F + 0.5F * (float) Math.sin(t * 0.25D - y * 6.0D + th * 0.5D);
+            float a = al * (0.15F + 0.55F * ripple) * (float) (1.0D - 0.6D * facing) + hit * 0.6F;
+            Vec3 ref = Math.abs(nrm.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+            Vec3 u = nrm.cross(ref).normalize();
+            Vec3 v = nrm.cross(u).normalize();
+            Vec3 prev = null;
+            for (int k = 0; k <= 6; k++) {
+                double ang = Math.PI / 3.0D * k;
+                Vec3 q = at.add(u.scale(Math.cos(ang) * cell)).add(v.scale(Math.sin(ang) * cell));
+                if (prev != null) {
+                    beam(buf, m, prev, q, 0.018F, mix(cr, 0.4F), mix(cg, 0.4F), mix(cb, 0.4F), a);
+                }
+                prev = q;
+            }
+        }
+    }
 }

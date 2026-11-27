@@ -256,9 +256,13 @@ public final class WonderVfx {
             for (Flying f : SHIELDS.values()) {
                 if (clock - f.seen <= 3.0F) {
                     Vec3 at = f.prev.lerp(f.cur, Mth.clamp(pt, 0.0F, 1.0F));
-                    Vec3 back = at.subtract(f.cur.subtract(f.prev).scale(2.5D));
-                    VfxDraw.energy(buf, m, back, at, 0.18F, GOLD[0], GOLD[1], GOLD[2], 0.5F);
-                    VfxDraw.glow(buf, m, at, left, up, 0.7D, GOLD[0], GOLD[1], GOLD[2], 0.45F);
+                    Vec3 back = at.subtract(f.cur.subtract(f.prev).scale(3.0D));
+                    // the shield's flight: a golden streak, its rim glinting, a flare at its heart
+                    VfxDraw.beam(buf, m, back, at, 0.5F, GOLD[0], GOLD[1], GOLD[2], 0.12F);
+                    VfxDraw.energy(buf, m, back, at, 0.14F, GOLD[0], GOLD[1], GOLD[2], 0.55F);
+                    VfxDraw.flare(buf, m, at, left, up, 0.35D, GOLD[0], GOLD[1], GOLD[2], 0.7F);
+                    VfxDraw.ring(buf, m, at, new Vec3(0.0D, 1.0D, 0.0D), 0.42D, 0.03D, t * 0.6F, WHITE[0], WHITE[1],
+                            WHITE[2], 0.5F);
                 }
             }
             for (Player p : mc.level.players()) {
@@ -271,9 +275,15 @@ public final class WonderVfx {
                 Vec3 c = p.getPosition(pt).add(0.0D, 1.3D, 0.0D).add(look.scale(0.55D));
                 Vec3 side = new Vec3(-look.z, 0.0D, look.x);
                 float pulse = 0.6F + 0.25F * Mth.sin(t * 0.5F);
-                VfxDraw.glow(buf, m, c, side, new Vec3(0.0D, 1.0D, 0.0D), 0.55D, GOLD[0], GOLD[1], GOLD[2], pulse);
-                VfxDraw.disc(buf, m, c.add(look.scale(0.15D)), side, new Vec3(0.0D, 1.0D, 0.0D), 0.9D, GOLD[0],
-                        GOLD[1], GOLD[2], WHITE[0], WHITE[1], WHITE[2], 0.18F * pulse);
+                // the bracelets crossed: an X of gold light, its flare, a faint barrier before her
+                Vec3 vu = new Vec3(0.0D, 1.0D, 0.0D);
+                Vec3 d1 = side.add(vu).normalize();
+                Vec3 d2 = side.subtract(vu).normalize();
+                VfxDraw.streak(buf, m, c, d1, look, 0.45D, 0.05D, GOLD[0], GOLD[1], GOLD[2], pulse);
+                VfxDraw.streak(buf, m, c, d2, look, 0.45D, 0.05D, GOLD[0], GOLD[1], GOLD[2], pulse);
+                VfxDraw.flare(buf, m, c, left, up, 0.3D, GOLD[0], GOLD[1], GOLD[2], pulse);
+                VfxDraw.disc(buf, m, c.add(look.scale(0.15D)), side, vu, 0.9D, GOLD[0],
+                        GOLD[1], GOLD[2], WHITE[0], WHITE[1], WHITE[2], 0.12F * pulse);
             }
         } finally {
             VfxDraw.end(buf);
@@ -319,131 +329,200 @@ public final class WonderVfx {
         }
     }
 
+    private static float ease(float k) {
+        float u = 1.0F - Mth.clamp(k, 0.0F, 1.0F);
+        return 1.0F - u * u * u;
+    }
+
+    /** The Lasso of Truth: a rope of living gold (glow, colour, white heart), a twist of fibres, glints running. */
+    private static void lasso(BufferBuilder buf, Matrix4f m, Vec3[] r, float t, Vec3 left, Vec3 up, float a) {
+        VfxDraw.path(buf, m, r, 0.18F, GOLD[0], GOLD[1], GOLD[2], 0.2F * a);
+        VfxDraw.path(buf, m, r, 0.055F, GOLD[0], GOLD[1], GOLD[2], a);
+        VfxDraw.path(buf, m, r, 0.018F, WHITE[0], WHITE[1], WHITE[2], a);
+        for (int i = 0; i + 1 < r.length; i += 2) {
+            Vec3[] fib = VfxDraw.helix(r[i], r[Math.min(r.length - 1, i + 2)], 0.03D, 1.5D, t * 0.6D + i, 6);
+            VfxDraw.path(buf, m, fib, 0.01F, 1.0F, 0.95F, 0.7F, 0.6F * a);
+        }
+        for (int g = 0; g < 3; g++) {
+            double k = (t * 0.07D + g / 3.0D) % 1.0D;
+            int idx = (int) Math.min(r.length - 1, Math.round(k * (r.length - 1)));
+            VfxDraw.flare(buf, m, r[idx], left, up, 0.09D, GOLD[0], GOLD[1], GOLD[2], a);
+        }
+    }
+
     private static void draw(BufferBuilder buf, Matrix4f m, Minecraft mc, Fx f, float pt, float t, Vec3 cam,
                              Vec3 left, Vec3 up) {
         float age = f.age + pt;
         float k = Math.min(1.0F, age / f.life);
         float fade = 1.0F - k;
+        Vec3 yUp = new Vec3(0.0D, 1.0D, 0.0D);
         switch (f.type) {
             case WonderAbilities.FX_LASSO -> {
                 Vec3 hand = handOf(mc, f.caster, f.a, pt);
                 Entity target = f.target >= 0 ? mc.level.getEntity(f.target) : null;
                 if (target != null && target.isAlive()) {
-                    // bound: the rope held taut, the loops round it, glowing
+                    // bound: the rope held taut, the loops of light round it, the truth glowing out of it
                     float end = Math.min(1.0F, (f.life - age) / 6.0F);
                     float in = Math.min(1.0F, age / 3.0F);
                     Vec3 tp = target.getPosition(pt);
                     Vec3 mid = tp.add(0.0D, target.getBbHeight() * 0.55D, 0.0D);
                     Vec3 to = hand.lerp(mid, in);
-                    float a = end * (0.75F + 0.2F * Mth.sin(t * 0.6F));
-                    Vec3[] r = rope(hand, to, 0.15D, 0.02D, t);
-                    VfxDraw.path(buf, m, r, 0.06F, GOLD[0], GOLD[1], GOLD[2], a);
-                    VfxDraw.path(buf, m, r, 0.02F, WHITE[0], WHITE[1], WHITE[2], a);
+                    float a = end * (0.8F + 0.2F * Mth.sin(t * 0.6F));
+                    lasso(buf, m, rope(hand, to, 0.15D, 0.02D, t), t, left, up, a);
+                    VfxDraw.flare(buf, m, hand, left, up, 0.25D, GOLD[0], GOLD[1], GOLD[2], a);
                     if (in >= 1.0F) {
-                        loops(buf, m, tp, target.getBbWidth() * 0.75D + 0.1D, target.getBbHeight(), t, a);
-                        VfxDraw.glow(buf, m, mid, left, up, target.getBbHeight() * 0.7D, GOLD[0], GOLD[1], GOLD[2],
-                                0.25F * a);
+                        double rr = target.getBbWidth() * 0.75D + 0.1D;
+                        for (int i = 0; i < 3; i++) {
+                            Vec3 c = tp.add(0.0D, target.getBbHeight() * (0.3D + i * 0.22D), 0.0D);
+                            VfxDraw.ring(buf, m, c, yUp, rr, 0.12D, 0.0F, GOLD[0], GOLD[1], GOLD[2], 0.25F * a);
+                            VfxDraw.ring(buf, m, c, yUp, rr, 0.04D, t * 0.1F + i, WHITE[0], WHITE[1], WHITE[2], a);
+                        }
+                        VfxDraw.glow(buf, m, mid, left, up, target.getBbHeight() * 0.8D, GOLD[0], GOLD[1], GOLD[2],
+                                0.28F * a);
+                        java.util.Random rnd = new java.util.Random(f.target * 31L);
+                        for (int i = 0; i < 8; i++) {
+                            double ang = rnd.nextDouble() * Math.PI * 2.0D;
+                            double ph = (t * 0.03D + rnd.nextDouble()) % 1.0D;
+                            Vec3 q = tp.add(Math.cos(ang) * rr, ph * target.getBbHeight() * 1.2D, Math.sin(ang) * rr);
+                            VfxDraw.flare(buf, m, q, left, up, 0.06D, GOLD[0], GOLD[1], GOLD[2], a * (float) (1.0D - ph));
+                        }
                     }
                 } else {
-                    // a throw that caught nothing: out and back
+                    // a throw that caught nothing: out and back, the loop open at its end
                     float out = age < 4.0F ? age / 4.0F : Math.max(0.0F, 1.0F - (age - 4.0F) / 5.0F);
                     Vec3 to = hand.lerp(f.b, out);
-                    VfxDraw.path(buf, m, rope(hand, to, 0.4D, 0.08D, t), 0.05F, GOLD[0], GOLD[1], GOLD[2], 0.85F);
+                    lasso(buf, m, rope(hand, to, 0.4D, 0.08D, t), t, left, up, 0.9F);
                     VfxDraw.ring(buf, m, to, f.b.subtract(hand).normalize(), 0.35D, 0.05D, t * 0.3F, GOLD[0], GOLD[1],
-                            GOLD[2], 0.8F);
+                            GOLD[2], 0.85F);
                 }
             }
             case WonderAbilities.FX_SPIN -> {
-                // the lasso whirled round her
+                // the lasso whirled round her: a spiral of gold, streaks of light flung off it
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 c = e != null ? e.getPosition(pt).add(0.0D, 1.1D, 0.0D) : f.a.add(0.0D, 1.1D, 0.0D);
-                double r = 1.0D + f.power * Math.min(1.0F, age / 4.0F);
-                int n = 24;
+                double r = 1.0D + f.power * ease(Math.min(1.0F, age / 4.0F));
+                int n = 28;
                 Vec3[] ring = new Vec3[n + 1];
                 double rot = t * 0.9D;
                 for (int i = 0; i <= n; i++) {
-                    double ang = rot + i / (double) n * Math.PI * 1.6D;
+                    double ang = rot + i / (double) n * Math.PI * 1.7D;
                     double rr = r * (0.25D + 0.75D * i / n);
                     ring[i] = c.add(Math.cos(ang) * rr, Math.sin(ang * 3.0D) * 0.15D, Math.sin(ang) * rr);
                 }
-                VfxDraw.path(buf, m, ring, 0.07F, GOLD[0], GOLD[1], GOLD[2], fade);
-                VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), r, 0.25D, t * 0.2F, GOLD[0], GOLD[1], GOLD[2],
+                lasso(buf, m, ring, t, left, up, fade);
+                for (int i = 0; i < 10; i++) {
+                    double ang = rot * 1.2D + i * Math.PI / 5.0D;
+                    Vec3 p0 = c.add(Math.cos(ang) * r, 0.0D, Math.sin(ang) * r);
+                    Vec3 p1 = c.add(Math.cos(ang + 0.5D) * r, 0.0D, Math.sin(ang + 0.5D) * r);
+                    VfxDraw.beam(buf, m, p0, p1, 0.02F, WHITE[0], WHITE[1], WHITE[2], 0.4F * fade);
+                }
+                VfxDraw.shockwave(buf, m, c.add(0.0D, -1.05D, 0.0D), r, 1.0D * fade, GOLD[0], GOLD[1], GOLD[2],
                         0.5F * fade);
-                VfxDraw.wall(buf, m, c.add(0.0D, -1.0D, 0.0D), r, 1.5D * fade, GOLD[0], GOLD[1], GOLD[2], 0.3F * fade);
             }
             case WonderAbilities.FX_GUARD -> {
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 c = e != null ? e.getPosition(pt).add(0.0D, 1.1D, 0.0D) : f.a.add(0.0D, 1.1D, 0.0D);
-                VfxDraw.burst(buf, m, c, left, up, 0.8F + 1.2F * k, GOLD[0], GOLD[1], GOLD[2], fade, t * 0.3F);
-                VfxDraw.ring(buf, m, c, new Vec3(0.0D, 1.0D, 0.0D), 0.4D + 1.4D * k, 0.1D, 0.0F, GOLD[0], GOLD[1],
-                        GOLD[2], fade);
+                VfxDraw.flare(buf, m, c, left, up, 0.8D, GOLD[0], GOLD[1], GOLD[2], fade);
+                VfxDraw.ring(buf, m, c, yUp, 0.4D + 1.6D * ease(k), 0.1D, 0.0F, GOLD[0], GOLD[1], GOLD[2], fade);
             }
             case WonderAbilities.FX_DEFLECT -> {
-                VfxDraw.burst(buf, m, f.a, left, up, 0.4F + 0.6F * k, WHITE[0], WHITE[1], WHITE[2], fade, t * 0.4F);
-                VfxDraw.glow(buf, m, f.a, left, up, 0.5D, GOLD[0], GOLD[1], GOLD[2], fade);
+                // what the bracelets turn away: a bright spark and a shower of gold
+                VfxDraw.flare(buf, m, f.a, left, up, 0.4D, WHITE[0], WHITE[1], WHITE[2], fade);
+                VfxDraw.sparks(buf, m, f.a, f.seed, 14, 1.4D, k, 0.6D, GOLD[0], GOLD[1], GOLD[2], 1.0F);
             }
             case WonderAbilities.FX_CLASH -> {
-                // the shockwave of the bracelets: rings racing ahead in a cone
+                // the bracelets struck together: a blinding flash and a wave of force tearing forward
                 Vec3 a = handOf(mc, f.caster, f.a, pt);
                 Vec3 dir = f.b.lengthSqr() < 1.0E-4D ? new Vec3(0.0D, 0.0D, 1.0D) : f.b.normalize();
-                if (age < 2.5F) {
-                    VfxDraw.glow(buf, m, a, left, up, 1.2D, WHITE[0], WHITE[1], WHITE[2], 1.0F);
-                    VfxDraw.burst(buf, m, a, left, up, 1.6F, GOLD[0], GOLD[1], GOLD[2], 1.0F, t * 0.3F);
+                if (age < 4.0F) {
+                    VfxDraw.flare(buf, m, a, left, up, 2.2D, WHITE[0], WHITE[1], WHITE[2], 1.0F - age / 4.0F);
                 }
-                for (int i = 0; i < 4; i++) {
-                    float kk = Mth.clamp(k * 1.4F - i * 0.12F, 0.0F, 1.0F);
+                if (age < 1.0F) {
+                    HulkVfx.quake(mc, a, 1.2F, 20.0D);
+                }
+                for (int i = 0; i < 5; i++) {
+                    float kk = Mth.clamp(k * 1.4F - i * 0.1F, 0.0F, 1.0F);
                     if (kk <= 0.0F || kk >= 1.0F) {
                         continue;
                     }
-                    double d = f.power * kk;
-                    VfxDraw.ring(buf, m, a.add(dir.scale(d)), dir, 0.4D + d * 0.55D, 0.25D + d * 0.03D, t * 0.2F,
-                            GOLD[0], GOLD[1], GOLD[2], (1.0F - kk) * 0.9F);
+                    double d = f.power * ease(kk);
+                    VfxDraw.ring(buf, m, a.add(dir.scale(d)), dir, 0.4D + d * 0.55D, 0.08D, 0.0F, WHITE[0], WHITE[1],
+                            WHITE[2], (1.0F - kk) * 0.9F);
+                    VfxDraw.ring(buf, m, a.add(dir.scale(d)), dir, 0.35D + d * 0.5D, 0.3D + d * 0.03D, 0.0F, GOLD[0],
+                            GOLD[1], GOLD[2], (1.0F - kk) * 0.35F);
                 }
+                VfxDraw.cone(buf, m, a, dir, f.power * ease(k), 0.4D + f.power * 0.55D * ease(k), GOLD[0], GOLD[1],
+                        GOLD[2], 0.1F * fade);
+                VfxDraw.sparks(buf, m, a, f.seed, 30, 4.0D, k, 0.5D, GOLD[0], GOLD[1], GOLD[2], 1.0F);
             }
             case WonderAbilities.FX_SHIELD_HIT -> {
+                VfxDraw.flare(buf, m, f.a, left, up, 0.8D, GOLD[0], GOLD[1], GOLD[2], fade);
                 VfxDraw.burst(buf, m, f.a, left, up, 0.9F + k, GOLD[0], GOLD[1], GOLD[2], fade, t * 0.3F);
-                VfxDraw.glow(buf, m, f.a, left, up, 0.9D, WHITE[0], WHITE[1], WHITE[2], fade);
+                VfxDraw.sparks(buf, m, f.a, f.seed, 16, 1.6D, k, 0.6D, GOLD[0], GOLD[1], GOLD[2], 1.0F);
             }
-            case WonderAbilities.FX_SHIELD_BACK -> VfxDraw.glow(buf, m, f.a, left, up, 0.6D * fade, GOLD[0], GOLD[1],
+            case WonderAbilities.FX_SHIELD_BACK -> VfxDraw.flare(buf, m, f.a, left, up, 0.4D * fade, GOLD[0], GOLD[1],
                     GOLD[2], fade);
             case WonderAbilities.FX_LEAP, WonderAbilities.FX_TAKEOFF -> {
-                VfxDraw.ring(buf, m, f.a.add(0.0D, 0.05D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 0.5D + 3.5D * k, 0.3D,
-                        0.0F, GOLD[0], GOLD[1], GOLD[2], fade);
-                VfxDraw.glow(buf, m, f.a.add(0.0D, 0.3D, 0.0D), left, up, 1.5D * fade, GOLD[0], GOLD[1], GOLD[2],
-                        fade);
+                VfxDraw.shockwave(buf, m, f.a, 0.5D + 4.0D * ease(k), 0.9D * fade, GOLD[0], GOLD[1], GOLD[2], fade);
+                VfxDraw.flare(buf, m, f.a.add(0.0D, 0.3D, 0.0D), left, up, 0.8D, GOLD[0], GOLD[1], GOLD[2], fade);
             }
             case WonderAbilities.FX_CATACLYSM -> {
+                // the Amazonian Cataclysm: the gods' lightning strikes, the ground breaks in rings of gold
                 double r = f.power;
-                Vec3 g = f.a.add(0.0D, 0.08D, 0.0D);
-                VfxDraw.ring(buf, m, g, new Vec3(0.0D, 1.0D, 0.0D), 0.5D + r * k, 0.6D, t * 0.1F, GOLD[0], GOLD[1],
-                        GOLD[2], fade);
-                VfxDraw.ring(buf, m, g, new Vec3(0.0D, 1.0D, 0.0D), 0.3D + r * 0.7D * k, 0.3D, -t * 0.1F, RED[0],
-                        RED[1], RED[2], 0.7F * fade);
-                VfxDraw.wall(buf, m, f.a, 0.5D + r * k, 3.0D * fade, GOLD[0], GOLD[1], GOLD[2], 0.5F * fade);
-                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 14.0D, cam, 1.6F * fade, GOLD[0], GOLD[1], GOLD[2],
+                if (age < 1.0F) {
+                    HulkVfx.quake(mc, f.a, 2.0F, 36.0D);
+                }
+                VfxDraw.flare(buf, m, f.a.add(0.0D, 1.0D, 0.0D), left, up, 4.0D, WHITE[0], WHITE[1], WHITE[2],
+                        Math.max(0.0F, 1.0F - age / 8.0F));
+                VfxDraw.shockwave(buf, m, f.a, 0.5D + r * ease(k), 3.0D * fade, GOLD[0], GOLD[1], GOLD[2], fade);
+                float k2 = Mth.clamp((age - 4.0F) / 22.0F, 0.0F, 1.0F);
+                if (k2 > 0.0F && k2 < 1.0F) {
+                    VfxDraw.shockwave(buf, m, f.a, 0.3D + r * 0.7D * ease(k2), 1.2D * (1.0F - k2), RED[0], RED[1],
+                            RED[2], 0.7F * (1.0F - k2));
+                }
+                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 18.0D, cam, 1.8F * fade, GOLD[0], GOLD[1], GOLD[2],
                         0.7F * fade);
-                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 18.0D, cam, 0.4F * fade, WHITE[0], WHITE[1], WHITE[2],
+                VfxDraw.pillar(buf, m, f.a, f.a.y, f.a.y + 22.0D, cam, 0.45F * fade, WHITE[0], WHITE[1], WHITE[2],
                         0.9F * fade);
-                if (age < 6.0F) {
-                    VfxDraw.glow(buf, m, f.a.add(0.0D, 1.0D, 0.0D), left, up, 4.0D * (1.0F - age / 6.0F), WHITE[0],
-                            WHITE[1], WHITE[2], 1.0F);
+                java.util.Random rnd = new java.util.Random(f.seed + (long) (age / 2.0F));
+                for (int i = 0; i < 4; i++) {
+                    Vec3 g = f.a.add(rnd.nextGaussian() * r * 0.4D, 0.1D, rnd.nextGaussian() * r * 0.4D);
+                    Vec3[] pts = VfxDraw.jagged(g.add(rnd.nextGaussian() * 2.0D, 30.0D, rnd.nextGaussian() * 2.0D), g,
+                            rnd.nextLong(), 1.0D, 5);
+                    VfxDraw.path(buf, m, pts, 0.3F, GOLD[0], GOLD[1], GOLD[2], 0.25F * fade);
+                    VfxDraw.path(buf, m, pts, 0.07F, WHITE[0], WHITE[1], WHITE[2], fade);
                 }
-                for (int i = 0; i < 6; i++) {
-                    double ang = i / 6.0D * Math.PI * 2.0D + f.seed % 7;
-                    Vec3 end = f.a.add(Math.cos(ang) * r * k, 0.2D, Math.sin(ang) * r * k);
-                    VfxDraw.path(buf, m, VfxDraw.jagged(f.a.add(0.0D, 0.2D, 0.0D), end, f.seed + i * 131L
-                            + (long) (age * 0.5F), 0.6D, 4), 0.07F, GOLD[0], GOLD[1], GOLD[2], fade);
+                for (int i = 0; i < 12; i++) {
+                    double ang = i / 12.0D * Math.PI * 2.0D + (f.seed % 7L);
+                    VfxDraw.crack(buf, m, f.a, ang, r * 0.9D, f.seed + i, Math.min(1.0F, age / 6.0F), 0.1D, GOLD[0],
+                            GOLD[1], GOLD[2], fade);
                 }
+                VfxDraw.sparks(buf, m, f.a.add(0.0D, 0.5D, 0.0D), f.seed, 60, r, age / 24.0F, 2.0D, GOLD[0], GOLD[1],
+                        GOLD[2], 1.0F);
             }
             case WonderAbilities.FX_CALL -> {
+                // the gods' call: a column of gold, sigils climbing her, motes of light rising
                 Entity e = mc.level.getEntity(f.caster);
                 Vec3 c = e != null ? e.getPosition(pt) : f.a;
                 float in = Math.min(1.0F, age / 8.0F);
-                VfxDraw.pillar(buf, m, c, c.y, c.y + 40.0D, cam, 1.2F * in * fade, GOLD[0], GOLD[1], GOLD[2],
+                VfxDraw.pillar(buf, m, c, c.y, c.y + 60.0D, cam, 1.4F * in * fade, GOLD[0], GOLD[1], GOLD[2],
                         0.6F * fade);
-                VfxDraw.ring(buf, m, c.add(0.0D, 0.05D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D), 1.8D, 0.2D, t * 0.05F,
-                        GOLD[0], GOLD[1], GOLD[2], in * fade);
-                VfxDraw.wall(buf, m, c, 1.8D, 2.6D * in, GOLD[0], GOLD[1], GOLD[2], 0.4F * fade);
+                VfxDraw.pillar(buf, m, c, c.y, c.y + 60.0D, cam, 0.35F * in * fade, WHITE[0], WHITE[1], WHITE[2],
+                        0.85F * fade);
+                for (int i = 0; i < 3; i++) {
+                    double y = (age * 0.06D + i * 0.9D) % 2.7D;
+                    VfxDraw.sigil(buf, m, c.add(0.0D, 0.1D + y, 0.0D), yUp, 1.6D - y * 0.3D,
+                            t * (i % 2 == 0 ? 1.0F : -1.0F), GOLD[0], GOLD[1], GOLD[2], in * fade);
+                }
+                java.util.Random rnd = new java.util.Random(f.caster * 17L);
+                for (int i = 0; i < 16; i++) {
+                    double ang = rnd.nextDouble() * Math.PI * 2.0D;
+                    double ph = (age * 0.025D + rnd.nextDouble()) % 1.0D;
+                    Vec3 q = c.add(Math.cos(ang) * 1.6D, ph * 5.0D, Math.sin(ang) * 1.6D);
+                    VfxDraw.flare(buf, m, q, left, up, 0.07D, GOLD[0], GOLD[1], GOLD[2], in * fade * (float) (1.0D - ph));
+                }
+                VfxDraw.shockwave(buf, m, c, 1.8D + 0.2D * Math.sin(t * 0.2D), 1.2D * in, GOLD[0], GOLD[1], GOLD[2],
+                        0.5F * fade);
             }
             default -> {
             }
