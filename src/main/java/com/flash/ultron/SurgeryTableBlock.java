@@ -177,6 +177,10 @@ public class SurgeryTableBlock extends BaseEntityBlock {
             if (!(state.getBlock() instanceof SurgeryTableBlock) || event.getHand() != InteractionHand.MAIN_HAND) {
                 return;
             }
+            if (level.isClientSide) {
+                com.mojang.logging.LogUtils.getLogger().info("[flash] surgery table clicked (client) at {}",
+                        event.getPos());
+            }
             InteractionResult r = interact(level, event.getPos(), state, event.getEntity());
             event.setCanceled(true);
             event.setCancellationResult(r == InteractionResult.PASS ? InteractionResult.SUCCESS : r);

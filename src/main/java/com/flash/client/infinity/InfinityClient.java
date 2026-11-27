@@ -482,6 +482,22 @@ public final class InfinityClient {
     /** Attacking throws what telekinesis holds (or the black hole); using locks it in space. */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onClick(InputEvent.InteractionKeyMappingTriggered event) {
+        // a block that is used by a click (the surgery table, chests, doors, levers...) keeps its click
+        net.minecraft.client.Minecraft mcc = net.minecraft.client.Minecraft.getInstance();
+        if (event.isUseItem() && mcc.level != null
+                && mcc.hitResult instanceof net.minecraft.world.phys.BlockHitResult bh
+                && mcc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            net.minecraft.world.level.block.state.BlockState st = mcc.level.getBlockState(bh.getBlockPos());
+            if (st.getBlock() instanceof com.flash.ultron.SurgeryTableBlock || st.hasBlockEntity()
+                    || st.getBlock() instanceof net.minecraft.world.level.block.DoorBlock
+                    || st.getBlock() instanceof net.minecraft.world.level.block.TrapDoorBlock
+                    || st.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock
+                    || st.getBlock() instanceof net.minecraft.world.level.block.LeverBlock
+                    || st.getBlock() instanceof net.minecraft.world.level.block.ButtonBlock
+                    || st.getBlock() instanceof net.minecraft.world.level.block.BedBlock) {
+                return;
+            }
+        }
         if (event.isUseItem() && !anyOn("flash:telekinesis")) {
             List<InfPowers.Ability> rc = byKeyType("right_click");
             if (!rc.isEmpty()) {
