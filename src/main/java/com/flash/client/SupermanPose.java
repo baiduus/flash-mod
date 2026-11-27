@@ -60,6 +60,57 @@ public final class SupermanPose {
     }
 
     // ------------------------------------------------------------------
+    // Put on the model directly too (SpiderPoseMixin, after the game posed it): the same layers, in their order,
+    // so the poses hold even where something else re-poses the model after playerAnimator. The limbs only (their
+    // rotations are absolute there, so a second pass changes nothing); the head and the body stay playerAnimator's.
+    // ------------------------------------------------------------------
+
+    private static final ResourceLocation[] APPLIED = {BASE, HOLD, SHOT,
+            new ResourceLocation(FlashMod.MODID, "lex_flight_arms"),
+            new ResourceLocation(FlashMod.MODID, "ultron_flight_arms")};
+
+    public static void apply(net.minecraft.client.model.PlayerModel<?> m, net.minecraft.world.entity.LivingEntity e,
+                             float ageInTicks) {
+        if (!(e instanceof AbstractClientPlayer p) || ageInTicks == 0.0F || !STATES.containsKey(p.getUUID())) {
+            return;
+        }
+        float pt = Minecraft.getInstance().getFrameTime();
+        IAnimation[] layers = new IAnimation[APPLIED.length];
+        boolean any = false;
+        for (int i = 0; i < APPLIED.length; i++) {
+            Object data = PlayerAnimationAccess.getPlayerAssociatedData(p).get(APPLIED[i]);
+            if (data instanceof IAnimation a && a.isActive()) {
+                a.setupAnim(pt);
+                layers[i] = a;
+                any = true;
+            }
+        }
+        if (!any) {
+            return;
+        }
+        limb(layers, "rightArm", m.rightArm, pt);
+        limb(layers, "leftArm", m.leftArm, pt);
+        limb(layers, "rightLeg", m.rightLeg, pt);
+        limb(layers, "leftLeg", m.leftLeg, pt);
+        m.rightSleeve.copyFrom(m.rightArm);
+        m.leftSleeve.copyFrom(m.leftArm);
+        m.rightPants.copyFrom(m.rightLeg);
+        m.leftPants.copyFrom(m.leftLeg);
+    }
+
+    private static void limb(IAnimation[] layers, String name, net.minecraft.client.model.geom.ModelPart part,
+                             float pt) {
+        dev.kosmx.playerAnim.core.util.Vec3f v = new dev.kosmx.playerAnim.core.util.Vec3f(part.xRot, part.yRot,
+                part.zRot);
+        for (IAnimation a : layers) {
+            if (a != null) {
+                v = a.get3DTransform(name, dev.kosmx.playerAnim.api.TransformType.ROTATION, pt, v);
+            }
+        }
+        part.setRotation(v.getX(), v.getY(), v.getZ());
+    }
+
+    // ------------------------------------------------------------------
     // Playing
     // ------------------------------------------------------------------
 

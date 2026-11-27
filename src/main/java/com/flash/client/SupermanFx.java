@@ -471,7 +471,12 @@ public final class SupermanFx {
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
 
 
-        // (the rest of Superman's light: SupermanCineVfx)
+        // the frost of the freezing breath and the ice on what it froze (the rest of the light: SupermanCineVfx)
+        renderFrost(buffers, m, cam, time);
+        for (ResourceLocation tex : FROST_TEX) {
+            buffers.endBatch(RenderType.entityTranslucent(tex));
+        }
+        buffers.endBatch(RenderType.entityTranslucent(SNOW_TEX));
         renderFrozen(buffers, m, level, cam, left, up, partial);
         buffers.endBatch(RenderType.entityTranslucent(ICE_BLOCK));
         pose.popPose();

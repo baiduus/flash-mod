@@ -201,6 +201,12 @@ public final class FlashTornadoVfx {
     /** The standing tornado over base (the centre of his run), in the Flash's colour c. */
     public static void speedTornado(BufferBuilder buf, Matrix4f m, Vec3 base, Vec3 cam, Vec3 left, Vec3 up,
                                     float t, float[] c, float on, float grow, long seed) {
+        speedTornado(buf, m, base, cam, left, up, t, c, on, grow, 1.0D, seed);
+    }
+
+    /** The same, wide times as wide (Thor's Mighty Tornado: wider and taller). */
+    public static void speedTornado(BufferBuilder buf, Matrix4f m, Vec3 base, Vec3 cam, Vec3 left, Vec3 up,
+                                    float t, float[] c, float on, float grow, double wide, long seed) {
         if (on <= 0.01F) {
             return;
         }
@@ -209,7 +215,7 @@ public final class FlashTornadoVfx {
             return;
         }
         Frame f = Frame.of(base, new Vec3(0.0D, 1.0D, 0.0D));
-        Shape shape = s -> 0.55D + 1.6D * s + 2.3D * s * s;
+        Shape shape = s -> (0.55D + 1.6D * s + 2.3D * s * s) * wide;
         // the rope sway: the top wanders, the foot stays on the run
         Sway sway = s -> new Vec3(Math.sin(t * 0.06D + s * 2.2D), 0.0D, Math.cos(t * 0.05D + s * 1.8D))
                 .scale(0.55D * s * s);
@@ -236,11 +242,11 @@ public final class FlashTornadoVfx {
         Vec3 g = base.add(0.0D, 0.05D, 0.0D);
         VfxDraw.glow(buf, m, g, new Vec3(1.0D, 0.0D, 0.0D), new Vec3(0.0D, 0.0D, 1.0D), 3.2D, c[0], c[1], c[2],
                 0.4F * on);
-        VfxDraw.wall(buf, m, g, 2.3D, 0.9D, MIST[0], MIST[1], MIST[2], 0.3F * on);
-        VfxDraw.ring(buf, m, g, f.ax(), 1.6D, 0.25D, (float) (spin * 2.0D), c[0], c[1], c[2], 0.5F * on);
+        VfxDraw.wall(buf, m, g, 2.3D * wide, 0.9D, MIST[0], MIST[1], MIST[2], 0.3F * on);
+        VfxDraw.ring(buf, m, g, f.ax(), 1.6D * wide, 0.25D, (float) (spin * 2.0D), c[0], c[1], c[2], 0.5F * on);
         for (int i = 0; i < 3; i++) {
             float k = (float) ((t * 0.04D + i / 3.0D) % 1.0D);
-            VfxDraw.ring(buf, m, g, f.ax(), 1.0D + 3.0D * k, 0.2D, 0.0F, MIST[0], MIST[1], MIST[2],
+            VfxDraw.ring(buf, m, g, f.ax(), (1.0D + 3.0D * k) * wide, 0.2D, 0.0F, MIST[0], MIST[1], MIST[2],
                     0.35F * on * (1.0F - k));
         }
     }

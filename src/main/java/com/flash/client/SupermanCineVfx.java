@@ -275,17 +275,13 @@ public final class SupermanCineVfx {
             case SupermanFxPacket.RING -> {
                 // a sonic boom: the shock ring, a second fainter one, the vapour cone and the flash
                 double s = Math.max(0.8D, f.scale);
-                VfxDraw.ring(buf, m, f.pos, f.dir, s * (0.4D + 1.6D * ease(k)), 0.06D * s, 0.0F, 1.0F, 1.0F, 1.0F,
-                        0.9F * fade);
+                VfxDraw.ring(buf, m, f.pos, f.dir, s * (0.4D + 1.6D * ease(k)), 0.06D * s, 0.0F, 0.9F, 0.94F, 1.0F,
+                        0.3F * fade);
                 VfxDraw.ring(buf, m, f.pos.subtract(f.dir.scale(0.4D * k)), f.dir, s * (0.3D + 1.2D * ease(k)),
-                        0.25D * s, 0.0F, SKY[0], SKY[1], SKY[2], 0.4F * fade);
-                VfxDraw.cone(buf, m, f.pos.add(f.dir.scale(0.6D)), f.dir.scale(-1.0D), 1.6D * s, s * (0.5D + ease(k)),
-                        SKY[0], SKY[1], SKY[2], 0.18F * fade);
-                VfxDraw.flare(buf, m, f.pos, left, up, 0.5D * s, SKY[0], SKY[1], SKY[2],
-                        Math.max(0.0F, 1.0F - age / 4.0F));
+                        0.25D * s, 0.0F, 0.85F, 0.9F, 0.95F, 0.12F * fade);
             }
             case VAPOR -> VfxDraw.ring(buf, m, f.pos.subtract(f.dir.scale(age * 0.3D)), f.dir,
-                    f.scale * (0.6D + 0.9D * ease(k)), 0.18D, 0.0F, 0.9F, 0.95F, 1.0F, 0.35F * fade);
+                    f.scale * (0.6D + 0.9D * ease(k)), 0.18D, 0.0F, 0.9F, 0.95F, 1.0F, 0.14F * fade);
             case TAKEOFF -> {
                 VfxDraw.shockwave(buf, m, f.pos, 0.6D + 4.5D * ease(k), 0.9D * fade, SKY[0], SKY[1], SKY[2], fade);
                 VfxDraw.flare(buf, m, f.pos.add(0.0D, 0.3D, 0.0D), left, up, 0.9D, SKY[0], SKY[1], SKY[2],
@@ -450,20 +446,28 @@ public final class SupermanCineVfx {
         VfxDraw.shockwave(buf, m, at, 1.5D + 2.5D * k, 0.6D * pulse, SUN[0], SUN[1], SUN[2], 0.5F);
     }
 
-    /** Top speed: a streak of air behind him, two wingtip vortices, the mach cone in front. */
+    /** Top speed: only wind behind him, no light: faint streaks of air and two thin wingtip vortices. */
     private static void flight(BufferBuilder buf, Matrix4f m, Player p, float pt, float t, Track tr, Vec3 left,
                                Vec3 up, boolean me) {
         List<Vec3> pts = new ArrayList<>(tr.trail);
         Vec3 head = p.getPosition(pt).add(0.0D, p.getBbHeight() * 0.5D, 0.0D);
         pts.set(0, head);
         int n = pts.size();
-        for (int i = 1; i < n; i++) {
-            float a = 1.0F - (float) i / n;
+        java.util.Random rnd = new java.util.Random(p.getId() * 31L);
+        // a few streaks of air peeling off the body, each a thin line along the path, a little apart
+        Vec3[] offs = new Vec3[6];
+        for (int i = 0; i < offs.length; i++) {
+            offs[i] = new Vec3(rnd.nextGaussian() * 0.35D, rnd.nextGaussian() * 0.45D, rnd.nextGaussian() * 0.35D);
+        }
+        for (int i = 2; i < n; i++) {
+            float a = (1.0F - (float) i / n) * 0.22F;
             Vec3 p0 = pts.get(i - 1);
             Vec3 p1 = pts.get(i);
-            VfxDraw.beam(buf, m, p0, p1, 0.55F * a + 0.1F, SKY[0], SKY[1], SKY[2], 0.12F * a);
-            VfxDraw.beam(buf, m, p0, p1, 0.12F * a + 0.02F, 1.0F, 1.0F, 1.0F, 0.45F * a * a);
-            // the wingtip vortices: two thin spirals off his hands
+            for (Vec3 o : offs) {
+                double spread = 1.0D + i * 0.06D;
+                VfxDraw.beam(buf, m, p0.add(o.scale(spread)), p1.add(o.scale(spread + 0.06D)), 0.012F, 0.92F, 0.95F,
+                        1.0F, a);
+            }
             Vec3 dir = p0.subtract(p1);
             if (dir.lengthSqr() > 1.0E-4D) {
                 Vec3 side = dir.cross(new Vec3(0.0D, 1.0D, 0.0D));
@@ -476,19 +480,8 @@ public final class SupermanCineVfx {
                             .add(vu.scale(Math.sin(w1) * 0.08D));
                     Vec3 q1 = p1.add(side.scale(0.5D * s)).add(side.scale(Math.cos(w0) * 0.08D))
                             .add(vu.scale(Math.sin(w0) * 0.08D));
-                    VfxDraw.beam(buf, m, q0, q1, 0.02F, 1.0F, 1.0F, 1.0F, 0.5F * a);
+                    VfxDraw.beam(buf, m, q0, q1, 0.01F, 0.92F, 0.95F, 1.0F, a * 1.2F);
                 }
-            }
-        }
-        if (tr.fast && n > 1 && !me) {
-            Vec3 dir = head.subtract(pts.get(1));
-            if (dir.lengthSqr() > 1.0E-4D) {
-                Vec3 dn = dir.normalize();
-                // the mach cone: the air crushed white in front of him
-                VfxDraw.cone(buf, m, head.add(dn.scale(1.4D)), dn.scale(-1.0D), 2.2D, 1.4D, 0.9F, 0.95F, 1.0F,
-                        0.16F);
-                VfxDraw.ring(buf, m, head.add(dn.scale(0.2D)), dn, 1.35D, 0.12D, (float) t, 1.0F, 1.0F, 1.0F, 0.3F);
-                VfxDraw.flare(buf, m, head.add(dn.scale(1.3D)), left, up, 0.35D, SKY[0], SKY[1], SKY[2], 0.5F);
             }
         }
     }

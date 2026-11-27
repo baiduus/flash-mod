@@ -1323,6 +1323,10 @@ public final class ThorAbilities {
                 level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 2, 0.1D, 0.1D, 0.1D, 0.1D);
             }
         }
+        if (t % 4 == 0) {
+            // the funnel itself, drawn on the clients (ThorCineVfx, as the Flash's tornado); b.x = ticks left
+            fx(level, ThorFxPacket.TORNADO, c, new Vec3(160 - t, 0.0D, 0.0D), 1.0F);
+        }
         if (t % 20 == 0) {
             level.playSound(null, c.x, c.y, c.z, SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.2F, 0.6F);
         }

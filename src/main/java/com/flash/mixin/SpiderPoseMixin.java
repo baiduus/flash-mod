@@ -22,5 +22,7 @@ public abstract class SpiderPoseMixin {
         com.flash.client.SpiderAnim.apply(model, entity, ageInTicks);
         com.flash.client.DoomPose.apply(model, entity, ageInTicks);
         com.flash.client.WonderPose.apply(model, entity, ageInTicks);
+        com.flash.client.SupermanPose.apply(model, entity, ageInTicks);
+        com.flash.client.ThorArmPose.apply(model, entity, ageInTicks);
     }
 }

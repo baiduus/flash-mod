@@ -50,6 +50,7 @@ public final class ThorCineVfx {
         final long seed;
         final int life;
         float age;
+        float born;
 
         Fx(int kind, Vec3 a, Vec3 b, float scale, boolean cosmic, int life) {
             this.kind = kind;
@@ -59,6 +60,7 @@ public final class ThorCineVfx {
             this.cosmic = cosmic;
             this.seed = RANDOM.nextLong();
             this.life = life;
+            this.born = clock;
         }
     }
 
@@ -83,6 +85,17 @@ public final class ThorCineVfx {
 
     /** An effect of the server's (ThorFx.handle passes them all here). */
     public static void handle(int kind, Vec3 a, Vec3 b, float scale, boolean cosmic) {
+        if (kind == ThorFxPacket.TORNADO) {
+            // the Mighty Tornado: one funnel, kept alive while the server keeps sending it
+            for (Fx f : ACTIVE) {
+                if (f.kind == ThorFxPacket.TORNADO && f.a.distanceToSqr(a) < 4.0D) {
+                    f.age = 0.0F;
+                    return;
+                }
+            }
+            ACTIVE.add(new Fx(kind, a, b, scale, cosmic, 8));
+            return;
+        }
         int life = switch (kind) {
             case ThorFxPacket.BOLT -> 9;
             case ThorFxPacket.RING -> 18;
@@ -172,6 +185,12 @@ public final class ThorCineVfx {
         side = side.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
         boolean first = p == Minecraft.getInstance().player
                 && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        if (ThorArmPose.raised(p) && !first) {
+            // raised to the sky with the hammer (ThorArmPose)
+            Vec3 flat = new Vec3(look.x, 0.0D, look.z);
+            flat = flat.lengthSqr() < 1.0E-6D ? Vec3.ZERO : flat.normalize();
+            return eye.add(side.scale(0.38D)).add(flat.scale(0.05D)).add(0.0D, 0.75D, 0.0D);
+        }
         return eye.add(look.scale(first ? 0.7D : 0.5D)).add(side.scale(0.35D)).subtract(0.0D, first ? 0.35D : 0.5D,
                 0.0D);
     }
@@ -268,6 +287,11 @@ public final class ThorCineVfx {
         Vec3 yUp = new Vec3(0.0D, 1.0D, 0.0D);
         long tick = (long) age;
         switch (f.kind) {
+            case ThorFxPacket.TORNADO -> {
+                float on = Math.min(1.0F, (t - f.born) / 8.0F) * Math.min(1.0F, (f.life - age) / 4.0F);
+                float grow = ease(Math.min(1.0F, (t - f.born) / 25.0F)) * 1.45F;
+                FlashTornadoVfx.speedTornado(buf, m, f.a, cam, left, up, t, c[1], on, grow, 2.0D, f.seed);
+            }
             case ThorFxPacket.BOLT -> {
                 float s = Math.max(0.3F, f.scale);
                 float a = fade * strobe(f.seed, age);
@@ -467,6 +491,16 @@ public final class ThorCineVfx {
                 VfxDraw.ring(buf, m, cc, yUp, r, 0.12D, (float) spin, c[0][0], c[0][1], c[0][2], 0.35F);
             }
             VfxDraw.shockwave(buf, m, pos, 1.8D + 0.2D * Math.sin(t * 0.3D), 0.6D, c[0][0], c[0][1], c[0][2], 0.4F);
+        }
+        if (charging) {
+            // the sky's lightning pouring into the raised hammer
+            Vec3 h = hand(p, pt);
+            long strike = tick / 3;
+            Random sky = new Random(p.getId() * 977L + strike);
+            if (sky.nextInt(3) != 0) {
+                Vec3 from = h.add(sky.nextGaussian() * 3.0D, 22.0D + sky.nextDouble() * 8.0D, sky.nextGaussian() * 3.0D);
+                bolt(buf, m, from, h, sky.nextLong(), 0.07F, c, 1.0F - (t % 3.0F) / 3.0F, 3);
+            }
         }
         if ((charging || fury || aura) && !me) {
             // the hammer crackling in his hand

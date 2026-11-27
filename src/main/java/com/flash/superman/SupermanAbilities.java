@@ -138,6 +138,9 @@ public final class SupermanAbilities {
         float throwCharge;
         Vec3 dwellAt;
         int dwellTicks;
+        /** Ticks the eyes have been firing without a pause (3 s: they start to break what they hit). */
+        int heatFiring;
+        int heatLast;
         final Map<UUID, Held> slowed = new HashMap<>();
         boolean slowing;
     }
@@ -498,6 +501,16 @@ public final class SupermanAbilities {
         }
         BlockPos pos = bh.getBlockPos();
         BlockState state = level.getBlockState(pos);
+        // firing without a pause: counted (a pause of more than a few ticks starts it again)
+        s.heatFiring = player.tickCount - s.heatLast <= 3 ? s.heatFiring + 1 : 1;
+        s.heatLast = player.tickCount;
+        // the ground it touches catches fire at once
+        if (player.tickCount % 5 == 0) {
+            BlockPos fire = pos.relative(bh.getDirection());
+            if (level.getBlockState(fire).isAir() && BaseFireBlock.canBePlacedAt(level, fire, bh.getDirection())) {
+                level.setBlockAndUpdate(fire, BaseFireBlock.getState(level, fire));
+            }
+        }
         // ice and snow melt at once
         if (state.is(Blocks.ICE) || state.is(Blocks.PACKED_ICE) || state.is(Blocks.SNOW_BLOCK)) {
             level.setBlockAndUpdate(pos, state.is(Blocks.SNOW_BLOCK) ? Blocks.AIR.defaultBlockState()
@@ -505,6 +518,15 @@ public final class SupermanAbilities {
             return;
         }
         if (!SupermanPowers.destroyBlocks(player)) {
+            return;
+        }
+        float hard = state.getDestroySpeed(level, pos);
+        // after 3 seconds of firing the beam starts to break what it hits (all but the toughest blocks)
+        if (s.heatFiring >= 60 && hard >= 0.0F && hard < 50.0F && !state.isAir()
+                && player.tickCount % (laser ? 2 : 4) == 0) {
+            level.destroyBlock(pos, true, player);
+            level.sendParticles(ParticleTypes.LAVA, p.x, p.y, p.z, 2, 0.1D, 0.1D, 0.1D, 0.0D);
+            s.heatOnBlock = 0;
             return;
         }
         if (!pos.equals(s.heatPos)) {
