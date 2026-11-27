@@ -81,8 +81,8 @@ public final class SupermanPose {
         for (int i = 0; i < APPLIED.length; i++) {
             // the base, hold and shot: the mod's own copies (they work even when playerAnimator's layers do not);
             // the arms of Lex and Ultron: their layers
-            IAnimation a = i < 3 ? st.own[i] : PlayerAnimationAccess.getPlayerAssociatedData(p).get(APPLIED[i])
-                    instanceof IAnimation l ? l : null;
+            Object o = i < 3 ? st.own[i] : PlayerAnimationAccess.getPlayerAssociatedData(p).get(APPLIED[i]);
+            IAnimation a = o instanceof IAnimation l ? l : null;
             if (a != null && a.isActive()) {
                 a.setupAnim(pt);
                 layers[i] = a;
