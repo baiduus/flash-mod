@@ -196,6 +196,11 @@ public class SurgeryTableBlock extends BaseEntityBlock {
         return true;
     }
 
+    /** (A bed of Forge's would mark itself occupied: the table has no such mark, it shows the operation.) */
+    @Override
+    public void setBedOccupied(BlockState state, Level level, BlockPos pos, LivingEntity sleeper, boolean occupied) {
+    }
+
     @Override
     public Direction getBedDirection(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
         return state.getValue(FACING);
