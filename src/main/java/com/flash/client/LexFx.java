@@ -95,6 +95,33 @@ public final class LexFx {
         return hit != null ? hit.getLocation() : stop;
     }
 
+    private static float ease(float k) {
+        float u = 1.0F - Math.min(1.0F, Math.max(0.0F, k));
+        return 1.0F - u * u * u;
+    }
+
+    /** A repulsor's beam in Kryptonite green: haze, band, white core, a spiral of energy, rings racing down. */
+    private static void repulsor(com.mojang.blaze3d.vertex.BufferBuilder buf, Matrix4f m, Vec3 a, Vec3 b, float w,
+                                 float t, Vec3 left, Vec3 up, float al) {
+        VfxDraw.beam(buf, m, a, b, w * 4.0F, GREEN[0], GREEN[1], GREEN[2], 0.12F * al);
+        VfxDraw.energy(buf, m, a, b, w, GREEN[0], GREEN[1], GREEN[2], al);
+        double len = a.distanceTo(b);
+        Vec3[] hx = VfxDraw.helix(a, b, w * 1.6D, Math.max(2.0D, len / 1.4D), t * 0.8D, Math.max(16, Math.min(120,
+                (int) (len * 5.0D))));
+        VfxDraw.path(buf, m, hx, w * 0.25F, 0.7F, 1.0F, 0.7F, 0.5F * al);
+        if (len > 1.0D) {
+            Vec3 dn = b.subtract(a).scale(1.0D / len);
+            for (int i = 0; i < 3; i++) {
+                double pos = (t * 1.6D + i * len / 3.0D) % len;
+                VfxDraw.ring(buf, m, a.add(dn.scale(pos)), dn, w * 2.2D, w * 0.3D, 0.0F, GREEN[0], GREEN[1], GREEN[2],
+                        0.45F * al);
+            }
+        }
+        VfxDraw.flare(buf, m, a, left, up, w * 4.0D, GREEN[0], GREEN[1], GREEN[2], al);
+        VfxDraw.flare(buf, m, b, left, up, w * 7.0D, GREEN[0], GREEN[1], GREEN[2], al);
+        VfxDraw.burst(buf, m, b, left, up, w * 14.0F, GREEN[0], GREEN[1], GREEN[2], 0.7F * al, t * 0.3F);
+    }
+
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
@@ -118,73 +145,117 @@ public final class LexFx {
         if (SHOTS.isEmpty() && beaming.isEmpty()) {
             return;
         }
-        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-        VertexConsumer c = buffers.getBuffer(RenderType.lightning());
         PoseStack pose = event.getPoseStack();
-        Vec3 cam = event.getCamera().getPosition();
+        var camera = event.getCamera();
+        Vec3 cam = camera.getPosition();
+        Vec3 left = new Vec3(camera.getLeftVector());
+        Vec3 up = new Vec3(camera.getUpVector());
         pose.pushPose();
         pose.translate(-cam.x, -cam.y, -cam.z);
         Matrix4f m = pose.last().pose();
         float flicker = 0.9F + 0.1F * (float) Math.sin(time * 2.3F);
-        for (Player p : beaming) {
-            if (LexState.flag(p, LexSuit.F_BEAM)) {
-                for (boolean right : new boolean[] {true, false}) {
-                    Vec3 from = palm(p, partial, right);
-                    Vec3 to = aim(level, p, from, partial, 32.0D);
-                    beam(c, m, cam, from, to, 0.07F * flicker, GREEN, 1.0F);
+        var buf = VfxDraw.begin();
+        try {
+            for (Player p : beaming) {
+                if (LexState.flag(p, LexSuit.F_BEAM)) {
+                    // the repulsor beams out of both palms
+                    for (boolean right : new boolean[] {true, false}) {
+                        Vec3 from = palm(p, partial, right);
+                        Vec3 to = aim(level, p, from, partial, 32.0D);
+                        repulsor(buf, m, from, to, 0.07F * flicker, time, left, up, 1.0F);
+                        long gen = (long) (time / 4.0F);
+                        VfxDraw.sparks(buf, m, to, p.getId() * 31L + gen * 977L + (right ? 1 : 0), 6, 1.2D,
+                                (time - gen * 4.0F) / 8.0F, 0.5D, GREEN[0], GREEN[1], GREEN[2], 1.0F);
+                    }
+                }
+                if (LexState.flag(p, LexSuit.F_UNIBEAM)) {
+                    // the unibeam: a torrent out of the chest, the reactor blazing
+                    Vec3 from = chest(p, partial);
+                    Vec3 to = aim(level, p, from, partial, 40.0D);
+                    repulsor(buf, m, from, to, 0.22F * flicker, time, left, up, 1.0F);
+                    VfxDraw.sphere(buf, m, to, 1.2D * flicker, cam, GREEN[0], GREEN[1], GREEN[2], 0.5F, time, 2.0D);
+                    long gen = (long) (time / 3.0F);
+                    VfxDraw.sparks(buf, m, to, p.getId() * 77L + gen * 977L, 14, 2.5D, (time - gen * 3.0F) / 7.0F,
+                            0.8D, GREEN[0], GREEN[1], GREEN[2], 1.0F);
+                } else if (LexState.flag(p, LexSuit.F_UNI_CHARGING)) {
+                    // the arc reactor gathering power: rings closing in, energy drawn into it
+                    Vec3 at = chest(p, partial);
+                    Vec3 look = p.getViewVector(partial);
+                    float pulse = 0.7F + 0.3F * (float) Math.sin(time * 1.7F);
+                    VfxDraw.flare(buf, m, at, left, up, 0.45D * pulse, GREEN[0], GREEN[1], GREEN[2], 1.0F);
+                    for (int i = 0; i < 3; i++) {
+                        float k = (float) (1.0D - ((time * 0.08D + i / 3.0D) % 1.0D));
+                        VfxDraw.ring(buf, m, at, look, 0.15D + 0.9D * k, 0.04D, time * 0.2F, GREEN[0], GREEN[1],
+                                GREEN[2], 0.7F * (1.0F - k));
+                    }
+                    java.util.Random rnd = new java.util.Random(p.getId() * 13L + (long) (time / 2.0F));
+                    for (int i = 0; i < 6; i++) {
+                        Vec3 o = at.add(rnd.nextGaussian() * 1.2D, rnd.nextGaussian() * 1.0D, rnd.nextGaussian() * 1.2D);
+                        VfxDraw.beam(buf, m, o, o.lerp(at, 0.5D), 0.02F, 0.7F, 1.0F, 0.7F, 0.6F);
+                    }
                 }
             }
-            if (LexState.flag(p, LexSuit.F_UNIBEAM)) {
-                Vec3 from = chest(p, partial);
-                Vec3 to = aim(level, p, from, partial, 40.0D);
-                beam(c, m, cam, from, to, 0.22F * flicker, GREEN, 1.0F);
-            } else if (LexState.flag(p, LexSuit.F_UNI_CHARGING)) {
-                // the arc reactor gathering power
-                Vec3 at = chest(p, partial);
-                float r = 0.12F + 0.05F * (float) Math.sin(time * 1.7F);
-                Vec3 d = new Vec3(0.0D, r, 0.0D);
-                beam(c, m, cam, at.subtract(d), at.add(d), r * 1.5F, GREEN, 0.9F);
+            for (Shot s : SHOTS) {
+                float age = time - s.start();
+                float k = age / s.life();
+                float fade = 1.0F - k;
+                switch (s.kind()) {
+                    case LexFxPacket.BLAST -> {
+                        // a repulsor blast: a bolt of green light, a burst where it lands
+                        float run = Math.min(1.0F, age / 2.0F);
+                        Vec3 tip = s.a().lerp(s.b(), run);
+                        repulsor(buf, m, s.a(), tip, 0.1F * (1.0F - k * 0.6F), time, left, up, fade);
+                        if (run >= 1.0F) {
+                            VfxDraw.sphere(buf, m, s.b(), 0.3D + 1.2D * ease(k), cam, GREEN[0], GREEN[1], GREEN[2],
+                                    0.6F * fade, time, 2.0D);
+                            VfxDraw.sparks(buf, m, s.b(), s.start() * 31L, 12, 1.6D, k, 0.6D, GREEN[0], GREEN[1],
+                                    GREEN[2], 1.0F);
+                        }
+                    }
+                    case LexFxPacket.LASER -> {
+                        // the wrist lasers sweeping from side to side in front, cutting red light
+                        Entity e = level.getEntity(s.entity());
+                        Vec3 dir = s.b();
+                        double base = Math.atan2(dir.z, dir.x);
+                        double sweep = 75.0D - 150.0D * Math.min(1.0D, k);
+                        if (dir.length() > 1.5D) {
+                            sweep = -sweep;
+                        }
+                        for (int w = 0; w < 2; w++) {
+                            double ang = base + Math.toRadians((w == 0 ? 1 : -1) * sweep);
+                            Vec3 from = e instanceof Player pl ? palm(pl, partial, w == 0) : s.a();
+                            Vec3 to = from.add(Math.cos(ang) * 9.0D, 0.0D, Math.sin(ang) * 9.0D);
+                            float al = 1.0F - k * 0.5F;
+                            VfxDraw.beam(buf, m, from, to, 0.12F, RED[0], RED[1], RED[2], 0.15F * al);
+                            VfxDraw.energy(buf, m, from, to, 0.025F, RED[0], RED[1], RED[2], al);
+                            VfxDraw.flare(buf, m, from, left, up, 0.18D, RED[0], RED[1], RED[2], al);
+                            VfxDraw.flare(buf, m, to, left, up, 0.25D, 1.0F, 0.5F, 0.3F, al);
+                        }
+                    }
+                    case LexFxPacket.DIVE -> {
+                        // the power dive's landing: a green shockwave, the ground cracked, sparks flung
+                        double r = 0.5D + 6.0D * ease(k);
+                        VfxDraw.shockwave(buf, m, s.a(), r, 1.6D * fade, GREEN[0], GREEN[1], GREEN[2], fade);
+                        VfxDraw.flare(buf, m, s.a().add(0.0D, 0.4D, 0.0D), left, up, 1.6D, GREEN[0], GREEN[1], GREEN[2],
+                                Math.max(0.0F, 1.0F - age / 4.0F));
+                        for (int i = 0; i < 9; i++) {
+                            VfxDraw.crack(buf, m, s.a(), Math.PI * 2.0D * i / 9.0D, 4.5D, s.start() * 7L + i,
+                                    Math.min(1.0F, age / 4.0F), 0.07D, GREEN[0], GREEN[1], GREEN[2], fade);
+                        }
+                        VfxDraw.sparks(buf, m, s.a().add(0.0D, 0.3D, 0.0D), s.start() * 13L, 26, 4.0D, k, 1.5D,
+                                GREEN[0], GREEN[1], GREEN[2], 1.0F);
+                        if (age < 1.0F) {
+                            HulkVfx.quake(mc, s.a(), 1.2F, 24.0D);
+                        }
+                    }
+                    default -> {
+                    }
+                }
             }
+        } finally {
+            VfxDraw.end(buf);
+            pose.popPose();
         }
-        for (Shot s : SHOTS) {
-            float age = time - s.start();
-            float k = age / s.life();
-            switch (s.kind()) {
-                case LexFxPacket.BLAST -> beam(c, m, cam, s.a(), s.b(), 0.12F * (1.0F - k * 0.6F), GREEN, 1.0F - k);
-                case LexFxPacket.LASER -> {
-                    // the two wrist lasers sweep from side to side in front
-                    Entity e = level.getEntity(s.entity());
-                    Vec3 dir = s.b();
-                    double base = Math.atan2(dir.z, dir.x);
-                    // (a direction twice as long: the sweep goes back the other way)
-                    double sweep = 75.0D - 150.0D * Math.min(1.0D, k);
-                    if (dir.length() > 1.5D) {
-                        sweep = -sweep;
-                    }
-                    for (int w = 0; w < 2; w++) {
-                        double ang = base + Math.toRadians((w == 0 ? 1 : -1) * sweep);
-                        Vec3 from = e instanceof Player pl ? palm(pl, partial, w == 0) : s.a();
-                        Vec3 to = from.add(Math.cos(ang) * 9.0D, 0.0D, Math.sin(ang) * 9.0D);
-                        beam(c, m, cam, from, to, 0.035F, RED, 1.0F - k * 0.5F);
-                    }
-                }
-                case LexFxPacket.DIVE -> {
-                    double r = 0.5D + 5.5D * Math.sqrt(k);
-                    int n = 32;
-                    for (int i = 0; i < n; i++) {
-                        double a0 = i * Math.PI * 2.0D / n;
-                        double a1 = (i + 1) * Math.PI * 2.0D / n;
-                        Vec3 p0 = s.a().add(Math.cos(a0) * r, 0.2D, Math.sin(a0) * r);
-                        Vec3 p1 = s.a().add(Math.cos(a1) * r, 0.2D, Math.sin(a1) * r);
-                        beam(c, m, cam, p0, p1, 0.18F, GREEN, 1.0F - k);
-                    }
-                }
-                default -> {
-                }
-            }
-        }
-        pose.popPose();
-        buffers.endBatch(RenderType.lightning());
     }
 
     /** A beam of solid light: glow, middle and white core, each a strip facing the camera. */

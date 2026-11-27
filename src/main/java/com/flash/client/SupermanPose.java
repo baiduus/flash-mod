@@ -89,7 +89,9 @@ public final class SupermanPose {
                 any = true;
             }
         }
+        bendable(m);
         if (!any) {
+            bend(m, null, pt);
             if ("charge_takeoff9".equals(st.shot)) {
                 coil(m, p, pt);
             }
@@ -99,6 +101,15 @@ public final class SupermanPose {
         limb(layers, "leftArm", m.leftArm, pt);
         limb(layers, "rightLeg", m.rightLeg, pt);
         limb(layers, "leftLeg", m.leftLeg, pt);
+        bend(m, layers, pt);
+        // in flight the head stays straight on the body (it does not swing round after the look)
+        float fly = LanternFlight.active(p) && !p.onGround() ? 1.0F : 0.0F;
+        if (fly > 0.0F) {
+            m.head.xRot = 0.0F;
+            m.head.yRot = 0.0F;
+            m.head.zRot = 0.0F;
+            m.hat.copyFrom(m.head);
+        }
         if ("charge_takeoff9".equals(st.shot)) {
             coil(m, p, pt);
         }
@@ -148,8 +159,11 @@ public final class SupermanPose {
                 m.rightLeg, m.leftLeg}) {
             leg.z = net.minecraft.util.Mth.lerp(k, leg.z, 4.2F);
             leg.y = net.minecraft.util.Mth.lerp(k, leg.y, 12.2F);
-            leg.xRot = net.minecraft.util.Mth.lerp(k, leg.xRot, -0.35F);
+            leg.xRot = net.minecraft.util.Mth.lerp(k, leg.xRot, -1.15F);
         }
+        // the knees bent deep (the shins back under the body)
+        bendPart(m.rightLeg, m.rightPants, 0.0F, 1.9F * k);
+        bendPart(m.leftLeg, m.leftPants, 0.0F, 1.9F * k);
         m.rightLeg.zRot = net.minecraft.util.Mth.lerp(k, m.rightLeg.zRot, 0.12F);
         m.leftLeg.zRot = net.minecraft.util.Mth.lerp(k, m.leftLeg.zRot, -0.12F);
         m.hat.copyFrom(m.head);
@@ -181,6 +195,58 @@ public final class SupermanPose {
         if (lowered) {
             lowered = false;
             event.getPoseStack().popPose();
+        }
+    }
+
+    private static final java.util.Set<Object> BENDABLE = java.util.Collections.newSetFromMap(
+            new java.util.WeakHashMap<>());
+
+    /** The limbs made bendable (knees, elbows) once per model, if playerAnimator has not already. */
+    private static void bendable(net.minecraft.client.model.PlayerModel<?> m) {
+        if (!BENDABLE.add(m)) {
+            return;
+        }
+        try {
+            var h = dev.kosmx.playerAnim.impl.animation.IBendHelper.INSTANCE;
+            for (net.minecraft.client.model.geom.ModelPart part : new net.minecraft.client.model.geom.ModelPart[] {
+                    m.rightArm, m.leftArm, m.rightLeg, m.leftLeg, m.rightSleeve, m.leftSleeve, m.rightPants,
+                    m.leftPants}) {
+                h.initBend(part, net.minecraft.core.Direction.UP);
+            }
+        } catch (Throwable ignored) {
+            // no bendy-lib: the limbs stay straight
+        }
+    }
+
+    /** The bend of each limb (the knees, the elbows) from the layers (or straight when there are none). */
+    private static void bend(net.minecraft.client.model.PlayerModel<?> m, IAnimation[] layers, float pt) {
+        bend(layers, "rightArm", pt, m.rightArm, m.rightSleeve);
+        bend(layers, "leftArm", pt, m.leftArm, m.leftSleeve);
+        bend(layers, "rightLeg", pt, m.rightLeg, m.rightPants);
+        bend(layers, "leftLeg", pt, m.leftLeg, m.leftPants);
+    }
+
+    private static void bend(IAnimation[] layers, String name, float pt,
+                             net.minecraft.client.model.geom.ModelPart part,
+                             net.minecraft.client.model.geom.ModelPart outer) {
+        dev.kosmx.playerAnim.core.util.Vec3f v = new dev.kosmx.playerAnim.core.util.Vec3f(0.0F, 0.0F, 0.0F);
+        if (layers != null) {
+            for (IAnimation a : layers) {
+                if (a != null) {
+                    v = a.get3DTransform(name, dev.kosmx.playerAnim.api.TransformType.BEND, pt, v);
+                }
+            }
+        }
+        bendPart(part, outer, v.getX(), v.getY());
+    }
+
+    private static void bendPart(net.minecraft.client.model.geom.ModelPart part,
+                                 net.minecraft.client.model.geom.ModelPart outer, float axis, float amount) {
+        try {
+            dev.kosmx.playerAnim.impl.animation.IBendHelper.INSTANCE.bend(part, axis, amount);
+            dev.kosmx.playerAnim.impl.animation.IBendHelper.INSTANCE.bend(outer, axis, amount);
+        } catch (Throwable ignored) {
+            // no bendy-lib
         }
     }
 

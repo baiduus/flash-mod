@@ -1065,6 +1065,7 @@ public final class SpiderClient {
         long now = mc.level.getGameTime();
         Entity caster = mc.level.getEntity(p.caster());
         Player cp = caster instanceof Player pl ? pl : null;
+        SpiderVfx.fx(p);
         switch (p.type()) {
             case SpiderAbilities.FX_SHOT -> {
                 STRANDS.add(new Strand(p.caster(), p.from(), p.to(), -1, now, 5, true));

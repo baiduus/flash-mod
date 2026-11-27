@@ -64,7 +64,7 @@ public class SurgeryTableBlockEntity extends BlockEntity {
         level.setBlock(this.worldPosition, this.getBlockState().setValue(SurgeryTableBlock.OPERATING, true), 3);
         level.playSound(null, this.worldPosition, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 1.0F, 0.6F);
         level.playSound(null, this.worldPosition, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.8F, 1.6F);
-        p.displayClientMessage(Component.translatable("message.flash.surgery.start"), true);
+        p.displayClientMessage(Component.translatable("message.flash.surgery.start"), false);
         this.setChanged();
     }
 
@@ -87,7 +87,7 @@ public class SurgeryTableBlockEntity extends BlockEntity {
             LOGGER.info("[flash] surgery at {} stopped: {}", pos, why);
             table.stop(level, pos);
             if (found instanceof ServerPlayer p2 && UltronPowers.has(p2)) {
-                p2.displayClientMessage(Component.translatable("message.flash.surgery.aborted"), true);
+                p2.displayClientMessage(Component.translatable("message.flash.surgery.aborted"), false);
             }
             return;
         }

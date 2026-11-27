@@ -120,16 +120,26 @@ public class SurgeryTableBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
                                  BlockHitResult hit) {
+        return interact(level, pos, state, player);
+    }
+
+    /**
+     * Ultron lying down on the table (also reached from the right-click event, SurgeryTableBlock.Clicks, so that
+     * nothing else can swallow the click first).
+     */
+    static InteractionResult interact(Level level, BlockPos pos, BlockState state, Player player) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
-        BlockPos head = headOf(pos, state);
-        if (!(player instanceof ServerPlayer p)) {
+        if (!(player instanceof ServerPlayer p) || !(state.getBlock() instanceof SurgeryTableBlock block)) {
             return InteractionResult.PASS;
         }
+        org.slf4j.Logger log = com.mojang.logging.LogUtils.getLogger();
+        BlockPos head = headOf(pos, state);
         BlockState hs = level.getBlockState(head);
-        if (!hs.is(this)) {
-            com.mojang.logging.LogUtils.getLogger().info("[flash] surgery table at {}: no head block at {}", pos, head);
+        log.info("[flash] surgery table clicked at {} by {} (ultron={}, head={})", pos, p.getGameProfile().getName(),
+                UltronPowers.has(p), hs.is(block));
+        if (!hs.is(block)) {
             return InteractionResult.PASS;
         }
         if (!(level.getBlockEntity(head) instanceof SurgeryTableBlockEntity)) {
@@ -140,18 +150,37 @@ public class SurgeryTableBlock extends BaseEntityBlock {
             return InteractionResult.PASS;
         }
         if (table.busy()) {
-            p.displayClientMessage(Component.translatable("message.flash.surgery.busy"), true);
+            p.displayClientMessage(Component.translatable("message.flash.surgery.busy"), false);
             return InteractionResult.CONSUME;
         }
         if (!UltronPowers.has(p)) {
-            p.displayClientMessage(Component.translatable("message.flash.surgery.nothing"), true);
+            p.displayClientMessage(Component.translatable("message.flash.surgery.nothing"), false);
             return InteractionResult.CONSUME;
         }
         if (p.isSleeping()) {
-            return InteractionResult.CONSUME;
+            p.stopSleepInBed(true, true);
         }
         table.start(p);
         return InteractionResult.CONSUME;
+    }
+
+    /** The click on the table, caught first (before anything else can take it). */
+    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.flash.FlashMod.MODID)
+    public static final class Clicks {
+        private Clicks() {
+        }
+
+        @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+        public static void onRightClick(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+            Level level = event.getLevel();
+            BlockState state = level.getBlockState(event.getPos());
+            if (!(state.getBlock() instanceof SurgeryTableBlock) || event.getHand() != InteractionHand.MAIN_HAND) {
+                return;
+            }
+            InteractionResult r = interact(level, event.getPos(), state, event.getEntity());
+            event.setCanceled(true);
+            event.setCancellationResult(r == InteractionResult.PASS ? InteractionResult.SUCCESS : r);
+        }
     }
 
     // ------------------------------------------------------------------

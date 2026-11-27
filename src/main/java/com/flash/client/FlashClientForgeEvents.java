@@ -198,6 +198,7 @@ public final class FlashClientForgeEvents {
         FlashCineVfx.reset();
         SupermanCineVfx.reset();
         ThorCineVfx.reset();
+        SpiderVfx.reset();
         com.flash.client.infinity.InfinityClient.reset();
         WonderLayer.resetModels();
         WonderItemRenderer.resetModels();
